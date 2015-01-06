@@ -617,9 +617,9 @@ namespace gbe
     /*! Multiply 64-bit integers */
     void I64MUL(Reg dst, Reg src0, Reg src1, GenRegister *tmp, bool native_long);
     /*! 64-bit integer division */
-    void I64DIV(Reg dst, Reg src0, Reg src1, GenRegister tmp[13]);
+    void I64DIV(Reg dst, Reg src0, Reg src1, GenRegister *tmp, int tmp_int);
     /*! 64-bit integer remainder of division */
-    void I64REM(Reg dst, Reg src0, Reg src1, GenRegister tmp[13]);
+    void I64REM(Reg dst, Reg src0, Reg src1, GenRegister *tmp, int tmp_int);
     /* common functions for both binary instruction and sel_cmp and compare instruction.
        It will handle the IMM or normal register assignment, and will try to avoid LOADI
        as much as possible. */
@@ -1380,21 +1380,21 @@ namespace gbe
     }
   }
 
-  void Selection::Opaque::I64DIV(Reg dst, Reg src0, Reg src1, GenRegister tmp[13]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64DIV, 14, 2);
+  void Selection::Opaque::I64DIV(Reg dst, Reg src0, Reg src1, GenRegister* tmp, int tmp_num) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64DIV, tmp_num + 1, 2);
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
-    for(int i = 0; i < 13; i++)
+    for(int i = 0; i < tmp_num; i++)
       insn->dst(i + 1) = tmp[i];
   }
 
-  void Selection::Opaque::I64REM(Reg dst, Reg src0, Reg src1, GenRegister tmp[13]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64REM, 14, 2);
+  void Selection::Opaque::I64REM(Reg dst, Reg src0, Reg src1, GenRegister* tmp, int tmp_num) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64REM, tmp_num + 1, 2);
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
-    for(int i = 0; i < 13; i++)
+    for(int i = 0; i < tmp_num; i++)
       insn->dst(i + 1) = tmp[i];
   }
 
@@ -2201,18 +2201,39 @@ namespace gbe
         GBE_ASSERT(op != OP_REM);
         sel.MATH(dst, GEN_MATH_FUNCTION_FDIV, src0, src1);
       } else if (type == TYPE_S64 || type == TYPE_U64) {
-        GenRegister tmp[13];
+        GenRegister tmp[15];
+        int tmp_num = 13;
         for(int i=0; i < 13; i++) {
           tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
           tmp[i].type = GEN_TYPE_UD;
+        }
+
+        if (sel.hasLongType()) {
+          if (!sel.isScalarReg(insn.getSrc(0))) {
+            tmp[tmp_num] = GenRegister::retype(sel.selReg(sel.reg(FAMILY_QWORD)), src0.type);
+            tmp_num++;
+          }
+
+          if (!sel.isScalarReg(insn.getSrc(1))) {
+            tmp[tmp_num] = GenRegister::retype(sel.selReg(sel.reg(FAMILY_QWORD)), src1.type);
+            tmp_num++;
+          }
+
+          /* We at least one tmp register to convert if dst is not scalar. */
+          if (!sel.isScalarReg(insn.getDst(0)) && sel.isScalarReg(insn.getSrc(0))
+              && sel.isScalarReg(insn.getSrc(1))) {
+            GBE_ASSERT(tmp_num == 13);
+            tmp[tmp_num] = sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U64);
+            tmp_num++;
+          }
         }
         sel.push();
           sel.curr.flag = 0;
           sel.curr.subFlag = 1;
           if(op == OP_DIV)
-            sel.I64DIV(dst, src0, src1, tmp);
+            sel.I64DIV(dst, src0, src1, tmp, tmp_num);
           else
-            sel.I64REM(dst, src0, src1, tmp);
+            sel.I64REM(dst, src0, src1, tmp, tmp_num);
         sel.pop();
       }
       markAllChildren(dag);

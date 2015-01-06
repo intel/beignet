@@ -531,6 +531,37 @@ namespace gbe
     p->ADD(dst, dst, tmp_dst);
   }
 
+  void Gen8Context::emitI64DIVREMInstruction(const SelectionInstruction &cnst_insn)
+  {
+    SelectionInstruction* insn = const_cast<SelectionInstruction*>(&cnst_insn);
+    GenRegister packed_src0 = ra->genReg(insn->src(0));
+    GenRegister packed_src1 = ra->genReg(insn->src(1));
+    GenRegister dst = ra->genReg(insn->dst(0));
+    int tmp_reg_n = 14;
+
+    if (packed_src0.hstride != GEN_HORIZONTAL_STRIDE_0) {
+      GenRegister unpacked_src0 = ra->genReg(insn->dst(tmp_reg_n));
+      unpackLongVec(packed_src0, unpacked_src0, p->curr.execWidth);
+      tmp_reg_n++;
+      insn->src(0) = unpacked_src0;
+    }
+    if (packed_src1.hstride != GEN_HORIZONTAL_STRIDE_0) {
+      GenRegister unpacked_src1 = ra->genReg(insn->dst(tmp_reg_n));
+      unpackLongVec(packed_src1, unpacked_src1, p->curr.execWidth);
+      tmp_reg_n++;
+      insn->src(1) = unpacked_src1;
+    }
+    GBE_ASSERT(tmp_reg_n <= insn->dstNum);
+
+    GenContext::emitI64DIVREMInstruction(*insn);
+
+    if (dst.hstride != GEN_HORIZONTAL_STRIDE_0) {
+      GenRegister dst_packed = ra->genReg(insn->dst(14));
+      packLongVec(dst, dst_packed, p->curr.execWidth);
+      p->MOV(dst, dst_packed);
+    }
+  }
+
   void Gen8Context::packLongVec(GenRegister unpacked, GenRegister packed, uint32_t simd)
   {
     GBE_ASSERT(packed.subnr == 0);
