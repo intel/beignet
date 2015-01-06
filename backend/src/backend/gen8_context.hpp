@@ -56,6 +56,8 @@ namespace gbe
   private:
     virtual void emitSLMOffset(void);
     virtual void newSelection(void);
+    void packLongVec(GenRegister unpacked, GenRegister packed, uint32_t simd);
+    void unpackLongVec(GenRegister packed, GenRegister unpacked, uint32_t simd);
   };
 }
 #endif /* __GBE_GEN8_CONTEXT_HPP__ */
