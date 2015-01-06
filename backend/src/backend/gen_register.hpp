@@ -446,6 +446,20 @@ namespace gbe
       return retype(vec1(file, reg), GEN_TYPE_DF);
     }
 
+    /* Because we can not crossing row with horizontal stride, so for long
+       type, we need to set it to <4,4:1>:UQ */
+    static INLINE GenRegister ul16(uint32_t file, ir::Register reg) {
+      return retype(vec4(file, reg), GEN_TYPE_UL);
+    }
+
+    static INLINE GenRegister ul8(uint32_t file, ir::Register reg) {
+      return retype(vec4(file, reg), GEN_TYPE_UL);
+    }
+
+    static INLINE GenRegister ul1(uint32_t file, ir::Register reg) {
+      return retype(vec1(file, reg), GEN_TYPE_UL);
+    }
+
     static INLINE GenRegister ud16(uint32_t file, ir::Register reg) {
       return retype(vec16(file, reg), GEN_TYPE_UD);
     }
@@ -623,6 +637,18 @@ namespace gbe
 
     static INLINE GenRegister df16grf(ir::Register reg) {
       return df16(GEN_GENERAL_REGISTER_FILE, reg);
+    }
+
+    static INLINE GenRegister ul16grf(ir::Register reg) {
+      return ul16(GEN_GENERAL_REGISTER_FILE, reg);
+    }
+
+    static INLINE GenRegister ul8grf(ir::Register reg) {
+      return ul8(GEN_GENERAL_REGISTER_FILE, reg);
+    }
+
+    static INLINE GenRegister ul1grf(ir::Register reg) {
+      return ul1(GEN_GENERAL_REGISTER_FILE, reg);
     }
 
     static INLINE GenRegister ud16grf(ir::Register reg) {
@@ -839,6 +865,18 @@ namespace gbe
       return retype(vec1(file, nr, subnr), GEN_TYPE_DF);
     }
 
+    static INLINE GenRegister ul16(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return retype(vec4(file, nr, subnr), GEN_TYPE_UL);
+    }
+
+    static INLINE GenRegister ul8(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return retype(vec4(file, nr, subnr), GEN_TYPE_UL);
+    }
+
+    static INLINE GenRegister ul1(uint32_t file, uint32_t nr, uint32_t subnr) {
+      return retype(vec1(file, nr, subnr), GEN_TYPE_UL);
+    }
+
     static INLINE GenRegister ud16(uint32_t file, uint32_t nr, uint32_t subnr) {
       return retype(vec16(file, nr, subnr), GEN_TYPE_UD);
     }
@@ -921,6 +959,18 @@ namespace gbe
 
     static INLINE GenRegister df1grf(uint32_t nr, uint32_t subnr) {
       return df1(GEN_GENERAL_REGISTER_FILE, nr, subnr);
+    }
+
+    static INLINE GenRegister ul16grf(uint32_t nr, uint32_t subnr) {
+      return ul16(GEN_GENERAL_REGISTER_FILE, nr, subnr);
+    }
+
+    static INLINE GenRegister ul8grf(uint32_t nr, uint32_t subnr) {
+      return ul8(GEN_GENERAL_REGISTER_FILE, nr, subnr);
+    }
+
+    static INLINE GenRegister ul1grf(uint32_t nr, uint32_t subnr) {
+      return ul1(GEN_GENERAL_REGISTER_FILE, nr, subnr);
     }
 
     static INLINE GenRegister ud16grf(uint32_t nr, uint32_t subnr) {
@@ -1048,6 +1098,7 @@ namespace gbe
         return SIMD1(values...); \
       } \
     }
+    // TODO: Should add native long type here.
     DECL_REG_ENCODER(dfxgrf, df16grf, df8grf, df1grf);
     DECL_REG_ENCODER(fxgrf, f16grf, f8grf, f1grf);
     DECL_REG_ENCODER(uwxgrf, uw16grf, uw8grf, uw1grf);
