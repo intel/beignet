@@ -2791,7 +2791,7 @@ namespace gbe
         case TYPE_S8:  sel.MOV(dst, GenRegister::immw(imm.getIntegerValue())); break;
         case TYPE_DOUBLE: sel.LOAD_DF_IMM(dst, GenRegister::immdf(imm.getDoubleValue()), sel.selReg(sel.reg(FAMILY_QWORD), TYPE_U64)); break;
         case TYPE_S64: sel.LOAD_INT64_IMM(dst, GenRegister::immint64(imm.getIntegerValue())); break;
-        case TYPE_U64: sel.LOAD_INT64_IMM(dst, GenRegister::immint64(imm.getIntegerValue())); break;
+        case TYPE_U64: sel.LOAD_INT64_IMM(dst, GenRegister::immuint64(imm.getIntegerValue())); break;
         default: NOT_SUPPORTED;
       }
       sel.pop();

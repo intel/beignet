@@ -669,8 +669,8 @@ namespace gbe
     pop();
   }
 
-  void GenEncoder::LOAD_INT64_IMM(GenRegister dest, int64_t value) {
-    GenRegister u0 = GenRegister::immd((int)value), u1 = GenRegister::immd(value >> 32);
+  void GenEncoder::LOAD_INT64_IMM(GenRegister dest, GenRegister value) {
+    GenRegister u0 = GenRegister::immd((int)value.value.i64), u1 = GenRegister::immd(value.value.i64 >> 32);
     MOV(dest.bottom_half(), u0);
     MOV(dest.top_half(this->simdWidth), u1);
   }
