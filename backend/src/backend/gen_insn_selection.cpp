@@ -533,7 +533,7 @@ namespace gbe
     /*! (x+y)>>1 without mod. overflow */
     void I64HADD(Reg dst, Reg src0, Reg src1, GenRegister *tmp, int tmp_num);
     /*! (x+y+1)>>1 without mod. overflow */
-    void I64RHADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[4]);
+    void I64RHADD(Reg dst, Reg src0, Reg src1, GenRegister *tmp, int tmp_num);
     /*! Shift a 64-bit integer */
     void I64Shift(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, GenRegister tmp[7]);
     /*! Compare 64-bit integer */
@@ -1505,12 +1505,12 @@ namespace gbe
       insn->dst(i + 1) = tmp[i];
   }
 
-  void Selection::Opaque::I64RHADD(Reg dst, Reg src0, Reg src1, GenRegister tmp[4]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64RHADD, 5, 2);
+  void Selection::Opaque::I64RHADD(Reg dst, Reg src0, Reg src1, GenRegister *tmp, int tmp_num) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64RHADD, tmp_num + 1, 2);
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
-    for(int i = 0; i < 4; i ++)
+    for(int i = 0; i < tmp_num; i ++)
       insn->dst(i + 1) = tmp[i];
   }
 
@@ -2453,13 +2453,20 @@ namespace gbe
             break;
           }
         case OP_I64RHADD:
-         {
-          GenRegister tmp[4];
-          for(int i=0; i<4; i++)
-            tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
-          sel.I64RHADD(dst, src0, src1, tmp);
-          break;
-         }
+          {
+            GenRegister tmp[4];
+            if (!sel.hasLongType()) {
+              for(int i=0; i<4; i++)
+                tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+              sel.I64RHADD(dst, src0, src1, tmp, 4);
+            } else {
+              tmp[0] = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U64);
+              tmp[1] = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U64);
+              tmp[2] = sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U64);
+              sel.I64RHADD(dst, src0, src1, tmp, 3);
+            }
+            break;
+          }
         case OP_UPSAMPLE_SHORT:
         {
           dst = GenRegister::retype(sel.unpacked_uw(dst.reg()), GEN_TYPE_B);
