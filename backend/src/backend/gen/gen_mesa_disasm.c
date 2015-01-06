@@ -266,7 +266,7 @@ static const char *access_mode[2] = {
   [1] = "align16",
 };
 
-static const char *reg_encoding[8] = {
+static const char *reg_encoding[10] = {
   [0] = ":UD",
   [1] = ":D",
   [2] = ":UW",
@@ -274,10 +274,12 @@ static const char *reg_encoding[8] = {
   [4] = ":UB",
   [5] = ":B",
   [6] = ":DF",
-  [7] = ":F"
+  [7] = ":F",
+  [8] = ":Q",
+  [9] = ":UQ"
 };
 
-int reg_type_size[8] = {
+int reg_type_size[10] = {
   [0] = 4,
   [1] = 4,
   [2] = 2,
@@ -285,7 +287,9 @@ int reg_type_size[8] = {
   [4] = 1,
   [5] = 1,
   [6] = 8,
-  [7] = 4
+  [7] = 4,
+  [8] = 8,
+  [9] = 8
 };
 
 static const char *reg_file[4] = {
