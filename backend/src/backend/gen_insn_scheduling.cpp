@@ -256,7 +256,7 @@ namespace gbe
     if (this->ignoreDependency(reg) == false) {
       const uint32_t index = this->getIndex(reg);
       this->addDependency(node0, index, m);
-      if (scheduler.policy == POST_ALLOC && (reg.isdf() || reg.isint64()))
+      if (scheduler.policy == POST_ALLOC && (reg.isdf() || reg.isint64() || reg.is_unpacked_long()))
         this->addDependency(node0, index + 1, m);
     }
   }
@@ -265,7 +265,7 @@ namespace gbe
     if (this->ignoreDependency(reg) == false) {
       const uint32_t index = this->getIndex(reg);
       this->addDependency(index, node0, m);
-      if (scheduler.policy == POST_ALLOC && (reg.isdf() || reg.isint64()))
+      if (scheduler.policy == POST_ALLOC && (reg.isdf() || reg.isint64() || reg.is_unpacked_long()))
         this->addDependency(index + 1, node0, m);
     }
   }
@@ -367,7 +367,7 @@ namespace gbe
       if (this->ignoreDependency(dst) == false) {
         const uint32_t index = this->getIndex(dst);
         this->nodes[index] = node;
-        if (scheduler.policy == POST_ALLOC && (dst.isdf() || dst.isint64()))
+        if (scheduler.policy == POST_ALLOC && (dst.isdf() || dst.isint64() || dst.is_unpacked_long()))
           this->nodes[index + 1] = node;
       }
     }

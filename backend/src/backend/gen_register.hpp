@@ -295,6 +295,15 @@ namespace gbe
       return false;
     }
 
+    /* Besides long and double, there are also some cases which can also stride
+       several registers, eg. unpacked ud for long<8,4:2> and unpacked uw for
+       long<16,4:4> */
+    INLINE bool is_unpacked_long(void) const {
+      if (file != GEN_GENERAL_REGISTER_FILE) return false;
+      if (width == GEN_WIDTH_4 && hstride > GEN_HORIZONTAL_STRIDE_1) return true;
+      return false;
+    }
+
     INLINE bool isimmdf(void) const {
       if (type == GEN_TYPE_DF && file == GEN_IMMEDIATE_VALUE)
         return true;
