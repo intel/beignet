@@ -241,6 +241,7 @@ namespace gbe
       uint32_t ud;
       uint16_t reg;
       int64_t i64;
+      uint64_t u64;
     } value;
 
     uint32_t nr:8;         //!< Just for some physical registers (acc, null)
@@ -579,6 +580,12 @@ namespace gbe
                          GEN_VERTICAL_STRIDE_0,
                          GEN_WIDTH_1,
                          GEN_HORIZONTAL_STRIDE_0);
+    }
+
+    static INLINE GenRegister immuint64(uint64_t i) {
+      GenRegister immediate = imm(GEN_TYPE_UL);
+      immediate.value.u64 = i;
+      return immediate;
     }
 
     static INLINE GenRegister immint64(int64_t i) {
