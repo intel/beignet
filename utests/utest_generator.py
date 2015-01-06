@@ -146,11 +146,11 @@ def udebug(ulpSize,returnType,function):
 #else
     if (isinf(cpu_data[index])){
       sprintf(log, "%s expect:%s\\n", log, INFORNAN);
-      OCL_ASSERTM(isinf(gpu_data[index]),log);
+      OCL_ASSERTM(isinf(gpu_data[index]) || !env_strict,log);
       }
     else if (isnan(cpu_data[index])){
       sprintf(log, "%s expect:%s\\n", log, INFORNAN);
-      OCL_ASSERTM(isnan(gpu_data[index]),log);
+      OCL_ASSERTM(isnan(gpu_data[index]) || !env_strict,log);
       }
     else{
       sprintf(log, "%s expect:%s\\n", log, ULPSIZE);
