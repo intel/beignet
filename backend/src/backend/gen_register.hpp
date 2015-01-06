@@ -510,13 +510,47 @@ namespace gbe
       return retype(vec1(file, reg), GEN_TYPE_UB);
     }
 
-    static INLINE GenRegister unpacked_uw(ir::Register reg, bool uniform = false) {
-        return GenRegister(GEN_GENERAL_REGISTER_FILE,
-                           reg,
-                           GEN_TYPE_UW,
-                           uniform ? GEN_VERTICAL_STRIDE_0 : GEN_VERTICAL_STRIDE_16,
-                           uniform ? GEN_WIDTH_1 : GEN_WIDTH_8,
-                           uniform ? GEN_HORIZONTAL_STRIDE_0 : GEN_HORIZONTAL_STRIDE_2);
+    static INLINE GenRegister unpacked_ud(ir::Register reg, bool uniform = false) {
+      uint32_t width;
+      uint32_t vstride;
+      uint32_t hstride;
+
+      if (uniform) {
+        width = GEN_WIDTH_1;
+        vstride = GEN_VERTICAL_STRIDE_0;
+        hstride = GEN_HORIZONTAL_STRIDE_0;
+      } else {
+        width = GEN_WIDTH_4;
+        vstride = GEN_VERTICAL_STRIDE_8;
+        hstride = GEN_HORIZONTAL_STRIDE_2;
+      }
+
+      return GenRegister(GEN_GENERAL_REGISTER_FILE, reg,
+                         GEN_TYPE_UD, vstride, width, hstride);
+    }
+
+    static INLINE GenRegister unpacked_uw(ir::Register reg, bool uniform = false,
+                                          bool islong = false) {
+      uint32_t width;
+      uint32_t vstride;
+      uint32_t hstride;
+
+      if (uniform) {
+        width = GEN_WIDTH_1;
+        vstride = GEN_VERTICAL_STRIDE_0;
+        hstride = GEN_HORIZONTAL_STRIDE_0;
+      } else if (islong) {
+        width = GEN_WIDTH_4;
+        vstride = GEN_VERTICAL_STRIDE_16;
+        hstride = GEN_HORIZONTAL_STRIDE_4;
+      } else {
+        width = GEN_WIDTH_8;
+        vstride = GEN_VERTICAL_STRIDE_16;
+        hstride = GEN_HORIZONTAL_STRIDE_2;
+      }
+
+      return GenRegister(GEN_GENERAL_REGISTER_FILE, reg,
+                         GEN_TYPE_UW, vstride, width, hstride);
     }
 
     static INLINE GenRegister unpacked_ub(ir::Register reg, bool uniform = false) {
