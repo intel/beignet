@@ -615,7 +615,7 @@ namespace gbe
     /*! Get image information */
     void GET_IMAGE_INFO(uint32_t type, GenRegister *dst, uint32_t dst_num, uint32_t bti);
     /*! Multiply 64-bit integers */
-    void I64MUL(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]);
+    void I64MUL(Reg dst, Reg src0, Reg src1, GenRegister *tmp, bool native_long);
     /*! 64-bit integer division */
     void I64DIV(Reg dst, Reg src0, Reg src1, GenRegister tmp[13]);
     /*! 64-bit integer remainder of division */
@@ -1361,13 +1361,23 @@ namespace gbe
     insn->extra.function = function;
   }
 
-  void Selection::Opaque::I64MUL(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_I64MUL, 7, 2);
+  void Selection::Opaque::I64MUL(Reg dst, Reg src0, Reg src1, GenRegister *tmp, bool native_long) {
+    SelectionInstruction *insn = NULL;
+    if (native_long)
+      insn = this->appendInsn(SEL_OP_I64MUL, 2, 2);
+    else
+      insn = this->appendInsn(SEL_OP_I64MUL, 7, 2);
+
     insn->dst(0) = dst;
     insn->src(0) = src0;
     insn->src(1) = src1;
-    for(int i = 0; i < 6; i++)
-      insn->dst(i + 1) = tmp[i];
+
+    if (native_long) {
+      insn->dst(1) = tmp[0];
+    } else {
+      for (int i = 0; i < 6; i++)
+        insn->dst(i + 1) = tmp[i];
+    }
   }
 
   void Selection::Opaque::I64DIV(Reg dst, Reg src0, Reg src1, GenRegister tmp[13]) {
@@ -2395,10 +2405,16 @@ namespace gbe
             sel.pop();
             return false;
           } else if (type == TYPE_S64 || type == TYPE_U64) {
-            GenRegister tmp[6];
-            for(int i = 0; i < 6; i++)
-              tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
-            sel.I64MUL(dst, src0, src1, tmp);
+            if (sel.hasLongType()) {
+              GenRegister tmp;
+              tmp = sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U64);
+              sel.I64MUL(dst, src0, src1, &tmp, true);
+            } else {
+              GenRegister tmp[6];
+              for(int i = 0; i < 6; i++)
+                tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
+              sel.I64MUL(dst, src0, src1, tmp, false);
+            }
           } else
             sel.MUL(dst, src0, src1);
           break;

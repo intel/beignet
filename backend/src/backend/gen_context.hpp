@@ -163,7 +163,7 @@ namespace gbe
     void emitSpillRegInstruction(const SelectionInstruction &insn);
     void emitUnSpillRegInstruction(const SelectionInstruction &insn);
     void emitGetImageInfoInstruction(const SelectionInstruction &insn);
-    void emitI64MULInstruction(const SelectionInstruction &insn);
+    virtual void emitI64MULInstruction(const SelectionInstruction &insn);
     void emitI64DIVREMInstruction(const SelectionInstruction &insn);
     void scratchWrite(const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode);
     void scratchRead(const GenRegister dst, const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode);

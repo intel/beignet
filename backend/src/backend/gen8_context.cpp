@@ -102,6 +102,37 @@ namespace gbe
     }
   }
 
+  void Gen8Context::emitI64MULInstruction(const SelectionInstruction &insn)
+  {
+    GenRegister src0 = ra->genReg(insn.src(0));
+    GenRegister src1 = ra->genReg(insn.src(1));
+    GenRegister dst = ra->genReg(insn.dst(0));
+    GenRegister res = ra->genReg(insn.dst(1));
+
+    src0.type = src1.type = GEN_TYPE_UD;
+    dst.type = GEN_TYPE_UL;
+    res.type = GEN_TYPE_UL;
+
+    /* Low 32 bits X low 32 bits. */
+    GenRegister s0l = src0.hstride == GEN_HORIZONTAL_STRIDE_0 ?
+      GenRegister::retype(src0, GEN_TYPE_UD) : GenRegister::unpacked_ud(src0.nr, src0.subnr);
+    GenRegister s1l = src1.hstride == GEN_HORIZONTAL_STRIDE_0 ?
+      GenRegister::retype(src1, GEN_TYPE_UD)  : GenRegister::unpacked_ud(src1.nr, src1.subnr);
+    p->MUL(dst, s0l, s1l);
+
+    /* Low 32 bits X high 32 bits. */
+    GenRegister s1h = GenRegister::offset(s1l, 0, 4);
+    p->MUL(res, s0l, s1h);
+    p->SHL(res, res, GenRegister::immud(32));
+    p->ADD(dst, dst, res);
+
+    /* High 32 bits X low 32 bits. */
+    GenRegister s0h = GenRegister::offset(s0l, 0, 4);
+    p->MUL(res, s0h, s1l);
+    p->SHL(res, res, GenRegister::immud(32));
+    p->ADD(dst, dst, res);
+  }
+
   void Gen8Context::packLongVec(GenRegister unpacked, GenRegister packed, uint32_t simd)
   {
     GBE_ASSERT(packed.subnr == 0);
