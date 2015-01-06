@@ -131,7 +131,7 @@ namespace gbe
     void emitTernaryInstruction(const SelectionInstruction &insn);
     virtual void emitI64MULHIInstruction(const SelectionInstruction &insn);
     void emitI64MADSATInstruction(const SelectionInstruction &insn);
-    void emitI64HADDInstruction(const SelectionInstruction &insn);
+    virtual void emitI64HADDInstruction(const SelectionInstruction &insn);
     void emitI64RHADDInstruction(const SelectionInstruction &insn);
     void emitI64ShiftInstruction(const SelectionInstruction &insn);
     void emitI64CompareInstruction(const SelectionInstruction &insn);
