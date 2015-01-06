@@ -1858,63 +1858,6 @@ OVERLOADABLE float __gen_ocl_internal_atan2(float y, float x) {
 }
 
 OVERLOADABLE float __gen_ocl_internal_atan2pi(float y, float x) {
-  uint ix = as_uint(x), iy = as_uint(y),
-       pos_zero = 0, neg_zero = 0x80000000u,
-       pos_inf = 0x7f800000, neg_inf = 0xff800000u;
-  if(iy == pos_zero) {
-    if(ix == pos_zero)
-      return 0;
-    if(ix == neg_zero)
-      return 1;
-    if(x < 0)
-      return 1;
-    if(x > 0)
-      return 0;
-  }
-  if(iy == neg_zero) {
-    if(ix == pos_zero)
-      return -0.f;
-    if(ix == neg_zero)
-      return -1;
-    if(x < 0)
-      return -1;
-    if(x > 0)
-      return -0.f;
-  }
-  if((ix & 0x7fffffff) == 0) {
-    if(y < 0)
-      return -.5f;
-    if(y > 0)
-      return .5f;
-  }
-  if(ix == pos_inf) {
-    if(y > 0 && iy != pos_inf)
-      return 0;
-    if(y < 0 && iy != neg_inf)
-      return -0.f;
-  }
-  if(ix == neg_inf) {
-    if(y > 0 && iy != pos_inf)
-      return 1;
-    if(y < 0 && iy != neg_inf)
-      return -1;
-  }
-  if(iy == pos_inf) {
-    if(ix == pos_inf)
-      return 0.25f;
-    if(ix == neg_inf)
-      return 0.75f;
-    if(x >= 0 || x <= 0)
-      return 0.5f;
-  }
-  if(iy == neg_inf) {
-    if(ix == pos_inf)
-      return -0.25f;
-    if(ix == neg_inf)
-      return -0.75f;
-    if(x >= 0 || x <= 0)
-      return -0.5f;
-  }
   return __gen_ocl_internal_atan2(y, x) / M_PI_F;
 }
 OVERLOADABLE float __gen_ocl_internal_fabs(float x)  { return __gen_ocl_fabs(x); }
