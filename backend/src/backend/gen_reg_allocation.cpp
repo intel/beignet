@@ -620,7 +620,10 @@ namespace gbe
             // set a temporary register to avoid switch in this block.
             bool isSrc = false;
             bool needMov = false;
-            this->replaceReg(selection, &insn, 0, isSrc, ir::TYPE_FLOAT, needMov);
+            ir::Type ir_type = ir::TYPE_FLOAT;
+            if (insn.src(0).isint64())
+              ir_type = ir::TYPE_U64;
+            this->replaceReg(selection, &insn, 0, isSrc, ir_type, needMov);
           }
           // If the instruction requires to generate (CMP for long/int/float..)
           // the flag value to the register, and it's not a pure flag boolean,
