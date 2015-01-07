@@ -310,7 +310,7 @@ int main (int argc, const char **argv)
     deque<int> used_index;
 
     if (argc < 2) {
-        cout << "Usage: kernel_path [-pbuild_parameter]\n[-obin_path]" << endl;
+        cout << "Usage: kernel_path [-pbuild_parameter] [-obin_path] [-tgen_pci_id]" << endl;
         return 0;
     }
 
