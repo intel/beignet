@@ -16,8 +16,6 @@ set (LOCAL_OCL_BITCODE_BIN "${OCL_OBJECT_DIR}/beignet.bc" PARENT_SCOPE)
 set (LOCAL_OCL_HEADER_DIR "${OCL_OBJECT_DIR}/include/" PARENT_SCOPE)
 set (LOCAL_OCL_PCH_OBJECT "${OCL_OBJECT_DIR}/beignet.local.pch" PARENT_SCOPE)
 
-add_dependencies(beignet_bitcode libocl)
-
 set (GBE_SRC
     ${ocl_blob_file}
     sys/vector.hpp
