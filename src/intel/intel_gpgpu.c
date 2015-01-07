@@ -1672,6 +1672,8 @@ intel_gpgpu_walker_gen8(intel_gpgpu_t *gpgpu,
   OUT_BATCH(gpgpu->batch, CMD_MEDIA_STATE_FLUSH | 0);
   OUT_BATCH(gpgpu->batch, 0);                        /* kernel index == 0 */
   ADVANCE_BATCH(gpgpu->batch);
+
+  intel_gpgpu_pipe_control(gpgpu);
 }
 
 static intel_event_t*
