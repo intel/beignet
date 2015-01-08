@@ -176,7 +176,7 @@ namespace gbe
           fmts.push_back(f);
         }
 
-        for (size_t i = 0; i < other.fmts.size(); ++i) {
+        for (size_t i = 0; i < other.slots.size(); ++i) {
           PrintfSlot* s = other.slots[i];
           slots.push_back(s);
         }
