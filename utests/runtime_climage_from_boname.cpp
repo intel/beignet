@@ -116,6 +116,10 @@ void runtime_climage_from_boname(void)
   drmGetMagic(fd, &magic);
 
   Display* dpy = XOpenDisplay(NULL);
+  if (dpy == NULL) {
+    fprintf(stderr, " Can't open Display, skipping.\n");
+    return; 
+  }
   XID root = RootWindow(dpy, DefaultScreen(dpy));
 
   Bool auth = VA_DRI2Authenticate(dpy, root, magic);
