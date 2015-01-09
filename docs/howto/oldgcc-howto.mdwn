@@ -1,0 +1,58 @@
+Old Gcc Support HowTo
+====================
+
+Beignet GBE compiler requires C++11 features, while some platforms does not provide
+such with an old gcc version. The solution is to build a standalone GBE compiler in
+a feasible system, and then build Beignet with the pre-built standalone compiler.
+The standalone compiler is also needed during OpenCL application development. Here
+are the brief steps.
+
+Build standalone GBE compiler in a system supporting C++11 features
+-------------------------------------------------------------------
+
+The build process is as usual except to add a CMake option "-DBUILD_STANDALONE_GBE_COMPILER=true".
+After build finishes, there is a tar ball at your_build_dir/backend/src/libocl/usr/local/lib/beignet/gbecompiler.tgz,
+this is the standalone compiler package that will be used next.
+
+
+Distribute the package to your target system without C++11 features
+-------------------------------------------------------------------
+
+Copy gbecompiler.tgz into your target system, the preference location is /usr/local/lib/beignet,
+and unzip it.
+tar zxvf gbecompiler.tgz
+
+Please check there are following files and directory at /usr/local/lib/beignet/ after unzip:
+beignet.bc  beignet.pch  gbe_bin_generater  include
+
+
+Build Beignet on your target system with the standalone compiler
+-------------------------------------------------------------------
+
+The build process is as usual except to add a CMake option "-DUSE_STANDALONE_GBE_COMPILER=true",
+
+If your_path_for_compiler is not /usr/local/lib/beignet, just need to add another CMake option
+"-DSTANDALONE_GBE_COMPILER_DIR=/your_path_for_compiler/".
+
+
+Develop OpenCL applications on your target machine
+--------------------------------------------------
+
+Firstly, write OpenCL kernel source code, secondly, compile the kernel source code to
+kernel binary with the standalone compiler gbe_bin_generater (see the usage below), finally,
+invoke clCreateProgramWithBinary to load the kernel binary and execute it. The utest case
+load_program_from_bin_file demos the whole procedure.
+
+gbe_bin_generater INFILE [-pbuild_parameter] -oOUTFILE -tGEN_PCI_ID
+
+For example, the following command builds OpenCL source kernel from file 'mykernel.cl'
+for Ivybridge with pci_id 0x0162, and write the result (executable binary kernel)
+into file 'mykernel.bin'.
+
+gbe_bin_generater mykernel.cl -omykernel.bin -t0x0162
+
+If the standalone compiler is not located at /usr/local/lib/beignet, need to set the below
+environment to execute gbe_bin_generater.
+OCL_BITCODE_LIB_PATH=/your_path_for_compiler/beignet.bc
+OCL_HEADER_FILE_DIR=/your_path_for_compiler/include
+OCL_PCH_PATH=/your_path_for_compiler/beignet.pch
