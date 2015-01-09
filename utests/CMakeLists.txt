@@ -18,8 +18,18 @@ configure_file (
 
 #XXX only need GL if required
 link_directories (${LLVM_LIBRARY_DIR} ${OPENGL_LIBDIR} ${DRM_LIBDIR})
-set (utests_sources
+
+set (utests_basic_sources
   utest_error.c
+  utest_assert.cpp
+  utest.cpp
+  utest_file_map.cpp
+  utest_helper.cpp)
+
+# the test case with binary kernel
+set (utests_binary_kernel_sources load_program_from_bin_file.cpp enqueue_built_in_kernels.cpp)
+
+set (utests_sources
   compiler_basic_arithmetic.cpp
   compiler_displacement_map_element.cpp
   compiler_mandelbrot.cpp
@@ -178,7 +188,6 @@ set (utests_sources
   compiler_simd_all.cpp
   compiler_time_stamp.cpp
   compiler_double_precision.cpp
-  load_program_from_bin_file.cpp
   load_program_from_gen_bin.cpp
   get_arg_info.cpp
   profiling_exec.cpp
@@ -186,7 +195,6 @@ set (utests_sources
   enqueue_copy_buf_unaligned.cpp
   test_printf.cpp
   enqueue_fill_buf.cpp
-  enqueue_built_in_kernels.cpp
   builtin_kernel_max_global_size.cpp
   image_1D_buffer.cpp
   compare_image_2d_and_1d_array.cpp
@@ -196,11 +204,7 @@ set (utests_sources
   compiler_assignment_operation_in_if.cpp
   vload_bench.cpp
   runtime_use_host_ptr_buffer.cpp
-  runtime_alloc_host_ptr_buffer.cpp
-  utest_assert.cpp
-  utest.cpp
-  utest_file_map.cpp
-  utest_helper.cpp)
+  runtime_alloc_host_ptr_buffer.cpp)
 
 if (LLVM_VERSION_NODOT VERSION_GREATER 34)
   SET(utests_sources
@@ -255,11 +259,17 @@ else()
   SET(UTESTS_REQUIRED_EGL_LIB "")
 endif()
 
+if (USE_STANDALONE_GBE_COMPILER STREQUAL "true")
+  SET(utests_sources ${utests_basic_sources} ${utests_binary_kernel_sources})
+else ()
+  SET(utests_sources ${utests_basic_sources} ${utests_binary_kernel_sources} ${ADDMATHFUNC} ${utests_sources})
+endif ()
+
 if (COMPILER STREQUAL "CLANG")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-tautological-compare")
 endif ()
 
-ADD_LIBRARY(utests SHARED ${ADDMATHFUNC} ${utests_sources})
+ADD_LIBRARY(utests SHARED ${utests_sources})
 
 TARGET_LINK_LIBRARIES(utests cl m ${OPENGL_LIBRARIES} ${UTESTS_REQUIRED_EGL_LIB} ${CMAKE_THREAD_LIBS_INIT} ${UTESTS_REQUIRED_X11_LIB})
 
