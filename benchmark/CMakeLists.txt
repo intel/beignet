@@ -12,7 +12,9 @@ set (benchmark_sources
   ../utests/utest_helper.cpp
   ../utests/vload_bench.cpp
   enqueue_copy_buf.cpp
-  benchmark_use_host_ptr_buffer.cpp)
+  benchmark_use_host_ptr_buffer.cpp
+  benchmark_read_buffer.cpp
+  benchmark_read_image.cpp)
 
 
 SET(CMAKE_CXX_FLAGS "-DBUILD_BENCHMARK ${CMAKE_CXX_FLAGS}")
