@@ -66,7 +66,7 @@ elseif (COMPILER STREQUAL "CLANG")
 elseif (COMPILER STREQUAL "ICC")
   set (CMAKE_C_CXX_FLAGS "${CMAKE_C_CXX_FLAGS}  -wd2928 -Wall -fPIC -fstrict-aliasing -fp-model fast -msse4.1 -Wl,-E")
 endif ()
-set (CMAKE_CXX_FLAGS "${CMAKE_C_CXX_FLAGS} -std=c++0x -Wno-invalid-offsetof -fno-rtti")
+set (CMAKE_CXX_FLAGS "${CMAKE_C_CXX_FLAGS} -std=c++0x -Wno-invalid-offsetof")
 set (CMAKE_C_FLAGS "${CMAKE_C_CXX_FLAGS}")
 set (CMAKE_CXX_FLAGS_DEBUG          "-O0 -g -DGBE_DEBUG=1")
 set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -DGBE_DEBUG=1")
@@ -77,9 +77,16 @@ set (CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g -DGBE_DEBUG=1")
 set (CMAKE_C_FLAGS_MINSIZEREL     "-Os -DNDEBUG -DGBE_DEBUG=0")
 set (CMAKE_C_FLAGS_RELEASE        "-O2 -DNDEBUG -DGBE_DEBUG=0")
 
-# Front end stuff we need
-#INCLUDE(CMake/FindLLVM.cmake)
-Find_Package(LLVM 3.3)
+
+IF (USE_STANDALONE_GBE_COMPILER STREQUAL "true")
+  Find_Package(StandaloneGbeCompiler)
+ELSE (USE_STANDALONE_GBE_COMPILER STREQUAL "true")
+  # Front end stuff we need
+  #INCLUDE(CMake/FindLLVM.cmake)
+  Find_Package(LLVM 3.3)
+  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
+ENDIF (USE_STANDALONE_GBE_COMPILER STREQUAL "true")
+
 
 set (CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined ${LLVM_LDFLAGS}")
 

@@ -9,7 +9,12 @@ configure_file (
     "GBEConfig.h"
 )
 
+#do not involve libocl if the standalone compiler is given,
+if (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
 add_subdirectory(libocl)
+add_dependencies(beignet_bitcode libocl)
+endif ()
+
 set (LOCAL_GBE_OBJECT_DIR "${CMAKE_CURRENT_BINARY_DIR}/libgbe.so" PARENT_SCOPE)
 set (LOCAL_INTERP_OBJECT_DIR "${CMAKE_CURRENT_BINARY_DIR}/libgbeinterp.so" PARENT_SCOPE)
 set (LOCAL_OCL_BITCODE_BIN "${OCL_OBJECT_DIR}/beignet.bc" PARENT_SCOPE)
@@ -128,13 +133,15 @@ set (GBE_LINK_LIBRARIES
 include_directories (.)
 link_directories (${LLVM_LIBRARY_DIRS} ${DRM_LIBDIR})
 include_directories(${LLVM_INCLUDE_DIRS})
-add_library (gbe SHARED ${GBE_SRC})
 
+#do not build libgbe.so if the standalone compiler is given
+if (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
+add_library (gbe SHARED ${GBE_SRC})
 target_link_libraries(gbe ${GBE_LINK_LIBRARIES})
+add_dependencies(gbe beignet_bitcode)
+endif (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
 
 add_library(gbeinterp SHARED gbe_bin_interpreter.cpp)
-
-add_dependencies(gbe beignet_bitcode)
 
 if (LLVM_VERSION_NODOT VERSION_EQUAL 34)
   find_library(TERMINFO NAMES tinfo ncurses)
@@ -148,6 +155,8 @@ endif(LLVM_VERSION_NODOT VERSION_EQUAL 34)
 
 link_directories (${LLVM_LIBRARY_DIR} ${DRM_LIBDIR})
 
+#do not build nor install if the standalone compiler is given
+if (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
 if (BUILD_STANDALONE_GBE_COMPILER STREQUAL "true")
 macro(remove_cxx_flag flag)
   string(REPLACE "${flag}" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -168,9 +177,10 @@ ADD_EXECUTABLE(gbe_bin_generater gbe_bin_generater.cpp)
 TARGET_LINK_LIBRARIES(gbe_bin_generater gbe)
 endif ()
 
-
 install (TARGETS gbe LIBRARY DESTINATION ${BEIGNET_INSTALL_DIR})
-install (TARGETS gbeinterp LIBRARY DESTINATION ${BEIGNET_INSTALL_DIR})
 install (FILES ${OCL_OBJECT_DIR}/beignet.bc DESTINATION ${BEIGNET_INSTALL_DIR})
 install (FILES ${OCL_OBJECT_DIR}/beignet.pch DESTINATION ${BEIGNET_INSTALL_DIR})
 install (FILES ${OCL_HEADER_FILES} DESTINATION ${BEIGNET_INSTALL_DIR}/include)
+endif (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
+
+install (TARGETS gbeinterp LIBRARY DESTINATION ${BEIGNET_INSTALL_DIR})
