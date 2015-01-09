@@ -115,22 +115,22 @@ set (GBE_SRC
     backend/gen8_encoder.cpp
     )
 
+set (GBE_LINK_LIBRARIES
+    ${DRM_INTEL_LIBRARIES}
+    ${DRM_LIBRARIES}
+    ${CLANG_LIBRARIES}
+    ${LLVM_MODULE_LIBS}
+    ${LLVM_SYSTEM_LIBS}
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${CMAKE_DL_LIBS}
+    )
 
 include_directories (.)
 link_directories (${LLVM_LIBRARY_DIRS} ${DRM_LIBDIR})
 include_directories(${LLVM_INCLUDE_DIRS})
 add_library (gbe SHARED ${GBE_SRC})
 
-
-target_link_libraries(
-                      gbe
-                      ${DRM_INTEL_LIBRARIES}
-                      ${DRM_LIBRARIES}
-                      ${CLANG_LIBRARIES}
-                      ${LLVM_MODULE_LIBS}
-                      ${LLVM_SYSTEM_LIBS}
-                      ${CMAKE_THREAD_LIBS_INIT}
-                      ${CMAKE_DL_LIBS})
+target_link_libraries(gbe ${GBE_LINK_LIBRARIES})
 
 add_library(gbeinterp SHARED gbe_bin_interpreter.cpp)
 
@@ -147,8 +147,27 @@ if (LLVM_VERSION_NODOT VERSION_EQUAL 34)
 endif(LLVM_VERSION_NODOT VERSION_EQUAL 34)
 
 link_directories (${LLVM_LIBRARY_DIR} ${DRM_LIBDIR})
+
+if (BUILD_STANDALONE_GBE_COMPILER STREQUAL "true")
+macro(remove_cxx_flag flag)
+  string(REPLACE "${flag}" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+endmacro()
+
+remove_cxx_flag("-Wl,-E")
+ADD_EXECUTABLE(gbe_bin_generater gbe_bin_generater.cpp ${GBE_SRC})
+set_target_properties(gbe_bin_generater PROPERTIES LINK_FLAGS "-static")
+TARGET_LINK_LIBRARIES(gbe_bin_generater ${GBE_LINK_LIBRARIES})
+
+ADD_CUSTOM_TARGET(gbecompiler.tgz ALL
+    COMMAND tar zcf ${OCL_OBJECT_DIR}/gbecompiler.tgz gbe_bin_generater -C ${OCL_OBJECT_DIR} beignet.bc -C ${OCL_OBJECT_DIR} beignet.pch -C ${OCL_OBJECT_DIR} include
+    DEPENDS gbe_bin_generater beignet_bitcode
+    )
+
+else ()
 ADD_EXECUTABLE(gbe_bin_generater gbe_bin_generater.cpp)
 TARGET_LINK_LIBRARIES(gbe_bin_generater gbe)
+endif ()
+
 
 install (TARGETS gbe LIBRARY DESTINATION ${BEIGNET_INSTALL_DIR})
 install (TARGETS gbeinterp LIBRARY DESTINATION ${BEIGNET_INSTALL_DIR})
