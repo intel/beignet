@@ -10,18 +10,19 @@ foreach (KF ${KERNEL_FILES})
   set (input_file ${KERNEL_PATH}/${KF}.cl)
   set (output_file ${KERNEL_PATH}/${KF}_str.c)
   list (APPEND KERNEL_STR_FILES ${output_file})
+  list (GET GBE_BIN_GENERATER -1 GBE_BIN_FILE)
   if(GEN_PCI_ID)
     add_custom_command(
       OUTPUT ${output_file}
       COMMAND rm -rf ${output_file}
       COMMAND ${GBE_BIN_GENERATER} -s ${input_file} -o${output_file} -t${GEN_PCI_ID}
-      DEPENDS ${input_file} ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater)
+      DEPENDS ${input_file} ${GBE_BIN_FILE})
   else(GEN_PCI_ID)
     add_custom_command(
       OUTPUT ${output_file}
       COMMAND rm -rf ${output_file}
       COMMAND ${GBE_BIN_GENERATER} -s ${input_file} -o${output_file}
-      DEPENDS ${input_file} ${CMAKE_CURRENT_BINARY_DIR}/../backend/src/gbe_bin_generater)
+      DEPENDS ${input_file} ${GBE_BIN_FILE})
   endif(GEN_PCI_ID)
 endforeach (KF)
 endmacro (MakeKernelBinStr)
