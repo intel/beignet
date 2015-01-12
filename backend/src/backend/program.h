@@ -157,7 +157,7 @@ typedef uint32_t (gbe_get_printf_sizeof_size_cb)(void* printf_info);
 extern gbe_get_printf_sizeof_size_cb *gbe_get_printf_sizeof_size;
 
 typedef void (gbe_output_printf_cb) (void* printf_info, void* index_addr, void* buf_addr,
-                         size_t global_wk_sz0, size_t global_wk_sz1, size_t global_wk_sz2);
+              size_t global_wk_sz0, size_t global_wk_sz1, size_t global_wk_sz2, size_t outbuf_sz);
 extern gbe_output_printf_cb* gbe_output_printf;
 
 /*! Create a new program from the given source code (zero terminated string) */

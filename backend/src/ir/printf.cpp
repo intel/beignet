@@ -105,16 +105,20 @@ namespace gbe
 #define PRINT_SOMETHING(target_ty, conv)  do {                          \
       if (!vec_i)                                                       \
         pf_str = pf_str + std::string(#conv);                           \
-      printf(pf_str.c_str(),                                            \
-             ((target_ty *)((char *)buf_addr + sizeOfSize * global_wk_sz0 * global_wk_sz1 * global_wk_sz2 * n \
-                                              + slot.state->out_buf_sizeof_offset * \
-                                                         global_wk_sz0 * global_wk_sz1 * global_wk_sz2)) \
-             [(k*global_wk_sz0*global_wk_sz1 + j*global_wk_sz0 + i) * vec_num + vec_i]);\
+      char *ptr = ((char *)buf_addr + sizeOfSize * global_wk_sz0 * global_wk_sz1 * global_wk_sz2 * n \
+                   + slot.state->out_buf_sizeof_offset *                \
+                   global_wk_sz0 * global_wk_sz1 * global_wk_sz2);      \
+      target_ty* obj_ptr = ((target_ty *)ptr) + (k*global_wk_sz0*global_wk_sz1 + j*global_wk_sz0 + i) * vec_num + vec_i; \
+      if ((char *)obj_ptr + sizeof(target_ty) > (char *)buf_addr + output_sz) {            \
+        printf("\n\n!!!The printf message is out of range because of the limited buffer, ignore.\n"); \
+        return;                                                         \
+      }                                                                 \
+      printf(pf_str.c_str(),  *obj_ptr);                                \
     } while (0)
 
 
     void PrintfSet::outputPrintf(void* index_addr, void* buf_addr, size_t global_wk_sz0,
-                                 size_t global_wk_sz1, size_t global_wk_sz2)
+                                 size_t global_wk_sz1, size_t global_wk_sz2, size_t output_sz)
     {
       LockOutput lock;
       size_t i, j, k;

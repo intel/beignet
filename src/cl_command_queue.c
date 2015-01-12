@@ -216,7 +216,8 @@ LOCAL void
 cl_command_queue_flush_gpgpu(cl_command_queue queue, cl_gpgpu gpgpu)
 {
   size_t global_wk_sz[3];
-  void* printf_info = cl_gpgpu_get_printf_info(gpgpu, global_wk_sz);
+  size_t outbuf_sz = 0;
+  void* printf_info = cl_gpgpu_get_printf_info(gpgpu, global_wk_sz, &outbuf_sz);
 
   cl_gpgpu_flush(gpgpu);
 
@@ -227,7 +228,7 @@ cl_command_queue_flush_gpgpu(cl_command_queue queue, cl_gpgpu gpgpu)
       buf_addr = cl_gpgpu_map_printf_buffer(gpgpu, 1);
 
     interp_output_printf(printf_info, index_addr, buf_addr, global_wk_sz[0],
-                      global_wk_sz[1], global_wk_sz[2]);
+                      global_wk_sz[1], global_wk_sz[2], outbuf_sz);
 
     cl_gpgpu_unmap_printf_buffer(gpgpu, 0);
     if (interp_get_printf_sizeof_size(printf_info))

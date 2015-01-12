@@ -266,7 +266,7 @@ typedef int (cl_gpgpu_set_printf_info_cb)(cl_gpgpu, void *, size_t*);
 extern cl_gpgpu_set_printf_info_cb *cl_gpgpu_set_printf_info;
 
 /* Get the last printfset pointer */
-typedef void* (cl_gpgpu_get_printf_info_cb)(cl_gpgpu, size_t*);
+typedef void* (cl_gpgpu_get_printf_info_cb)(cl_gpgpu, size_t*, size_t*);
 extern cl_gpgpu_get_printf_info_cb *cl_gpgpu_get_printf_info;
 
 /* Will spawn all threads */

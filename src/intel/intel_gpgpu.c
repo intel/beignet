@@ -1896,11 +1896,14 @@ intel_gpgpu_set_printf_info(intel_gpgpu_t *gpgpu, void* printf_info, size_t * gl
 }
 
 static void*
-intel_gpgpu_get_printf_info(intel_gpgpu_t *gpgpu, size_t * global_sz)
+intel_gpgpu_get_printf_info(intel_gpgpu_t *gpgpu, size_t * global_sz, size_t *outbuf_sz)
 {
   global_sz[0] = gpgpu->global_wk_sz[0];
   global_sz[1] = gpgpu->global_wk_sz[1];
   global_sz[2] = gpgpu->global_wk_sz[2];
+
+  if (gpgpu->printf_b.bo)
+    *outbuf_sz = gpgpu->printf_b.bo->size;
   return gpgpu->printf_info;
 }
 
