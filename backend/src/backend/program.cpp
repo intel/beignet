@@ -1068,12 +1068,13 @@ namespace gbe {
 
   static void kernelOutputPrintf(void * printf_info, void* index_addr,
                                  void* buf_addr, size_t global_wk_sz0,
-                                 size_t global_wk_sz1, size_t global_wk_sz2)
+                                 size_t global_wk_sz1, size_t global_wk_sz2,
+                                 size_t output_sz)
   {
     if (printf_info == NULL) return;
     ir::PrintfSet *ps = (ir::PrintfSet *)printf_info;
     ps->outputPrintf(index_addr, buf_addr, global_wk_sz0,
-                         global_wk_sz1, global_wk_sz2);
+                         global_wk_sz1, global_wk_sz2, output_sz);
   }
 
   static void kernelGetCompileWorkGroupSize(gbe_kernel gbeKernel, size_t wg_size[3]) {

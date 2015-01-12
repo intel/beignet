@@ -155,10 +155,10 @@ namespace gbe {
     }
 
     void outputPrintf(void* index_addr, void* buf_addr, size_t global_wk_sz0,
-                      size_t global_wk_sz1, size_t global_wk_sz2) {
+                      size_t global_wk_sz1, size_t global_wk_sz2, size_t output_sz) {
       if(printfSet)
         printfSet->outputPrintf(index_addr, buf_addr, global_wk_sz0,
-                                global_wk_sz1, global_wk_sz2);
+                                global_wk_sz1, global_wk_sz2, output_sz);
     }
 
     ir::FunctionArgument::InfoFromLLVM* getArgInfo(uint32_t id) const { return &args[id].info; }
