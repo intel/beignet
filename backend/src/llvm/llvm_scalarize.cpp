@@ -92,6 +92,7 @@
 #include "llvm/Support/CFG.h"
 #endif
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 
 #include "llvm/llvm_gen_backend.hpp"
 #include "sys/map.hpp"
@@ -158,6 +159,7 @@ namespace gbe {
     bool scalarizeShuffleVector(ShuffleVectorInst*);
     bool scalarizePHI(PHINode*);
     void scalarizeArgs(Function& F);
+    bool isLibFuncFunc(CallInst* call, LibFunc::Func& Func);
     // ...
 
     // Helpers to make the actual multiple scalar calls, one per
@@ -277,8 +279,18 @@ namespace gbe {
 
   bool Scalarize::IsPerComponentOp(const Instruction* inst)
   {
-    //if (const IntrinsicInst* intr = dyn_cast<const IntrinsicInst>(inst))
-    //    return IsPerComponentOp(intr);
+    if (const IntrinsicInst* intr = dyn_cast<const IntrinsicInst>(inst))
+    {
+        const Intrinsic::ID intrinsicID = (Intrinsic::ID) intr->getIntrinsicID();
+        switch (intrinsicID) {
+          default: return false;
+          case Intrinsic::sqrt:
+          case Intrinsic::ceil:
+          case Intrinsic::copysign:
+          case Intrinsic::trunc:
+              return true;
+        }
+    }
 
     if (inst->isTerminator())
         return false;
@@ -423,13 +435,17 @@ namespace gbe {
       // assumption. This is due to how getDeclaration operates; it only takes
       // a list of types that fit overloadable slots.
       SmallVector<Type*, 8> tys(1, GetBasicType(inst->getType()));
+
       // Call instructions have the decl as a last argument, so skip it
+      SmallVector<Value*, 8> _args;
+
       for (ArrayRef<Value*>::iterator i = args.begin(), e = args.end() - 1; i != e; ++i) {
         tys.push_back(GetBasicType((*i)->getType()));
+        _args.push_back(*i);
       }
 
       Function* f = Intrinsic::getDeclaration(module, intr->getIntrinsicID(), tys);
-      return CallInst::Create(f, args);
+      return CallInst::Create(f, _args);
     }
 
     NOT_IMPLEMENTED; //gla::UnsupportedFunctionality("Currently unsupported instruction: ", inst->getOpcode(),
@@ -629,11 +645,59 @@ namespace gbe {
     return II;
   }
 
+  bool Scalarize::isLibFuncFunc(CallInst* call, LibFunc::Func& Func)
+  {
+    TargetLibraryInfo *LibInfo;
+    Function *F = call->getCalledFunction();
+
+    LibInfo = getAnalysisIfAvailable<TargetLibraryInfo>();
+    if (!F->hasLocalLinkage() && F->hasName() && LibInfo &&
+        LibInfo->getLibFunc(F->getName(), Func) &&
+        LibInfo->hasOptimizedCodeGen(Func)) {
+      // Non-read-only functions are never treated as intrinsics.
+      if (!call->onlyReadsMemory())
+        return false;
+
+      // Conversion happens only for FP calls.
+      if (!call->getArgOperand(0)->getType()->isFloatingPointTy())
+        return false;
+      return true;
+    }
+    return false;
+  }
+
   bool Scalarize::scalarizeFuncCall(CallInst* call) {
     if (Function *F = call->getCalledFunction()) {
       if (F->getIntrinsicID() != 0) {   //Intrinsic functions
-        NOT_IMPLEMENTED;
+        const Intrinsic::ID intrinsicID = (Intrinsic::ID) F->getIntrinsicID();
+
+        switch (intrinsicID) {
+          default: GBE_ASSERTM(false, "Unsupported Intrinsic");
+          case Intrinsic::sqrt:
+          case Intrinsic::ceil:
+          case Intrinsic::copysign:
+          case Intrinsic::trunc:
+          {
+            scalarizePerComponent(call);
+          }
+          break;
+        }
       } else {
+        LibFunc::Func Func;
+        if(isLibFuncFunc(call, Func))
+        {
+          switch (Func) {
+            case LibFunc::copysignf:
+            {
+              scalarizePerComponent(call);
+            }
+            break;
+            default:
+              GBE_ASSERTM(false, "Unsupported libFuncs");
+          }
+          return true;
+        }
+
         Value *Callee = call->getCalledValue();
         const std::string fnName = Callee->getName();
         auto genIntrinsicID = intrinsicMap.find(fnName);
