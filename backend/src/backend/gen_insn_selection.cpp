@@ -1942,7 +1942,7 @@ namespace gbe
     static ir::Type getType(const ir::Opcode opcode, const ir::Type insnType) {
       if (insnType == ir::TYPE_S64 || insnType == ir::TYPE_U64 || insnType == ir::TYPE_S8 || insnType == ir::TYPE_U8)
         return insnType;
-      if (opcode == ir::OP_FBH || opcode == ir::OP_FBL || opcode == ir::OP_CBIT)
+      if (opcode == ir::OP_FBH || opcode == ir::OP_FBL || opcode == ir::OP_CBIT || opcode == ir::OP_LZD)
         return ir::TYPE_U32;
       if (insnType == ir::TYPE_S16 || insnType == ir::TYPE_U16)
         return insnType;
@@ -1997,6 +1997,7 @@ namespace gbe
           case ir::OP_FBH: sel.FBH(dst, src); break;
           case ir::OP_FBL: sel.FBL(dst, src); break;
           case ir::OP_CBIT: sel.CBIT(dst, src); break;
+          case ir::OP_LZD: sel.LZD(dst, src); break;
           case ir::OP_COS: sel.MATH(dst, GEN_MATH_FUNCTION_COS, src); break;
           case ir::OP_SIN: sel.MATH(dst, GEN_MATH_FUNCTION_SIN, src); break;
           case ir::OP_LOG: sel.MATH(dst, GEN_MATH_FUNCTION_LOG, src); break;

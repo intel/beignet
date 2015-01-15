@@ -206,6 +206,7 @@ namespace gbe
       case SEL_OP_FBH: p->FBH(dst, src); break;
       case SEL_OP_FBL: p->FBL(dst, src); break;
       case SEL_OP_CBIT: p->CBIT(dst, src); break;
+      case SEL_OP_LZD: p->LZD(dst, src); break;
       case SEL_OP_NOT: p->NOT(dst, src); break;
       case SEL_OP_RNDD: p->RNDD(dst, src); break;
       case SEL_OP_RNDU: p->RNDU(dst, src); break;

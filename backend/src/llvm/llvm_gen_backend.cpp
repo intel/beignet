@@ -2790,6 +2790,7 @@ error:
           case Intrinsic::umul_with_overflow:
             this->newRegister(&I);
           break;
+          case Intrinsic::ctlz:
           case Intrinsic::bswap:
             this->newRegister(&I);
           break;
@@ -3201,6 +3202,14 @@ error:
               default:
                 GBE_ASSERT(0);
             }
+          }
+          break;
+          case Intrinsic::ctlz:
+          {
+            ir::Type srcType = getType(ctx, I.getType());
+            const ir::Register dst = this->getRegister(&I);
+            const ir::Register src = this->getRegister(I.getOperand(0));
+            ctx.ALU1(ir::OP_LZD, srcType, dst, src);
           }
           break;
           default: NOT_IMPLEMENTED;
