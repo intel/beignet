@@ -3310,11 +3310,9 @@ error:
             ir::Type srcType = getType(ctx, llvmSrcType);
             GBE_ASSERT(srcType == dstType);
 
-            const ir::Register tmp = ctx.reg(getFamily(ir::TYPE_S32));
             const ir::Register dst = this->getRegister(&I);
             const ir::Register src = this->getRegister(I.getOperand(0));
-            ctx.CVT(ir::TYPE_S32, srcType, tmp, src);
-            ctx.CVT(dstType, ir::TYPE_S32, dst, tmp);
+            ctx.RNDZ(dstType, dst, src);
           }
           break;
           case Intrinsic::copysign:
