@@ -161,19 +161,19 @@ static float atanpi(float x){
 } '''
   atanpiUtests = func('atanpi','atanpi',[atanpi_input_type],atanpi_output_type,[atanpi_input_values],'4 * FLT_ULP',atanpi_cpu_func)
   
-#  ##### gentype atan2pi(gentype y, gentype x)
-#  atan2pi_base_values = base_input_values
-#  atan2pi_input_values1 = []
-#  atan2pi_input_values2 = []
-#  atan2pi_input_values1,atan2pi_input_values2=gene2ValuesLoop(atan2pi_input_values1,atan2pi_input_values2,atan2pi_base_values)
-#  atan2pi_input_type1 = ['float','float2','float4','float8','float16']
-#  atan2pi_input_type2 = ['float','float2','float4','float8','float16']
-#  atan2pi_output_type = ['float','float2','float4','float8','float16']
-#  atan2pi_cpu_func='''
-#static float atan2pi(float y, float x){
-#  return atan2(y,x)/M_PI;
-#} '''
-#  atan2piUtests = func('atan2pi','atan2pi',[atan2pi_input_type1,atan2pi_input_type2],atan2pi_output_type,[atan2pi_input_values1,atan2pi_input_values2],'6 * FLT_ULP',atan2pi_cpu_func)
+  ##### gentype atan2pi(gentype y, gentype x)
+  atan2pi_base_values = base_input_values
+  atan2pi_input_values1 = []
+  atan2pi_input_values2 = []
+  atan2pi_input_values1,atan2pi_input_values2=gene2ValuesLoop(atan2pi_input_values1,atan2pi_input_values2,atan2pi_base_values)
+  atan2pi_input_type1 = ['float','float2','float4','float8','float16']
+  atan2pi_input_type2 = ['float','float2','float4','float8','float16']
+  atan2pi_output_type = ['float','float2','float4','float8','float16']
+  atan2pi_cpu_func='''
+static float atan2pi(float y, float x){
+  return atan2(y,x)/M_PI;
+} '''
+  atan2piUtests = func('atan2pi','atan2pi',[atan2pi_input_type1,atan2pi_input_type2],atan2pi_output_type,[atan2pi_input_values1,atan2pi_input_values2],'6 * FLT_ULP',atan2pi_cpu_func)
   
   ##### gentype cbrt(gentype)
   cbrt_input_values = base_input_values
@@ -341,6 +341,18 @@ static float atanpi(float x){
   ilogb_input_type = ['float','float2','float4','float8','float16']
   ilogb_output_type = ['int','int2','int4','int8','int16']
   ilogbUtests = func('ilogb','ilogb',[ilogb_input_type],ilogb_output_type,[ilogb_input_values],'0 * INT_ULP')
+
+  #### floatn ldexp(floatnx, intnk)
+  ldexp_input_values1 = [FLT_MAX_POSI,FLT_MIN_NEGA,FLT_MIN_POSI,FLT_MAX_NEGA,80, -80, 3.14, -3.14, 0.5, 1, 0.0,1500.24,-1500.24]
+  ldexp_input_values2 = [-1,-2,-3,4,5,6,7,8,10,12,14,16,12]
+  ldexp_input_type1 = ['float','float2','float4','float8','float16']
+  ldexp_input_type2 = ['int','int2','int4','int8','int16']
+  ldexp_output_type = ['float','float2','float4','float8','float16']
+  ldexp_cpu_func='''
+static float ldexp(float x, int y){
+    return x * exp2(y);
+} '''
+  ldexpUtests = func('ldexp','ldexp',[ldexp_input_type1,ldexp_input_type2],ldexp_output_type,[ldexp_input_values1,ldexp_input_values2],'0 * FLT_ULP', ldexp_cpu_func)
 
   ##### gentype lgamma(gentype x)
   lgamma_input_values = base_input_values
