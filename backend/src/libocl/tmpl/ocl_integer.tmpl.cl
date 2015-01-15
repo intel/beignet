@@ -87,15 +87,11 @@ OVERLOADABLE ulong clz(ulong x) {
   return v;
 }
 
-OVERLOADABLE char popcount(char x) {
-  return x == 0 ? 0 : x < 0?__gen_ocl_cbit(x) - 24 : __gen_ocl_cbit(x);
-}
-OVERLOADABLE short popcount(short x) {
-  return x == 0 ? 0 : x < 0?__gen_ocl_cbit(x) - 16 : __gen_ocl_cbit(x);
-}
 #define SDEF(TYPE)        \
-OVERLOADABLE TYPE popcount(TYPE x){ return x == 0? 0:__gen_ocl_cbit(x);}
+OVERLOADABLE TYPE popcount(TYPE x){ return __gen_ocl_cbit(x);}
+SDEF(char);
 SDEF(uchar);
+SDEF(short);
 SDEF(ushort);
 SDEF(int);
 SDEF(uint);
