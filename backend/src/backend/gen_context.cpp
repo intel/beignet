@@ -1739,6 +1739,14 @@ namespace gbe
     p->pop();
   }
 
+  void GenContext::emitUnpackLongInstruction(const SelectionInstruction &insn) {
+    GBE_ASSERT(0);
+  }
+
+  void GenContext::emitPackLongInstruction(const SelectionInstruction &insn) {
+    GBE_ASSERT(0);
+  }
+
   void GenContext::emitDWordGatherInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src = ra->genReg(insn.src(0));

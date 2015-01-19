@@ -157,6 +157,8 @@ namespace gbe
     void emitByteScatterInstruction(const SelectionInstruction &insn);
     void emitPackByteInstruction(const SelectionInstruction &insn);
     void emitUnpackByteInstruction(const SelectionInstruction &insn);
+    virtual void emitPackLongInstruction(const SelectionInstruction &insn);
+    virtual void emitUnpackLongInstruction(const SelectionInstruction &insn);
     void emitDWordGatherInstruction(const SelectionInstruction &insn);
     void emitSampleInstruction(const SelectionInstruction &insn);
     void emitTypedWriteInstruction(const SelectionInstruction &insn);

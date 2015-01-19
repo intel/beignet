@@ -68,6 +68,9 @@ namespace gbe
     virtual void emitI64MULInstruction(const SelectionInstruction &insn);
     virtual void emitI64DIVREMInstruction(const SelectionInstruction &insn);
 
+    virtual void emitPackLongInstruction(const SelectionInstruction &insn);
+    virtual void emitUnpackLongInstruction(const SelectionInstruction &insn);
+
   protected:
     virtual GenEncoder* generateEncoder(void) {
       return GBE_NEW(Gen8Encoder, this->simdWidth, 8, deviceID);

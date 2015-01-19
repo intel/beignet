@@ -594,6 +594,10 @@ namespace gbe
     void UNPACK_BYTE(const GenRegister *dst, const GenRegister src, uint32_t elemSize, uint32_t elemNum);
     /*! pack the charN to uint */
     void PACK_BYTE(const GenRegister dst, const GenRegister *src, uint32_t elemSize, uint32_t elemNum);
+    /*! Unpack the uint to charN */
+    void UNPACK_LONG(const GenRegister dst, const GenRegister src);
+    /*! pack the charN to uint */
+    void PACK_LONG(const GenRegister dst, const GenRegister src);
     /*! Extended math function (2 arguments) */
     void MATH(Reg dst, uint32_t function, Reg src0, Reg src1);
     /*! Extended math function (1 argument) */
@@ -1343,6 +1347,18 @@ namespace gbe
     for(uint32_t i = 0; i < elemNum; i++)
       insn->src(i) = src[i];
     insn->extra.elem = 4 / elemSize;
+    insn->dst(0) = dst;
+  }
+
+  void Selection::Opaque::UNPACK_LONG(const GenRegister dst, const GenRegister src) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_UNPACK_LONG, 1, 1);
+    insn->src(0) = src;
+    insn->dst(0) = dst;
+  }
+
+  void Selection::Opaque::PACK_LONG(const GenRegister dst, const GenRegister src) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_PACK_LONG, 1, 1);
+    insn->src(0) = src;
     insn->dst(0) = dst;
   }
 
