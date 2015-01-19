@@ -182,6 +182,7 @@ set (utests_sources
   compiler_long_asr.cpp
   compiler_long_mult.cpp
   compiler_long_cmp.cpp
+  compiler_long_bitcast.cpp
   compiler_function_argument3.cpp
   compiler_function_qualifiers.cpp
   compiler_bool_cross_basic_block.cpp
