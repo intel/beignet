@@ -84,6 +84,16 @@ namespace gbe
         /* Should never come to here, just use the common OPCODE. */
         GBE_ASSERT(0);
         break;
+      case SEL_OP_UPSAMPLE_LONG:
+      {
+        const GenRegister dst = ra->genReg(insn.dst(0));
+        const GenRegister src0 = ra->genReg(insn.src(0));
+        const GenRegister src1 = ra->genReg(insn.src(1));
+        p->MOV(dst, src0);
+        p->SHL(dst, dst, GenRegister::immud(32));
+        p->ADD(dst, dst, src1);
+        break;
+      }
       default:
         GenContext::emitBinaryInstruction(insn);
     }
