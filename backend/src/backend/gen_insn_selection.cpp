@@ -349,9 +349,17 @@ namespace gbe
       const ir::RegisterData &regData = getRegisterData(reg);
       return regData.isUniform();
     }
+    INLINE bool isLongReg(const ir::Register &reg) const {
+      const ir::RegisterData &regData = getRegisterData(reg);
+      return regData.family == ir::FAMILY_QWORD;
+    }
+
+    INLINE GenRegister unpacked_ud(const ir::Register &reg) const {
+      return GenRegister::unpacked_ud(reg, isScalarReg(reg));
+    }
 
     INLINE GenRegister unpacked_uw(const ir::Register &reg) const {
-      return GenRegister::unpacked_uw(reg, isScalarReg(reg));
+      return GenRegister::unpacked_uw(reg, isScalarReg(reg), isLongReg(reg));
     }
 
     INLINE GenRegister unpacked_ub(const ir::Register &reg) const {
@@ -3666,7 +3674,7 @@ namespace gbe
           sel.F32TO16(unpacked, src);
         sel.pop();
         sel.MOV(dst, unpacked);
-      } else if (dstFamily != FAMILY_DWORD && dstFamily != FAMILY_QWORD && (srcFamily == FAMILY_DWORD || srcFamily == FAMILY_QWORD)) {
+      } else if (dstFamily != FAMILY_DWORD && dstFamily != FAMILY_QWORD && srcFamily == FAMILY_DWORD) {//convert i32 to small int
         GenRegister unpacked;
         if (dstFamily == FAMILY_WORD) {
           const uint32_t type = dstType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
@@ -3683,7 +3691,33 @@ namespace gbe
           } else
             unpacked = GenRegister::retype(sel.unpacked_ub(dst.reg()), type);
         }
-        if(srcFamily == FAMILY_QWORD) {
+
+        sel.push();
+          if (sel.isScalarReg(insn.getSrc(0))) {
+            sel.curr.execWidth = 1;
+            sel.curr.predicate = GEN_PREDICATE_NONE;
+            sel.curr.noMask = 1;
+          }
+          sel.MOV(unpacked, src);
+        sel.pop();
+
+        if (unpacked.reg() != dst.reg())
+          sel.MOV(dst, unpacked);
+      } else if (dstFamily == FAMILY_WORD && srcFamily == FAMILY_QWORD) { //convert i64 to i16
+        const uint32_t type = dstType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
+        GenRegister unpacked;
+        if (!sel.isScalarReg(dst.reg())) {
+          if (sel.hasLongType()) {
+            unpacked = sel.unpacked_uw(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+          } else {
+            unpacked = sel.unpacked_uw(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))));
+          }
+          unpacked = GenRegister::retype(unpacked, type);
+        } else {
+          unpacked = GenRegister::retype(sel.unpacked_uw(dst.reg()), type);
+        }
+
+        if(!sel.hasLongType()) {
           GenRegister tmp = sel.selReg(sel.reg(FAMILY_DWORD));
           tmp.type = GEN_TYPE_D;
           sel.CONVI64_TO_I(tmp, src);
@@ -3698,12 +3732,81 @@ namespace gbe
             sel.MOV(unpacked, src);
           sel.pop();
         }
-        if (unpacked.reg() != dst.reg())
+
+        if (unpacked.reg() != dst.reg()) {
           sel.MOV(dst, unpacked);
+        }
+      } else if (dstFamily == FAMILY_BYTE && srcFamily == FAMILY_QWORD) { //convert i64 to i8
+        GenRegister unpacked;
+        const uint32_t type = dstType == TYPE_U8 ? GEN_TYPE_UB : GEN_TYPE_B;
+
+        if (sel.hasLongType()) { // handle the native long logic.
+          if (!sel.isScalarReg(dst.reg())) {
+            /* When convert i64 to i8, the hstride should be 8, but the hstride do not
+               support more than 4, so we need to split it to 2 steps. */
+            unpacked = sel.unpacked_uw(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+            unpacked = GenRegister::retype(unpacked, dstType == TYPE_U8 ? GEN_TYPE_UW : GEN_TYPE_W);
+          } else {
+            unpacked = GenRegister::retype(sel.unpacked_ub(dst.reg()), type);
+          }
+
+          sel.push();
+          if (sel.isScalarReg(insn.getSrc(0))) {
+            sel.curr.execWidth = 1;
+            sel.curr.predicate = GEN_PREDICATE_NONE;
+            sel.curr.noMask = 1;
+          }
+          sel.MOV(unpacked, src);
+          sel.pop();
+
+          if (unpacked.reg() != dst.reg()) {
+            sel.MOV(dst, unpacked);
+          }
+        } else { // Do not have native long
+          if (!sel.isScalarReg(dst.reg())) {
+            unpacked = sel.unpacked_ub(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))));
+            unpacked = GenRegister::retype(unpacked, type);
+          } else {
+            unpacked = GenRegister::retype(sel.unpacked_ub(dst.reg()), type);
+          }
+
+          GenRegister tmp = sel.selReg(sel.reg(FAMILY_DWORD));
+          tmp.type = GEN_TYPE_D;
+          sel.CONVI64_TO_I(tmp, src);
+          sel.MOV(unpacked, tmp);
+
+          if (unpacked.reg() != dst.reg()) {
+            sel.MOV(dst, unpacked);
+          }
+        }
       } else if ((dstType == ir::TYPE_S32 || dstType == ir::TYPE_U32) &&
-                 (srcType == ir::TYPE_U64 || srcType == ir::TYPE_S64))
-        sel.CONVI64_TO_I(dst, src);
-      else if (dstType == ir::TYPE_FLOAT && (srcType == ir::TYPE_U64 || srcType == ir::TYPE_S64)) {
+                 (srcType == ir::TYPE_U64 || srcType == ir::TYPE_S64)) {// Convert i64 to i32
+        if (sel.hasLongType()) {
+          GenRegister unpacked;
+          const uint32_t type = dstType == TYPE_U32 ? GEN_TYPE_UD : GEN_TYPE_D;
+          if (!sel.isScalarReg(dst.reg())) {
+            unpacked = sel.unpacked_ud(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+            unpacked = GenRegister::retype(unpacked, dstType == TYPE_U32 ? GEN_TYPE_UD : GEN_TYPE_D);
+          } else {
+            unpacked = GenRegister::retype(sel.unpacked_ud(dst.reg()), type);
+          }
+
+          sel.push();
+            if (sel.isScalarReg(insn.getSrc(0))) {
+              sel.curr.execWidth = 1;
+              sel.curr.predicate = GEN_PREDICATE_NONE;
+              sel.curr.noMask = 1;
+            }
+            sel.MOV(unpacked, src);
+          sel.pop();
+
+          if (unpacked.reg() != dst.reg()) {
+            sel.MOV(dst, unpacked);
+          }
+        } else {
+          sel.CONVI64_TO_I(dst, src);
+        }
+      } else if (dstType == ir::TYPE_FLOAT && (srcType == ir::TYPE_U64 || srcType == ir::TYPE_S64)) { //i64 to float
         auto dag = sel.regDAG[src.reg()];
         // FIXME, in the future, we need to do a common I64 lower to I32 analysis
         // at llvm IR layer which could cover more cases then just this one.
@@ -3737,37 +3840,70 @@ namespace gbe
             }
           }
         }
-        GenRegister tmp[6];
-        for(int i=0; i<6; i++) {
-          tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+
+        if (!sel.hasLongType()) {
+          GenRegister tmp[6];
+          for(int i=0; i<6; i++) {
+            tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+          }
+          sel.push();
+            sel.curr.flag = 0;
+            sel.curr.subFlag = 1;
+            sel.CONVI64_TO_F(dst, src, tmp);
+          sel.pop();
+        } else {
+          GenRegister unpacked;
+          const uint32_t type = GEN_TYPE_F;
+          if (!sel.isScalarReg(dst.reg())) {
+            unpacked = sel.unpacked_ud(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+            unpacked = GenRegister::retype(unpacked, type);
+          } else {
+            unpacked = GenRegister::retype(sel.unpacked_ud(dst.reg()), type);
+          }
+
+          sel.push();
+            if (sel.isScalarReg(insn.getSrc(0))) {
+              sel.curr.execWidth = 1;
+              sel.curr.predicate = GEN_PREDICATE_NONE;
+              sel.curr.noMask = 1;
+            }
+            sel.MOV(unpacked, src);
+          sel.pop();
+
+          if (unpacked.reg() != dst.reg()) {
+            sel.MOV(dst, unpacked);
+          }
         }
-        sel.push();
-          sel.curr.flag = 0;
-          sel.curr.subFlag = 1;
-          sel.CONVI64_TO_F(dst, src, tmp);
-        sel.pop();
       } else if ((dst.isdf() && srcType == ir::TYPE_FLOAT) ||
-                 (src.isdf() && dstType == ir::TYPE_FLOAT)) {
+                 (src.isdf() && dstType == ir::TYPE_FLOAT)) { // float and double conversion
         ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
         sel.MOV_DF(dst, src, sel.selReg(r, TYPE_U64));
-      } else if (dst.isint64()) {
+      } else if (dst.isint64()) { // promote to i64
         switch(src.type) {
           case GEN_TYPE_F:
-          {
-            GenRegister tmp[2];
-            tmp[0] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-            tmp[1] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_FLOAT);
-            sel.push();
-              sel.curr.flag = 0;
-              sel.curr.subFlag = 1;
-              sel.CONVF_TO_I64(dst, src, tmp);
-            sel.pop();
-            break;
-          }
+            {
+              if (!sel.hasLongType()) {
+                GenRegister tmp[2];
+                tmp[0] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+                tmp[1] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_FLOAT);
+                sel.push();
+                  sel.curr.flag = 0;
+                  sel.curr.subFlag = 1;
+                  sel.CONVF_TO_I64(dst, src, tmp);
+                sel.pop();
+              } else {
+                sel.MOV(dst, src);
+              }
+              break;
+            }
           case GEN_TYPE_DF:
             NOT_IMPLEMENTED;
           default:
-            sel.CONVI_TO_I64(dst, src, sel.selReg(sel.reg(FAMILY_DWORD)));
+            if (sel.hasLongType()) {
+              sel.MOV(dst, src);
+            } else {
+              sel.CONVI_TO_I64(dst, src, sel.selReg(sel.reg(FAMILY_DWORD)));
+            }
         }
       } else
         sel.MOV(dst, src);

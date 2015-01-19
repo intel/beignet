@@ -55,7 +55,9 @@ namespace gbe
   {
     switch (insn.opcode) {
       case SEL_OP_CONVI64_TO_I:
-
+        /* Should never come to here, just use the common OPCODE. */
+        GBE_ASSERT(0);
+        break;
       default:
         GenContext::emitUnaryInstruction(insn);
     }
@@ -65,7 +67,9 @@ namespace gbe
   {
     switch (insn.opcode) {
       case SEL_OP_CONVI_TO_I64:
-
+        /* Should never come to here, just use the common OPCODE. */
+        GBE_ASSERT(0);
+        break;
       default:
         GenContext::emitUnaryWithTempInstruction(insn);
     }
