@@ -3566,20 +3566,25 @@ namespace gbe
       const Type srcType = insn.getSrcType();
       const uint32_t dstNum = insn.getDstNum();
       const uint32_t srcNum = insn.getSrcNum();
-      int index = 0, multiple, narrowNum;
+      int index = 0, multiple, narrowNum, wideNum;
       bool narrowDst;
       Type narrowType;
+      bool wideScalar = false;
 
       if(dstNum > srcNum) {
         multiple = dstNum / srcNum;
         narrowType = dstType;
         narrowNum = dstNum;
+        wideNum = srcNum;
         narrowDst = 1;
+        wideScalar = sel.isScalarReg(insn.getSrc(0));
       } else {
         multiple = srcNum / dstNum;
         narrowType = srcType;
         narrowNum = srcNum;
+        wideNum = dstNum;
         narrowDst = 0;
+        wideScalar = sel.isScalarReg(insn.getDst(0));
       }
 
       sel.push();
@@ -3595,31 +3600,71 @@ namespace gbe
       const bool isInt64 = (srcType == TYPE_S64 || srcType == TYPE_U64 || dstType == TYPE_S64 || dstType == TYPE_U64);
       const int simdWidth = sel.curr.execWidth;
 
+      /* because we do not have hstride = 8, here, we need to seperate
+         the long into top have and bottom half. */
+      vector<GenRegister> tmp(wideNum);
+      if (multiple == 8 && sel.hasLongType() && !wideScalar) {
+        GBE_ASSERT(isInt64); // Must relate to long and char conversion.
+        if (narrowDst) {
+          for (int i = 0; i < wideNum; i++) {
+            tmp[i] = sel.selReg(sel.reg(FAMILY_QWORD));
+            sel.UNPACK_LONG(tmp[i], sel.selReg(insn.getSrc(i), srcType));
+          }
+        } else {
+          for (int i = 0; i < wideNum; i++) {
+            tmp[i] = sel.selReg(sel.reg(FAMILY_QWORD));
+          }
+        }
+      }
+
       for(int i = 0; i < narrowNum; i++, index++) {
         GenRegister narrowReg, wideReg;
-        if(narrowDst) {
-          narrowReg = sel.selReg(insn.getDst(i), narrowType);
-          wideReg = sel.selReg(insn.getSrc(index/multiple), narrowType);  //retype to narrow type
+        if (multiple == 8 && sel.hasLongType() && !wideScalar) {
+          if(narrowDst) {
+            narrowReg = sel.selReg(insn.getDst(i), narrowType);
+            wideReg = GenRegister::retype(tmp[index/multiple], narrowType);  //retype to narrow type
+          } else {
+            wideReg = GenRegister::retype(tmp[index/multiple], narrowType);
+            narrowReg = sel.selReg(insn.getSrc(i), narrowType);  //retype to narrow type
+          }
         } else {
-          wideReg = sel.selReg(insn.getDst(index/multiple), narrowType);
-          narrowReg = sel.selReg(insn.getSrc(i), narrowType);  //retype to narrow type
+          if(narrowDst) {
+            narrowReg = sel.selReg(insn.getDst(i), narrowType);
+            wideReg = sel.selReg(insn.getSrc(index/multiple), narrowType);  //retype to narrow type
+          } else {
+            wideReg = sel.selReg(insn.getDst(index/multiple), narrowType);
+            narrowReg = sel.selReg(insn.getSrc(i), narrowType);  //retype to narrow type
+          }
         }
 
         // set correct horizontal stride
         if(wideReg.hstride != GEN_HORIZONTAL_STRIDE_0) {
           if(multiple == 2) {
-            wideReg = sel.unpacked_uw(wideReg.reg());
-            wideReg = GenRegister::retype(wideReg, getGenType(narrowType));
-            if(isInt64) {
-              wideReg.hstride = GEN_HORIZONTAL_STRIDE_1;
-              wideReg.vstride = GEN_VERTICAL_STRIDE_8;
+            if (sel.hasLongType() && isInt64) {
+              // long to int or int to long
+              wideReg = sel.unpacked_ud(wideReg.reg());
+              wideReg = GenRegister::retype(wideReg, getGenType(narrowType));
+            } else {
+              wideReg = sel.unpacked_uw(wideReg.reg());
+              wideReg = GenRegister::retype(wideReg, getGenType(narrowType));
+              if(isInt64) {
+                wideReg.width = GEN_WIDTH_8;
+                wideReg.hstride = GEN_HORIZONTAL_STRIDE_1;
+                wideReg.vstride = GEN_VERTICAL_STRIDE_8;
+              }
             }
           } else if(multiple == 4) {
-            wideReg = sel.unpacked_ub(wideReg.reg());
-            wideReg = GenRegister::retype(wideReg, getGenType(narrowType));
-            if(isInt64) {
-              wideReg.hstride = GEN_HORIZONTAL_STRIDE_2;
-              wideReg.vstride = GEN_VERTICAL_STRIDE_16;
+            if (sel.hasLongType() && isInt64) {
+              // long to short or short to long
+              wideReg = sel.unpacked_uw(wideReg.reg());
+              wideReg = GenRegister::retype(wideReg, getGenType(narrowType));
+            } else {
+              wideReg = sel.unpacked_ub(wideReg.reg());
+              wideReg = GenRegister::retype(wideReg, getGenType(narrowType));
+              if(isInt64) {
+                wideReg.hstride = GEN_HORIZONTAL_STRIDE_2;
+                wideReg.vstride = GEN_VERTICAL_STRIDE_16;
+              }
             }
           } else if(multiple == 8) {
             // we currently store high/low 32bit separately in register,
@@ -3631,11 +3676,11 @@ namespace gbe
           }
         }
 
-        if(!isInt64 && index % multiple) {
+        if((!isInt64 || (sel.hasLongType() && multiple != 8)) && index % multiple) {
           wideReg = GenRegister::offset(wideReg, 0, (index % multiple) * typeSize(wideReg.type));
           wideReg.subphysical = 1;
         }
-        if(isInt64) {
+        if(isInt64 && (multiple == 8 || !sel.hasLongType())) {
           wideReg.subphysical = 1;
           // Offset to next half
           if((i % multiple) >= multiple/2)
@@ -3665,6 +3710,13 @@ namespace gbe
         } else
           sel.MOV(xdst, xsrc);
       }
+
+      if (multiple == 8 && sel.hasLongType() && !wideScalar && !narrowDst) {
+        for (int i = 0; i < wideNum; i++) {
+          sel.PACK_LONG(sel.selReg(insn.getDst(i), dstType), tmp[i]);
+        }
+      }
+
       sel.pop();
 
       return true;
