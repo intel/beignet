@@ -229,8 +229,10 @@ namespace gbe
     virtual bool disableCompact() { return false; }
     GenNativeInstruction *next(uint32_t opcode);
     uint32_t n_instruction(void) const { return store.size(); }
-    GBE_CLASS(GenEncoder); //!< Use custom allocators
+    virtual bool canHandleLong(uint32_t opcode, GenRegister dst, GenRegister src0,
+                            GenRegister src1 = GenRegister::null());
 
+    GBE_CLASS(GenEncoder); //!< Use custom allocators
     virtual void alu3(uint32_t opcode, GenRegister dst,
                        GenRegister src0, GenRegister src1, GenRegister src2) = 0;
   };

@@ -488,6 +488,14 @@ namespace gbe
      return (GenNativeInstruction *)(&this->store.back()-1);
   }
 
+  bool GenEncoder::canHandleLong(uint32_t opcode, GenRegister dst, GenRegister src0, GenRegister src1)
+  {
+	/* By now, just alu1 insn will come to here. So just MOV */
+    this->MOV(dst.bottom_half(), src0.bottom_half());
+    this->MOV(dst.top_half(this->simdWidth), src0.top_half(this->simdWidth));
+    return true;
+  }
+
   INLINE void _handleDouble(GenEncoder *p, uint32_t opcode, GenRegister dst,
                             GenRegister src0, GenRegister src1 = GenRegister::null()) {
        int w = p->curr.execWidth;
@@ -537,9 +545,9 @@ namespace gbe
             GenRegister src, uint32_t condition) {
      if (dst.isdf() && src.isdf()) {
        handleDouble(p, opcode, dst, src);
-     } else if (dst.isint64() && src.isint64()) { // handle int64
-       p->MOV(dst.bottom_half(), src.bottom_half());
-       p->MOV(dst.top_half(p->simdWidth), src.top_half(p->simdWidth));
+     } else if (dst.isint64() && src.isint64()
+                && p->canHandleLong(opcode, dst, src)) { // handle int64
+       return;
      } else if (needToSplitAlu1(p, dst, src) == false) {
       if(compactAlu1(p, opcode, dst, src, condition, false))
         return;

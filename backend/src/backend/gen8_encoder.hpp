@@ -63,6 +63,8 @@ namespace gbe
     virtual bool disableCompact() { return true; }
     virtual void alu3(uint32_t opcode, GenRegister dst,
                        GenRegister src0, GenRegister src1, GenRegister src2);
+    virtual bool canHandleLong(uint32_t opcode, GenRegister dst, GenRegister src0,
+                            GenRegister src1 = GenRegister::null());
   };
 }
 #endif /* __GBE_GEN8_ENCODER_HPP__ */

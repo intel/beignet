@@ -413,6 +413,11 @@ namespace gbe
     }
   }
 
+  bool Gen8Encoder::canHandleLong(uint32_t opcode, GenRegister dst, GenRegister src0, GenRegister src1)
+  {
+    return false;
+  }
+
 #define NO_SWIZZLE ((0<<0) | (1<<2) | (2<<4) | (3<<6))
 
   void Gen8Encoder::alu3(uint32_t opcode,
