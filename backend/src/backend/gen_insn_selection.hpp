@@ -77,6 +77,8 @@ namespace gbe
     bool isRead(void) const;
     /*! Does it write memory? */
     bool isWrite(void) const;
+    /*! Does it modify the acc register. */
+    bool modAcc(void) const;
     /*! Is it a branch instruction (i.e. modify control flow) */
     bool isBranch(void) const;
     /*! Is it a label instruction (i.e. change the implicit mask) */

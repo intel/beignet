@@ -379,7 +379,7 @@ namespace gbe
     }
 
     // Track writes in accumulators
-    if (insn.state.accWrEnable) {
+    if (insn.modAcc()) {
       const uint32_t index = this->getIndex(GenRegister::acc());
       this->nodes[index] = node;
     }
@@ -517,7 +517,7 @@ namespace gbe
         tracker.addDependency(node, getFlag(insn), WRITE_AFTER_WRITE);
 
       // write-after-write for accumulators
-      if (insn.state.accWrEnable)
+      if (insn.modAcc())
         tracker.addDependency(node, GenRegister::acc(), WRITE_AFTER_WRITE);
 
       // write-after-write in memory
