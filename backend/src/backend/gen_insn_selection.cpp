@@ -189,6 +189,20 @@ namespace gbe
            this->opcode == SEL_OP_DWORD_GATHER;
   }
 
+  bool SelectionInstruction::modAcc(void) const {
+    return this->opcode == SEL_OP_I64SUB ||
+           this->opcode == SEL_OP_I64ADD ||
+           this->opcode == SEL_OP_MUL_HI ||
+           this->opcode == SEL_OP_HADD ||
+           this->opcode == SEL_OP_RHADD ||
+           this->opcode == SEL_OP_I64MUL ||
+           this->opcode == SEL_OP_I64_MUL_HI ||
+           this->opcode == SEL_OP_I64MADSAT ||
+           this->opcode == SEL_OP_I64DIV ||
+           this->opcode == SEL_OP_I64REM ||
+           this->opcode == SEL_OP_MACH;
+  }
+
   bool SelectionInstruction::isWrite(void) const {
     return this->opcode == SEL_OP_UNTYPED_WRITE ||
            this->opcode == SEL_OP_WRITE64       ||
