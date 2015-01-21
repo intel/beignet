@@ -43,7 +43,7 @@ void compiler_bitcast_long_to_char8(void)
 {
   const size_t n = 64;
   const int v = 8;
-  ulong src[n];
+  uint64_t src[n];
   char *dst = (char *)src;
 
   // Setup kernel and buffers
@@ -92,7 +92,7 @@ void compiler_bitcast_int2_to_long(void)
   locals[0] = 16;
 
   for (int32_t i = 0; i < (int32_t) n*v; ++i) {
-    src[i] = (char)rand();
+    src[i] = (int)rand();
   }
 
   OCL_MAP_BUFFER(0);
@@ -115,7 +115,7 @@ void compiler_bitcast_long_to_int2(void)
 {
   const size_t n = 64;
   const int v = 2;
-  ulong src[n];
+  uint64_t src[n];
   uint32_t *dst = (uint32_t *)src;
 
   // Setup kernel and buffers
@@ -164,7 +164,7 @@ void compiler_bitcast_short4_to_long(void)
   locals[0] = 16;
 
   for (int32_t i = 0; i < (int32_t) n*v; ++i) {
-    src[i] = (char)rand();
+    src[i] = (short)rand();
   }
 
   OCL_MAP_BUFFER(0);
@@ -187,7 +187,7 @@ void compiler_bitcast_long_to_short4(void)
 {
   const size_t n = 64;
   const int v = 4;
-  ulong src[n];
+  uint64_t src[n];
   uint16_t *dst = (uint16_t *)src;
 
   // Setup kernel and buffers
