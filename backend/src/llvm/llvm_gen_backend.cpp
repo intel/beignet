@@ -624,7 +624,7 @@ namespace gbe
 #undef DECL_VISIT_FN
 
     // Emit unary instructions from gen native function
-    void emitUnaryCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode);
+    void emitUnaryCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode, ir::Type = ir::TYPE_FLOAT);
     // Emit unary instructions from gen native function
     void emitAtomicInst(CallInst &I, CallSite &CS, ir::AtomicOps opcode);
 
@@ -2986,7 +2986,7 @@ error:
     };
   }
 
-  void GenWriter::emitUnaryCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode) {
+  void GenWriter::emitUnaryCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode, ir::Type type) {
     CallSite::arg_iterator AI = CS.arg_begin();
 #if GBE_DEBUG
     CallSite::arg_iterator AE = CS.arg_end();
@@ -2994,7 +2994,7 @@ error:
     GBE_ASSERT(AI != AE);
     const ir::Register src = this->getRegister(*AI);
     const ir::Register dst = this->getRegister(&I);
-    ctx.ALU1(opcode, ir::TYPE_FLOAT, dst, src);
+    ctx.ALU1(opcode, type, dst, src);
   }
 
   void GenWriter::emitAtomicInst(CallInst &I, CallSite &CS, ir::AtomicOps opcode) {
@@ -3229,7 +3229,7 @@ error:
           }
           case GEN_OCL_FBH: this->emitUnaryCallInst(I,CS,ir::OP_FBH); break;
           case GEN_OCL_FBL: this->emitUnaryCallInst(I,CS,ir::OP_FBL); break;
-          case GEN_OCL_CBIT: this->emitUnaryCallInst(I,CS,ir::OP_CBIT); break;
+          case GEN_OCL_CBIT: this->emitUnaryCallInst(I,CS,ir::OP_CBIT, getUnsignedType(ctx, (*AI)->getType())); break;
           case GEN_OCL_ABS:
           {
             const ir::Register src = this->getRegister(*AI);

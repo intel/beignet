@@ -814,7 +814,8 @@ namespace ir {
       const RegisterFamily family = getFamily(this->type);
       if (UNLIKELY(checkSpecialRegForWrite(dst[0], fn, whyNot) == false))
         return false;
-      if (UNLIKELY(checkRegisterData(family, dst[0], fn, whyNot) == false))
+      if (opcode != OP_CBIT &&
+          UNLIKELY(checkRegisterData(family, dst[0], fn, whyNot) == false))
         return false;
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
         if (UNLIKELY(checkRegisterData(family, src[srcID], fn, whyNot) == false))
