@@ -19,7 +19,12 @@
 
 PURE CONST uint __gen_ocl_fbh(uint);
 PURE CONST uint __gen_ocl_fbl(uint);
-PURE CONST uint __gen_ocl_cbit(uint);
+PURE CONST OVERLOADABLE uint __gen_ocl_cbit(uint);
+PURE CONST OVERLOADABLE uint __gen_ocl_cbit(int);
+PURE CONST OVERLOADABLE uint __gen_ocl_cbit(ushort);
+PURE CONST OVERLOADABLE uint __gen_ocl_cbit(short);
+PURE CONST OVERLOADABLE uint __gen_ocl_cbit(uchar);
+PURE CONST OVERLOADABLE uint __gen_ocl_cbit(char);
 
 OVERLOADABLE char clz(char x) {
   if (x < 0)

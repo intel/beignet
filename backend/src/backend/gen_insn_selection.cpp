@@ -2044,10 +2044,12 @@ namespace gbe
   /*! Unary instruction patterns */
   DECL_PATTERN(UnaryInstruction)
   {
-    static ir::Type getType(const ir::Opcode opcode, const ir::Type insnType) {
+    static ir::Type getType(const ir::Opcode opcode, const ir::Type insnType, bool isSrc = false) {
+      if (opcode == ir::OP_CBIT)
+        return isSrc ? insnType : ir::TYPE_U32;
       if (insnType == ir::TYPE_S64 || insnType == ir::TYPE_U64 || insnType == ir::TYPE_S8 || insnType == ir::TYPE_U8)
         return insnType;
-      if (opcode == ir::OP_FBH || opcode == ir::OP_FBL || opcode == ir::OP_CBIT || opcode == ir::OP_LZD)
+      if (opcode == ir::OP_FBH || opcode == ir::OP_FBL || opcode == ir::OP_LZD)
         return ir::TYPE_U32;
       if (insnType == ir::TYPE_S16 || insnType == ir::TYPE_U16)
         return insnType;
@@ -2059,8 +2061,8 @@ namespace gbe
     INLINE bool emitOne(Selection::Opaque &sel, const ir::UnaryInstruction &insn, bool &markChildren) const {
       const ir::Opcode opcode = insn.getOpcode();
       const ir::Type insnType = insn.getType();
-      const GenRegister dst = sel.selReg(insn.getDst(0), getType(opcode, insnType));
-      const GenRegister src = sel.selReg(insn.getSrc(0), getType(opcode, insnType));
+      const GenRegister dst = sel.selReg(insn.getDst(0), getType(opcode, insnType, false));
+      const GenRegister src = sel.selReg(insn.getSrc(0), getType(opcode, insnType, true));
       sel.push();
         if (sel.isScalarReg(insn.getDst(0)) == true) {
           sel.curr.execWidth = 1;
