@@ -10,7 +10,7 @@ int benchmark_use_host_ptr_buffer(void)
   // Setup kernel and buffers
   OCL_CREATE_KERNEL("runtime_use_host_ptr_buffer");
 
-  int ret = posix_memalign(&buf_data[0], 4096, sizeof(uint32_t) * n);
+  int ret = posix_memalign(&buf_data[0], 64, sizeof(uint32_t) * n);
   OCL_ASSERT(ret == 0);
 
   for (uint32_t i = 0; i < n; ++i) ((uint32_t*)buf_data[0])[i] = i;
