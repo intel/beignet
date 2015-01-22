@@ -94,6 +94,7 @@ typedef  struct _cl_mem {
   uint8_t mapped_gtt;       /* This object has mapped gtt, for unmap. */
   cl_mem_dstr_cb *dstr_cb;  /* The destroy callback. */
   uint8_t is_userptr;       /* CL_MEM_USE_HOST_PTR is enabled*/
+  size_t offset;            /* offset of host_ptr to the page beginning, only for CL_MEM_USE_HOST_PTR*/
 } _cl_mem;
 
 struct _cl_mem_image {

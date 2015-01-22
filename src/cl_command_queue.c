@@ -133,6 +133,10 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k)
     int id = k->images[i].arg_idx;
     struct _cl_mem_image *image;
     assert(interp_kernel_get_arg_type(k->opaque, id) == GBE_ARG_IMAGE);
+
+    //currently, user ptr is not supported for cl image, so offset should be always zero
+    assert(k->args[id].mem->offset == 0);
+
     image = cl_mem_image(k->args[id].mem);
     set_image_info(k->curbe, &k->images[i], image);
     cl_gpgpu_bind_image(gpgpu, k->images[i].idx, image->base.bo, image->offset,
@@ -166,9 +170,9 @@ cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k)
     offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, i);
     if (k->args[i].mem->type == CL_MEM_SUBBUFFER_TYPE) {
       struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)k->args[i].mem;
-      cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, buffer->sub_offset, k->args[i].mem->size, interp_kernel_get_arg_bti(k->opaque, i));
+      cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, k->args[i].mem->offset + buffer->sub_offset, k->args[i].mem->size, interp_kernel_get_arg_bti(k->opaque, i));
     } else {
-      cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, 0, k->args[i].mem->size, interp_kernel_get_arg_bti(k->opaque, i));
+      cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, k->args[i].mem->offset, k->args[i].mem->size, interp_kernel_get_arg_bti(k->opaque, i));
     }
   }
 
