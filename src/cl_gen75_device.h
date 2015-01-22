@@ -20,7 +20,7 @@
 /* Common fields for both SNB devices (either GT1 or GT2)
  */
 .max_parameter_size = 1024,
-.global_mem_cache_line_size = 128, /* XXX */
+.global_mem_cache_line_size = 64, /* XXX */
 .global_mem_cache_size = 8 << 10, /* XXX */
 .local_mem_type = CL_GLOBAL,
 .local_mem_size = 64 << 10,
