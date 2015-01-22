@@ -266,6 +266,7 @@ cl_mem_allocate(enum cl_mem_type type,
   mem->magic = CL_MAGIC_MEM_HEADER;
   mem->flags = flags;
   mem->is_userptr = 0;
+  mem->offset = 0;
 
   if (sz != 0) {
     /* Pinning will require stricter alignment rules */
@@ -279,15 +280,21 @@ cl_mem_allocate(enum cl_mem_type type,
 #ifdef HAS_USERPTR
     if (ctx->device->host_unified_memory) {
       int page_size = getpagesize();
+      int cacheline_size = 0;
+      cl_get_device_info(ctx->device, CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, sizeof(cacheline_size), &cacheline_size, NULL);
+
       /* currently only cl buf is supported, will add cl image support later */
       if (type == CL_MEM_BUFFER_TYPE) {
         if (flags & CL_MEM_USE_HOST_PTR) {
           assert(host_ptr != NULL);
           /* userptr not support tiling */
           if (!is_tiled) {
-            if ((((unsigned long)host_ptr | sz) & (page_size - 1)) == 0) {
+            if (ALIGN((unsigned long)host_ptr, cacheline_size) == (unsigned long)host_ptr) {
+              void* aligned_host_ptr = (void*)(((unsigned long)host_ptr) & (~(page_size - 1)));
+              mem->offset = host_ptr - aligned_host_ptr;
               mem->is_userptr = 1;
-              mem->bo = cl_buffer_alloc_userptr(bufmgr, "CL userptr memory object", host_ptr, sz, 0);
+              size_t aligned_sz = ALIGN((mem->offset + sz), page_size);
+              mem->bo = cl_buffer_alloc_userptr(bufmgr, "CL userptr memory object", aligned_host_ptr, aligned_sz, 0);
             }
           }
         }
@@ -514,6 +521,8 @@ cl_mem_new_sub_buffer(cl_mem buffer,
   mem->ref_n = 1;
   mem->magic = CL_MAGIC_MEM_HEADER;
   mem->flags = flags;
+  mem->offset = buffer->offset;
+  mem->is_userptr = buffer->is_userptr;
   sub_buf->parent = (struct _cl_mem_buffer*)buffer;
 
   cl_mem_add_ref(buffer);
@@ -1853,6 +1862,10 @@ cl_mem_unmap_gtt(cl_mem mem)
 LOCAL void*
 cl_mem_map_auto(cl_mem mem, int write)
 {
+  //if mem is not created from userptr, the offset should be always zero.
+  if (!mem->is_userptr)
+    assert(mem->offset == 0);
+
   if (IS_IMAGE(mem) && cl_mem_image(mem)->tiling != CL_NO_TILE)
     return cl_mem_map_gtt(mem);
   else {
