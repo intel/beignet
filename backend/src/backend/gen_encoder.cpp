@@ -67,10 +67,44 @@ namespace gbe
       return false;
   }
 
+  INLINE bool isSrcDstDiffSpan(GenRegister dst, GenRegister src) {
+    if (src.hstride == GEN_HORIZONTAL_STRIDE_0) return false;
+
+    uint32_t typeSz = typeSize(dst.type);
+    uint32_t horizontal = stride(dst.hstride);
+    uint32_t spans = (dst.subnr / (horizontal * typeSz)) * (horizontal * typeSz)  + horizontal * typeSz * 16;
+    uint32_t dstSpan = spans / GEN_REG_SIZE;
+    dstSpan = dstSpan + (spans % GEN_REG_SIZE == 0 ? 0 : 1);
+    if (dstSpan < 2) return false;
+
+    typeSz = typeSize(src.type);
+    horizontal = stride(src.hstride);
+    spans = (src.subnr / (horizontal * typeSz)) * (horizontal * typeSz)  + horizontal * typeSz * 16;
+    uint32_t srcSpan = (horizontal * typeSz * 16) / GEN_REG_SIZE;
+    srcSpan = srcSpan + (spans % GEN_REG_SIZE == 0 ? 0 : 1);
+
+    GBE_ASSERT(srcSpan <= 2);
+    GBE_ASSERT(dstSpan == 2);
+
+    if (srcSpan == dstSpan) return false;
+
+    /* Special case, dst is DW and src is w.
+       the case:
+       mov (16) r10.0<1>:d r12<8;8,1>:w
+       is allowed. */
+    if ((dst.type == GEN_TYPE_UD || dst.type == GEN_TYPE_D)
+          && (src.type == GEN_TYPE_UW || src.type == GEN_TYPE_W)
+          && dstSpan == 2 && srcSpan == 1
+          && dst.subnr == 0 && src.subnr == 0) return false;
+
+    return true;
+  }
+
   INLINE bool needToSplitAlu1(GenEncoder *p, GenRegister dst, GenRegister src) {
     if (p->curr.execWidth != 16 || src.hstride == GEN_HORIZONTAL_STRIDE_0) return false;
     if (isVectorOfBytes(dst) == true) return true;
     if (isVectorOfBytes(src) == true) return true;
+    if (isSrcDstDiffSpan(dst, src)) return true;
     return false;
   }
 
@@ -79,17 +113,22 @@ namespace gbe
          (src0.hstride == GEN_HORIZONTAL_STRIDE_0 &&
           src1.hstride == GEN_HORIZONTAL_STRIDE_0))
       return false;
+
+    if (isSrcDstDiffSpan(dst, src0)) return true;
+    if (isSrcDstDiffSpan(dst, src1)) return true;
     if (isVectorOfBytes(dst) == true) return true;
     if (isVectorOfBytes(src0) == true) return true;
     if (isVectorOfBytes(src1) == true) return true;
     return false;
   }
 
-  INLINE bool needToSplitCmp(GenEncoder *p, GenRegister src0, GenRegister src1) {
+  INLINE bool needToSplitCmp(GenEncoder *p, GenRegister src0, GenRegister src1, GenRegister dst) {
     if (p->curr.execWidth != 16 ||
          (src0.hstride == GEN_HORIZONTAL_STRIDE_0 &&
           src1.hstride == GEN_HORIZONTAL_STRIDE_0))
       return false;
+    if (isSrcDstDiffSpan(dst, src0)) return true;
+    if (isSrcDstDiffSpan(dst, src1)) return true;
     if (isVectorOfBytes(src0) == true) return true;
     if (isVectorOfBytes(src1) == true) return true;
     if (src0.type == GEN_TYPE_D || src0.type == GEN_TYPE_UD || src0.type == GEN_TYPE_F)
@@ -864,7 +903,7 @@ namespace gbe
   }
 
   void GenEncoder::CMP(uint32_t conditional, GenRegister src0, GenRegister src1, GenRegister dst) {
-    if (needToSplitCmp(this, src0, src1) == false) {
+    if (needToSplitCmp(this, src0, src1, dst) == false) {
       if(!GenRegister::isNull(dst) && compactAlu2(this, GEN_OPCODE_CMP, dst, src0, src1, conditional, false)) {
         return;
       }
