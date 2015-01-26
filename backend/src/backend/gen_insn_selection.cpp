@@ -3998,12 +3998,8 @@ namespace gbe
         } else {
           GenRegister unpacked;
           const uint32_t type = GEN_TYPE_F;
-          if (!sel.isScalarReg(dst.reg())) {
-            unpacked = sel.unpacked_ud(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
-            unpacked = GenRegister::retype(unpacked, type);
-          } else {
-            unpacked = GenRegister::retype(sel.unpacked_ud(dst.reg()), type);
-          }
+          unpacked = sel.unpacked_ud(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+          unpacked = GenRegister::retype(unpacked, type);
 
           sel.push();
             if (sel.isScalarReg(insn.getSrc(0))) {
