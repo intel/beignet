@@ -3623,12 +3623,12 @@ namespace gbe
         GBE_ASSERT(isInt64); // Must relate to long and char conversion.
         if (narrowDst) {
           for (int i = 0; i < wideNum; i++) {
-            tmp[i] = sel.selReg(sel.reg(FAMILY_QWORD));
+            tmp[i] = sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U64);
             sel.UNPACK_LONG(tmp[i], sel.selReg(insn.getSrc(i), srcType));
           }
         } else {
           for (int i = 0; i < wideNum; i++) {
-            tmp[i] = sel.selReg(sel.reg(FAMILY_QWORD));
+            tmp[i] = sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U64);
           }
         }
       }
