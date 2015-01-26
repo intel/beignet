@@ -79,6 +79,7 @@ namespace gbe
         return 4;
       case GEN_TYPE_UW:
       case GEN_TYPE_W:
+      case GEN_TYPE_HF:
         return 2;
       case GEN_TYPE_UB:
       case GEN_TYPE_B:
