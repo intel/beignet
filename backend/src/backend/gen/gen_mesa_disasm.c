@@ -275,8 +275,8 @@ static const char *reg_encoding[10] = {
   [5] = ":B",
   [6] = ":DF",
   [7] = ":F",
-  [8] = ":Q",
-  [9] = ":UQ"
+  [8] = ":UQ",
+  [9] = ":Q"
 };
 
 int reg_type_size[10] = {
