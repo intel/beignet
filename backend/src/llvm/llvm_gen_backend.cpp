@@ -2477,12 +2477,12 @@ error:
       case Instruction::PtrToInt:
       case Instruction::IntToPtr:
       {
-        Constant *CPV = dyn_cast<Constant>(srcValue);
-        if (CPV == NULL) {
+        Type *dstType = dstValue->getType();
+        Type *srcType = srcValue->getType();
+
+        if (getTypeByteSize(unit, dstType) == getTypeByteSize(unit, srcType))
+        {
 #if GBE_DEBUG
-          Type *dstType = dstValue->getType();
-          Type *srcType = srcValue->getType();
-          GBE_ASSERT(getTypeByteSize(unit, dstType) == getTypeByteSize(unit, srcType));
 #endif /* GBE_DEBUG */
           regTranslator.newValueProxy(srcValue, dstValue);
         } else
@@ -2525,12 +2525,13 @@ error:
       {
         Value *dstValue = &I;
         Value *srcValue = I.getOperand(0);
-        Constant *CPV = dyn_cast<Constant>(srcValue);
-        if (CPV != NULL) {
-          const ir::ImmediateIndex index = ctx.newImmediate(CPV);
-          const ir::Immediate imm = ctx.getImmediate(index);
-          const ir::Register reg = this->getRegister(dstValue);
-          ctx.LOADI(imm.getType(), reg, index);
+        Type *dstType = dstValue->getType();
+        Type *srcType = srcValue->getType();
+
+        if (getTypeByteSize(unit, dstType) != getTypeByteSize(unit, srcType)) {
+          const ir::Register dst = this->getRegister(&I);
+          const ir::Register src = this->getRegister(srcValue);
+          ctx.CVT(getType(ctx, dstType), getType(ctx, srcType), dst, src);
         }
       }
       break;
