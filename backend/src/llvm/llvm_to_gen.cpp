@@ -270,20 +270,21 @@ namespace gbe
     passes.add(createScalarReplAggregatesPass(64, true, -1, -1, 64));
     passes.add(createLoadStoreOptimizationPass());
     passes.add(createConstantPropagationPass());
-    passes.add(createLowerSwitchPass());
     passes.add(createPromoteMemoryToRegisterPass());
     if(optLevel > 0)
-      passes.add(createGVNPass());                  // Remove redundancies
+      passes.add(createGVNPass());                 // Remove redundancies
     passes.add(createPrintfParserPass());
-    passes.add(createExpandConstantExprPass());
-    passes.add(createScalarizePass());        // Expand all vector ops
-    passes.add(createLegalizePass());         // legalize large integer operation
-    passes.add(createConstantPropagationPass()); // propagate constant after scalarize/legalize
-    passes.add(createExpandConstantExprPass()); // constant prop may generate ConstantExpr
-    passes.add(createRemoveGEPPass(unit)); // Constant prop may generate gep
-    passes.add(createDeadInstEliminationPass());  // Remove simplified instructions
+    passes.add(createExpandConstantExprPass());    // expand ConstantExpr
+    passes.add(createScalarizePass());             // Expand all vector ops
+    passes.add(createExpandLargeIntegersPass());   // legalize large integer operation
+    passes.add(createInstructionCombiningPass());  // legalize will generate some silly instructions
+    passes.add(createConstantPropagationPass());   // propagate constant after scalarize/legalize
+    passes.add(createExpandConstantExprPass());    // constant prop may generate ConstantExpr
+    passes.add(createRemoveGEPPass(unit));         // Constant prop may generate gep
+    passes.add(createDeadInstEliminationPass());   // Remove simplified instructions
     passes.add(createCFGSimplificationPass());     // Merge & remove BBs
-    passes.add(createScalarizePass());        // Expand all vector ops
+    passes.add(createLowerSwitchPass());           // simplify cfg will generate switch-case instruction
+    passes.add(createScalarizePass());             // Expand all vector ops
 
     if(OCL_OUTPUT_CFG)
       passes.add(createCFGPrinterPass());
