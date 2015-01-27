@@ -40,7 +40,20 @@
 #include <algorithm>
 
 // LLVM Type
-namespace llvm { class Type; }
+namespace llvm {
+  class Type;
+  /* Imported from pNaCl */
+  llvm::Instruction *PhiSafeInsertPt(llvm::Use *U);
+
+  void PhiSafeReplaceUses(llvm::Use *U, llvm::Value *NewVal);
+
+  FunctionPass *createExpandConstantExprPass();
+  // Copy debug information from Original to New, and return New.
+  template <typename T> T *CopyDebug(T *New, llvm::Instruction *Original) {
+    New->setDebugLoc(Original->getDebugLoc());
+   return New;
+  }
+}
 
 namespace gbe
 {

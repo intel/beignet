@@ -199,7 +199,8 @@ namespace ir {
     }
 
     INLINE float getFloatValue(void) const {
-      GBE_ASSERT(type == IMM_TYPE_FLOAT);
+      // we allow bitcast from u32/s32 immediate to float
+      GBE_ASSERT(type == IMM_TYPE_FLOAT || type == IMM_TYPE_U32 || type == IMM_TYPE_S32);
       return *data.f32;
     }
 
