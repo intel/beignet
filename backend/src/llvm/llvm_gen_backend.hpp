@@ -48,6 +48,7 @@ namespace llvm {
   void PhiSafeReplaceUses(llvm::Use *U, llvm::Value *NewVal);
 
   FunctionPass *createExpandConstantExprPass();
+  FunctionPass *createExpandLargeIntegersPass();
   // Copy debug information from Original to New, and return New.
   template <typename T> T *CopyDebug(T *New, llvm::Instruction *Original) {
     New->setDebugLoc(Original->getDebugLoc());
