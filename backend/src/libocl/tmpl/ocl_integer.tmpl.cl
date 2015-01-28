@@ -278,7 +278,9 @@ OVERLOADABLE ulong rhadd(ulong x, ulong y) {
   return __gen_ocl_rhadd(x, y);
 }
 
-int __gen_ocl_abs(int x);
+PURE CONST OVERLOADABLE char __gen_ocl_abs(char x);
+PURE CONST OVERLOADABLE short __gen_ocl_abs(short x);
+PURE CONST OVERLOADABLE int __gen_ocl_abs(int x);
 #define DEC(TYPE) OVERLOADABLE u##TYPE abs(TYPE x) { return (u##TYPE) __gen_ocl_abs(x); }
 DEC(int)
 DEC(short)

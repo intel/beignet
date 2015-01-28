@@ -2071,13 +2071,10 @@ namespace gbe
         }
         switch (opcode) {
           case ir::OP_ABS:
-            if (insn.getType() == ir::TYPE_S32) {
-              const GenRegister src_ = GenRegister::retype(src, GEN_TYPE_D);
-              const GenRegister dst_ = GenRegister::retype(dst, GEN_TYPE_D);
+            {
+              const GenRegister src_ = GenRegister::retype(src, getGenType(insnType));
+              const GenRegister dst_ = GenRegister::retype(dst, getGenType(insnType));
               sel.MOV(dst_, GenRegister::abs(src_));
-            } else {
-              GBE_ASSERT(insn.getType() == ir::TYPE_FLOAT);
-              sel.MOV(dst, GenRegister::abs(src));
             }
             break;
           case ir::OP_MOV:

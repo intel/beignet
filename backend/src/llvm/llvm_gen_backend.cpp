@@ -3434,7 +3434,7 @@ error:
           {
             const ir::Register src = this->getRegister(*AI);
             const ir::Register dst = this->getRegister(&I);
-            ctx.ALU1(ir::OP_ABS, ir::TYPE_S32, dst, src);
+            ctx.ALU1(ir::OP_ABS, getType(ctx, (*AI)->getType()), dst, src);
             break;
           }
           case GEN_OCL_SIMD_ALL:
