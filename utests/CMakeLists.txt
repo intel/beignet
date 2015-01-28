@@ -49,8 +49,6 @@ set (utests_sources
   compiler_array4.cpp
   compiler_byte_scatter.cpp
   compiler_ceil.cpp
-  compiler_clz_short.cpp
-  compiler_clz_int.cpp
   compiler_popcount.cpp
   compiler_convert_uchar_sat.cpp
   compiler_copy_buffer.cpp

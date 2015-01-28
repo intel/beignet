@@ -3,10 +3,14 @@
 {                                                \
   __global TYPE* A = &src[get_global_id(0)];    \
   __global TYPE* B = &dst[get_global_id(0)];    \
-  *B =  __builtin_clz(*A);   \
+  *B =  clz(*A);   \
 }
 
-COMPILER_CLZ(uint)
 COMPILER_CLZ(ulong)
+COMPILER_CLZ(uint)
 COMPILER_CLZ(ushort)
 COMPILER_CLZ(uchar)
+COMPILER_CLZ(long)
+COMPILER_CLZ(int)
+COMPILER_CLZ(short)
+COMPILER_CLZ(char)
