@@ -67,6 +67,11 @@ namespace analysis
     if (pbb->hasExtraBra)
       it--;
     ir::BranchInstruction* pinsn = static_cast<ir::BranchInstruction *>(&*it);
+
+    if(!pinsn->isPredicated()){
+      std::cout << "WARNING:" << "endless loop detected!" << std::endl;
+      return;
+    }
     ir::Register reg = pinsn->getPredicateIndex();
     /* since this node is an while node, so we remove the BRA instruction at the bottom of the exit BB of 'node',
      * and insert WHILE instead
