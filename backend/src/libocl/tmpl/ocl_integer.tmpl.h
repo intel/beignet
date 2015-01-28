@@ -45,6 +45,15 @@ OVERLOADABLE uint clz(uint x);
 OVERLOADABLE long clz(long x);
 OVERLOADABLE ulong clz(ulong x);
 
+char   clz_s8(char);
+uchar  clz_u8(uchar);
+short  clz_s16(short);
+ushort clz_u16(ushort);
+int    clz_s32(int);
+uint   clz_u32(uint);
+long   clz_s64(long);
+ulong  clz_u64(ulong);
+
 OVERLOADABLE char popcount(char x);
 OVERLOADABLE uchar popcount(uchar x);
 OVERLOADABLE short popcount(short x);

@@ -19,6 +19,8 @@
 
 PURE CONST uint __gen_ocl_fbh(uint);
 PURE CONST uint __gen_ocl_fbl(uint);
+
+
 PURE CONST OVERLOADABLE uint __gen_ocl_cbit(uint);
 PURE CONST OVERLOADABLE uint __gen_ocl_cbit(int);
 PURE CONST OVERLOADABLE uint __gen_ocl_cbit(ushort);
@@ -26,71 +28,17 @@ PURE CONST OVERLOADABLE uint __gen_ocl_cbit(short);
 PURE CONST OVERLOADABLE uint __gen_ocl_cbit(uchar);
 PURE CONST OVERLOADABLE uint __gen_ocl_cbit(char);
 
-OVERLOADABLE char clz(char x) {
-  if (x < 0)
-    return 0;
-  if (x == 0)
-    return 8;
-  return __gen_ocl_fbh(x) - 24;
-}
-
-OVERLOADABLE uchar clz(uchar x) {
-  if (x == 0)
-    return 8;
-  return __gen_ocl_fbh(x) - 24;
-}
-
-OVERLOADABLE short clz(short x) {
-  if (x < 0)
-    return 0;
-  if (x == 0)
-    return 16;
-  return __gen_ocl_fbh(x) - 16;
-}
-
-OVERLOADABLE ushort clz(ushort x) {
-  if (x == 0)
-    return 16;
-  return __gen_ocl_fbh(x) - 16;
-}
-
-OVERLOADABLE int clz(int x) {
-  if (x < 0)
-    return 0;
-  if (x == 0)
-    return 32;
-  return __gen_ocl_fbh(x);
-}
-
-OVERLOADABLE uint clz(uint x) {
-  if (x == 0)
-    return 32;
-  return __gen_ocl_fbh(x);
-}
-
-OVERLOADABLE long clz(long x) {
-  union { int i[2]; long x; } u;
-  u.x = x;
-  if (u.i[1] & 0x80000000u)
-    return 0;
-  if (u.i[1] == 0 && u.i[0] == 0)
-    return 64;
-  uint v = clz(u.i[1]);
-  if(v == 32)
-    v += clz(u.i[0]);
-  return v;
-}
-
-OVERLOADABLE ulong clz(ulong x) {
-  if (x == 0)
-    return 64;
-  union { uint i[2]; ulong x; } u;
-  u.x = x;
-  uint v = clz(u.i[1]);
-  if(v == 32)
-    v += clz(u.i[0]);
-  return v;
-}
+#define SDEF(TYPE, TYPE_NAME, SIZE)        \
+OVERLOADABLE TYPE clz(TYPE x){ return clz_##TYPE_NAME##SIZE(x);}
+SDEF(char, s, 8);
+SDEF(uchar, u, 8);
+SDEF(short, s, 16);
+SDEF(ushort, u, 16);
+SDEF(int, s, 32);
+SDEF(uint, u, 32);
+SDEF(long, s, 64);
+SDEF(ulong, u, 64);
+#undef SDEF
 
 #define SDEF(TYPE)        \
 OVERLOADABLE TYPE popcount(TYPE x){ return __gen_ocl_cbit(x);}

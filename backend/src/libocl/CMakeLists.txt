@@ -181,7 +181,7 @@ MACRO(ADD_LL_TO_BC_TARGET M)
 	)
 ENDMACRO(ADD_LL_TO_BC_TARGET)
 
-SET (OCL_LL_MODULES ocl_barrier ocl_memcpy ocl_memset)
+SET (OCL_LL_MODULES ocl_barrier ocl_memcpy ocl_memset ocl_clz)
 FOREACH(f ${OCL_LL_MODULES})
     COPY_THE_LL(${f})
     ADD_LL_TO_BC_TARGET(${f})
