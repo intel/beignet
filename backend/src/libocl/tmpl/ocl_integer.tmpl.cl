@@ -298,34 +298,16 @@ DEC(ulong)
 /* Char and short type abs diff */
 /* promote char and short to int and will be no module overflow */
 #define DEC(TYPE, UTYPE) OVERLOADABLE UTYPE abs_diff(TYPE x, TYPE y) \
-                         { return (UTYPE) (abs((int)x - (int)y)); }
+      { return y > x ? (y -x) : (x - y); }
 DEC(char, uchar)
 DEC(uchar, uchar)
 DEC(short, ushort)
 DEC(ushort, ushort)
+DEC(int, uint)
+DEC(uint, uint)
+DEC(long, ulong)
+DEC(ulong, ulong)
 #undef DEC
-
-OVERLOADABLE uint abs_diff (uint x, uint y) {
-    /* same signed will never overflow. */
-    return y > x ? (y -x) : (x - y);
-}
-
-OVERLOADABLE uint abs_diff (int x, int y) {
-    /* same signed will never module overflow. */
-    if ((x >= 0 && y >= 0) || (x <= 0 && y <= 0))
-        return abs(x - y);
-
-    return (abs(x) + abs(y));
-}
-
-OVERLOADABLE ulong abs_diff (long x, long y) {
-  if ((x >= 0 && y >= 0) || (x <= 0 && y <= 0))
-    return abs(x - y);
-  return abs(x) + abs(y);
-}
-OVERLOADABLE ulong abs_diff (ulong x, ulong y) {
-  return y > x ? (y - x) : (x - y);
-}
 
 
 #define DECL_MIN_MAX_CLAMP(TYPE) \
