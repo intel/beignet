@@ -3286,10 +3286,43 @@ error:
           break;
           case Intrinsic::ctlz:
           {
-            ir::Type srcType = getType(ctx, I.getType());
+            Type *llvmDstType = I.getType();
+            ir::Type dstType = getType(ctx, llvmDstType);
+            Type *llvmSrcType = I.getOperand(0)->getType();
+            ir::Type srcType = getUnsignedType(ctx, llvmSrcType);
+
+            //the llvm.ctlz.i64 is lowered to two llvm.ctlz.i32 call in ocl_clz.ll
+            GBE_ASSERT(srcType != ir::TYPE_U64);
+
             const ir::Register dst = this->getRegister(&I);
             const ir::Register src = this->getRegister(I.getOperand(0));
-            ctx.ALU1(ir::OP_LZD, srcType, dst, src);
+            int imm_value = 0;
+            if(srcType == ir::TYPE_U16) {
+              imm_value = 16;
+            }else if(srcType == ir::TYPE_U8) {
+              imm_value = 24;
+            }
+
+            if(srcType == ir::TYPE_U16 || srcType == ir::TYPE_U8) {
+              ir::ImmediateIndex imm;
+              ir::Type tmpType = ir::TYPE_S32;
+              imm = ctx.newIntegerImmediate(imm_value, tmpType);
+              const ir::RegisterFamily family = getFamily(tmpType);
+              const ir::Register immReg = ctx.reg(family);
+              ctx.LOADI(ir::TYPE_S32, immReg, imm);
+
+              ir::Register tmp0 = ctx.reg(getFamily(tmpType));
+              ir::Register tmp1 = ctx.reg(getFamily(tmpType));
+              ir::Register tmp2 = ctx.reg(getFamily(tmpType));
+              ctx.CVT(tmpType, srcType, tmp0, src);
+              ctx.ALU1(ir::OP_LZD, tmpType, tmp1, tmp0);
+              ctx.SUB(tmpType, tmp2, tmp1, immReg);
+              ctx.CVT(dstType, tmpType, dst, tmp2);
+            }
+            else
+            {
+              ctx.ALU1(ir::OP_LZD, dstType, dst, src);
+            }
           }
           break;
           case Intrinsic::fma:
