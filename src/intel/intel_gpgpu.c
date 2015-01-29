@@ -107,6 +107,9 @@ intel_gpgpu_load_idrt_t *intel_gpgpu_load_idrt = NULL;
 typedef void (intel_gpgpu_pipe_control_t)(intel_gpgpu_t *gpgpu);
 intel_gpgpu_pipe_control_t *intel_gpgpu_pipe_control = NULL;
 
+typedef void (intel_gpgpu_select_pipeline_t)(intel_gpgpu_t *gpgpu);
+intel_gpgpu_select_pipeline_t *intel_gpgpu_select_pipeline = NULL;
+
 static void
 intel_gpgpu_sync(void *buf)
 {
@@ -245,10 +248,18 @@ error:
 }
 
 static void
-intel_gpgpu_select_pipeline(intel_gpgpu_t *gpgpu)
+intel_gpgpu_select_pipeline_gen7(intel_gpgpu_t *gpgpu)
 {
   BEGIN_BATCH(gpgpu->batch, 1);
   OUT_BATCH(gpgpu->batch, CMD_PIPELINE_SELECT | PIPELINE_SELECT_GPGPU);
+  ADVANCE_BATCH(gpgpu->batch);
+}
+
+static void
+intel_gpgpu_select_pipeline_gen9(intel_gpgpu_t *gpgpu)
+{
+  BEGIN_BATCH(gpgpu->batch, 1);
+  OUT_BATCH(gpgpu->batch, CMD_PIPELINE_SELECT | PIPELINE_SELECT_MASK | PIPELINE_SELECT_GPGPU);
   ADVANCE_BATCH(gpgpu->batch);
 }
 
@@ -267,6 +278,13 @@ static uint32_t
 intel_gpgpu_get_cache_ctrl_gen8()
 {
   return tcc_llc_ec_l3 | mtllc_wb;
+}
+static uint32_t
+intel_gpgpu_get_cache_ctrl_gen9()
+{
+  //Pre-defined cache control registers 9:
+  //L3CC: WB; LeCC: WB; TC: LLC/eLLC;
+  return (0x9 << 1);
 }
 
 static void
@@ -501,6 +519,7 @@ intel_gpgpu_load_vfe_state_gen8(intel_gpgpu_t *gpgpu)
   OUT_BATCH(gpgpu->batch, 0);
   OUT_BATCH(gpgpu->batch, 0);
   OUT_BATCH(gpgpu->batch, 0);
+
   ADVANCE_BATCH(gpgpu->batch);
 }
 
@@ -2071,12 +2090,13 @@ intel_set_gpgpu_callbacks(int device_id)
     intel_gpgpu_load_idrt = intel_gpgpu_load_idrt_gen8;
     cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler_gen8;
     intel_gpgpu_pipe_control = intel_gpgpu_pipe_control_gen8;
+	intel_gpgpu_select_pipeline = intel_gpgpu_select_pipeline_gen7;
     return;
   }
   if (IS_SKYLAKE(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen8;
     intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen8;
-    cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen8;
+    cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen9;
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen8;
     intel_gpgpu_post_action = intel_gpgpu_post_action_gen7; //BDW need not restore SLM, same as gen7
     intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_gen7;
@@ -2089,6 +2109,7 @@ intel_set_gpgpu_callbacks(int device_id)
     intel_gpgpu_load_idrt = intel_gpgpu_load_idrt_gen8;
     cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler_gen8;
     intel_gpgpu_pipe_control = intel_gpgpu_pipe_control_gen8;
+    intel_gpgpu_select_pipeline = intel_gpgpu_select_pipeline_gen9;
     return;
   }
 
@@ -2098,6 +2119,7 @@ intel_set_gpgpu_callbacks(int device_id)
   intel_gpgpu_build_idrt = intel_gpgpu_build_idrt_gen7;
   intel_gpgpu_load_curbe_buffer = intel_gpgpu_load_curbe_buffer_gen7;
   intel_gpgpu_load_idrt = intel_gpgpu_load_idrt_gen7;
+  intel_gpgpu_select_pipeline = intel_gpgpu_select_pipeline_gen7;
 
   if (IS_HASWELL(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen75;
