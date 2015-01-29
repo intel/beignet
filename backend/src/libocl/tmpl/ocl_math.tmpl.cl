@@ -1280,18 +1280,16 @@ OVERLOADABLE float logb(float x) {
   if (__ocl_math_fastpath_flag)
     return __gen_ocl_internal_fastpath_logb(x);
 
-union {float f; unsigned i;} u;
+  union {float f; unsigned i;} u;
   u.f = x;
   int e =  ((u.i & 0x7f800000) >> 23);
-  if(e == 0) {
+  float r1 = e-127;
+  float r2 = -INFINITY;
+  float r3 = x*x;
     /* sub normal or +/-0 */
-    return -INFINITY;
-  } else if(e == 0xff) {
+  float r = e == 0 ? r2 : r1;
     /* inf & nan */
-    return x*x;
-  } else {
-    return (float)(e-127);
-  }
+  return e == 0xff ? r3 : r;
 }
 
 OVERLOADABLE int ilogb(float x) {
