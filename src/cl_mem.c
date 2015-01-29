@@ -663,7 +663,8 @@ cl_image_tiling_t cl_get_default_tiling(cl_driver drv)
 
   if (!initialized) {
     // FIXME, need to find out the performance diff's root cause on BDW.
-    if(cl_driver_get_ver(drv) == 8)
+    // SKL's 3D Image can't use TILE_X, so use TILE_Y as default
+    if(cl_driver_get_ver(drv) == 8 || cl_driver_get_ver(drv) == 9)
       tiling = CL_TILE_Y;
     char *tilingStr = getenv("OCL_TILING");
     if (tilingStr != NULL) {
