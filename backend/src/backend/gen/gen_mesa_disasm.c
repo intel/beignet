@@ -989,17 +989,17 @@ static int imm(FILE *file, uint32_t type, const void* inst)
     case GEN_TYPE_F:
       format(file, "%-gF", GEN_BITS_FIELD(inst, bits3.f));
       break;
-    case GEN_TYPE_L:
+    case GEN_TYPE_UL:
       assert(!(gen_version < 80));
-      format(file, "0x%.8x %.8xQ", (((const union Gen8NativeInstruction *)inst)->bits3).ud,
+      format(file, "0x%.8x %.8xUQ", (((const union Gen8NativeInstruction *)inst)->bits3).ud,
                                 (((const union Gen8NativeInstruction *)inst)->bits2).ud);
       break;
-    case GEN_TYPE_UL:
+    case GEN_TYPE_L:
     {
       assert(!(gen_version < 80));
       uint64_t val = (((const union Gen8NativeInstruction *)inst)->bits3).ud;
       val = (val << 32) + ((((const union Gen8NativeInstruction *)inst)->bits2).ud);
-      format(file, "0x%luUQ", val);
+      format(file, "0x%lldQ", val);
     }
   }
   return 0;
