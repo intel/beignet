@@ -626,6 +626,25 @@ intel_gpgpu_pipe_control_gen75(intel_gpgpu_t *gpgpu)
 }
 
 static void
+intel_gpgpu_pipe_control_gen8(intel_gpgpu_t *gpgpu)
+{
+  gen8_pipe_control_t* pc = (gen8_pipe_control_t*)
+    intel_batchbuffer_alloc_space(gpgpu->batch, sizeof(gen8_pipe_control_t));
+  memset(pc, 0, sizeof(*pc));
+  pc->dw0.length = SIZEOF32(gen8_pipe_control_t) - 2;
+  pc->dw0.instruction_subopcode = GEN7_PIPE_CONTROL_SUBOPCODE_3D_CONTROL;
+  pc->dw0.instruction_opcode = GEN7_PIPE_CONTROL_OPCODE_3D_CONTROL;
+  pc->dw0.instruction_pipeline = GEN7_PIPE_CONTROL_3D;
+  pc->dw0.instruction_type = GEN7_PIPE_CONTROL_INSTRUCTION_GFX;
+  pc->dw1.render_target_cache_flush_enable = 1;
+  pc->dw1.texture_cache_invalidation_enable = 1;
+  pc->dw1.cs_stall = 1;
+  pc->dw1.dc_flush_enable = 1;
+  //pc->dw1.instruction_cache_invalidate_enable = 1;
+  ADVANCE_BATCH(gpgpu->batch);
+}
+
+static void
 intel_gpgpu_set_L3_gen7(intel_gpgpu_t *gpgpu, uint32_t use_slm)
 {
   BEGIN_BATCH(gpgpu->batch, 9);
@@ -2007,7 +2026,7 @@ intel_set_gpgpu_callbacks(int device_id)
     intel_gpgpu_load_curbe_buffer = intel_gpgpu_load_curbe_buffer_gen8;
     intel_gpgpu_load_idrt = intel_gpgpu_load_idrt_gen8;
     cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler_gen8;
-    intel_gpgpu_pipe_control = intel_gpgpu_pipe_control_gen7;
+    intel_gpgpu_pipe_control = intel_gpgpu_pipe_control_gen8;
     return;
   }
   if (IS_SKYLAKE(device_id)) {
@@ -2025,7 +2044,7 @@ intel_set_gpgpu_callbacks(int device_id)
     intel_gpgpu_load_curbe_buffer = intel_gpgpu_load_curbe_buffer_gen8;
     intel_gpgpu_load_idrt = intel_gpgpu_load_idrt_gen8;
     cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler_gen8;
-    intel_gpgpu_pipe_control = intel_gpgpu_pipe_control_gen7;
+    intel_gpgpu_pipe_control = intel_gpgpu_pipe_control_gen8;
     return;
   }
 

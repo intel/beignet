@@ -498,6 +498,62 @@ typedef struct gen6_pipe_control
   } dw4;
 } gen6_pipe_control_t;
 
+typedef struct gen8_pipe_control
+{
+  struct {
+    uint32_t length : BITFIELD_RANGE(0, 7);
+    uint32_t reserved : BITFIELD_RANGE(8, 15);
+    uint32_t instruction_subopcode : BITFIELD_RANGE(16, 23);
+    uint32_t instruction_opcode : BITFIELD_RANGE(24, 26);
+    uint32_t instruction_pipeline : BITFIELD_RANGE(27, 28);
+    uint32_t instruction_type : BITFIELD_RANGE(29, 31);
+  } dw0;
+
+  struct {
+    uint32_t depth_cache_flush_enable : BITFIELD_BIT(0);
+    uint32_t stall_at_pixel_scoreboard : BITFIELD_BIT(1);
+    uint32_t state_cache_invalidation_enable : BITFIELD_BIT(2);
+    uint32_t constant_cache_invalidation_enable : BITFIELD_BIT(3);
+    uint32_t vf_cache_invalidation_enable : BITFIELD_BIT(4);
+    uint32_t dc_flush_enable : BITFIELD_BIT(5);
+    uint32_t protected_memory_app_id : BITFIELD_BIT(6);
+    uint32_t pipe_control_flush_enable : BITFIELD_BIT(7);
+    uint32_t notify_enable : BITFIELD_BIT(8);
+    uint32_t indirect_state_pointers_disable : BITFIELD_BIT(9);
+    uint32_t texture_cache_invalidation_enable : BITFIELD_BIT(10);
+    uint32_t instruction_cache_invalidate_enable : BITFIELD_BIT(11);
+    uint32_t render_target_cache_flush_enable : BITFIELD_BIT(12);
+    uint32_t depth_stall_enable : BITFIELD_BIT(13);
+    uint32_t post_sync_operation : BITFIELD_RANGE(14, 15);
+    uint32_t generic_media_state_clear : BITFIELD_BIT(16);
+    uint32_t synchronize_gfdt_surface : BITFIELD_BIT(17);
+    uint32_t tlb_invalidate : BITFIELD_BIT(18);
+    uint32_t global_snapshot_count_reset : BITFIELD_BIT(19);
+    uint32_t cs_stall : BITFIELD_BIT(20);
+    uint32_t store_data_index : BITFIELD_BIT(21);
+    uint32_t protected_memory_enable : BITFIELD_BIT(22);
+    uint32_t reserved : BITFIELD_RANGE(23, 31);
+  } dw1;
+
+  struct {
+    uint32_t reserved : BITFIELD_RANGE(0, 1);
+    uint32_t destination_address_type : BITFIELD_BIT(2);
+    uint32_t address : BITFIELD_RANGE(3, 31);
+  } dw2;
+
+  struct {
+    uint32_t data;
+  } dw3;
+
+  struct {
+    uint32_t data;
+  } dw4;
+
+  struct {
+    uint32_t data;
+  } dw5;
+} gen8_pipe_control_t;
+
 typedef struct gen6_sampler_state
 {
   struct {
