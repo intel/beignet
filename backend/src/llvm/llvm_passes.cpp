@@ -355,14 +355,16 @@ namespace gbe
       CompTy = dyn_cast<CompositeType>(CompTy->getTypeAtIndex(TypeIndex));
     }
 
-    //insert addition of new offset before GEPInst
-    Constant* newConstOffset = 
-      ConstantInt::get(IntegerType::get(GEPInst->getContext(), 
-            ptrSize),
-          constantOffset);
-    currentAddrInst = 
-      BinaryOperator::Create(Instruction::Add, currentAddrInst, 
-          newConstOffset, "", GEPInst);
+    //insert addition of new offset before GEPInst when it is not zero
+    if (constantOffset != 0) {
+      Constant* newConstOffset =
+        ConstantInt::get(IntegerType::get(GEPInst->getContext(),
+              ptrSize),
+            constantOffset);
+      currentAddrInst =
+        BinaryOperator::Create(Instruction::Add, currentAddrInst,
+            newConstOffset, "", GEPInst);
+    }
 
     //convert offset to ptr type (nop)
     IntToPtrInst* intToPtrInst = 
