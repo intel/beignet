@@ -92,7 +92,6 @@
 #include "llvm/Support/CFG.h"
 #endif
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetLibraryInfo.h"
 
 #include "llvm/llvm_gen_backend.hpp"
 #include "sys/map.hpp"
@@ -159,7 +158,6 @@ namespace gbe {
     bool scalarizeShuffleVector(ShuffleVectorInst*);
     bool scalarizePHI(PHINode*);
     void scalarizeArgs(Function& F);
-    bool isLibFuncFunc(CallInst* call, LibFunc::Func& Func);
     // ...
 
     // Helpers to make the actual multiple scalar calls, one per
@@ -286,7 +284,6 @@ namespace gbe {
           default: return false;
           case Intrinsic::sqrt:
           case Intrinsic::ceil:
-          case Intrinsic::copysign:
           case Intrinsic::trunc:
               return true;
         }
@@ -645,27 +642,6 @@ namespace gbe {
     return II;
   }
 
-  bool Scalarize::isLibFuncFunc(CallInst* call, LibFunc::Func& Func)
-  {
-    TargetLibraryInfo *LibInfo;
-    Function *F = call->getCalledFunction();
-
-    LibInfo = getAnalysisIfAvailable<TargetLibraryInfo>();
-    if (!F->hasLocalLinkage() && F->hasName() && LibInfo &&
-        LibInfo->getLibFunc(F->getName(), Func) &&
-        LibInfo->hasOptimizedCodeGen(Func)) {
-      // Non-read-only functions are never treated as intrinsics.
-      if (!call->onlyReadsMemory())
-        return false;
-
-      // Conversion happens only for FP calls.
-      if (!call->getArgOperand(0)->getType()->isFloatingPointTy())
-        return false;
-      return true;
-    }
-    return false;
-  }
-
   bool Scalarize::scalarizeFuncCall(CallInst* call) {
     if (Function *F = call->getCalledFunction()) {
       if (F->getIntrinsicID() != 0) {   //Intrinsic functions
@@ -675,7 +651,6 @@ namespace gbe {
           default: GBE_ASSERTM(false, "Unsupported Intrinsic");
           case Intrinsic::sqrt:
           case Intrinsic::ceil:
-          case Intrinsic::copysign:
           case Intrinsic::trunc:
           {
             scalarizePerComponent(call);
@@ -683,21 +658,6 @@ namespace gbe {
           break;
         }
       } else {
-        LibFunc::Func Func;
-        if(isLibFuncFunc(call, Func))
-        {
-          switch (Func) {
-            case LibFunc::copysignf:
-            {
-              scalarizePerComponent(call);
-            }
-            break;
-            default:
-              GBE_ASSERTM(false, "Unsupported libFuncs");
-          }
-          return true;
-        }
-
         Value *Callee = call->getCalledValue();
         const std::string fnName = Callee->getName();
         auto genIntrinsicID = intrinsicMap.find(fnName);

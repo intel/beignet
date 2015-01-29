@@ -151,7 +151,6 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Target/TargetLibraryInfo.h"
 
 #include "llvm/llvm_gen_backend.hpp"
 #include "ir/context.hpp"
@@ -660,8 +659,6 @@ namespace gbe
       ir::ImmediateIndex processSeqConstant(ConstantDataSequential *seq,
                                             int index, ConstTypeId tid);
       ir::ImmediateIndex processConstantVector(ConstantVector *cv, int index);
-
-      bool isLibFuncFunc(CallInst* call, LibFunc::Func& Func);
   };
 
   char GenWriter::ID = 0;
@@ -2756,27 +2753,6 @@ error:
     }
   }
 
-  bool GenWriter::isLibFuncFunc(CallInst* call, LibFunc::Func& Func)
-  {
-    TargetLibraryInfo *LibInfo;
-    Function *F = call->getCalledFunction();
-
-    LibInfo = getAnalysisIfAvailable<TargetLibraryInfo>();
-    if (!F->hasLocalLinkage() && F->hasName() && LibInfo &&
-        LibInfo->getLibFunc(F->getName(), Func) &&
-        LibInfo->hasOptimizedCodeGen(Func)) {
-      // Non-read-only functions are never treated as intrinsics.
-      if (!call->onlyReadsMemory())
-        return false;
-
-      // Conversion happens only for FP calls.
-      if (!call->getArgOperand(0)->getType()->isFloatingPointTy())
-        return false;
-      return true;
-    }
-    return false;
-  }
-
   void GenWriter::regAllocateCallInst(CallInst &I) {
     Value *dst = &I;
     Value *Callee = I.getCalledValue();
@@ -2822,7 +2798,6 @@ error:
           case Intrinsic::ceil:
           case Intrinsic::fma:
           case Intrinsic::trunc:
-          case Intrinsic::copysign:
             this->newRegister(&I);
           break;
           case Intrinsic::fabs:
@@ -2834,30 +2809,6 @@ error:
         return;
       }
     }
-
-    if (Function *F = I.getCalledFunction()) {
-      // Most intrinsics don't become function calls, but some might.
-      // sin, cos, exp and log are always calls.
-      if (F->getIntrinsicID() != Intrinsic::not_intrinsic) {
-        switch (F->getIntrinsicID()) {
-          default:
-          GBE_ASSERTM(false, "Unsupported intrinsics");
-        }
-      }
-        LibFunc::Func Func;
-        if(isLibFuncFunc(&I, Func))
-        {
-          switch (Func) {
-            case LibFunc::copysignf:
-              this->newRegister(&I);
-            break;
-            default:
-              GBE_ASSERTM(false, "Unsupported libFuncs");
-          }
-          return;
-        }
-    }
-
     // Get the name of the called function and handle it
     const std::string fnName = Callee->getName();
     auto genIntrinsicID = intrinsicMap.find(fnName);
@@ -3348,64 +3299,9 @@ error:
             ctx.RNDZ(dstType, dst, src);
           }
           break;
-          case Intrinsic::copysign:
-          {
-            ir::Type srcType = getType(ctx, I.getType());
-            const ir::Register dst = this->getRegister(&I);
-            const ir::Register src0 = this->getRegister(I.getOperand(0));
-            const ir::Register src1 = this->getRegister(I.getOperand(1));
-            const ir::Register cmp = ctx.reg(ir::FAMILY_BOOL);
-
-            const ir::Register tmp1 = ctx.reg(getFamily(srcType));
-            const ir::Register tmp2 = ctx.reg(getFamily(srcType));
-
-            const ir::RegisterFamily family = getFamily(srcType);
-            const ir::ImmediateIndex zero = ctx.newFloatImmediate((float)0.0);
-            const ir::Register zeroReg = ctx.reg(family);
-            ctx.LOADI(srcType, zeroReg, zero);
-
-            ctx.GE(srcType, cmp, src1, zeroReg);
-            ctx.ALU1(ir::OP_ABS, srcType, tmp1, src0);
-            ctx.SUB(srcType, tmp2, zeroReg, tmp1);
-            ctx.SEL(srcType, dst, cmp, tmp1, tmp2);
-          }
-          break;
           default: NOT_IMPLEMENTED;
         }
       } else {
-
-        LibFunc::Func Func;
-        if(isLibFuncFunc(&I, Func))
-        {
-          switch (Func) {
-            case LibFunc::copysignf:
-              {
-                ir::Type srcType = getType(ctx, I.getType());
-                const ir::Register dst = this->getRegister(&I);
-                const ir::Register src0 = this->getRegister(I.getOperand(0));
-                const ir::Register src1 = this->getRegister(I.getOperand(1));
-                const ir::Register cmp = ctx.reg(ir::FAMILY_BOOL);
-
-                const ir::Register tmp1 = ctx.reg(getFamily(srcType));
-                const ir::Register tmp2 = ctx.reg(getFamily(srcType));
-
-                const ir::RegisterFamily family = getFamily(srcType);
-                const ir::ImmediateIndex zero = ctx.newFloatImmediate((float)0.0);
-                const ir::Register zeroReg = ctx.reg(family);
-                ctx.LOADI(srcType, zeroReg, zero);
-
-                ctx.GE(srcType, cmp, src1, zeroReg);
-                ctx.ALU1(ir::OP_ABS, srcType, tmp1, src0);
-                ctx.SUB(srcType, tmp2, zeroReg, tmp1);
-                ctx.SEL(srcType, dst, cmp, tmp1, tmp2);
-              }
-              break;
-            default:
-              GBE_ASSERTM(false, "Unsupported libFuncs");
-          }
-          return;
-        }
-
         // Get the name of the called function and handle it
         Value *Callee = I.getCalledValue();
         const std::string fnName = Callee->getName();
