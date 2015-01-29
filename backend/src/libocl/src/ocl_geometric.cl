@@ -60,30 +60,23 @@ OVERLOADABLE float distance(float2 x, float2 y) { return length(x-y); }
 OVERLOADABLE float distance(float3 x, float3 y) { return length(x-y); }
 OVERLOADABLE float distance(float4 x, float4 y) { return length(x-y); }
 OVERLOADABLE float normalize(float x) {
-  union { float f; unsigned u; } u;
-  u.f = x;
-  if(u.u == 0)
-    return 0.f;
-  if(isnan(x))
-    return NAN;
-  return u.u < 0x7fffffff ? 1.f : -1.f;
+  float m = length(x);
+  m = m == 0.0f ? 1.0f : m;
+  return x / m;
 }
 OVERLOADABLE float2 normalize(float2 x) {
   float m = length(x);
-  if(m == 0)
-    return 0;
+  m = m == 0.0f ? 1.0f : m;
   return x / m;
 }
 OVERLOADABLE float3 normalize(float3 x) {
   float m = length(x);
-  if(m == 0)
-    return 0;
+  m = m == 0.0f ? 1.0f : m;
   return x / m;
 }
 OVERLOADABLE float4 normalize(float4 x) {
   float m = length(x);
-  if(m == 0)
-    return 0;
+  m = m == 0.0f ? 1.0f : m;
   return x / m;
 }
 
