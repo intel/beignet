@@ -230,5 +230,50 @@
 #define IS_BROADWELL(devid) (IS_BRW_GT1(devid) || IS_BRW_GT2(devid) || IS_BRW_GT3(devid))
 #define IS_GEN8(devid)      IS_BROADWELL(devid)
 
+/* SKL */
+#define PCI_CHIP_SKYLAKE_ULT_GT1	0x1906   /* Intel(R) Skylake ULT - GT1 */
+#define PCI_CHIP_SKYLAKE_ULT_GT2	0x1916   /* Intel(R) Skylake ULT - GT2 */
+#define PCI_CHIP_SKYLAKE_ULT_GT3	0x1926   /* Intel(R) Skylake ULT - GT3 */
+#define PCI_CHIP_SKYLAKE_ULT_GT2F	0x1921   /* Intel(R) Skylake ULT - GT2F */
+#define PCI_CHIP_SKYLAKE_ULX_GT1	0x190E   /* Intel(R) Skylake ULX - GT1 */
+#define PCI_CHIP_SKYLAKE_ULX_GT2	0x191E   /* Intel(R) Skylake ULX - GT2 */
+#define PCI_CHIP_SKYLAKE_DT_GT1		0x1902   /* Intel(R) Skylake Desktop - GT1 */
+#define PCI_CHIP_SKYLAKE_DT_GT2		0x1912   /* Intel(R) Skylake Desktop - GT2 */
+#define PCI_CHIP_SKYLAKE_HALO_GT1 	0x190B   /* Intel(R) Skylake HALO - GT1 */
+#define PCI_CHIP_SKYLAKE_HALO_GT2	0x191B   /* Intel(R) Skylake HALO - GT2 */
+#define PCI_CHIP_SKYLAKE_HALO_GT3	0x192B   /* Intel(R) Skylake HALO - GT3 */
+#define PCI_CHIP_SKYLAKE_HALO_GT4	0x193B   /* Intel(R) Skylake HALO - GT4 */
+#define PCI_CHIP_SKYLAKE_SRV_GT1	0x190A   /* Intel(R) Skylake Server - GT1 */
+#define PCI_CHIP_SKYLAKE_SRV_GT2	0x191A   /* Intel(R) Skylake Server - GT2 */
+#define PCI_CHIP_SKYLAKE_SRV_GT3	0x192A   /* Intel(R) Skylake Server - GT3 */
+#define PCI_CHIP_SKYLAKE_SRV_GT4	0x193A   /* Intel(R) Skylake Server - GT4 */
+
+#define IS_SKL_GT1(devid)               \
+  (devid == PCI_CHIP_SKYLAKE_ULT_GT1 ||   \
+   devid == PCI_CHIP_SKYLAKE_ULX_GT1 || \
+   devid == PCI_CHIP_SKYLAKE_DT_GT1 || \
+   devid == PCI_CHIP_SKYLAKE_HALO_GT1 || \
+   devid == PCI_CHIP_SKYLAKE_SRV_GT1)
+
+#define IS_SKL_GT2(devid)               \
+  (devid == PCI_CHIP_SKYLAKE_ULT_GT2 ||   \
+   devid == PCI_CHIP_SKYLAKE_ULT_GT2F ||   \
+   devid == PCI_CHIP_SKYLAKE_ULX_GT2 || \
+   devid == PCI_CHIP_SKYLAKE_DT_GT2 || \
+   devid == PCI_CHIP_SKYLAKE_HALO_GT2 || \
+   devid == PCI_CHIP_SKYLAKE_SRV_GT2)
+
+#define IS_SKL_GT3(devid)               \
+  (devid == PCI_CHIP_SKYLAKE_ULT_GT3 ||   \
+   devid == PCI_CHIP_SKYLAKE_HALO_GT3 || \
+   devid == PCI_CHIP_SKYLAKE_SRV_GT3)
+
+#define IS_SKL_GT4(devid)               \
+  (devid == PCI_CHIP_SKYLAKE_HALO_GT4 || \
+   devid == PCI_CHIP_SKYLAKE_SRV_GT4)
+
+#define IS_SKYLAKE(devid) (IS_SKL_GT1(devid) || IS_SKL_GT2(devid) || IS_SKL_GT3(devid) || IS_SKL_GT4(devid))
+#define IS_GEN9(devid)      IS_SKYLAKE(devid)
+
 #endif /* __CL_DEVICE_DATA_H__ */
 

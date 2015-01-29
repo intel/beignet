@@ -140,6 +140,51 @@ static struct _cl_device_id intel_brw_gt3_device = {
 #include "cl_gen75_device.h"
 };
 
+/* XXX we clone brw now */
+static struct _cl_device_id intel_skl_gt1_device = {
+  INIT_ICD(dispatch)
+  .max_compute_unit = 6,
+  .max_thread_per_unit = 7,
+  .sub_slice_count = 2,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+#include "cl_gen75_device.h"
+};
+
+static struct _cl_device_id intel_skl_gt2_device = {
+  INIT_ICD(dispatch)
+  .max_compute_unit = 24,
+  .max_thread_per_unit = 7,
+  .sub_slice_count = 3,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+#include "cl_gen75_device.h"
+};
+
+static struct _cl_device_id intel_skl_gt3_device = {
+  INIT_ICD(dispatch)
+  .max_compute_unit = 48,
+  .max_thread_per_unit = 7,
+  .sub_slice_count = 6,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+#include "cl_gen75_device.h"
+};
+
+static struct _cl_device_id intel_skl_gt4_device = {
+  INIT_ICD(dispatch)
+  .max_compute_unit = 72,
+  .max_thread_per_unit = 7,
+  .sub_slice_count = 9,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+#include "cl_gen75_device.h"
+};
+
 
 LOCAL cl_device_id
 cl_get_gt_device(void)
@@ -378,6 +423,62 @@ brw_gt3_break:
       ret = &intel_brw_gt3_device;
       break;
 
+	  case PCI_CHIP_SKYLAKE_ULT_GT1:
+		DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake ULT GT1");
+	  case PCI_CHIP_SKYLAKE_ULX_GT1:
+		DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake ULX GT1");
+	  case PCI_CHIP_SKYLAKE_DT_GT1:
+		DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake Desktop GT1");
+	  case PCI_CHIP_SKYLAKE_HALO_GT1:
+		DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake Halo GT1");
+	  case PCI_CHIP_SKYLAKE_SRV_GT1:
+		DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake Server GT1");
+skl_gt1_break:
+		intel_skl_gt1_device.vendor_id = device_id;
+		intel_skl_gt1_device.platform = intel_platform;
+		ret = &intel_skl_gt1_device;
+		break;
+
+	  case PCI_CHIP_SKYLAKE_ULT_GT2:
+		DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake ULT GT2");
+	  case PCI_CHIP_SKYLAKE_ULT_GT2F:
+		DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake ULT GT2F");
+	  case PCI_CHIP_SKYLAKE_ULX_GT2:
+		DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake ULX GT2");
+	  case PCI_CHIP_SKYLAKE_DT_GT2:
+		DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake Desktop GT2");
+	  case PCI_CHIP_SKYLAKE_HALO_GT2:
+		DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake Halo GT2");
+	  case PCI_CHIP_SKYLAKE_SRV_GT2:
+		DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake Server GT2");
+skl_gt2_break:
+		intel_skl_gt2_device.vendor_id = device_id;
+		intel_skl_gt2_device.platform = intel_platform;
+		ret = &intel_skl_gt2_device;
+		break;
+
+	  case PCI_CHIP_SKYLAKE_ULT_GT3:
+		DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake ULT GT3");
+      case PCI_CHIP_SKYLAKE_HALO_GT3:
+		DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake Halo GT3");
+	  case PCI_CHIP_SKYLAKE_SRV_GT3:
+		DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake Server GT3");
+skl_gt3_break:
+		intel_skl_gt3_device.vendor_id = device_id;
+		intel_skl_gt3_device.platform = intel_platform;
+		ret = &intel_skl_gt3_device;
+		break;
+
+      case PCI_CHIP_SKYLAKE_HALO_GT4:
+		DECL_INFO_STRING(skl_gt4_break, intel_skl_gt4_device, name, "Intel(R) HD Graphics Skylake Halo GT4");
+	  case PCI_CHIP_SKYLAKE_SRV_GT4:
+		DECL_INFO_STRING(skl_gt4_break, intel_skl_gt4_device, name, "Intel(R) HD Graphics Skylake Server GT4");
+skl_gt4_break:
+		intel_skl_gt4_device.vendor_id = device_id;
+		intel_skl_gt4_device.platform = intel_platform;
+		ret = &intel_skl_gt4_device;
+		break;
+
     case PCI_CHIP_SANDYBRIDGE_BRIDGE:
     case PCI_CHIP_SANDYBRIDGE_GT1:
     case PCI_CHIP_SANDYBRIDGE_GT2:
@@ -503,7 +604,11 @@ cl_get_device_info(cl_device_id     device,
                device != &intel_hsw_gt3_device &&
                device != &intel_brw_gt1_device &&
                device != &intel_brw_gt2_device &&
-               device != &intel_brw_gt3_device
+               device != &intel_brw_gt3_device &&
+               device != &intel_skl_gt1_device &&
+               device != &intel_skl_gt2_device &&
+               device != &intel_skl_gt3_device &&
+               device != &intel_skl_gt4_device
                ))
     return CL_INVALID_DEVICE;
 
@@ -608,7 +713,11 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
                device != &intel_hsw_gt3_device &&
                device != &intel_brw_gt1_device &&
                device != &intel_brw_gt2_device &&
-               device != &intel_brw_gt3_device))
+               device != &intel_brw_gt3_device &&
+               device != &intel_skl_gt1_device &&
+               device != &intel_skl_gt2_device &&
+               device != &intel_skl_gt3_device &&
+               device != &intel_skl_gt4_device))
     return CL_INVALID_DEVICE;
   if (ver == NULL)
     return CL_SUCCESS;
@@ -622,6 +731,9 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
   } else if (device == &intel_brw_gt1_device || device == &intel_brw_gt2_device
         || device == &intel_brw_gt3_device) {
     *ver = 8;
+  } else if (device == &intel_skl_gt1_device || device == &intel_skl_gt2_device
+        || device == &intel_skl_gt3_device || device == &intel_skl_gt4_device) {
+    *ver = 9;
   } else
     return CL_INVALID_VALUE;
 
@@ -703,7 +815,11 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
                device != &intel_hsw_gt3_device &&
                device != &intel_brw_gt1_device &&
                device != &intel_brw_gt2_device &&
-               device != &intel_brw_gt3_device))
+               device != &intel_brw_gt3_device &&
+               device != &intel_skl_gt1_device &&
+               device != &intel_skl_gt2_device &&
+               device != &intel_skl_gt3_device &&
+               device != &intel_skl_gt4_device))
     return CL_INVALID_DEVICE;
 
   CHECK_KERNEL(kernel);
