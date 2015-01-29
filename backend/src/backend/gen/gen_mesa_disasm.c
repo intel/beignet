@@ -1154,6 +1154,8 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
     gen_version = 75;
   } else if (IS_BROADWELL(deviceID)) {
     gen_version = 80;
+  } else if (IS_SKYLAKE(deviceID)) {
+    gen_version = 90;
   }
 
   if (PRED_CTRL(inst)) {

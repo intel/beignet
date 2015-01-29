@@ -347,6 +347,55 @@ intel_gpgpu_set_base_address_gen8(intel_gpgpu_t *gpgpu)
     ADVANCE_BATCH(gpgpu->batch);
 }
 
+static void
+intel_gpgpu_set_base_address_gen9(intel_gpgpu_t *gpgpu)
+{
+    const uint32_t def_cc = cl_gpgpu_get_cache_ctrl(); /* default Cache Control value */
+    BEGIN_BATCH(gpgpu->batch, 19);
+    OUT_BATCH(gpgpu->batch, CMD_STATE_BASE_ADDRESS | 17);
+    /* 0, Gen State Mem Obj CC, Stateless Mem Obj CC, Stateless Access Write Back */
+    OUT_BATCH(gpgpu->batch, 0 | (def_cc << 4) | (0 << 1)| BASE_ADDRESS_MODIFY);    /* General State Base Addr   */
+    OUT_BATCH(gpgpu->batch, 0);
+    OUT_BATCH(gpgpu->batch, 0 | (def_cc << 16));
+    /* 0, State Mem Obj CC */
+    /* We use a state base address for the surface heap since IVB clamp the
+     * binding table pointer at 11 bits. So, we cannot use pointers directly while
+     * using the surface heap
+     */
+    assert(gpgpu->aux_offset.surface_heap_offset % 4096 == 0);
+    OUT_RELOC(gpgpu->batch, gpgpu->aux_buf.bo,
+              I915_GEM_DOMAIN_SAMPLER,
+              I915_GEM_DOMAIN_SAMPLER,
+              gpgpu->aux_offset.surface_heap_offset + (0 | (def_cc << 4) | (0 << 1)| BASE_ADDRESS_MODIFY));
+    OUT_BATCH(gpgpu->batch, 0);
+    OUT_RELOC(gpgpu->batch, gpgpu->aux_buf.bo,
+              I915_GEM_DOMAIN_RENDER,
+              I915_GEM_DOMAIN_RENDER,
+              (0 | (def_cc << 4) | (0 << 1)| BASE_ADDRESS_MODIFY)); /* Dynamic State Base Addr */
+    OUT_BATCH(gpgpu->batch, 0);
+    OUT_BATCH(gpgpu->batch, 0 | (def_cc << 4) | BASE_ADDRESS_MODIFY); /* Indirect Obj Base Addr */
+    OUT_BATCH(gpgpu->batch, 0);
+    //OUT_BATCH(gpgpu->batch, 0 | (def_cc << 4) | BASE_ADDRESS_MODIFY); /* Instruction Base Addr  */
+    OUT_RELOC(gpgpu->batch, (drm_intel_bo *)gpgpu->ker->bo,
+              I915_GEM_DOMAIN_INSTRUCTION,
+              I915_GEM_DOMAIN_INSTRUCTION,
+              0 + (0 | (def_cc << 4) | (0 << 1)| BASE_ADDRESS_MODIFY));
+    OUT_BATCH(gpgpu->batch, 0);
+
+    OUT_BATCH(gpgpu->batch, 0xfffff000 | BASE_ADDRESS_MODIFY);
+    /* According to mesa i965 driver code, we must set the dynamic state access upper bound
+     * to a valid bound value, otherwise, the border color pointer may be rejected and you
+     * may get incorrect border color. This is a known hardware bug. */
+    OUT_BATCH(gpgpu->batch, 0xfffff000 | BASE_ADDRESS_MODIFY);
+    OUT_BATCH(gpgpu->batch, 0xfffff000 | BASE_ADDRESS_MODIFY);
+    OUT_BATCH(gpgpu->batch, 0xfffff000 | BASE_ADDRESS_MODIFY);
+    /* Bindless surface state base address */
+    OUT_BATCH(gpgpu->batch, (def_cc << 4) | BASE_ADDRESS_MODIFY);
+    OUT_BATCH(gpgpu->batch, 0);
+    OUT_BATCH(gpgpu->batch, 0xfffff000);
+    ADVANCE_BATCH(gpgpu->batch);
+}
+
 uint32_t intel_gpgpu_get_scratch_index_gen7(uint32_t size) {
   return size / 1024 - 1;
 }
@@ -1054,7 +1103,8 @@ static uint32_t get_surface_type(intel_gpgpu_t *gpgpu, int index, cl_mem_object_
   uint32_t surface_type;
   if (((IS_IVYBRIDGE(gpgpu->drv->device_id) ||
         IS_HASWELL(gpgpu->drv->device_id) ||
-        IS_BROADWELL(gpgpu->drv->device_id))) &&
+        IS_BROADWELL(gpgpu->drv->device_id) ||
+        IS_SKYLAKE(gpgpu->drv->device_id))) &&
       index >= BTI_WORKAROUND_IMAGE_OFFSET + BTI_RESERVED_NUM &&
       type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
     surface_type = I965_SURFACE_2D;
@@ -1950,6 +2000,24 @@ intel_set_gpgpu_callbacks(int device_id)
     intel_gpgpu_post_action = intel_gpgpu_post_action_gen7; //BDW need not restore SLM, same as gen7
     intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_gen7;
     intel_gpgpu_set_base_address = intel_gpgpu_set_base_address_gen8;
+    intel_gpgpu_setup_bti = intel_gpgpu_setup_bti_gen8;
+    intel_gpgpu_load_vfe_state = intel_gpgpu_load_vfe_state_gen8;
+    cl_gpgpu_walker = (cl_gpgpu_walker_cb *)intel_gpgpu_walker_gen8;
+    intel_gpgpu_build_idrt = intel_gpgpu_build_idrt_gen8;
+    intel_gpgpu_load_curbe_buffer = intel_gpgpu_load_curbe_buffer_gen8;
+    intel_gpgpu_load_idrt = intel_gpgpu_load_idrt_gen8;
+    cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler_gen8;
+    intel_gpgpu_pipe_control = intel_gpgpu_pipe_control_gen7;
+    return;
+  }
+  if (IS_SKYLAKE(device_id)) {
+    cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen8;
+    intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen8;
+    cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen8;
+    intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen8;
+    intel_gpgpu_post_action = intel_gpgpu_post_action_gen7; //BDW need not restore SLM, same as gen7
+    intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_gen7;
+    intel_gpgpu_set_base_address = intel_gpgpu_set_base_address_gen9;
     intel_gpgpu_setup_bti = intel_gpgpu_setup_bti_gen8;
     intel_gpgpu_load_vfe_state = intel_gpgpu_load_vfe_state_gen8;
     cl_gpgpu_walker = (cl_gpgpu_walker_cb *)intel_gpgpu_walker_gen8;

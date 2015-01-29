@@ -207,7 +207,7 @@ cl_command_queue_ND_range(cl_command_queue queue,
   /* Check that the user did not forget any argument */
   TRY (cl_kernel_check_args, k);
 
-  if (ver == 7 || ver == 75 || ver == 8)
+  if (ver == 7 || ver == 75 || ver == 8 || ver == 9)
     TRY (cl_command_queue_ND_range_gen7, queue, k, work_dim, global_wk_off, global_wk_sz, local_wk_sz);
   else
     FATAL ("Unknown Gen Device");

@@ -170,7 +170,9 @@ intel_driver_init(intel_driver_t *driver, int dev_fd)
   else
     FATAL ("Unsupported Gen for emulation");
 #else
-  if (IS_GEN8(driver->device_id))
+  if (IS_GEN9(driver->device_id))
+    driver->gen_ver = 9;
+  else if (IS_GEN8(driver->device_id))
     driver->gen_ver = 8;
   else if (IS_GEN75(driver->device_id))
     driver->gen_ver = 75;

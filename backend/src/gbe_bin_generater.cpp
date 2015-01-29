@@ -178,6 +178,10 @@ void program_build_instance::serialize_program(void) throw(int)
         src_hw_info[0]='B';
         src_hw_info[1]='D';
         src_hw_info[2]='W';
+    }else if(IS_SKYLAKE(gen_pci_id)){
+        src_hw_info[0]='S';
+        src_hw_info[1]='K';
+        src_hw_info[2]='L';
     }
 
     if (str_fmt_out) {

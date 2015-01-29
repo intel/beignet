@@ -170,6 +170,8 @@ namespace gbe {
       ctx = GBE_NEW(Gen75Context, unit, name, deviceID, relaxMath);
     } else if (IS_BROADWELL(deviceID)) {
       ctx = GBE_NEW(Gen8Context, unit, name, deviceID, relaxMath);
+    } else if (IS_SKYLAKE(deviceID)) {
+      ctx = GBE_NEW(Gen8Context, unit, name, deviceID, relaxMath);
     }
     GBE_ASSERTM(ctx != NULL, "Fail to create the gen context\n");
 
@@ -211,7 +213,8 @@ namespace gbe {
                                       (IS_IVYBRIDGE(typeA) && !strcmp(src_hw_info, "BYT")) ||  \
                                       (IS_BAYTRAIL_T(typeA) && !strcmp(src_hw_info, "BYT")) ||  \
                                       (IS_HASWELL(typeA) && !strcmp(src_hw_info, "HSW")) ||  \
-                                      (IS_BROADWELL(typeA) && !strcmp(src_hw_info, "BDW")) )
+                                      (IS_BROADWELL(typeA) && !strcmp(src_hw_info, "BDW")) ||  \
+                                      (IS_SKYLAKE(typeA) && !strcmp(src_hw_info, "SKL")) )
 
   static gbe_program genProgramNewFromBinary(uint32_t deviceID, const char *binary, size_t size) {
     using namespace gbe;
@@ -306,6 +309,10 @@ namespace gbe {
         src_hw_info[0]='B';
         src_hw_info[1]='D';
         src_hw_info[2]='W';
+      }else if(IS_SKYLAKE(prog->deviceID)){
+        src_hw_info[0]='S';
+        src_hw_info[1]='K';
+        src_hw_info[2]='L';
       }
       FILL_DEVICE_ID(*binary, src_hw_info);
       memcpy(*binary+BINARY_HEADER_LENGTH, oss.str().c_str(), sz*sizeof(char));
