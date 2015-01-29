@@ -1433,6 +1433,50 @@ intel_gpgpu_build_idrt_gen8(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
   desc->desc6.slm_sz = slm_sz;
 }
 
+static void
+intel_gpgpu_build_idrt_gen9(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
+{
+  gen8_interface_descriptor_t *desc;
+
+  desc = (gen8_interface_descriptor_t*) (gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.idrt_offset);
+
+  memset(desc, 0, sizeof(*desc));
+  desc->desc0.kernel_start_pointer = 0; /* reloc */
+  desc->desc2.single_program_flow = 0;
+  desc->desc2.floating_point_mode = 0; /* use IEEE-754 rule */
+  desc->desc6.rounding_mode = 0; /* round to nearest even */
+
+  assert((gpgpu->aux_buf.bo->offset + gpgpu->aux_offset.sampler_state_offset) % 32 == 0);
+  desc->desc3.sampler_state_pointer = gpgpu->aux_offset.sampler_state_offset >> 5;
+  desc->desc4.binding_table_entry_count = 0; /* no prefetch */
+  desc->desc4.binding_table_pointer = 0;
+  desc->desc5.curbe_read_len = kernel->curbe_sz / 32;
+  desc->desc5.curbe_read_offset = 0;
+
+  /* Barriers / SLM are automatically handled on Gen7+ */
+  size_t slm_sz = kernel->slm_sz;
+  /* group_threads_num should not be set to 0 even if the barrier is disabled per bspec */
+  desc->desc6.group_threads_num = kernel->thread_n;
+  desc->desc6.barrier_enable = kernel->use_slm;
+  if (slm_sz == 0)
+    slm_sz = 0;
+  else if (slm_sz <= 1*KB)
+    slm_sz = 1;
+  else if (slm_sz <= 2*KB)
+    slm_sz = 2;
+  else if (slm_sz <= 4*KB)
+    slm_sz = 3;
+  else if (slm_sz <= 8*KB)
+    slm_sz = 4;
+  else if (slm_sz <= 16*KB)
+    slm_sz = 5;
+  else if (slm_sz <= 32*KB)
+    slm_sz = 6;
+  else
+    slm_sz = 7;
+  desc->desc6.slm_sz = slm_sz;
+}
+
 static int
 intel_gpgpu_upload_curbes(intel_gpgpu_t *gpgpu, const void* data, uint32_t size)
 {
@@ -2040,7 +2084,7 @@ intel_set_gpgpu_callbacks(int device_id)
     intel_gpgpu_setup_bti = intel_gpgpu_setup_bti_gen8;
     intel_gpgpu_load_vfe_state = intel_gpgpu_load_vfe_state_gen8;
     cl_gpgpu_walker = (cl_gpgpu_walker_cb *)intel_gpgpu_walker_gen8;
-    intel_gpgpu_build_idrt = intel_gpgpu_build_idrt_gen8;
+    intel_gpgpu_build_idrt = intel_gpgpu_build_idrt_gen9;
     intel_gpgpu_load_curbe_buffer = intel_gpgpu_load_curbe_buffer_gen8;
     intel_gpgpu_load_idrt = intel_gpgpu_load_idrt_gen8;
     cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler_gen8;

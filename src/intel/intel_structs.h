@@ -142,8 +142,9 @@ typedef struct gen8_interface_descriptor
   } desc5;
 
   struct {
-    uint32_t group_threads_num:8;        /* 0..64, 0 - no barrier use */
-    uint32_t barrier_return_byte:8;
+    uint32_t group_threads_num:10;        /* 0..64, 0 - no barrier use */
+    uint32_t pad:5;
+    uint32_t global_barrier_enable:1;
     uint32_t slm_sz:5;                   /* 0..16 - 0K..64K */
     uint32_t barrier_enable:1;
     uint32_t rounding_mode:2;
