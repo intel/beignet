@@ -1158,10 +1158,12 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
                               uint32_t obj_bo_offset,
                               uint32_t format,
                               cl_mem_object_type type,
+                              uint32_t bpp,
                               int32_t w,
                               int32_t h,
                               int32_t depth,
                               int32_t pitch,
+                              int32_t slice_pitch,
                               int32_t tiling)
 {
   surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
@@ -1204,10 +1206,12 @@ intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
                               uint32_t obj_bo_offset,
                               uint32_t format,
                               cl_mem_object_type type,
+                              uint32_t bpp,
                               int32_t w,
                               int32_t h,
                               int32_t depth,
                               int32_t pitch,
+                              int32_t slice_pitch,
                               int32_t tiling)
 {
   surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
@@ -1252,10 +1256,12 @@ intel_gpgpu_bind_image_gen8(intel_gpgpu_t *gpgpu,
                             uint32_t obj_bo_offset,
                             uint32_t format,
                             cl_mem_object_type type,
+                            uint32_t bpp,
                             int32_t w,
                             int32_t h,
                             int32_t depth,
                             int32_t pitch,
+                            int32_t slice_pitch,
                             int32_t tiling)
 {
   surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
@@ -1268,6 +1274,82 @@ intel_gpgpu_bind_image_gen8(intel_gpgpu_t *gpgpu,
     ss->ss0.surface_array = 1;
     ss->ss1.surface_qpitch = (h + 3)/4;
   }
+  ss->ss0.horizontal_alignment = 1;
+  ss->ss0.vertical_alignment = 1;
+
+  if (tiling == GPGPU_TILE_X) {
+    ss->ss0.tile_mode = GEN8_TILEMODE_XMAJOR;
+  } else if (tiling == GPGPU_TILE_Y) {
+    ss->ss0.tile_mode = GEN8_TILEMODE_YMAJOR;
+  } else
+    assert(tiling == GPGPU_NO_TILE);// W mode is not supported now.
+
+  ss->ss2.width = w - 1;
+  ss->ss2.height = h - 1;
+  ss->ss3.depth = depth - 1;
+
+  ss->ss8.surface_base_addr_lo = (obj_bo->offset64 + obj_bo_offset) & 0xffffffff;
+  ss->ss9.surface_base_addr_hi = ((obj_bo->offset64 + obj_bo_offset) >> 32) & 0xffffffff;
+
+  ss->ss4.render_target_view_ext = depth - 1;
+  ss->ss4.min_array_elt = 0;
+  ss->ss3.surface_pitch = pitch - 1;
+
+  ss->ss1.mem_obj_ctrl_state = cl_gpgpu_get_cache_ctrl();
+  ss->ss7.shader_channel_select_red = I965_SURCHAN_SELECT_RED;
+  ss->ss7.shader_channel_select_green = I965_SURCHAN_SELECT_GREEN;
+  ss->ss7.shader_channel_select_blue = I965_SURCHAN_SELECT_BLUE;
+  ss->ss7.shader_channel_select_alpha = I965_SURCHAN_SELECT_ALPHA;
+  ss->ss0.render_cache_rw_mode = 1; /* XXX do we need to set it? */
+
+  heap->binding_table[index] = offsetof(surface_heap_t, surface) +
+                               index * surface_state_sz;
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
+                    I915_GEM_DOMAIN_RENDER,
+                    I915_GEM_DOMAIN_RENDER,
+                    obj_bo_offset,
+                    gpgpu->aux_offset.surface_heap_offset +
+                    heap->binding_table[index] +
+                    offsetof(gen8_surface_state_t, ss8),
+                    obj_bo);
+
+  assert(index < GEN_MAX_SURFACES);
+}
+
+static void
+intel_gpgpu_bind_image_gen9(intel_gpgpu_t *gpgpu,
+                            uint32_t index,
+                            dri_bo* obj_bo,
+                            uint32_t obj_bo_offset,
+                            uint32_t format,
+                            cl_mem_object_type type,
+                            uint32_t bpp,
+                            int32_t w,
+                            int32_t h,
+                            int32_t depth,
+                            int32_t pitch,
+                            int32_t slice_pitch,
+                            int32_t tiling)
+{
+  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
+  gen8_surface_state_t *ss = (gen8_surface_state_t *) &heap->surface[index * sizeof(gen8_surface_state_t)];
+  memset(ss, 0, sizeof(*ss));
+  ss->ss0.vertical_line_stride = 0; // always choose VALIGN_2
+  ss->ss0.surface_type = get_surface_type(gpgpu, index, type);
+  ss->ss0.surface_format = format;
+  if (intel_is_surface_array(type) && ss->ss0.surface_type == I965_SURFACE_1D) {
+    ss->ss0.surface_array = 1;
+    ss->ss1.surface_qpitch = (slice_pitch/bpp + 3)/4;   //align_h
+  }
+
+  if (intel_is_surface_array(type) && ss->ss0.surface_type == I965_SURFACE_2D) {
+    ss->ss0.surface_array = 1;
+    ss->ss1.surface_qpitch = (h + 3)/4;
+  }
+
+  if(ss->ss0.surface_type == I965_SURFACE_3D)
+    ss->ss1.surface_qpitch = (h + 3)/4;
+
   ss->ss0.horizontal_alignment = 1;
   ss->ss0.vertical_alignment = 1;
 
@@ -2094,7 +2176,7 @@ intel_set_gpgpu_callbacks(int device_id)
     return;
   }
   if (IS_SKYLAKE(device_id)) {
-    cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen8;
+    cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen9;
     intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen8;
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen9;
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen8;

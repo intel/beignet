@@ -479,7 +479,7 @@ static uint32_t intel_buffer_get_tiling_align(cl_context ctx, uint32_t tiling_mo
 
   case CL_NO_TILE:
     if (dim == 1) { //vertical alignment
-      if (gen_ver == 8)
+      if (gen_ver == 8 || gen_ver == 9) //SKL 1D array need 4 alignment qpitch
         ret = 4;
       else
         ret = 2;

@@ -145,11 +145,13 @@ typedef void (cl_gpgpu_bind_image_cb)(cl_gpgpu state,
                                       cl_buffer obj_bo,
                                       uint32_t obj_bo_offset,
                                       uint32_t format,
+                                      uint32_t bpp,
                                       uint32_t type,
                                       int32_t w,
                                       int32_t h,
                                       int32_t depth,
                                       int pitch,
+                                      int32_t slice_pitch,
                                       cl_gpgpu_tiling tiling);
 
 extern cl_gpgpu_bind_image_cb *cl_gpgpu_bind_image;
