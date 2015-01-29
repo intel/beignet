@@ -38,13 +38,9 @@ OVERLOADABLE float dot(float4 p0, float4 p1) {
 OVERLOADABLE float length(float x) { return __gen_ocl_fabs(x); }
 
 #define BODY \
-  if(m == 0) \
-    return 0; \
-  if(isinf(m)) \
-    return INFINITY; \
-  if(m < 1) \
-    m = 1; \
-  x /= m; \
+  m = m==0.0f ? 1.0f : m; \
+  m = isinf(m) ? 1.0f : m; \
+  x = x/m; \
   return m * sqrt(dot(x,x));
 OVERLOADABLE float length(float2 x) {
   float m = max(__gen_ocl_fabs(x.s0), __gen_ocl_fabs(x.s1));
