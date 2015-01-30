@@ -2795,13 +2795,13 @@ error:
           case Intrinsic::bswap:
             this->newRegister(&I);
           break;
+          case Intrinsic::fabs:
           case Intrinsic::sqrt:
           case Intrinsic::ceil:
           case Intrinsic::fma:
           case Intrinsic::trunc:
-            this->newRegister(&I);
-          break;
-          case Intrinsic::fabs:
+          case Intrinsic::sin:
+          case Intrinsic::cos:
             this->newRegister(&I);
           break;
           default:
@@ -2855,8 +2855,6 @@ error:
       case GEN_OCL_FBH:
       case GEN_OCL_FBL:
       case GEN_OCL_CBIT:
-      case GEN_OCL_COS:
-      case GEN_OCL_SIN:
       case GEN_OCL_SQR:
       case GEN_OCL_RSQ:
       case GEN_OCL_LOG:
@@ -3057,6 +3055,13 @@ error:
     if (Function *F = I.getCalledFunction()) {
       if (F->getIntrinsicID() != 0) {
         const ir::Function &fn = ctx.getFunction();
+
+        // Get the function arguments
+        CallSite CS(&I);
+        CallSite::arg_iterator AI = CS.arg_begin();
+#if GBE_DEBUG
+        CallSite::arg_iterator AE = CS.arg_end();
+#endif /* GBE_DEBUG */
         switch (F->getIntrinsicID()) {
           case Intrinsic::stacksave:
           {
@@ -3213,29 +3218,6 @@ error:
             }
           }
           break;
-          case Intrinsic::sqrt:
-          {
-            const ir::Register dst = this->getRegister(&I);
-            const ir::Register src = this->getRegister(I.getOperand(0));
-            ctx.ALU1(ir::OP_SQR, ir::TYPE_FLOAT, dst, src);
-          }
-          break;
-          case Intrinsic::fabs:
-          {
-            ir::Type srcType = getType(ctx, I.getType());
-            const ir::Register dst = this->getRegister(&I);
-            const ir::Register src = this->getRegister(I.getOperand(0));
-            ctx.ALU1(ir::OP_ABS, srcType, dst, src);
-          }
-          break;
-          case Intrinsic::ceil:
-          {
-            ir::Type srcType = getType(ctx, I.getType());
-            const ir::Register dst = this->getRegister(&I);
-            const ir::Register src = this->getRegister(I.getOperand(0));
-            ctx.ALU1(ir::OP_RNDU, srcType, dst, src);
-          }
-          break;
           case Intrinsic::ctlz:
           {
             Type *llvmDstType = I.getType();
@@ -3287,19 +3269,12 @@ error:
             ctx.MAD(srcType, dst, src0, src1, src2);
           }
           break;
-          case Intrinsic::trunc:
-          {
-            Type *llvmDstType = I.getType();
-            Type *llvmSrcType = I.getOperand(0)->getType();
-            ir::Type dstType = getType(ctx, llvmDstType);
-            ir::Type srcType = getType(ctx, llvmSrcType);
-            GBE_ASSERT(srcType == dstType);
-
-            const ir::Register dst = this->getRegister(&I);
-            const ir::Register src = this->getRegister(I.getOperand(0));
-            ctx.RNDZ(dstType, dst, src);
-          }
-          break;
+          case Intrinsic::sqrt: this->emitUnaryCallInst(I,CS,ir::OP_SQR); break;
+          case Intrinsic::ceil: this->emitUnaryCallInst(I,CS,ir::OP_RNDU); break;
+          case Intrinsic::fabs: this->emitUnaryCallInst(I,CS,ir::OP_ABS); break;
+          case Intrinsic::trunc: this->emitUnaryCallInst(I,CS,ir::OP_RNDZ); break;
+          case Intrinsic::sin: this->emitUnaryCallInst(I,CS,ir::OP_SIN); break;
+          case Intrinsic::cos: this->emitUnaryCallInst(I,CS,ir::OP_COS); break;
           default: NOT_IMPLEMENTED;
         }
       } else {
@@ -3368,8 +3343,6 @@ error:
             ctx.REGION(dst, src, x.getIntegerValue());
             break;
           }
-          case GEN_OCL_COS: this->emitUnaryCallInst(I,CS,ir::OP_COS); break;
-          case GEN_OCL_SIN: this->emitUnaryCallInst(I,CS,ir::OP_SIN); break;
           case GEN_OCL_LOG: this->emitUnaryCallInst(I,CS,ir::OP_LOG); break;
           case GEN_OCL_EXP: this->emitUnaryCallInst(I,CS,ir::OP_EXP); break;
           case GEN_OCL_SQR: this->emitUnaryCallInst(I,CS,ir::OP_SQR); break;

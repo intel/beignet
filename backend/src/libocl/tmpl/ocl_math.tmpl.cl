@@ -24,8 +24,8 @@
 constant int __ocl_math_fastpath_flag = 1;
 
 PURE CONST float __gen_ocl_fabs(float x);
-PURE CONST float __gen_ocl_sin(float x);
-PURE CONST float __gen_ocl_cos(float x);
+CONST float __gen_ocl_sin(float x) __asm("llvm.sin" ".f32");
+CONST float __gen_ocl_cos(float x) __asm("llvm.cos" ".f32");
 PURE CONST float __gen_ocl_sqrt(float x);
 PURE CONST float __gen_ocl_rsqrt(float x);
 PURE CONST float __gen_ocl_log(float x);
