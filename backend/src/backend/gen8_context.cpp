@@ -332,7 +332,6 @@ namespace gbe
       sum.type = GEN_TYPE_UL;
       src2.type = GEN_TYPE_L;
       dst_l.type = GEN_TYPE_UL;
-      p->NOP();
       p->ADD(sum, src2, dst_l);
 
       /* Implement this logic:
@@ -359,7 +358,6 @@ namespace gbe
       p->MOV(dst_h, GenRegister::immint64(0x7FFFFFFFFFFFFFFFLL));
       p->MOV(sum, GenRegister::immuint64(0xFFFFFFFFFFFFFFFFULL));
       p->pop();
-      p->NOP();
 
       /* Implement this logic:
       else {
@@ -385,15 +383,19 @@ namespace gbe
       p->MOV(dst_h, GenRegister::immint64(-0x7FFFFFFFFFFFFFFFLL - 1LL));
       p->MOV(sum, GenRegister::immud(0));
       p->pop();
-      p->NOP();
 
       /* saturate logic:
       if(dst_h > 0)
         sum = CL_LONG_MAX;
-      else if(dst_h < -1)
+      else if (dst_h == 0 && sum > 0x7FFFFFFFFFFFFFFFLL) {
+        sum = CL_LONG_MAX;
+      else if (dst_h == -1 && sum < 0x8000000000000000)
+        sum = CL_LONG_MIN;
+      else (dst_h < -1)
         sum = CL_LONG_MIN;
       cl_long result = (cl_long) sum; */
       p->MOV(dst_l, sum);
+      tmp0.type = GEN_TYPE_UL;
 
       dst_h.type = GEN_TYPE_L;
       p->push();
@@ -405,7 +407,32 @@ namespace gbe
       p->curr.predicate = GEN_PREDICATE_NORMAL;
       p->MOV(dst_l, GenRegister::immint64(0x7FFFFFFFFFFFFFFFLL));
       p->pop();
-      p->NOP();
+
+      p->push();
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+      p->CMP(GEN_CONDITIONAL_EQ, dst_h, GenRegister::immd(0x0L), tmp1);
+      p->curr.noMask = 0;
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->MOV(tmp0, GenRegister::immuint64(0x7FFFFFFFFFFFFFFFUL));
+      p->CMP(GEN_CONDITIONAL_G, dst_l, tmp0, tmp1);
+      p->MOV(dst_l, GenRegister::immint64(0x7FFFFFFFFFFFFFFFLL));
+      p->pop();
+
+      p->push();
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+      /* Fixme: HW bug ? 0xFFFFFFFFFFFFFFFF != 0xFFFFFFFFFFFFFFFF */
+      p->ADD(tmp0, dst_h, GenRegister::immud(1));
+      p->CMP(GEN_CONDITIONAL_EQ, tmp0, GenRegister::immud(0), tmp1);
+      p->curr.noMask = 0;
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->MOV(tmp0, GenRegister::immuint64(0x8000000000000000UL));
+      p->CMP(GEN_CONDITIONAL_L, dst_l, tmp0, tmp1);
+      p->MOV(dst_l, GenRegister::immint64(-0x7FFFFFFFFFFFFFFFLL - 1LL));
+      p->pop();
 
       p->push();
       p->curr.predicate = GEN_PREDICATE_NONE;
@@ -416,7 +443,6 @@ namespace gbe
       p->curr.predicate = GEN_PREDICATE_NORMAL;
       p->MOV(dst_l, GenRegister::immint64(-0x7FFFFFFFFFFFFFFFLL - 1LL));
       p->pop();
-      p->NOP();
     }
   }
 

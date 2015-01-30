@@ -57,7 +57,6 @@ static void __mad_sat(int64_t sourceA, int64_t sourceB, int64_t sourceC, int64_t
   cl_long multHi;
   cl_ulong multLo;
   __64_mul_64(sourceA, sourceB, multLo, multHi);
-
   cl_ulong sum = multLo + sourceC;
 
   // carry if overflow
@@ -82,6 +81,10 @@ static void __mad_sat(int64_t sourceA, int64_t sourceB, int64_t sourceC, int64_t
   // saturate
   if( multHi > 0 )
     sum = CL_LONG_MAX;
+  else if ( multHi == 0 && sum > CL_LONG_MAX)
+    sum = CL_LONG_MAX;
+  else if ( multHi == -1 && sum < (cl_ulong)CL_LONG_MIN)
+    sum = CL_LONG_MIN;
   else if( multHi < -1 )
     sum = CL_LONG_MIN;
 
@@ -111,7 +114,6 @@ void compiler_long_mul_hi(void)
     uint64_t a = rand();
     a = a <<32 | a;
     src[i] = a;
-//    printf(" 0x%lx", src[i]);
   }
 
   OCL_MAP_BUFFER(0);
@@ -133,7 +135,6 @@ void compiler_long_mul_hi(void)
       __64_mul_64(src[i], num1, res_lo, res_hi);
 
     OCL_ASSERT(((int64_t *)(buf_data[1]))[i] == res_hi);
-//    printf("hi is 0x%lx, result is 0x%lx\n", res_hi, ((int64_t *)(buf_data[1]))[i]);
   }
   OCL_UNMAP_BUFFER(1);
 }
@@ -161,7 +162,6 @@ void compiler_long_mul_sat(void)
     uint64_t a = rand();
     a = a <<32 | a;
     src[i] = a;
-//    printf(" 0x%lx", src[i]);
   }
 
   OCL_MAP_BUFFER(0);
@@ -179,7 +179,6 @@ void compiler_long_mul_sat(void)
     __mad_sat(src[i], num0, num1, res);
 
     OCL_ASSERT(((int64_t *)(buf_data[1]))[i] == res);
-    //printf("ref is 0x%lx, result is 0x%lx\n", res, ((int64_t *)(buf_data[1]))[i]);
   }
   OCL_UNMAP_BUFFER(1);
 }
