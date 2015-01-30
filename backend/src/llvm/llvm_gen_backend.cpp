@@ -2855,7 +2855,6 @@ error:
       case GEN_OCL_FBH:
       case GEN_OCL_FBL:
       case GEN_OCL_CBIT:
-      case GEN_OCL_SQR:
       case GEN_OCL_RSQ:
       case GEN_OCL_LOG:
       case GEN_OCL_EXP:
@@ -3345,7 +3344,6 @@ error:
           }
           case GEN_OCL_LOG: this->emitUnaryCallInst(I,CS,ir::OP_LOG); break;
           case GEN_OCL_EXP: this->emitUnaryCallInst(I,CS,ir::OP_EXP); break;
-          case GEN_OCL_SQR: this->emitUnaryCallInst(I,CS,ir::OP_SQR); break;
           case GEN_OCL_RSQ: this->emitUnaryCallInst(I,CS,ir::OP_RSQ); break;
           case GEN_OCL_RCP: this->emitUnaryCallInst(I,CS,ir::OP_RCP); break;
           case GEN_OCL_FABS: this->emitUnaryCallInst(I,CS,ir::OP_ABS); break;
