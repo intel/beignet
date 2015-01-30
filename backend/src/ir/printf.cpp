@@ -34,8 +34,9 @@ namespace gbe
     uint32_t PrintfSet::append(PrintfFmt* fmt, Unit& unit)
     {
       fmts.push_back(*fmt);
+      vector<PrintfSlot>& vp = fmts.back().first;
 
-      for (PrintfFmt::iterator f = fmts.back().begin(); f != fmts.back().end(); ++f) {
+      for (vector<PrintfSlot>::iterator f = vp.begin(); f !=  vp.end(); ++f) {
         if (f->type == PRINTF_SLOT_TYPE_STRING)
           continue;
 
@@ -126,14 +127,27 @@ namespace gbe
       int stmt = 0;
 
       for (size_t count = 0; count < fmts.size(); ++count) {
-        PrintfFmt& pf = fmts[count];
         for (i = 0; i < global_wk_sz0; i++) {
           for (j = 0; j < global_wk_sz1; j++) {
             for (k = 0; k < global_wk_sz2; k++) {
-              int loop_num = ((int *)index_addr)[stmt*global_wk_sz0*global_wk_sz1*global_wk_sz2
-                                                 + k*global_wk_sz0*global_wk_sz1 + j*global_wk_sz0 + i];
+              int loop_num = ((int *)index_addr)[(stmt*global_wk_sz0*global_wk_sz1*global_wk_sz2
+                                                 + k*global_wk_sz0*global_wk_sz1 + j*global_wk_sz0 + i)*2];
+              int printf_num = ((int *)index_addr)[(stmt*global_wk_sz0*global_wk_sz1*global_wk_sz2
+                                                 + k*global_wk_sz0*global_wk_sz1 + j*global_wk_sz0 + i)*2 + 1];
+              if (!loop_num) continue;
+
+              PrintfFmt* ppf = NULL;
+              for (auto& f : fmts) {
+                if (f.second == printf_num) {
+                  ppf = &f;
+                  break;
+                }
+              }
+
+              PrintfFmt& pf = *ppf;
+
               for (int n = 0; n < loop_num; n++) {
-                for (PrintfFmt::iterator pfit = pf.begin(); pfit != pf.end(); ++pfit) {
+                for (vector<PrintfSlot>::iterator pfit = pf.first.begin(); pfit != pf.first.end(); ++pfit) {
                   PrintfSlot& slot = *pfit;
                   pf_str = "";
                   int vec_num;
@@ -145,6 +159,7 @@ namespace gbe
                   assert(slot.type == PRINTF_SLOT_TYPE_STATE);
 
                   generatePrintfFmtString(*slot.state, pf_str);
+
 
                   vec_num = slot.state->vector_n > 0 ? slot.state->vector_n : 1;
 

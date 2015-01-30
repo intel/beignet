@@ -268,7 +268,7 @@ again:
 
       if (p != begin) {
         std::string s = std::string(begin, size_t(p - begin));
-        printf_fmt->push_back(PrintfSlot(s.c_str()));
+        printf_fmt->first.push_back(PrintfSlot(s.c_str()));
       }
 
       if (p == end) // finish
@@ -279,7 +279,7 @@ again:
       if (ret_char < 0)
         goto error;
 
-      printf_fmt->push_back(&state);
+      printf_fmt->first.push_back(&state);
       num++;
 
       if (rend == end)
@@ -385,14 +385,14 @@ error:
 
     /////////////////////////////////////////////////////
     /* calculate index address.
-       index_addr = (index_offset + wg_offset )* sizeof(int) + index_buf_ptr
+       index_addr = (index_offset + wg_offset )* sizeof(int) * 2 + index_buf_ptr
        index_offset = global_size2 * global_size1 * global_size0 * printf_num */
 
     Value* index_offset = builder->CreateMul(g1Xg2Xg3, ConstantInt::get(intTy, printf_num));
     // index_offset + offset
     op0 = builder->CreateAdd(index_offset, wg_offset);
-    // (index_offset + offset)* sizeof(int)
-    op0 = builder->CreateMul(op0, ConstantInt::get(intTy, sizeof(int)));
+    // (index_offset + offset)* sizeof(int) * 2
+    op0 = builder->CreateMul(op0, ConstantInt::get(intTy, sizeof(int)*2));
     // Final index address = index_buf_ptr + (index_offset + offset)* sizeof(int)
     op0 = builder->CreateAdd(index_buf_ptr, op0);
     Value* index_addr = builder->CreateIntToPtr(op0, Type::getInt32PtrTy(module->getContext(), 1));
@@ -401,9 +401,13 @@ error:
     val = builder->CreateAdd(loop_num, ConstantInt::get(intTy, 1));
     builder->CreateStore(val, index_addr);// The loop number.
 
+    op0 = builder->CreateAdd(op0, ConstantInt::get(intTy, sizeof(int)));
+    index_addr = builder->CreateIntToPtr(op0, Type::getInt32PtrTy(module->getContext(), 1));
+    builder->CreateStore(ConstantInt::get(intTy, printf_num), index_addr);// The printf number.
+
     int i = 1;
     Value* data_addr = NULL;
-    for (auto &s : *pInfo.printf_fmt) {
+    for (auto &s : (*pInfo.printf_fmt).first) {
       if (s.type == PRINTF_SLOT_TYPE_STRING)
         continue;
 
@@ -458,6 +462,7 @@ error:
                               NULL)));
     assert(printfs[printf_inst] == NULL);
     printfs[printf_inst] = pInfo.printf_fmt;
+    printfs[printf_inst]->second = printf_num;
     printf_num++;
     return true;
   }
@@ -499,7 +504,7 @@ error:
 
     sizeof_size = 0;
     int i = 1;
-    for (auto &s : *printf_fmt) {
+    for (auto &s : (*printf_fmt).first) {
       int sz = 0;
       if (s.type == PRINTF_SLOT_TYPE_STRING)
         continue;
