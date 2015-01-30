@@ -28,7 +28,7 @@ CONST float __gen_ocl_sin(float x) __asm("llvm.sin" ".f32");
 CONST float __gen_ocl_cos(float x) __asm("llvm.cos" ".f32");
 CONST float __gen_ocl_sqrt(float x) __asm("llvm.sqrt" ".f32");
 PURE CONST float __gen_ocl_rsqrt(float x);
-PURE CONST float __gen_ocl_log(float x);
+CONST float __gen_ocl_log(float x) __asm("llvm.log2" ".f32");
 PURE CONST float __gen_ocl_exp(float x);
 PURE CONST float __gen_ocl_pow(float x, float y);
 PURE CONST float __gen_ocl_rcp(float x);
