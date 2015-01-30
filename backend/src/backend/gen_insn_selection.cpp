@@ -249,6 +249,9 @@ namespace gbe
     this->vectorList.push_back(vec);
   }
 
+#define LD_MSG_ORDER_IVB 7
+#define LD_MSG_ORDER_SKL 9
+
   ///////////////////////////////////////////////////////////////////////////
   // Maximal munch selection on DAG
   ///////////////////////////////////////////////////////////////////////////
@@ -358,6 +361,8 @@ namespace gbe
     void setHas32X32Mul(bool b) { bHas32X32Mul = b; }
     bool hasLongType() const { return bHasLongType; }
     void setHasLongType(bool b) { bHasLongType = b; }
+    void setLdMsgOrder(uint32_t type)  { ldMsgOrder = type; }
+    uint32_t getLdMsgOrder()  const { return ldMsgOrder; }
     /*! indicate whether a register is a scalar/uniform register. */
     INLINE bool isScalarReg(const ir::Register &reg) const {
       const ir::RegisterData &regData = getRegisterData(reg);
@@ -656,6 +661,7 @@ namespace gbe
     uint16_t currAuxLabel;
     bool bHas32X32Mul;
     bool bHasLongType;
+    uint32_t ldMsgOrder;
     INLINE ir::LabelIndex newAuxLabel()
     {
       currAuxLabel++;
@@ -695,7 +701,7 @@ namespace gbe
     curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
     maxInsnNum(ctx.getFunction().getLargestBlockSize()), dagPool(maxInsnNum),
     stateNum(0), vectorNum(0), bwdCodeGeneration(false), currAuxLabel(ctx.getFunction().labelNum()),
-    bHas32X32Mul(false), bHasLongType(false)
+    bHas32X32Mul(false), bHasLongType(false), ldMsgOrder(LD_MSG_ORDER_IVB)
   {
     const ir::Function &fn = ctx.getFunction();
     this->regNum = fn.regNum();
@@ -1851,6 +1857,12 @@ namespace gbe
   Selection8::Selection8(GenContext &ctx) : Selection(ctx) {
     this->opaque->setHas32X32Mul(true);
     this->opaque->setHasLongType(true);
+  }
+
+  Selection9::Selection9(GenContext &ctx) : Selection(ctx) {
+    this->opaque->setHas32X32Mul(true);
+    this->opaque->setHasLongType(true);
+    this->opaque->setLdMsgOrder(LD_MSG_ORDER_SKL);
   }
 
   void Selection::Opaque::TYPED_WRITE(GenRegister *msgs, uint32_t msgNum,
@@ -4299,6 +4311,44 @@ namespace gbe
 
   DECL_PATTERN(SampleInstruction)
   {
+    INLINE void emitLd_ivb(Selection::Opaque &sel, const ir::SampleInstruction &insn,
+                           GenRegister msgPayloads[4], uint32_t &msgLen) const
+    {
+      // pre SKL: U, lod, [V], [W]
+      using namespace ir;
+      GBE_ASSERT(insn.getSrcType() != TYPE_FLOAT);
+      uint32_t srcNum = insn.getSrcNum();
+      msgPayloads[0] = sel.selReg(insn.getSrc(0), insn.getSrcType());
+      msgPayloads[1] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+      sel.MOV(msgPayloads[1], GenRegister::immud(0));
+      if (srcNum > 1)
+        msgPayloads[2] = sel.selReg(insn.getSrc(1), insn.getSrcType());
+      if (srcNum > 2)
+        msgPayloads[3] = sel.selReg(insn.getSrc(2), insn.getSrcType());
+      // Clear the lod to zero.
+      msgLen = srcNum + 1;
+    }
+
+    INLINE void emitLd_skl(Selection::Opaque &sel, const ir::SampleInstruction &insn,
+                           GenRegister msgPayloads[4], uint32_t &msgLen) const
+    {
+      // SKL: U, [V], [lod], [W]
+      using namespace ir;
+      GBE_ASSERT(insn.getSrcType() != TYPE_FLOAT);
+      uint32_t srcNum = msgLen = insn.getSrcNum();
+      msgPayloads[0] = sel.selReg(insn.getSrc(0), insn.getSrcType());
+      if (srcNum > 1)
+        msgPayloads[1] = sel.selReg(insn.getSrc(1), insn.getSrcType());
+      if (srcNum > 2) {
+        // Clear the lod to zero.
+        msgPayloads[2] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+        sel.MOV(msgPayloads[2], GenRegister::immud(0));
+        msgLen += 1;
+
+        msgPayloads[3] = sel.selReg(insn.getSrc(2), insn.getSrcType());
+      }
+    }
+
     INLINE bool emitOne(Selection::Opaque &sel, const ir::SampleInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
@@ -4317,17 +4367,10 @@ namespace gbe
         srcNum = 2;
 
       if (insn.getSamplerOffset() != 0) {
-        // U, lod, [V], [W]
-        GBE_ASSERT(insn.getSrcType() != TYPE_FLOAT);
-        msgPayloads[0] = sel.selReg(insn.getSrc(0), insn.getSrcType());
-        msgPayloads[1] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-        if (srcNum > 1)
-          msgPayloads[2] = sel.selReg(insn.getSrc(1), insn.getSrcType());
-        if (srcNum > 2)
-          msgPayloads[3] = sel.selReg(insn.getSrc(2), insn.getSrcType());
-        // Clear the lod to zero.
-        sel.MOV(msgPayloads[1], GenRegister::immud(0));
-        msgLen = srcNum + 1;
+        if(sel.getLdMsgOrder() < LD_MSG_ORDER_SKL)
+          this->emitLd_ivb(sel, insn, msgPayloads, msgLen);
+        else
+          this->emitLd_skl(sel, insn, msgPayloads, msgLen);
       } else {
         // U, V, [W]
         GBE_ASSERT(insn.getSrcType() == TYPE_FLOAT);
