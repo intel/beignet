@@ -198,7 +198,7 @@ namespace gbe
         }
       };
 
-      typedef vector<PrintfSlot> PrintfFmt;
+      typedef std::pair<vector<PrintfSlot>, int> PrintfFmt;
       uint32_t append(PrintfFmt* fmt, Unit &unit);
 
       uint32_t getPrintfNum(void) const {
