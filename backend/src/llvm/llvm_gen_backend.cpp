@@ -2803,6 +2803,7 @@ error:
           case Intrinsic::sin:
           case Intrinsic::cos:
           case Intrinsic::log2:
+          case Intrinsic::exp2:
             this->newRegister(&I);
           break;
           default:
@@ -2857,7 +2858,6 @@ error:
       case GEN_OCL_FBL:
       case GEN_OCL_CBIT:
       case GEN_OCL_RSQ:
-      case GEN_OCL_EXP:
       case GEN_OCL_POW:
       case GEN_OCL_RCP:
       case GEN_OCL_ABS:
@@ -3275,6 +3275,7 @@ error:
           case Intrinsic::sin: this->emitUnaryCallInst(I,CS,ir::OP_SIN); break;
           case Intrinsic::cos: this->emitUnaryCallInst(I,CS,ir::OP_COS); break;
           case Intrinsic::log2: this->emitUnaryCallInst(I,CS,ir::OP_LOG); break;
+          case Intrinsic::exp2: this->emitUnaryCallInst(I,CS,ir::OP_EXP); break;
           default: NOT_IMPLEMENTED;
         }
       } else {
@@ -3343,7 +3344,6 @@ error:
             ctx.REGION(dst, src, x.getIntegerValue());
             break;
           }
-          case GEN_OCL_EXP: this->emitUnaryCallInst(I,CS,ir::OP_EXP); break;
           case GEN_OCL_RSQ: this->emitUnaryCallInst(I,CS,ir::OP_RSQ); break;
           case GEN_OCL_RCP: this->emitUnaryCallInst(I,CS,ir::OP_RCP); break;
           case GEN_OCL_FABS: this->emitUnaryCallInst(I,CS,ir::OP_ABS); break;
