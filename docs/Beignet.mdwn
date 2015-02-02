@@ -238,6 +238,7 @@ Documents for OpenCL application developers
 -------------------------------------------
 - [[Cross compile|Beignet/howto/cross-compiler-howto]]
 - [[Kernel Optimization Guide|Beignet/optimization-guide]]
+- [[Libva Buffer Sharing|Beignet/howto/libva-buffer-sharing-howto]]
 
 The wiki URL is as below:
 [http://www.freedesktop.org/wiki/Software/Beignet/](http://www.freedesktop.org/wiki/Software/Beignet/)

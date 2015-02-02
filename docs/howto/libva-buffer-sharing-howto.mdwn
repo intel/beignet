@@ -1,0 +1,67 @@
+Libva Buffer Sharing HowTo
+==========================
+
+Beignet has extensions (clCreateBufferFromLibvaIntel/clCreateImageFromLibvaIntel)
+to share gpu buffer object with libva. So users can utilize OpenCL to do processing
+on VASurface or VABuffer without buffer copy.
+
+Prerequisite
+------------
+
+Libva api version >= 0.36.0. Please check your libva api version by command
+`pkg-config --modversion libva`.
+
+Steps
+-----
+
+In order to use the extension clCreateBufferFromLibvaIntel/clCreateImageFromLibvaIntel
+in your program, please follow the steps as below (We have added an example of using
+clCreateImageFromLibvaIntel, please read next section for details):
+
+- Get the address of this extension by the function:
+  clGetExtensionFunctionAddress("clCreateBufferFromLibvaIntel")
+  or clGetExtensionFunctionAddress("clCreateImageFromLibvaIntel")
+
+- Invoke vaAcquireBufferHandle to get VASurface/VABuffer's handle, which you want
+  to do processing by OpenCL.
+
+- Use clCreateBufferFromLibvaIntel/clCreateImageFromLibvaIntel to create corresponding
+  cl memory object from VASurface/VABuffer's handle. If you create a normal VASurface,
+  you should use clCreateImageFromLibvaIntel to create a cl image object from VASurface,
+  because VASurface is a tiling gpu buffer object. The only case you should use
+  clCreateBufferFromLibvaIntel to create a cl buffer object from VASurface is that: The
+  VASurface is created from an external untiling gpu buffer object. And You should use
+  clCreateBufferFromLibvaIntel to create a cl buffer object from VABuffer.
+
+- Use OpenCL to do post-processing.
+
+- Release this cl buffer object by clReleaseMemObject.
+
+- Unlock this VABuffer by vaReleaseBufferHandle.
+
+Sample code
+-----------
+
+We have developed an example of using clCreateImageFromLibvaIntel in examples/libva_buffer_sharing
+directory. This example read a source nv12 file to a VASurface, and create a target VASurface.
+Then create corresponding cl image objects from them. After using ocl to do a mirror effect
+post-processing on this source surface, target VASurface is shown on screen by default.
+
+- Add option -DBUILD_EXAMPLES=ON to enable building examples when running cmake, such as:
+  `> mkdir build`
+  `> cd build`
+  `> cmake -DBUILD_EXAMPLES=ON ../`
+
+- Build source code:
+  `> make`
+
+- Run:
+  `> cd examples`
+  `> . ../utests/setenv.sh`
+  `> ./example-libva_buffer_sharing`
+
+In addition, you can choose to save the result as a nv12 file. You can use gst-launch-1.0 to see
+the result. Just install gstreamer1.0-plugins-base, gstreamer1.0-plugins-bad and
+gstreamer1.0-x by apt on Ubuntu. Then running the following command:
+  `> gst-launch-1.0 filesrc location=file_name ! videoparse format=nv12 width=xxx height=xxx \
+   ! imagefreeze ! videoconvert ! video/x-raw, format=BGRx ! ximagesink`
