@@ -681,7 +681,7 @@ int cl_INT_ULP(int int_number)
   return 0;
 }
 
-int time_subtract(struct timeval *y, struct timeval *x, struct timeval *result)
+double time_subtract(struct timeval *y, struct timeval *x, struct timeval *result)
 {
   if ( x->tv_sec > y->tv_sec )
     return   -1;
@@ -699,6 +699,6 @@ int time_subtract(struct timeval *y, struct timeval *x, struct timeval *result)
     }
   }
 
-  int msec = 1000.0*(y->tv_sec - x->tv_sec) + (y->tv_usec - x->tv_usec)/1000.0;
+  double msec = 1000.0*(y->tv_sec - x->tv_sec) + (y->tv_usec - x->tv_usec)/1000.0;
   return msec;
 }

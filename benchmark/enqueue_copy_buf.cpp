@@ -28,7 +28,7 @@ void test_copy_buf(size_t sz, size_t src_off, size_t dst_off, size_t cb)
     src_off, dst_off, cb*sizeof(char), 0, NULL, NULL));
 }
 
-int enqueue_copy_buf(void)
+double enqueue_copy_buf(void)
 {
   size_t i;
   const size_t sz = 127 *1023 * 1023;
@@ -41,7 +41,9 @@ int enqueue_copy_buf(void)
   }
 
   gettimeofday(&stop,0);
-  return time_subtract(&stop, &start, 0);
+  double elapsed = time_subtract(&stop, &start, 0);
+
+  return BANDWIDTH(sz * sizeof(char) * 10, elapsed);
 }
 
 MAKE_BENCHMARK_FROM_FUNCTION(enqueue_copy_buf);

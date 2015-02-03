@@ -34,8 +34,8 @@ static double vload_bench(const char *kernelFunc, uint32_t N, uint32_t offset, b
     OCL_FINISH();
     gettimeofday(&end, NULL);
     double elapsed = (end.tv_sec - start.tv_sec) * 1e6 + (end.tv_usec - start.tv_usec);
-    double bandwidth = (globals[0] * (N_ITERATIONS) * sizeof(T) * N) / elapsed;
-    printf("\t%2.1fGB/S\n", bandwidth/1000.);
+    double bandwidth = (globals[0] * (N_ITERATIONS) * sizeof(T) * N) / (elapsed * 1000.);
+    printf("\t%2.1fGB/S\n", bandwidth);
     return bandwidth;
   } else {
     // Check result
@@ -71,7 +71,7 @@ VLOAD_TEST(float, float)
 #endif
 
 #define VLOAD_BENCH(T, kT) \
-static int vload_bench_ ##kT(void) \
+static double vload_bench_ ##kT(void) \
 { \
   uint8_t vectorSize[] = {2, 3, 4, 8, 16}; \
   double totBandwidth = 0; \

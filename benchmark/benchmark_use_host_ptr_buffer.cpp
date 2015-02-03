@@ -1,7 +1,7 @@
 #include "utests/utest_helper.hpp"
 #include <sys/time.h>
 
-int benchmark_use_host_ptr_buffer(void)
+double benchmark_use_host_ptr_buffer(void)
 {
   struct timeval start,stop;
 
@@ -32,7 +32,9 @@ int benchmark_use_host_ptr_buffer(void)
   free(buf_data[0]);
   buf_data[0] = NULL;
 
-  return time_subtract(&stop, &start, 0);
+  double elapsed = time_subtract(&stop, &start, 0);
+
+  return BANDWIDTH(n*sizeof(uint32_t)*100*2, elapsed);
 }
 
 MAKE_BENCHMARK_FROM_FUNCTION(benchmark_use_host_ptr_buffer);

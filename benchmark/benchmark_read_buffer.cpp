@@ -1,7 +1,7 @@
 #include "utests/utest_helper.hpp"
 #include <sys/time.h>
 
-int benchmark_read_buffer(void)
+double benchmark_read_buffer(void)
 {
   struct timeval start,stop;
 
@@ -43,7 +43,9 @@ int benchmark_read_buffer(void)
   free(buf_data[0]);
   buf_data[0] = NULL;
 
-  return time_subtract(&stop, &start, 0);
+  double elapsed = time_subtract(&stop, &start, 0);
+
+  return BANDWIDTH(sz * sizeof(float) * 2 * 100, elapsed);
 }
 
 MAKE_BENCHMARK_FROM_FUNCTION(benchmark_read_buffer);

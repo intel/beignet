@@ -30,6 +30,7 @@
 #include "utest_exception.hpp"
 #include <vector>
 #include <iostream>
+#include <iomanip>
 
 /*! struct for statistics */
 struct RStatistics
@@ -135,10 +136,10 @@ struct UTest
 
 #define BENCHMARK(EXPR) \
  do { \
-    int ret = 0;\
+    double ret = 0;\
     try { \
       ret = EXPR; \
-      std::cout << "    [Result: " << ret << "]    [SUCCESS]" << std::endl; \
+      std::cout << "    [Result: " << std::fixed<< std::setprecision(3) << ret << " GB/S]    [SUCCESS]" << std::endl; \
       UTest::retStatistics.passCount += 1; \
     } \
     catch (Exception e) { \
@@ -147,5 +148,8 @@ struct UTest
       UTest::retStatistics.failCount++; \
     } \
   } while (0)
+
+#define BANDWIDTH(BYTES, MSEC) \
+  ((double)(BYTES)) / ((MSEC) * 1e6);
 #endif /* __UTEST_UTEST_HPP__ */
 
