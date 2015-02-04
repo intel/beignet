@@ -4318,6 +4318,10 @@ namespace gbe
       using namespace ir;
       GBE_ASSERT(insn.getSrcType() != TYPE_FLOAT);
       uint32_t srcNum = insn.getSrcNum();
+      if (insn.getSrc(1) == ir::ocl::invalid) //not 3D
+        srcNum = 1;
+      else if (insn.getSrc(2) == ir::ocl::invalid)
+        srcNum = 2;
       msgPayloads[0] = sel.selReg(insn.getSrc(0), insn.getSrcType());
       msgPayloads[1] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
       sel.MOV(msgPayloads[1], GenRegister::immud(0));
