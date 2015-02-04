@@ -1071,16 +1071,19 @@ cl_mem_delete(cl_mem mem)
   }
 
   /* Remove it from the list */
-  assert(mem->ctx);
-  pthread_mutex_lock(&mem->ctx->buffer_lock);
-    if (mem->prev)
-      mem->prev->next = mem->next;
-    if (mem->next)
-      mem->next->prev = mem->prev;
-    if (mem->ctx->buffers == mem)
-      mem->ctx->buffers = mem->next;
-  pthread_mutex_unlock(&mem->ctx->buffer_lock);
-  cl_context_delete(mem->ctx);
+  if (mem->ctx) {
+    pthread_mutex_lock(&mem->ctx->buffer_lock);
+      if (mem->prev)
+        mem->prev->next = mem->next;
+      if (mem->next)
+        mem->next->prev = mem->prev;
+      if (mem->ctx->buffers == mem)
+        mem->ctx->buffers = mem->next;
+    pthread_mutex_unlock(&mem->ctx->buffer_lock);
+    cl_context_delete(mem->ctx);
+  } else {
+    assert((mem->prev == 0) && (mem->next == 0));
+  }
 
   /* Someone still mapped, unmap */
   if(mem->map_ref > 0) {
