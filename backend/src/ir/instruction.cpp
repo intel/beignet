@@ -506,10 +506,11 @@ namespace ir {
       public TupleDstPolicy<SampleInstruction>
     {
     public:
-      SampleInstruction(uint8_t imageIdx, Tuple dstTuple, Tuple srcTuple, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset) {
+      SampleInstruction(uint8_t imageIdx, Tuple dstTuple, Tuple srcTuple, uint8_t srcNum, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset) {
         this->opcode = OP_SAMPLE;
         this->dst = dstTuple;
         this->src = srcTuple;
+        this->srcNum = srcNum;
         this->dstIsFloat = dstIsFloat;
         this->srcIsFloat = srcIsFloat;
         this->samplerIdx = sampler;
@@ -544,7 +545,7 @@ namespace ir {
       uint8_t samplerIdx:4;
       uint8_t samplerOffset:2;
       uint8_t imageIdx;
-      static const uint32_t srcNum = 3;
+      uint8_t srcNum;
       static const uint32_t dstNum = 4;
     };
 
@@ -555,9 +556,10 @@ namespace ir {
     {
     public:
 
-      INLINE TypedWriteInstruction(uint8_t imageIdx, Tuple srcTuple, Type srcType, Type coordType) {
+      INLINE TypedWriteInstruction(uint8_t imageIdx, Tuple srcTuple, uint8_t srcNum, Type srcType, Type coordType) {
         this->opcode = OP_TYPED_WRITE;
         this->src = srcTuple;
+        this->srcNum = srcNum;
         this->coordType = coordType;
         this->srcType = srcType;
         this->imageIdx = imageIdx;
@@ -580,12 +582,12 @@ namespace ir {
       uint8_t srcType;
       uint8_t coordType;
       uint8_t imageIdx;
+      // bti, u, [v], [w], 4 data elements
+      uint8_t srcNum;
 
       INLINE uint8_t getImageIndex(void) const { return this->imageIdx; }
       INLINE Type getSrcType(void) const { return (Type)this->srcType; }
       INLINE Type getCoordType(void) const { return (Type)this->coordType; }
-      // bti, u, v, w, 4 data elements
-      static const uint32_t srcNum = 7;
       Register dst[0];               //!< No dest register
     };
 
@@ -1774,12 +1776,12 @@ DECL_MEM_FN(GetImageInfoInstruction, uint8_t, getImageIndex(void), getImageIndex
   }
 
   // SAMPLE
-  Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset) {
-    return internal::SampleInstruction(imageIndex, dst, src, dstIsFloat, srcIsFloat, sampler, samplerOffset).convert();
+  Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, uint8_t srcNum, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset) {
+    return internal::SampleInstruction(imageIndex, dst, src, srcNum, dstIsFloat, srcIsFloat, sampler, samplerOffset).convert();
   }
 
-  Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, Type srcType, Type coordType) {
-    return internal::TypedWriteInstruction(imageIndex, src, srcType, coordType).convert();
+  Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, uint8_t srcNum, Type srcType, Type coordType) {
+    return internal::TypedWriteInstruction(imageIndex, src, srcNum, srcType, coordType).convert();
   }
 
   Instruction GET_IMAGE_INFO(int infoType, Register dst, uint8_t imageIndex, Register infoReg) {

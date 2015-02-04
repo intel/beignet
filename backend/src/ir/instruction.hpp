@@ -706,9 +706,9 @@ namespace ir {
   Instruction READ_ARF(Type type, Register dst, ARFRegister arf);
   Instruction REGION(Register dst, Register src, uint32_t offset);
   /*! typed write */
-  Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, Type srcType, Type coordType);
+  Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, uint8_t srcNum, Type srcType, Type coordType);
   /*! sample textures */
-  Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset);
+  Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, uint8_t srcNum, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset);
   /*! get image information , such as width/height/depth/... */
   Instruction GET_IMAGE_INFO(int infoType, Register dst, uint8_t imageIndex, Register infoReg);
   /*! label labelIndex */

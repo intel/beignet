@@ -4318,10 +4318,6 @@ namespace gbe
       using namespace ir;
       GBE_ASSERT(insn.getSrcType() != TYPE_FLOAT);
       uint32_t srcNum = insn.getSrcNum();
-      if (insn.getSrc(1) == ir::ocl::invalid) //not 3D
-        srcNum = 1;
-      else if (insn.getSrc(2) == ir::ocl::invalid)
-        srcNum = 2;
       msgPayloads[0] = sel.selReg(insn.getSrc(0), insn.getSrcType());
       msgPayloads[1] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
       sel.MOV(msgPayloads[1], GenRegister::immud(0));
@@ -4364,12 +4360,6 @@ namespace gbe
       for (valueID = 0; valueID < insn.getDstNum(); ++valueID)
         dst[valueID] = sel.selReg(insn.getDst(valueID), insn.getDstType());
 
-      GBE_ASSERT(srcNum == 3);
-      if (insn.getSrc(1) == ir::ocl::invalid) //not 3D
-        srcNum = 1;
-      else if (insn.getSrc(2) == ir::ocl::invalid)
-        srcNum = 2;
-
       if (insn.getSamplerOffset() != 0) {
         if(sel.getLdMsgOrder() < LD_MSG_ORDER_SKL)
           this->emitLd_ivb(sel, insn, msgPayloads, msgLen);
@@ -4405,7 +4395,7 @@ namespace gbe
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
       GenRegister msgs[9]; // (header + U + V + R + LOD + 4)
       const uint32_t msgNum = (8 / (simdWidth / 8)) + 1;
-      const uint32_t coordNum = 3;
+      const uint32_t dim = insn.getSrcNum() - 4;
 
       if (simdWidth == 16) {
         for(uint32_t i = 0; i < msgNum; i++)
@@ -4413,18 +4403,18 @@ namespace gbe
       } else {
         uint32_t valueID = 0;
         msgs[0] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-        for(uint32_t msgID = 1; msgID < 1 + coordNum; msgID++, valueID++)
+        for(uint32_t msgID = 1; msgID < 1 + dim; msgID++, valueID++)
           msgs[msgID] = sel.selReg(insn.getSrc(msgID - 1), insn.getCoordType());
 
-        // fake u.
-        if (insn.getSrc(1) == ir::ocl::invalid)
+        // fake v.
+        if (dim < 2)
           msgs[2] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
         // fake w.
-        if (insn.getSrc(2) == ir::ocl::invalid)
+        if (dim < 3)
           msgs[3] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
         // LOD.
         msgs[4] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-        for(uint32_t msgID = 5; valueID < insn.getSrcNum(); msgID++, valueID++)
+        for(uint32_t msgID = dim + 2; valueID < insn.getSrcNum(); msgID++, valueID++)
           msgs[msgID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
       }
 
@@ -4441,14 +4431,14 @@ namespace gbe
       sel.curr.execWidth = 8;
       // Set zero LOD.
       if (simdWidth == 8)
-        sel.MOV(msgs[4], GenRegister::immud(0));
+        sel.MOV(msgs[dim + 1], GenRegister::immud(0));
       else
         sel.MOV(GenRegister::Qn(msgs[2], 0), GenRegister::immud(0));
       sel.pop();
 
       uint32_t bti = insn.getImageIndex();
       if (simdWidth == 8)
-        sel.TYPED_WRITE(msgs, msgNum, bti, insn.getSrc(2) != ir::ocl::invalid);
+        sel.TYPED_WRITE(msgs, msgNum, bti, dim == 3);
       else {
         sel.push();
         sel.curr.execWidth = 8;
@@ -4464,16 +4454,16 @@ namespace gbe
           sel.curr.quarterControl = (quarter == 0) ? GEN_COMPRESSION_Q1 : GEN_COMPRESSION_Q2;
           // Set U,V,W
           QUARTER_MOV0(msgs, 1, sel.selReg(insn.getSrc(0), insn.getCoordType()));
-          if (insn.getSrc(1) != ir::ocl::invalid) //not 2D
+          if (dim > 1)
             QUARTER_MOV0(msgs, 2, sel.selReg(insn.getSrc(1), insn.getCoordType()));
-          if (insn.getSrc(2) != ir::ocl::invalid) //not 3D
+          if (dim > 2)
             QUARTER_MOV0(msgs, 3, sel.selReg(insn.getSrc(2), insn.getCoordType()));
           // Set R, G, B, A
-          QUARTER_MOV1(msgs, 5, sel.selReg(insn.getSrc(3), insn.getSrcType()));
-          QUARTER_MOV1(msgs, 6, sel.selReg(insn.getSrc(4), insn.getSrcType()));
-          QUARTER_MOV1(msgs, 7, sel.selReg(insn.getSrc(5), insn.getSrcType()));
-          QUARTER_MOV1(msgs, 8, sel.selReg(insn.getSrc(6), insn.getSrcType()));
-          sel.TYPED_WRITE(msgs, msgNum, bti, insn.getSrc(2) != ir::ocl::invalid);
+          QUARTER_MOV1(msgs, 5, sel.selReg(insn.getSrc(dim), insn.getSrcType()));
+          QUARTER_MOV1(msgs, 6, sel.selReg(insn.getSrc(dim + 1), insn.getSrcType()));
+          QUARTER_MOV1(msgs, 7, sel.selReg(insn.getSrc(dim + 2), insn.getSrcType()));
+          QUARTER_MOV1(msgs, 8, sel.selReg(insn.getSrc(dim + 3), insn.getSrcType()));
+          sel.TYPED_WRITE(msgs, msgNum, bti, dim == 3);
           #undef QUARTER_MOV0
           #undef QUARTER_MOV1
         }

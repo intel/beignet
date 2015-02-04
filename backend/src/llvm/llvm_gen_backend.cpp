@@ -3431,16 +3431,8 @@ error:
             GBE_ASSERT(isFloatCoord == requiredFloatCoord);
 
             vector<ir::Register> dstTupleData, srcTupleData;
-            for (uint32_t elemID = 0; elemID < 3; elemID++) {
-              ir::Register reg;
-
-              if (elemID < imageDim)
-                reg = this->getRegister(coordVal, elemID);
-              else
-                reg = ir::ocl::invalid;
-
-              srcTupleData.push_back(reg);
-            }
+            for (uint32_t elemID = 0; elemID < imageDim; elemID++)
+              srcTupleData.push_back(this->getRegister(coordVal, elemID));
 
             uint32_t elemNum;
             ir::Type dstType = getVectorInfo(ctx, &I, elemNum);
@@ -3451,9 +3443,9 @@ error:
               dstTupleData.push_back(reg);
             }
             const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], elemNum);
-            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 3);
+            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], imageDim);
 
-            ctx.SAMPLE(imageID, dstTuple, srcTuple, dstType == ir::TYPE_FLOAT,
+            ctx.SAMPLE(imageID, dstTuple, srcTuple, imageDim, dstType == ir::TYPE_FLOAT,
                        requiredFloatCoord, sampler, samplerOffset);
             break;
           }
@@ -3472,16 +3464,9 @@ error:
             vector<ir::Register> srcTupleData;
             GBE_ASSERT(imageDim >= 1 && imageDim <= 3);
 
-            for (uint32_t elemID = 0; elemID < 3; elemID++) {
-              ir::Register reg;
+            for (uint32_t elemID = 0; elemID < imageDim; elemID++)
+              srcTupleData.push_back(this->getRegister(*AI, elemID));
 
-              if (elemID < imageDim)
-                reg = this->getRegister(*AI, elemID);
-              else
-                reg = ir::ocl::invalid;
-
-              srcTupleData.push_back(reg);
-            }
             ++AI; GBE_ASSERT(AI != AE);
             uint32_t elemNum;
             ir::Type srcType = getVectorInfo(ctx, *AI, elemNum);
@@ -3491,8 +3476,8 @@ error:
               const ir::Register reg = this->getRegister(*AI, elemID);
               srcTupleData.push_back(reg);
             }
-            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], 7);
-            ctx.TYPED_WRITE(imageID, srcTuple, srcType, ir::TYPE_U32);
+            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], imageDim + 4);
+            ctx.TYPED_WRITE(imageID, srcTuple, imageDim + 4, srcType, ir::TYPE_U32);
             break;
           }
           case GEN_OCL_MUL_HI_INT:
