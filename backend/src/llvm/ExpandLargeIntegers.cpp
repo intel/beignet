@@ -105,7 +105,10 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "nacl-expand-ints"
-
+#ifdef DEBUG
+  #undef DEBUG
+  #define DEBUG(...)
+#endif
 // Break instructions up into no larger than 64-bit chunks.
 static const unsigned kChunkBits = 64;
 static const unsigned kChunkBytes = kChunkBits / CHAR_BIT;
