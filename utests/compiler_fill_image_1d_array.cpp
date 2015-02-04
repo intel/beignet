@@ -10,6 +10,11 @@ static void compiler_fill_image_1d_array(void)
   size_t origin[3] = { };
   size_t region[3];
   uint32_t* dst;
+  uint32_t* src;
+
+  region[0] = w;
+  region[1] = array;
+  region[2] = 1;
 
   memset(&desc, 0x0, sizeof(cl_image_desc));
   memset(&format, 0x0, sizeof(cl_image_format));
@@ -26,9 +31,9 @@ static void compiler_fill_image_1d_array(void)
 
   OCL_CREATE_IMAGE(buf[0], 0, &format, &desc, NULL);
 
-  OCL_MAP_BUFFER_GTT(0);
-  memset(buf_data[0], 0, sizeof(uint32_t) * w * array);
-  OCL_UNMAP_BUFFER_GTT(0);
+  src = (uint32_t*)malloc(w*array*sizeof(uint32_t));
+  memset(src, 0, sizeof(uint32_t) * w * array);
+  OCL_WRITE_IMAGE(buf[0], origin, region, src);
 
   // Run the kernel
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
@@ -39,9 +44,6 @@ static void compiler_fill_image_1d_array(void)
   OCL_NDRANGE(2);
 
   // Check result
-  region[0] = w;
-  region[1] = array;
-  region[2] = 1;
   dst = (uint32_t*)malloc(w*array*sizeof(uint32_t));
   OCL_READ_IMAGE(buf[0], origin, region, dst);
 
