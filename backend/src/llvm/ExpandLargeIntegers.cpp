@@ -332,7 +332,7 @@ static Value *buildVectorOrScalar(ConversionState &State, IRBuilder<> &IRB, Smal
     Value * vec = NULL;
     unsigned ElemNo = Elements.size();
     Type *ElemTy = Elements[0]->getType();
-    bool KeepInsert = isLegalBitSize(ElemTy->getIntegerBitWidth() * ElemNo);
+    bool KeepInsert = isLegalBitSize(ElemTy->getPrimitiveSizeInBits() * ElemNo);
     for (unsigned i = 0; i < ElemNo; ++i) {
       Value *tmp = vec ? vec : UndefValue::get(VectorType::get(ElemTy, ElemNo));
       Value *idx = ConstantInt::get(IntTy, i);
@@ -459,8 +459,8 @@ static void convertInstruction(Instruction *Inst, ConversionState &State,
 
       TypePair OpTys = getExpandedIntTypes(LargeTy);
       Value *Lo, *Hi;
-      unsigned LowNo = OpTys.Lo->getIntegerBitWidth() / ElemTy->getIntegerBitWidth();
-      unsigned HighNo = OpTys.Hi->getIntegerBitWidth() / ElemTy->getIntegerBitWidth();
+      unsigned LowNo = OpTys.Lo->getIntegerBitWidth() / ElemTy->getPrimitiveSizeInBits();
+      unsigned HighNo = OpTys.Hi->getIntegerBitWidth() / ElemTy->getPrimitiveSizeInBits();
 
       SmallVector<Value *, 16> LoElems;
       for (unsigned i = 0; i < LowNo; ++i)
