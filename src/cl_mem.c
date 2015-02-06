@@ -1128,7 +1128,9 @@ cl_mem_delete(cl_mem mem)
     cl_buffer_unreference(mem->bo);
   }
 
-  if (mem->is_userptr && (mem->flags & CL_MEM_ALLOC_HOST_PTR))
+  if (mem->is_userptr &&
+      (mem->flags & CL_MEM_ALLOC_HOST_PTR) &&
+      (mem->type != CL_MEM_SUBBUFFER_TYPE))
     cl_free(mem->host_ptr);
 
   cl_free(mem);
