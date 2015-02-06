@@ -843,7 +843,8 @@ _cl_mem_new_image(cl_context ctx,
       image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
     aligned_slice_pitch = 0;
   else
-    aligned_slice_pitch = aligned_pitch * ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_NO_TILE, 1));
+    //SKL need use tiling's aligned_h to calc slice_pitch and IVB to BDW need CL_NO_TILE's aligned_h to calc.
+    aligned_slice_pitch = aligned_pitch * ALIGN(h, cl_buffer_get_tiling_align(ctx, tiling, 2));
 
   cl_mem_image_init(cl_mem_image(mem), w, h, image_type, depth, *fmt,
                     intel_fmt, bpp, aligned_pitch, aligned_slice_pitch, tiling,

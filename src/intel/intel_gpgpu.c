@@ -1344,11 +1344,11 @@ intel_gpgpu_bind_image_gen9(intel_gpgpu_t *gpgpu,
 
   if (intel_is_surface_array(type) && ss->ss0.surface_type == I965_SURFACE_2D) {
     ss->ss0.surface_array = 1;
-    ss->ss1.surface_qpitch = (h + 3)/4;
+    ss->ss1.surface_qpitch = (slice_pitch/pitch + 3)/4;
   }
 
   if(ss->ss0.surface_type == I965_SURFACE_3D)
-    ss->ss1.surface_qpitch = (h + 3)/4;
+    ss->ss1.surface_qpitch = (slice_pitch/pitch + 3)/4;
 
   ss->ss0.horizontal_alignment = 1;
   ss->ss0.vertical_alignment = 1;

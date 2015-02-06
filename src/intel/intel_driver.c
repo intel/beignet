@@ -464,6 +464,13 @@ static uint32_t intel_buffer_get_tiling_align(cl_context ctx, uint32_t tiling_mo
       ret = 512;
     } else if (dim == 1) { //tileX height in number of rows
       ret = 8;
+    }  else if (dim == 2) { //height to calculate slice pitch
+      if (gen_ver == 9) //SKL same as tileY height
+        ret = 8;
+      else if (gen_ver == 8)  //IVB, HSW, BDW same as CL_NO_TILE vertical alignment
+        ret = 4;
+      else
+        ret = 2;
     } else
       assert(0);
     break;
@@ -473,12 +480,19 @@ static uint32_t intel_buffer_get_tiling_align(cl_context ctx, uint32_t tiling_mo
       ret = 128;
     } else if (dim == 1) { //tileY height in number of rows
       ret = 32;
+    } else if (dim == 2) { //height to calculate slice pitch
+      if (gen_ver == 9) //SKL same as tileY height
+        ret = 32;
+      else if (gen_ver == 8) //IVB, HSW, BDW same as CL_NO_TILE vertical alignment
+        ret = 4;
+      else
+        ret = 2;
     } else
       assert(0);
     break;
 
   case CL_NO_TILE:
-    if (dim == 1) { //vertical alignment
+    if (dim == 1 || dim == 2) { //vertical alignment
       if (gen_ver == 8 || gen_ver == 9) //SKL 1D array need 4 alignment qpitch
         ret = 4;
       else
