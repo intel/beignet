@@ -1,0 +1,3 @@
+[submodule "examples/thirdparty/libva"]
+	path = examples/thirdparty/libva
+	url = git://anongit.freedesktop.org/libva
