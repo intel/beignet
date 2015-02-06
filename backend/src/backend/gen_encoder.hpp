@@ -185,7 +185,7 @@ namespace gbe
     /*! for scratch memory write */
     void SCRATCH_WRITE(GenRegister msg, uint32_t offset, uint32_t size, uint32_t src_num, uint32_t channel_mode);
     /*! Send instruction for the sampler */
-    void SAMPLE(GenRegister dest,
+    virtual void SAMPLE(GenRegister dest,
                 GenRegister msg,
                 unsigned int msg_len,
                 bool header_present,
@@ -196,6 +196,15 @@ namespace gbe
                 uint32_t return_format,
                 bool isLD,
                 bool isUniform);
+    void setSamplerMessage(GenNativeInstruction *insn,
+                           unsigned char bti,
+                           unsigned char sampler,
+                           uint32_t msg_type,
+                           uint32_t response_length,
+                           uint32_t msg_length,
+                           bool header_present,
+                           uint32_t simd_mode,
+                           uint32_t return_format);
 
     /*! TypedWrite instruction for texture */
     virtual void TYPED_WRITE(GenRegister header,

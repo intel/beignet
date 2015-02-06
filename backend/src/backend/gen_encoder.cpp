@@ -275,25 +275,6 @@ namespace gbe
   }
 #endif
 
-  static void setSamplerMessage(GenEncoder *p,
-                                GenNativeInstruction *insn,
-                                unsigned char bti,
-                                unsigned char sampler,
-                                uint32_t msg_type,
-                                uint32_t response_length,
-                                uint32_t msg_length,
-                                bool header_present,
-                                uint32_t simd_mode,
-                                uint32_t return_format)
-  {
-     const GenMessageTarget sfid = GEN_SFID_SAMPLER;
-     p->setMessageDescriptor(insn, sfid, msg_length, response_length);
-     insn->bits3.sampler_gen7.bti = bti;
-     insn->bits3.sampler_gen7.sampler = sampler;
-     insn->bits3.sampler_gen7.msg_type = msg_type;
-     insn->bits3.sampler_gen7.simd_mode = simd_mode;
-  }
-
   static void setDWordScatterMessgae(GenEncoder *p,
                                      GenNativeInstruction *insn,
                                      uint32_t bti,
@@ -1095,6 +1076,24 @@ namespace gbe
      this->setSrc0(insn, src);
   }
 
+  void GenEncoder::setSamplerMessage(GenNativeInstruction *insn,
+                                unsigned char bti,
+                                unsigned char sampler,
+                                uint32_t msg_type,
+                                uint32_t response_length,
+                                uint32_t msg_length,
+                                bool header_present,
+                                uint32_t simd_mode,
+                                uint32_t return_format)
+  {
+     const GenMessageTarget sfid = GEN_SFID_SAMPLER;
+     setMessageDescriptor(insn, sfid, msg_length, response_length);
+     insn->bits3.sampler_gen7.bti = bti;
+     insn->bits3.sampler_gen7.sampler = sampler;
+     insn->bits3.sampler_gen7.msg_type = msg_type;
+     insn->bits3.sampler_gen7.simd_mode = simd_mode;
+  }
+
   void GenEncoder::SAMPLE(GenRegister dest,
                           GenRegister msg,
                           unsigned int msg_len,
@@ -1126,7 +1125,7 @@ namespace gbe
      this->setHeader(insn);
      this->setDst(insn, dest);
      this->setSrc0(insn, msg);
-     setSamplerMessage(this, insn, bti, sampler, msg_type,
+     setSamplerMessage(insn, bti, sampler, msg_type,
                        response_length, msg_length,
                        header_present,
                        simd_mode, return_format);

@@ -23,7 +23,7 @@
 #define __GBE_gen9_CONTEXT_HPP__
 
 #include "backend/gen8_context.hpp"
-#include "backend/gen8_encoder.hpp"
+#include "backend/gen9_encoder.hpp"
 
 namespace gbe
 {
@@ -37,10 +37,10 @@ namespace gbe
             : Gen8Context(unit, name, deviceID, relaxMath) {
     };
 
-	protected:
-		virtual GenEncoder* generateEncoder(void) {
-			return GBE_NEW(Gen8Encoder, this->simdWidth, 9, deviceID);
-		}
+  protected:
+    virtual GenEncoder* generateEncoder(void) {
+      return GBE_NEW(Gen9Encoder, this->simdWidth, 9, deviceID);
+    }
 
   private:
     virtual void newSelection(void);

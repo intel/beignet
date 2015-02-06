@@ -122,6 +122,8 @@ set (GBE_SRC
     backend/gen75_encoder.cpp
     backend/gen8_encoder.hpp
     backend/gen8_encoder.cpp
+    backend/gen9_encoder.hpp
+    backend/gen9_encoder.cpp
     )
 
 set (GBE_LINK_LIBRARIES
