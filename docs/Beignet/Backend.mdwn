@@ -5,10 +5,13 @@ This code base contains the compiler part of the Beignet OpenCL stack. The
 compiler is responsible to take a OpenCL language string and to compile it into
 a binary that can be executed on Intel integrated GPUs.
 
-Limitations
------------
+Status
+------
 
-Today, the compiler is far from complete. See [[here|Backend/TODO]] for a
+After two years development, beignet is mature now. It now supports all the
+OpenCL 1.2 mandatory features. Beignet get almost 100% pass rate with both
+OpenCV 3.0 test suite and the piglit opencl test suite. There are some 
+performance tuning related items remained, see [[here|Backend/TODO]] for a
 (incomplete) lists of things to do.
 
 Interface with the run-time
