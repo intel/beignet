@@ -1612,27 +1612,43 @@ cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image
       ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_3D,
           cl_internal_copy_image_2d_to_3d_str, (size_t)cl_internal_copy_image_2d_to_3d_str_size, NULL);
     } else if(dst_image->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
+      extern char cl_internal_copy_image_2d_to_2d_array_str[];
+      extern size_t cl_internal_copy_image_2d_to_2d_array_str_size;
 
-      cl_mem_copy_image_to_image(dst_origin, src_origin, region, dst_image, src_image);
-      return CL_SUCCESS;
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_2D_ARRAY,
+          cl_internal_copy_image_2d_to_2d_array_str, (size_t)cl_internal_copy_image_2d_to_2d_array_str_size, NULL);
     }
   } else if(src_image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
     if(dst_image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
+      extern char cl_internal_copy_image_1d_array_to_1d_array_str[];
+      extern size_t cl_internal_copy_image_1d_array_to_1d_array_str_size;
 
-      cl_mem_copy_image_to_image(dst_origin, src_origin, region, dst_image, src_image);
-      return CL_SUCCESS;
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_1D_ARRAY_TO_1D_ARRAY,
+          cl_internal_copy_image_1d_array_to_1d_array_str,
+          (size_t)cl_internal_copy_image_1d_array_to_1d_array_str_size, NULL);
     }
   } else if(src_image->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
     if(dst_image->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
+      extern char cl_internal_copy_image_2d_array_to_2d_array_str[];
+      extern size_t cl_internal_copy_image_2d_array_to_2d_array_str_size;
 
-      cl_mem_copy_image_to_image(dst_origin, src_origin, region, dst_image, src_image);
-      return CL_SUCCESS;
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_ARRAY_TO_2D_ARRAY,
+          cl_internal_copy_image_2d_array_to_2d_array_str,
+          (size_t)cl_internal_copy_image_2d_array_to_2d_array_str_size, NULL);
     } else if(dst_image->image_type == CL_MEM_OBJECT_IMAGE2D) {
-      cl_mem_copy_image_to_image(dst_origin, src_origin, region, dst_image, src_image);
-      return CL_SUCCESS;
+      extern char cl_internal_copy_image_2d_array_to_2d_str[];
+      extern size_t cl_internal_copy_image_2d_array_to_2d_str_size;
+
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_ARRAY_TO_2D,
+          cl_internal_copy_image_2d_array_to_2d_str,
+          (size_t)cl_internal_copy_image_2d_array_to_2d_str_size, NULL);
     } else if(dst_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
-      cl_mem_copy_image_to_image(dst_origin, src_origin, region, dst_image, src_image);
-      return CL_SUCCESS;
+      extern char cl_internal_copy_image_2d_array_to_3d_str[];
+      extern size_t cl_internal_copy_image_2d_array_to_3d_str_size;
+
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_ARRAY_TO_3D,
+          cl_internal_copy_image_2d_array_to_3d_str,
+          (size_t)cl_internal_copy_image_2d_array_to_3d_str_size, NULL);
     }
   } else if(src_image->image_type == CL_MEM_OBJECT_IMAGE3D) {
     if(dst_image->image_type == CL_MEM_OBJECT_IMAGE2D) {
@@ -1648,8 +1664,11 @@ cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image
       ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_3D,
           cl_internal_copy_image_3d_to_3d_str, (size_t)cl_internal_copy_image_3d_to_3d_str_size, NULL);
     } else if(dst_image->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
-      cl_mem_copy_image_to_image(dst_origin, src_origin, region, dst_image, src_image);
-      return CL_SUCCESS;
+      extern char cl_internal_copy_image_3d_to_2d_array_str[];
+      extern size_t cl_internal_copy_image_3d_to_2d_array_str_size;
+
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_2D_ARRAY,
+          cl_internal_copy_image_3d_to_2d_array_str, (size_t)cl_internal_copy_image_3d_to_2d_array_str_size, NULL);
     }
   }
 
