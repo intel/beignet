@@ -496,13 +496,14 @@ skl_gt4_break:
       printf("cl_get_gt_device(): error, unknown device: %x\n", device_id);
   }
 
+  if (ret == NULL)
+    return NULL;
+
   if (!CompilerSupported()) {
-    if (ret != NULL) {
-      ret->compiler_available = CL_FALSE;
-      //ret->linker_available = CL_FALSE;
-      ret->profile = "EMBEDDED_PROFILE";
-      ret->profile_sz = strlen(ret->profile) + 1;
-    }
+    ret->compiler_available = CL_FALSE;
+    //ret->linker_available = CL_FALSE;
+    ret->profile = "EMBEDDED_PROFILE";
+    ret->profile_sz = strlen(ret->profile) + 1;
   }
 
 #ifdef HAS_USERPTR
