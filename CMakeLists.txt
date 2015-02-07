@@ -46,8 +46,6 @@ if (NOT BEIGNET_INSTALL_DIR)
   set (BEIGNET_INSTALL_DIR "${LIB_INSTALL_DIR}/beignet/")
 endif (NOT BEIGNET_INSTALL_DIR)
 
-ADD_DEFINITIONS(-D__$(USER)__)
-
 # Force Release with debug info
 if (NOT CMAKE_BUILD_TYPE)
   set (CMAKE_BUILD_TYPE RelWithDebInfo)
