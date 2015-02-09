@@ -308,6 +308,7 @@ namespace gbe
       p->curr.noMask = 1;
       p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
       p->CMP(GEN_CONDITIONAL_NZ, dst_h, GenRegister::immud(0), tmp0);
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
       p->curr.noMask = 0;
       p->MOV(dst_l, GenRegister::immuint64(0xFFFFFFFFFFFFFFFF));
       p->pop();
@@ -317,6 +318,7 @@ namespace gbe
       p->curr.noMask = 1;
       p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
       p->CMP(GEN_CONDITIONAL_L, dst_l, src2, tmp0);
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
       p->curr.noMask = 0;
       p->MOV(dst_l, GenRegister::immuint64(0xFFFFFFFFFFFFFFFF));
       p->pop();
