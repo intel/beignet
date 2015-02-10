@@ -28,4 +28,30 @@ namespace gbe
   void Gen9Context::newSelection(void) {
     this->sel = GBE_NEW(Selection9, *this);
   }
+
+  void Gen9Context::emitBarrierInstruction(const SelectionInstruction &insn) {
+    const GenRegister src = ra->genReg(insn.src(0));
+    const GenRegister fenceDst = ra->genReg(insn.dst(0));
+    uint32_t barrierType = insn.extra.barrierType;
+    const GenRegister barrierId = ra->genReg(GenRegister::ud1grf(ir::ocl::barrierid));
+
+    if (barrierType == ir::syncGlobalBarrier) {
+      p->FENCE(fenceDst);
+      p->MOV(fenceDst, fenceDst);
+    }
+    p->push();
+      // As only the payload.2 is used and all the other regions are ignored
+      // SIMD8 mode here is safe.
+      p->curr.execWidth = 8;
+      p->curr.physicalFlag = 0;
+      p->curr.noMask = 1;
+      // Copy barrier id from r0.
+      p->AND(src, barrierId, GenRegister::immud(0x8f000000));
+      // A barrier is OK to start the thread synchronization *and* SLM fence
+      p->BARRIER(src);
+      p->curr.execWidth = 1;
+      // Now we wait for the other threads
+      p->WAIT();
+    p->pop();
+  }
 }

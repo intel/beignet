@@ -36,6 +36,7 @@ namespace gbe
     Gen9Context(const ir::Unit &unit, const std::string &name, uint32_t deviceID, bool relaxMath = false)
             : Gen8Context(unit, name, deviceID, relaxMath) {
     };
+    virtual void emitBarrierInstruction(const SelectionInstruction &insn);
 
   protected:
     virtual GenEncoder* generateEncoder(void) {
