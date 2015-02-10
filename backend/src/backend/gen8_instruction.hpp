@@ -96,9 +96,9 @@ union Gen8NativeInstruction
         uint32_t dest_reg_type:4;
         uint32_t src0_reg_file:2;
         uint32_t src0_reg_type:4;
-        int dest_indirect_offset_9:1;        /* offset against the deref'd address reg bit9 */
+        int dest_indirect_offset_9:1;      /* offset against the deref'd address reg bit9 */
         int dest_indirect_offset:9;        /* offset against the deref'd address reg bit0-8 */
-        uint32_t dest_subreg_nr:3; /* subnr for the address reg a0.x */
+        uint32_t dest_subreg_nr:4;         /* subnr for the address reg a0.x */
         uint32_t dest_horiz_stride:2;
         uint32_t dest_address_mode:1;
       } ia1;
