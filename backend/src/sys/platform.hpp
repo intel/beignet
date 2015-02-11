@@ -258,10 +258,14 @@ private: \
 /*! Default alignment for the platform */
 #define GBE_DEFAULT_ALIGNMENT 16
 
+namespace gbe
+{
 /*! Useful constants */
-#define KB 1024
-#define MB (KB*KB)
-
+  enum {
+    KB = 1024,
+    MB = (KB*KB),
+  };
+}
 /*! Portable AlignOf */
 template <typename T>
 struct AlignOf {
