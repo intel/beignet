@@ -86,6 +86,7 @@ set (GBE_SRC
     llvm/llvm_printf_parser.cpp
     llvm/ExpandConstantExpr.cpp
     llvm/ExpandUtils.cpp
+    llvm/PromoteIntegers.cpp
     llvm/ExpandLargeIntegers.cpp
     llvm/llvm_to_gen.cpp
     llvm/llvm_loadstore_optimization.cpp
