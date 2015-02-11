@@ -280,6 +280,7 @@ namespace gbe
     passes.add(createInstructionCombiningPass());  // legalize will generate some silly instructions
     passes.add(createConstantPropagationPass());   // propagate constant after scalarize/legalize
     passes.add(createExpandConstantExprPass());    // constant prop may generate ConstantExpr
+    passes.add(createPromoteIntegersPass());       // align integer size to power of two
     passes.add(createRemoveGEPPass(unit));         // Constant prop may generate gep
     passes.add(createDeadInstEliminationPass());   // Remove simplified instructions
     passes.add(createCFGSimplificationPass());     // Merge & remove BBs
