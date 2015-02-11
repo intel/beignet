@@ -652,15 +652,16 @@ static void convertInstruction(Instruction *Inst, ConversionState &State,
 
   } else if (LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
     Value *Op = Load->getPointerOperand();
+    unsigned AddrSpace = Op->getType()->getPointerAddressSpace();
     TypePair Tys = getExpandedIntTypes(Load->getType());
     AlignPair Align = getAlign(DL, Load, Load->getType());
-    Value *Loty = IRB.CreateBitCast(Op, Tys.Lo->getPointerTo(),
+    Value *Loty = IRB.CreateBitCast(Op, Tys.Lo->getPointerTo(AddrSpace),
                                     Twine(Op->getName(), ".loty"));
     Value *Lo =
         IRB.CreateAlignedLoad(Loty, Align.Lo, Twine(Load->getName(), ".lo"));
     Value *HiAddr =
         IRB.CreateConstGEP1_32(Loty, 1, Twine(Op->getName(), ".hi.gep"));
-    Value *HiTy = IRB.CreateBitCast(HiAddr, Tys.Hi->getPointerTo(),
+    Value *HiTy = IRB.CreateBitCast(HiAddr, Tys.Hi->getPointerTo(AddrSpace),
                                     Twine(Op->getName(), ".hity"));
     Value *Hi =
         IRB.CreateAlignedLoad(HiTy, Align.Hi, Twine(Load->getName(), ".hi"));
@@ -668,15 +669,16 @@ static void convertInstruction(Instruction *Inst, ConversionState &State,
 
   } else if (StoreInst *Store = dyn_cast<StoreInst>(Inst)) {
     Value *Ptr = Store->getPointerOperand();
+    unsigned AddrSpace = Ptr->getType()->getPointerAddressSpace();
     TypePair Tys = getExpandedIntTypes(Store->getValueOperand()->getType());
     ValuePair StoreVals = State.getConverted(Store->getValueOperand());
     AlignPair Align = getAlign(DL, Store, Store->getValueOperand()->getType());
-    Value *Loty = IRB.CreateBitCast(Ptr, Tys.Lo->getPointerTo(),
+    Value *Loty = IRB.CreateBitCast(Ptr, Tys.Lo->getPointerTo(AddrSpace),
                                     Twine(Ptr->getName(), ".loty"));
     Value *Lo = IRB.CreateAlignedStore(StoreVals.Lo, Loty, Align.Lo);
     Value *HiAddr =
         IRB.CreateConstGEP1_32(Loty, 1, Twine(Ptr->getName(), ".hi.gep"));
-    Value *HiTy = IRB.CreateBitCast(HiAddr, Tys.Hi->getPointerTo(),
+    Value *HiTy = IRB.CreateBitCast(HiAddr, Tys.Hi->getPointerTo(AddrSpace),
                                     Twine(Ptr->getName(), ".hity"));
     Value *Hi = IRB.CreateAlignedStore(StoreVals.Hi, HiTy, Align.Hi);
     State.recordConverted(Store, ValuePair(Lo, Hi));
