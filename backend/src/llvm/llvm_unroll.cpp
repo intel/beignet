@@ -95,7 +95,11 @@ namespace gbe {
           if (Name.equals(S->getString())) {
             assert(MD->getNumOperands() == 2 &&
                    "Unroll hint metadata should have two operands.");
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+            return mdconst::extract<ConstantInt>(MD->getOperand(1));
+#else
             return cast<ConstantInt>(MD->getOperand(1));
+#endif
           }
         }
         return nullptr;
@@ -105,6 +109,15 @@ namespace gbe {
         if (!enable && disabledLoops.find(L) != disabledLoops.end())
            return;
         LLVMContext &Context = L->getHeader()->getContext();
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+        SmallVector<Metadata *, 2> forceUnroll;
+        forceUnroll.push_back(MDString::get(Context, "llvm.loop.unroll.enable"));
+        forceUnroll.push_back(ConstantAsMetadata::get(ConstantInt::get(Type::getInt1Ty(Context), enable)));
+        MDNode *forceUnrollNode = MDNode::get(Context, forceUnroll);
+        SmallVector<Metadata *, 4> Vals;
+        Vals.push_back(NULL);
+        Vals.push_back(forceUnrollNode);
+#else
         SmallVector<Value *, 2> forceUnroll;
         forceUnroll.push_back(MDString::get(Context, "llvm.loop.unroll.enable"));
         forceUnroll.push_back(ConstantInt::get(Type::getInt1Ty(Context), enable));
@@ -112,6 +125,7 @@ namespace gbe {
         SmallVector<Value *, 4> Vals;
         Vals.push_back(NULL);
         Vals.push_back(forceUnrollNode);
+#endif
         MDNode *NewLoopID = MDNode::get(Context, Vals);
         // Set operand 0 to refer to the loop id itself.
         NewLoopID->replaceOperandWith(0, NewLoopID);

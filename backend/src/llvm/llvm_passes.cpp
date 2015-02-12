@@ -119,7 +119,11 @@ namespace gbe
       uint32_t ops = md.getNumOperands();
       for(uint32_t x = 0; x < ops; x++) {
         MDNode* node = md.getOperand(x);
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
         Value * op = node->getOperand(0);
+#else
+        Value * op = cast<ValueAsMetadata>(node->getOperand(0))->getValue();
+#endif
         if(op == &F) bKernel = true;
       }
     }

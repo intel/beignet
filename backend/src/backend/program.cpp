@@ -621,7 +621,11 @@ namespace gbe {
     if (!retVal)
       return false;
 
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
     llvm::Module *module = Act->takeModule();
+#else
+    llvm::Module *module = Act->takeModule().release();
+#endif
 
     *out_module = module;
     return true;

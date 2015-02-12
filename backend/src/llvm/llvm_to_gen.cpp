@@ -80,7 +80,9 @@ namespace gbe
   {
     FunctionPassManager FPM(&mod);
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+    FPM.add(new DataLayoutPass());
+#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR == 5
     FPM.add(new DataLayoutPass(DL));
 #else
     FPM.add(new DataLayout(DL));
@@ -111,7 +113,9 @@ namespace gbe
   {
     llvm::PassManager MPM;
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+    MPM.add(new DataLayoutPass());
+#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR == 5
     MPM.add(new DataLayoutPass(DL));
 #else
     MPM.add(new DataLayout(DL));
@@ -230,7 +234,11 @@ namespace gbe
       cl_mod = reinterpret_cast<Module*>(const_cast<void*>(module));
     } else if (fileName){
       llvm::LLVMContext& c = llvm::getGlobalContext();
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+      cl_mod = parseIRFile(fileName, Err, c).release();
+#else
       cl_mod = ParseIRFile(fileName, Err, c);
+#endif
     }
 
     if (!cl_mod) return false;
@@ -258,7 +266,9 @@ namespace gbe
     runFuntionPass(mod, libraryInfo, DL);
     runModulePass(mod, libraryInfo, DL, optLevel, strictMath);
     llvm::PassManager passes;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+    passes.add(new DataLayoutPass());
+#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR == 5
     passes.add(new DataLayoutPass(DL));
 #else
     passes.add(new DataLayout(DL));
