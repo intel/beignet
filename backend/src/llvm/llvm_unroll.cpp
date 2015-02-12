@@ -163,19 +163,25 @@ namespace gbe {
       bool handleParentLoops(Loop *L, LPPassManager &LPM) {
         Loop *currL = L;
         ScalarEvolution *SE = &getAnalysis<ScalarEvolution>();
-        BasicBlock *latchBlock = currL->getLoopLatch();
+        BasicBlock *ExitBlock = currL->getLoopLatch();
+        if (!ExitBlock || !L->isLoopExiting(ExitBlock))
+          ExitBlock = currL->getExitingBlock();
+
         unsigned currTripCount = 0;
         bool shouldUnroll = true;
-        if (latchBlock)
-          currTripCount = SE->getSmallConstantTripCount(L, latchBlock);
+        if (ExitBlock)
+          currTripCount = SE->getSmallConstantTripCount(L, ExitBlock);
 
         while(currL) {
           Loop *parentL = currL->getParentLoop();
           unsigned parentTripCount = 0;
           if (parentL) {
-            BasicBlock *parentLatchBlock = parentL->getLoopLatch();
-            if (parentLatchBlock)
-              parentTripCount = SE->getSmallConstantTripCount(parentL, parentLatchBlock);
+            BasicBlock *parentExitBlock = parentL->getLoopLatch();
+            if (!parentExitBlock || !parentL->isLoopExiting(parentExitBlock))
+              parentExitBlock = parentL->getExitingBlock();
+
+            if (parentExitBlock)
+              parentTripCount = SE->getSmallConstantTripCount(parentL, parentExitBlock);
           }
           if ((parentTripCount != 0 && currTripCount / parentTripCount > 16) ||
               (currTripCount > 32)) {
