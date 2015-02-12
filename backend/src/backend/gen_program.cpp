@@ -252,9 +252,15 @@ namespace gbe {
     llvm::StringRef llvm_bin_str(binary_content);
     llvm::LLVMContext& c = llvm::getGlobalContext();
     llvm::SMDiagnostic Err;
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+    std::unique_ptr<llvm::MemoryBuffer> memory_buffer = llvm::MemoryBuffer::getMemBuffer(llvm_bin_str, "llvm_bin_str");
+    acquireLLVMContextLock();
+    llvm::Module* module = llvm::parseIR(memory_buffer->getMemBufferRef(), Err, c).release();
+#else
     llvm::MemoryBuffer* memory_buffer = llvm::MemoryBuffer::getMemBuffer(llvm_bin_str, "llvm_bin_str");
     acquireLLVMContextLock();
     llvm::Module* module = llvm::ParseIR(memory_buffer, Err, c);
+#endif
     releaseLLVMContextLock();
     if(module == NULL){
       GBE_ASSERT(0);
@@ -382,7 +388,11 @@ namespace gbe {
       llvm::Module* src = (llvm::Module*)((GenProgram*)src_program)->module;
       llvm::Module* dst = (llvm::Module*)((GenProgram*)dst_program)->module;
 
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
       if (LLVMLinkModules(wrap(dst), wrap(src), LLVMLinkerPreserveSource, &errMsg)) {
+#else
+      if (LLVMLinkModules(wrap(dst), wrap(src), 0, &errMsg)) {
+#endif
         if (err != NULL && errSize != NULL && stringSize > 0u) {
           if(strlen(errMsg) < stringSize )
             stringSize = strlen(errMsg);

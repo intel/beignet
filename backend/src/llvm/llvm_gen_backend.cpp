@@ -1467,7 +1467,12 @@ error:
     /* First find the meta data belong to this function. */
     for(uint i = 0; i < clKernelMetaDatas->getNumOperands(); i++) {
       node = clKernelMetaDatas->getOperand(i);
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
       if (node->getOperand(0) == &F) break;
+#else
+      auto *V = cast<ValueAsMetadata>(node->getOperand(0));
+      if (V && V->getValue() == &F) break;
+#endif
       node = NULL;
     }
 
@@ -1484,9 +1489,15 @@ error:
 
       if (attrName->getString() == "reqd_work_group_size") {
         GBE_ASSERT(attrNode->getNumOperands() == 4);
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
         ConstantInt *x = dyn_cast<ConstantInt>(attrNode->getOperand(1));
         ConstantInt *y = dyn_cast<ConstantInt>(attrNode->getOperand(2));
         ConstantInt *z = dyn_cast<ConstantInt>(attrNode->getOperand(3));
+#else
+        ConstantInt *x = mdconst::extract<ConstantInt>(attrNode->getOperand(1));
+        ConstantInt *y = mdconst::extract<ConstantInt>(attrNode->getOperand(2));
+        ConstantInt *z = mdconst::extract<ConstantInt>(attrNode->getOperand(3));
+#endif
         GBE_ASSERT(x && y && z);
         reqd_wg_sz[0] = x->getZExtValue();
         reqd_wg_sz[1] = y->getZExtValue();
@@ -1521,9 +1532,15 @@ error:
         functionAttributes += " ";
       } else if (attrName->getString() == "work_group_size_hint") {
         GBE_ASSERT(attrNode->getNumOperands() == 4);
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
         ConstantInt *x = dyn_cast<ConstantInt>(attrNode->getOperand(1));
         ConstantInt *y = dyn_cast<ConstantInt>(attrNode->getOperand(2));
         ConstantInt *z = dyn_cast<ConstantInt>(attrNode->getOperand(3));
+#else
+        ConstantInt *x = mdconst::extract<ConstantInt>(attrNode->getOperand(1));
+        ConstantInt *y = mdconst::extract<ConstantInt>(attrNode->getOperand(2));
+        ConstantInt *z = mdconst::extract<ConstantInt>(attrNode->getOperand(3));
+#endif
         GBE_ASSERT(x && y && z);
         hint_wg_sz[0] = x->getZExtValue();
         hint_wg_sz[1] = y->getZExtValue();
@@ -1561,8 +1578,11 @@ error:
       for (; I != E; ++I, ++argID) {
         const std::string &argName = I->getName().str();
         Type *type = I->getType();
-
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
         llvmInfo.addrSpace = (cast<ConstantInt>(addrSpaceNode->getOperand(1 + argID)))->getZExtValue();
+#else
+        llvmInfo.addrSpace = (mdconst::extract<ConstantInt>(addrSpaceNode->getOperand(1 + argID)))->getZExtValue();
+#endif
         llvmInfo.typeName = (cast<MDString>(typeNameNode->getOperand(1 + argID)))->getString();
         llvmInfo.accessQual = (cast<MDString>(accessQualNode->getOperand(1 + argID)))->getString();
         llvmInfo.typeQual = (cast<MDString>(typeQualNode->getOperand(1 + argID)))->getString();
