@@ -33,12 +33,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/DataLayout.h"
 #endif  /* LLVM_VERSION_MINOR <= 2 */
-
-#if LLVM_VERSION_MINOR >= 5
-#include "llvm/Linker/Linker.h"
-#else
-#include "llvm/Linker.h"
-#endif
+#include "llvm-c/Linker.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/raw_ostream.h"
@@ -371,22 +366,19 @@ namespace gbe {
   {
 #ifdef GBE_COMPILER_AVAILABLE
     using namespace gbe;
-    std::string errMsg;
+    char* errMsg;
     if(((GenProgram*)dst_program)->module == NULL){
       ((GenProgram*)dst_program)->module = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module);
       errSize = 0;
     }else{
       llvm::Module* src = (llvm::Module*)((GenProgram*)src_program)->module;
       llvm::Module* dst = (llvm::Module*)((GenProgram*)dst_program)->module;
-      llvm::Linker::LinkModules( dst,
-                                 src,
-                                 llvm::Linker::PreserveSource,
-                                 &errMsg);
-      if (errMsg.c_str() != NULL) {
+
+      if (LLVMLinkModules(wrap(dst), wrap(src), LLVMLinkerPreserveSource, &errMsg)) {
         if (err != NULL && errSize != NULL && stringSize > 0u) {
-          if(errMsg.length() < stringSize )
-            stringSize = errMsg.length();
-          strcpy(err, errMsg.c_str());
+          if(strlen(errMsg) < stringSize )
+            stringSize = strlen(errMsg);
+          strcpy(err, errMsg);
           err[stringSize+1] = '\0';
         }
       }

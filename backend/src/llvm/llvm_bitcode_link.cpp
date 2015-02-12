@@ -38,11 +38,7 @@
 #include "sys/cvar.hpp"
 #include "src/GBEConfig.h"
 #include "llvm/llvm_gen_backend.hpp"
-#if LLVM_VERSION_MINOR >= 5
-#include "llvm/Linker/Linker.h"
-#else
-#include "llvm/Linker.h"
-#endif
+#include "llvm-c/Linker.h"
 
 using namespace llvm;
 
@@ -110,10 +106,10 @@ namespace gbe
         if (!newMF) {
           newMF = src.getFunction(fnName);
           if (!newMF) {
-	    printf("Can not find the lib: %s\n", fnName.c_str());
-	    return false;
+            printf("Can not find the lib: %s\n", fnName.c_str());
+            return false;
           }
-	  fromSrc = true;
+          fromSrc = true;
         }
 
         std::string ErrInfo;// = "Not Materializable";
@@ -226,10 +222,10 @@ namespace gbe
 
     /* We use beignet's bitcode as dst because it will have a lot of
        lazy functions which will not be loaded. */
-    std::string errorMsg;
-    if(Linker::LinkModules(clonedLib, mod, Linker::DestroySource, &errorMsg)) {
+    char* errorMsg;
+    if(LLVMLinkModules(wrap(clonedLib), wrap(mod), LLVMLinkerDestroySource, &errorMsg)) {
       delete clonedLib;
-      printf("Fatal Error: link the bitcode error:\n%s\n", errorMsg.c_str());
+      printf("Fatal Error: link the bitcode error:\n%s\n", errorMsg);
       return NULL;
     }
 
