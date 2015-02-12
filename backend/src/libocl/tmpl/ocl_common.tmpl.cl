@@ -17,6 +17,7 @@
  */
 #include "ocl_common.h"
 #include "ocl_float.h"
+#include "ocl_relational.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // Common Functions
@@ -55,11 +56,22 @@ OVERLOADABLE float smoothstep(float e0, float e1, float x) {
 }
 
 OVERLOADABLE float sign(float x) {
-  if(x > 0)
-    return 1;
-  if(x < 0)
-    return -1;
-  if(x == -0.f)
-    return -0.f;
-  return 0.f;
+// TODO: the best form of implementation is below,
+//      But I find it hard to implement in Beignet now,
+//      So I would put it in the TODO list.
+
+//      cmp.ne.f0  null    x:f  0.0:f
+//      and        ret:ud  x:ud 0x80000000:ud
+//(+f0) or         ret:ud  ret:ud 0x3f800000:ud
+//      cmp.ne.f0  null    x:f  x:f
+//(+f0) mov        ret:f   0.0f
+
+  union {float f; unsigned u;} ieee;
+  ieee.f = x;
+  unsigned k = ieee.u;
+  float r = (k&0x80000000) ? -1.0f : 1.0f;
+  // differentiate +0.0f -0.0f
+  float s = 0.0f * r;
+  s = (x == 0.0f) ? s : r;
+  return isnan(x) ? 0.0f : s;
 }
