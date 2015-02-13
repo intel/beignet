@@ -224,7 +224,7 @@ namespace gbe
       }
 #else
         if (std::error_code EC = newMF->materialize()) {
-          printf("Can not materialize the function: %s, because %s\n", fnName.c_str(), EC.message().c_str();
+          printf("Can not materialize the function: %s, because %s\n", fnName.c_str(), EC.message().c_str());
           delete clonedLib;
           return NULL;
         }
