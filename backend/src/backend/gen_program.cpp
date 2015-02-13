@@ -386,10 +386,9 @@ namespace gbe {
       if (LLVMLinkModules(wrap(dst), wrap(src), 0, &errMsg)) {
 #endif
         if (err != NULL && errSize != NULL && stringSize > 0u) {
-          if(strlen(errMsg) < stringSize )
-            stringSize = strlen(errMsg);
-          strcpy(err, errMsg);
-          err[stringSize+1] = '\0';
+          strncpy(err, errMsg, stringSize-1);
+          err[stringSize-1] = '\0';
+          *errSize = strlen(err);
         }
       }
     }
