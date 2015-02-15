@@ -21,7 +21,7 @@
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #include "ocl_defines.h"
 
-#define NULL ((void*)0)
+#define NULL 0
 
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL Common Defines
