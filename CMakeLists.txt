@@ -39,12 +39,27 @@ INCLUDE (FindPkgConfig)
 
 SET(CMAKE_VERBOSE_MAKEFILE "false")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/")
+INCLUDE (GNUInstallDirs OPTIONAL)
+# support old CMake without GNUInstallDirs
+if (NOT CMAKE_INSTALL_FULL_LIBDIR)
+  set (CMAKE_INSTALL_FULL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib")
+  set (CMAKE_LIBRARY_ARCHITECTURE "")
+endif (NOT CMAKE_INSTALL_FULL_LIBDIR)
+
 if (NOT LIB_INSTALL_DIR)
-  set (LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+  set (LIB_INSTALL_DIR "${CMAKE_INSTALL_FULL_LIBDIR}")
 endif (NOT LIB_INSTALL_DIR)
 if (NOT BEIGNET_INSTALL_DIR)
   set (BEIGNET_INSTALL_DIR "${LIB_INSTALL_DIR}/beignet/")
 endif (NOT BEIGNET_INSTALL_DIR)
+
+# allow co-installation of 32- and 64-bit versions:
+# https://wiki.debian.org/Multiarch
+if (BEIGNET_INSTALL_DIR STREQUAL "${CMAKE_INSTALL_PREFIX}/lib/beignet/")
+  set (ICD_FILE_NAME "intel-beignet.icd")
+else (BEIGNET_INSTALL_DIR STREQUAL "${CMAKE_INSTALL_PREFIX}/lib/beignet/")
+  set (ICD_FILE_NAME "intel-beignet-${CMAKE_LIBRARY_ARCHITECTURE}.icd")
+endif (BEIGNET_INSTALL_DIR STREQUAL "${CMAKE_INSTALL_PREFIX}/lib/beignet/")
 
 # Force Release with debug info
 if (NOT CMAKE_BUILD_TYPE)
@@ -173,9 +188,9 @@ IF(OCLIcd_FOUND)
   MESSAGE(STATUS "Looking for OCL ICD header file - found")
   configure_file (
     "intel-beignet.icd.in"
-    "intel-beignet.icd"
+    "${ICD_FILE_NAME}"
   )
-  install (FILES ${CMAKE_CURRENT_BINARY_DIR}/intel-beignet.icd DESTINATION /etc/OpenCL/vendors)
+  install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${ICD_FILE_NAME} DESTINATION /etc/OpenCL/vendors)
 ELSE(OCLIcd_FOUND)
   MESSAGE(STATUS "Looking for OCL ICD header file - not found")
 ENDIF(OCLIcd_FOUND)
