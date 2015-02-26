@@ -354,13 +354,47 @@ static Value *buildVectorOrScalar(ConversionState &State, IRBuilder<> &IRB, Smal
   }
 }
 
-void getSplitedValue(ConversionState &State, Value *Val, SmallVector<Value *, 16> &Result) {
+static void getSplitedValue(ConversionState &State, Value *Val, SmallVector<Value *, 16> &Result) {
   while (shouldConvert(Val)) {
     ValuePair Convert = State.getConverted(Val);
     Result.push_back(Convert.Lo);
     Val = Convert.Hi;
   }
   Result.push_back(Val);
+}
+
+// make all the elements in Src use the same llvm::Type, and return them in Dst
+static void unifyElementType(IRBuilder<> &IRB, SmallVector<Value *, 16> &Src, SmallVector<Value *, 16> &Dst) {
+  unsigned MinWidth = Src[0]->getType()->getPrimitiveSizeInBits();
+  bool Unified = true;
+  for (unsigned i = 0; i < Src.size(); i++) {
+    Type *Ty = Src[i]->getType();
+    unsigned BitWidth = Ty->getPrimitiveSizeInBits();
+    if(BitWidth != MinWidth) Unified = false;
+    if(BitWidth < MinWidth) MinWidth = BitWidth;
+  }
+
+  if (Unified) {
+    for (unsigned i = 0; i < Src.size(); i++)
+      Dst.push_back(Src[i]);
+  } else {
+    Type *IntTy = IntegerType::get(IRB.getContext(), 32);
+    Type *ElemTy = IntegerType::get(IRB.getContext(), MinWidth);
+    for (unsigned i = 0; i < Src.size(); i++) {
+      Type *Ty = Src[i]->getType();
+      unsigned Size = Ty->getPrimitiveSizeInBits();
+      assert((Size % MinWidth) == 0);
+
+      if (Size > MinWidth) {
+        VectorType *VecTy = VectorType::get(ElemTy, Size/MinWidth);
+        Value *Casted = IRB.CreateBitCast(Src[i], VecTy);
+        for (unsigned j = 0; j < Size/MinWidth; j++)
+          Dst.push_back(IRB.CreateExtractElement(Casted, ConstantInt::get(IntTy, j)));
+      } else {
+        Dst.push_back(Src[i]);
+      }
+    }
+  }
 }
 
 static void convertInstruction(Instruction *Inst, ConversionState &State,
@@ -429,15 +463,18 @@ static void convertInstruction(Instruction *Inst, ConversionState &State,
     if (DstVec) {
       // integer to vector, get all children and bitcast
       SmallVector<Value *, 16> Split;
+      SmallVector<Value *, 16> Unified;
       getSplitedValue(State, Operand, Split);
+      // unify element type, this is required by insertelement
+      unifyElementType(IRB, Split, Unified);
 
       Value *vec = NULL;
-      unsigned ElemNo = Split.size();
-      Type *ElemTy = Split[0]->getType();
+      unsigned ElemNo = Unified.size();
+      Type *ElemTy = Unified[0]->getType();
       for (unsigned i = 0; i < ElemNo; ++i) {
         Value *tmp = vec ? vec : UndefValue::get(VectorType::get(ElemTy, ElemNo));
         Value *idx = ConstantInt::get(IntTy, i);
-        vec = IRB.CreateInsertElement(tmp, Split[i], idx);
+        vec = IRB.CreateInsertElement(tmp, Unified[i], idx);
       }
       if (vec->getType() != Cast->getType())
         vec = IRB.CreateBitCast(vec, Cast->getType());
