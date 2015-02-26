@@ -124,14 +124,15 @@ intel_driver_aub_dump(intel_driver_t *driver)
   }
 }
 
-static void
+static int
 intel_driver_memman_init(intel_driver_t *driver)
 {
   driver->bufmgr = drm_intel_bufmgr_gem_init(driver->fd, BATCH_SIZE);
-  assert(driver->bufmgr);
+  if (!driver->bufmgr) return 0;
   drm_intel_bufmgr_gem_enable_reuse(driver->bufmgr);
   driver->device_id = drm_intel_bufmgr_gem_get_devid(driver->bufmgr);
   intel_driver_aub_dump(driver);
+  return 1;
 }
 
 static void
@@ -149,14 +150,14 @@ intel_driver_context_destroy(intel_driver_t *driver)
   driver->ctx = NULL;
 }
 
-static void 
+static int
 intel_driver_init(intel_driver_t *driver, int dev_fd)
 {
   driver->fd = dev_fd;
   driver->locked = 0;
   pthread_mutex_init(&driver->ctxmutex, NULL);
 
-  intel_driver_memman_init(driver);
+  if (!intel_driver_memman_init(driver)) return 0;
   intel_driver_context_init(driver);
 
 #if EMULATE_GEN
@@ -183,6 +184,7 @@ intel_driver_init(intel_driver_t *driver, int dev_fd)
   else
     driver->gen_ver = 4;
 #endif /* EMULATE_GEN */
+  return 1;
 }
 
 static cl_int
@@ -271,19 +273,20 @@ intel_driver_is_active(intel_driver_t *driver) {
 LOCAL int 
 intel_driver_init_shared(intel_driver_t *driver, dri_state_t *state)
 {
+  int ret;
   assert(state);
   if(state->driConnectedFlag != DRI2)
     return 0;
-  intel_driver_init(driver, state->fd);
+  ret = intel_driver_init(driver, state->fd);
   driver->need_close = 0;
-  return 1;
+  return ret;
 }
 #endif
 
 LOCAL int
 intel_driver_init_master(intel_driver_t *driver, const char* dev_name)
 {
-  int dev_fd;
+  int dev_fd, ret;
 
   drm_client_t client;
 
@@ -296,7 +299,7 @@ intel_driver_init_master(intel_driver_t *driver, const char* dev_name)
 
   // Check that we're authenticated
   memset(&client, 0, sizeof(drm_client_t));
-  int ret = ioctl(dev_fd, DRM_IOCTL_GET_CLIENT, &client);
+  ret = ioctl(dev_fd, DRM_IOCTL_GET_CLIENT, &client);
   if (ret == -1) {
     fprintf(stderr, "ioctl(dev_fd, DRM_IOCTL_GET_CLIENT, &client) failed: %s\n", strerror(errno));
     close(dev_fd);
@@ -309,26 +312,26 @@ intel_driver_init_master(intel_driver_t *driver, const char* dev_name)
     return 0;
   }
 
-  intel_driver_init(driver, dev_fd);
+  ret = intel_driver_init(driver, dev_fd);
   driver->need_close = 1;
 
-  return 1;
+  return ret;
 }
 
 LOCAL int
 intel_driver_init_render(intel_driver_t *driver, const char* dev_name)
 {
-  int dev_fd;
+  int dev_fd, ret;
 
   // usually dev_name = "/dev/dri/renderD%d"
   dev_fd = open(dev_name, O_RDWR);
   if (dev_fd == -1)
     return 0;
 
-  intel_driver_init(driver, dev_fd);
+  ret = intel_driver_init(driver, dev_fd);
   driver->need_close = 1;
 
-  return 1;
+  return ret;
 }
 
 LOCAL int 
