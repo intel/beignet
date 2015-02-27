@@ -78,6 +78,7 @@
 
 #include <map>
 
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
@@ -110,6 +111,43 @@ static Value *expandConstantExpr(Instruction *InsertPt, ConstantExpr *Expr) {
   return NewInst;
 }
 
+// For a constant vector, it may contain some constant expressions.
+// We need to expand each expressions then recreate this vector by
+// using InsertElement instruction. Thus we can eliminate all the
+// constant expressions.
+static Value *expandConstantVector(Instruction *InsertPt, ConstantVector *CV) {
+  int elemNum = CV->getType()->getNumElements();
+  Type *IntTy = IntegerType::get(CV->getContext(), 32);
+
+  BasicBlock::iterator InsertPos(InsertPt);
+  IRBuilder<> IRB(--InsertPos);
+  Value *vec = UndefValue::get(CV->getType());
+  for (int i = 0; i < elemNum; i++) {
+    Value *idx = ConstantInt::get(IntTy, i);
+    if (dyn_cast<ConstantVector>(CV->getOperand(i)))
+      vec = IRB.CreateInsertElement(vec, expandConstantVector(InsertPt, dyn_cast<ConstantVector>(CV->getOperand(i))), idx);
+    else if (dyn_cast<ConstantExpr>(CV->getOperand(i)))
+      vec = IRB.CreateInsertElement(vec, expandConstantExpr(InsertPt, dyn_cast<ConstantExpr>(CV->getOperand(i))), idx);
+    else
+      vec = IRB.CreateInsertElement(vec, CV->getOperand(i), idx);
+  }
+  return vec;
+}
+
+// Whether a constant vector contains constant expression which need to expand.
+static bool needExpand(ConstantVector *CV) {
+  int elemNum = CV->getType()->getNumElements();
+  for (int i = 0; i < elemNum; i++) {
+    Constant *C = CV->getOperand(i);
+    if (dyn_cast<ConstantExpr>(C))
+      return true;
+    if (dyn_cast<ConstantVector>(C))
+      if (needExpand(dyn_cast<ConstantVector>(C)))
+        return true;
+  }
+  return false;
+}
+
 static bool expandInstruction(Instruction *Inst) {
   // A landingpad can only accept ConstantExprs, so it should remain
   // unmodified.
@@ -123,6 +161,14 @@ static bool expandInstruction(Instruction *Inst) {
       Modified = true;
       Use *U = &Inst->getOperandUse(OpNum);
       PhiSafeReplaceUses(U, expandConstantExpr(PhiSafeInsertPt(U), Expr));
+    }
+    else {
+      ConstantVector *CV = dyn_cast<ConstantVector>(Inst->getOperand(OpNum));
+      if (CV && needExpand(CV)) {
+        Modified = true;
+        Use *U = &Inst->getOperandUse(OpNum);
+        PhiSafeReplaceUses(U, expandConstantVector(PhiSafeInsertPt(U), CV));
+      }
     }
   }
   return Modified;
