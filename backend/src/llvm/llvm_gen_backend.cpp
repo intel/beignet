@@ -649,6 +649,8 @@ namespace gbe
                   Value *llvmValue, const ir::Register ptr,
                   const ir::AddressSpace addrSpace, Type * elemType, bool isLoad, ir::BTI bti,
                   bool dwAligned);
+    // handle load of dword/qword with unaligned address
+    void emitUnalignedDQLoadStore(Value *llvmPtr, Value *llvmValues, ir::AddressSpace addrSpace, ir::BTI &binding, bool isLoad, bool dwAligned);
     void visitInstruction(Instruction &I) {NOT_SUPPORTED;}
     private:
       ir::ImmediateIndex processConstantImmIndexImpl(Constant *CPV, int32_t index = 0u);
@@ -3667,6 +3669,67 @@ namespace gbe
     }
     GBE_ASSERT(bti.count <= MAX_MIXED_POINTER);
   }
+  // handle load of dword/qword with unaligned address
+  void GenWriter::emitUnalignedDQLoadStore(Value *llvmPtr, Value *llvmValues, ir::AddressSpace addrSpace, ir::BTI &binding, bool isLoad, bool dwAligned)
+  {
+    Type *llvmType = llvmValues->getType();
+    const ir::Type type = getType(ctx, llvmType);
+    unsigned byteSize = getTypeByteSize(unit, llvmType);
+    const ir::Register ptr = this->getRegister(llvmPtr);
+
+    Type *elemType = llvmType;
+    unsigned elemNum = 1;
+    if (!isScalarType(llvmType)) {
+      VectorType *vectorType = cast<VectorType>(llvmType);
+      elemType = vectorType->getElementType();
+      elemNum = vectorType->getNumElements();
+    }
+
+    vector<ir::Register> tupleData;
+    for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
+      ir::Register reg;
+      if(regTranslator.isUndefConst(llvmValues, elemID)) {
+        Value *v = Constant::getNullValue(elemType);
+        reg = this->getRegister(v);
+      } else
+        reg = this->getRegister(llvmValues, elemID);
+
+      tupleData.push_back(reg);
+    }
+    const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], elemNum);
+
+    vector<ir::Register> byteTupleData;
+    for (uint32_t elemID = 0; elemID < byteSize; ++elemID) {
+      byteTupleData.push_back(ctx.reg(ir::FAMILY_BYTE));
+    }
+    const ir::Tuple byteTuple = ctx.arrayTuple(&byteTupleData[0], byteSize);
+
+    if (isLoad) {
+      ctx.LOAD(ir::TYPE_U8, byteTuple, ptr, addrSpace, byteSize, dwAligned, binding);
+      ctx.BITCAST(type, ir::TYPE_U8, tuple, byteTuple, elemNum, byteSize);
+    } else {
+      ctx.BITCAST(ir::TYPE_U8, type, byteTuple, tuple, byteSize, elemNum);
+      // FIXME: byte scatter does not handle correctly vector store, after fix that,
+      //        we can directly use on store instruction like:
+      //        ctx.STORE(ir::TYPE_U8, byteTuple, ptr, addrSpace, byteSize, dwAligned, binding);
+      const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
+      for (uint32_t elemID = 0; elemID < byteSize; elemID++) {
+        const ir::Register reg = byteTupleData[elemID];
+        ir::Register addr;
+        if (elemID == 0)
+          addr = ptr;
+        else {
+          const ir::Register offset = ctx.reg(pointerFamily);
+          ir::ImmediateIndex immIndex;
+          immIndex = ctx.newImmediate(int32_t(elemID));
+          addr = ctx.reg(pointerFamily);
+          ctx.LOADI(ir::TYPE_S32, offset, immIndex);
+          ctx.ADD(ir::TYPE_S32, addr, ptr, offset);
+        }
+       ctx.STORE(type, addr, addrSpace, dwAligned, binding, reg);
+      }
+    }
+  }
 
   extern int OCL_SIMD_WIDTH;
   template <bool isLoad, typename T>
@@ -3682,6 +3745,19 @@ namespace gbe
     ir::BTI binding;
     gatherBTI(&I, binding);
 
+    Type *scalarType = llvmType;
+    if (!isScalarType(llvmType)) {
+      VectorType *vectorType = cast<VectorType>(llvmType);
+      scalarType = vectorType->getElementType();
+    }
+
+    if (!dwAligned
+       && (scalarType == IntegerType::get(I.getContext(), 64)
+          || scalarType == IntegerType::get(I.getContext(), 32))
+       ) {
+      emitUnalignedDQLoadStore(llvmPtr, llvmValues, addrSpace, binding, isLoad, dwAligned);
+      return;
+    }
     // Scalar is easy. We neednot build register tuples
     if (isScalarType(llvmType) == true) {
       const ir::Type type = getType(ctx, llvmType);
