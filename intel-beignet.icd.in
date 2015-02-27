@@ -1,1 +1,1 @@
-@LIB_INSTALL_DIR@/beignet/libcl.so
+@BEIGNET_INSTALL_DIR@/libcl.so
