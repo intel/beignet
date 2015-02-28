@@ -21,7 +21,7 @@
 #include "ocl_common.h"
 #include "ocl_integer.h"
 
-constant int __ocl_math_fastpath_flag = 1;
+extern constant int __ocl_math_fastpath_flag;
 
 PURE CONST float __gen_ocl_fabs(float x);
 PURE CONST float __gen_ocl_sin(float x);
