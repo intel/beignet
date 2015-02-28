@@ -73,12 +73,10 @@ namespace gbe
       return NULL;
     }
 
-    if (strictMath) {
-      llvm::GlobalVariable* mathFastFlag = oclLib->getGlobalVariable("__ocl_math_fastpath_flag");
-      assert(mathFastFlag);
-      Type* intTy = IntegerType::get(ctx, 32);
-      mathFastFlag->setInitializer(ConstantInt::get(intTy, 0));
-    }
+    llvm::GlobalVariable* mathFastFlag = oclLib->getGlobalVariable("__ocl_math_fastpath_flag");
+    assert(mathFastFlag);
+    Type* intTy = IntegerType::get(ctx, 32);
+    mathFastFlag->setInitializer(ConstantInt::get(intTy, strictMath ? 0 : 1));
 
     return oclLib;
   }
