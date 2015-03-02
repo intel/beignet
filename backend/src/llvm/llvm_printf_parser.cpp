@@ -564,6 +564,7 @@ error:
       case CallingConv::PTX_Kernel:
 #else
       case CallingConv::C:
+      case CallingConv::Fast:
 #endif
         break;
       default:
