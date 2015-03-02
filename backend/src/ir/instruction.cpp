@@ -887,7 +887,6 @@ namespace ir {
       for (uint32_t srcID = 0; srcID < 2; ++srcID)
         if (UNLIKELY(checkRegisterData(family, src[srcID], fn, whyNot) == false))
           return false;
-      CHECK_TYPE(this->type, allButBool);
       return true;
     }
 

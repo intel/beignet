@@ -2151,8 +2151,6 @@ namespace gbe
   }
 
   void GenWriter::emitICmpInst(ICmpInst &I) {
-    GBE_ASSERT(I.getOperand(0)->getType() != Type::getInt1Ty(I.getContext()));
-
     // Get the element type and the number of elements
     Type *operandType = I.getOperand(0)->getType();
     const ir::Type type = getType(ctx, operandType);
