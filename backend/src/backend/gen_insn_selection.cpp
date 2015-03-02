@@ -115,7 +115,7 @@ namespace gbe
   uint32_t getGenType(ir::Type type) {
     using namespace ir;
     switch (type) {
-      case TYPE_BOOL: return GEN_TYPE_UW;
+      case TYPE_BOOL: return GEN_TYPE_W;
       case TYPE_S8: return GEN_TYPE_B;
       case TYPE_U8: return GEN_TYPE_UB;
       case TYPE_S16: return GEN_TYPE_W;
@@ -1956,7 +1956,7 @@ namespace gbe
       case TYPE_U8:  return GenRegister::immuw(imm.getIntegerValue() * sign);
       case TYPE_S8:  return GenRegister::immw((int8_t)imm.getIntegerValue() * sign);
       case TYPE_DOUBLE: return GenRegister::immdf(imm.getDoubleValue() * sign);
-      case TYPE_BOOL: return GenRegister::immuw(-imm.getIntegerValue());  //return 0xffff when true
+      case TYPE_BOOL: return GenRegister::immw((imm.getIntegerValue() == 0) ? 0 : -1);  //return 0xffff when true
       default: NOT_SUPPORTED; return GenRegister::immuw(0);
     }
   }
