@@ -788,9 +788,11 @@ namespace gbe {
     case CallingConv::PTX_Kernel:
 #else
     case CallingConv::C:
+    case CallingConv::Fast:
 #endif
       break;
-    default: GBE_ASSERTM(false, "Unsupported calling convention");
+    default:
+      GBE_ASSERTM(false, "Unsupported calling convention");
     }
 
     // As we inline all function calls, so skip non-kernel functions
