@@ -872,7 +872,6 @@ namespace ir {
         if (UNLIKELY(checkRegisterData(family, regID, fn, whyNot) == false))
           return false;
       }
-      CHECK_TYPE(this->type, allButBool);
       return true;
     }
 
