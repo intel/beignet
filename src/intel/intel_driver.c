@@ -754,6 +754,41 @@ static int intel_buffer_set_tiling(cl_buffer bo,
   return ret;
 }
 
+static void
+intel_update_device_info(cl_device_id device)
+{
+#ifdef HAS_USERPTR
+  intel_driver_t *driver;
+  const size_t sz = 4096;
+  void *host_ptr;
+
+  driver = intel_driver_new();
+  assert(driver != NULL);
+  if (intel_driver_open(driver, NULL) != CL_SUCCESS) {
+    intel_driver_delete(driver);
+    return;
+  }
+
+  host_ptr = cl_aligned_malloc(sz, 4096);
+  if (host_ptr != NULL) {
+    cl_buffer bo = intel_buffer_alloc_userptr((cl_buffer_mgr)driver->bufmgr,
+      "CL memory object", host_ptr, sz, 0);
+    if (bo == NULL)
+      device->host_unified_memory = CL_FALSE;
+    else
+      drm_intel_bo_unreference((drm_intel_bo*)bo);
+    cl_free(host_ptr);
+  }
+  else
+    device->host_unified_memory = CL_FALSE;
+
+  intel_driver_context_destroy(driver);
+  intel_driver_close(driver);
+  intel_driver_terminate(driver);
+  intel_driver_delete(driver);
+#endif
+}
+
 LOCAL void
 intel_setup_callbacks(void)
 {
@@ -762,6 +797,7 @@ intel_setup_callbacks(void)
   cl_driver_get_ver = (cl_driver_get_ver_cb *) intel_driver_get_ver;
   cl_driver_get_bufmgr = (cl_driver_get_bufmgr_cb *) intel_driver_get_bufmgr;
   cl_driver_get_device_id = (cl_driver_get_device_id_cb *) intel_get_device_id;
+  cl_driver_update_device_info = (cl_driver_update_device_info_cb *) intel_update_device_info;
   cl_buffer_alloc = (cl_buffer_alloc_cb *) drm_intel_bo_alloc;
   cl_buffer_alloc_userptr = (cl_buffer_alloc_userptr_cb*) intel_buffer_alloc_userptr;
   cl_buffer_set_tiling = (cl_buffer_set_tiling_cb *) intel_buffer_set_tiling;

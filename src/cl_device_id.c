@@ -506,24 +506,8 @@ skl_gt4_break:
     ret->profile_sz = strlen(ret->profile) + 1;
   }
 
-#ifdef HAS_USERPTR
-  cl_driver dummy = cl_driver_new(NULL);
-  cl_buffer_mgr bufmgr = cl_driver_get_bufmgr(dummy);
-
-  const size_t sz = 4096;
-  void* host_ptr = cl_aligned_malloc(sz, 4096);;
-  if (host_ptr != NULL) {
-    cl_buffer bo = cl_buffer_alloc_userptr(bufmgr, "CL memory object", host_ptr, sz, 0);
-    if (bo == NULL)
-      ret->host_unified_memory = CL_FALSE;
-    else
-      cl_buffer_unreference(bo);
-    cl_free(host_ptr);
-  }
-  else
-    ret->host_unified_memory = CL_FALSE;
-  cl_driver_delete(dummy);
-#endif
+  /* Apply any driver-dependent updates to the device info */
+  cl_driver_update_device_info(ret);
 
   struct sysinfo info;
   if (sysinfo(&info) == 0) {

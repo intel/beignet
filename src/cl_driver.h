@@ -376,6 +376,10 @@ extern cl_buffer_get_tiling_align_cb *cl_buffer_get_tiling_align;
 typedef int (cl_driver_get_device_id_cb)(void);
 extern cl_driver_get_device_id_cb *cl_driver_get_device_id;
 
+/* Update the device info */
+typedef void (cl_driver_update_device_info_cb)(cl_device_id device);
+extern cl_driver_update_device_info_cb *cl_driver_update_device_info;
+
 /**************************************************************************
  * cl_khr_gl_sharing.
  **************************************************************************/
