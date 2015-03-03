@@ -388,11 +388,7 @@ namespace gbe {
       llvm::Module* src = (llvm::Module*)((GenProgram*)src_program)->module;
       llvm::Module* dst = (llvm::Module*)((GenProgram*)dst_program)->module;
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
       if (LLVMLinkModules(wrap(dst), wrap(src), LLVMLinkerPreserveSource, &errMsg)) {
-#else
-      if (LLVMLinkModules(wrap(dst), wrap(src), 0, &errMsg)) {
-#endif
         if (err != NULL && errSize != NULL && stringSize > 0u) {
           strncpy(err, errMsg, stringSize-1);
           err[stringSize-1] = '\0';

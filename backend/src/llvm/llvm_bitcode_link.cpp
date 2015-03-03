@@ -240,11 +240,7 @@ namespace gbe
     /* We use beignet's bitcode as dst because it will have a lot of
        lazy functions which will not be loaded. */
     char* errorMsg;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
     if(LLVMLinkModules(wrap(clonedLib), wrap(mod), LLVMLinkerDestroySource, &errorMsg)) {
-#else
-    if(LLVMLinkModules(wrap(clonedLib), wrap(mod), 0, &errorMsg)) {
-#endif
       delete clonedLib;
       printf("Fatal Error: link the bitcode error:\n%s\n", errorMsg);
       return NULL;
