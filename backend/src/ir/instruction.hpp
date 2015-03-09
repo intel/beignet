@@ -620,6 +620,8 @@ namespace ir {
   Instruction RNDU(Type type, Register dst, Register src);
   /*! rndz.type dst src */
   Instruction RNDZ(Type type, Register dst, Register src);
+  /*! bswap.type dst src */
+  Instruction BSWAP(Type type, Register dst, Register src);
   /*! pow.type dst src0 src1 */
   Instruction POW(Type type, Register dst, Register src0, Register src1);
   /*! mul.type dst src0 src1 */

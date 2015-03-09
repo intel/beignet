@@ -2946,89 +2946,6 @@ namespace gbe
           case Intrinsic::umul_with_overflow:
           NOT_IMPLEMENTED;
           break;
-          case Intrinsic::bswap:
-          {
-            // FIXME, this is an unoptimized version, could be optimized by
-            // leveraging GEN's register region/indirect address feature.
-            Type *llvmDstType = I.getType();
-            uint32_t elementSize = getTypeByteSize(unit, llvmDstType);
-
-            const ir::Register dst0  = this->getRegister(&I);
-            const ir::Register src0 = this->getRegister(I.getOperand(0));
-            switch(elementSize)
-            {
-              case 2:
-                {
-                  ir::Type srcType = getUnsignedType(ctx, llvmDstType);
-                  ir::Register tmp1 = ctx.reg(getFamily(srcType));
-                  ir::Register tmp2 = ctx.reg(getFamily(srcType));
-
-                  ir::Register regWMask = ctx.reg( ir::FAMILY_WORD );
-                  const ir::ImmediateIndex wMask = ctx.newIntegerImmediate(0x00FF, ir::TYPE_S16);
-                  ir::Register regShift = ctx.reg( ir::FAMILY_WORD );
-                  const ir::ImmediateIndex shift = ctx.newIntegerImmediate(8, ir::TYPE_S16);
-
-                  ctx.LOADI(ir::TYPE_S16, regWMask, wMask);
-                  ctx.AND(srcType, tmp1, src0, regWMask);
-
-                  ctx.LOADI(ir::TYPE_S16, regShift, shift);
-                  ctx.SHL(srcType, tmp2, tmp1, regShift);
-
-                  ir::Register tmp3 = ctx.reg( getFamily(srcType) );
-                  ctx.SHR(srcType, tmp3, src0, regShift);
-
-                  ctx.OR(srcType, dst0, tmp2, tmp3);
-                }
-                break;
-              case 4:
-                {
-                  ir::Type srcType = getType(ctx, llvmDstType);
-                  ir::Register tmp1 = ctx.reg(getFamily(srcType));
-                  ir::Register tmp2 = ctx.reg(getFamily(srcType));
-                  ir::Register tmp3 = ctx.reg(getFamily(srcType));
-                  ir::Register tmp4 = ctx.reg(getFamily(srcType));
-                  ir::Register tmp5 = ctx.reg(getFamily(srcType));
-                  ir::Register tmp6 = ctx.reg(getFamily(srcType));
-
-                  ir::Register regDWMask = ctx.reg( ir::FAMILY_DWORD );
-                  ir::Register regShift_8 = ctx.reg( ir::FAMILY_DWORD );
-                  ir::Register regShift_24 = ctx.reg( ir::FAMILY_DWORD );
-                  ir::ImmediateIndex wMask_L = ctx.newIntegerImmediate(0x0000FF00, ir::TYPE_S32);
-                  ir::ImmediateIndex wMask_H = ctx.newIntegerImmediate(0x00FF0000, ir::TYPE_S32);
-                  ir::ImmediateIndex shift_8 = ctx.newIntegerImmediate(8, ir::TYPE_S32);
-                  ir::ImmediateIndex shift_24 = ctx.newIntegerImmediate(24, ir::TYPE_S32);
-
-                  ctx.LOADI(ir::TYPE_S32, regShift_24, shift_24);
-                  ctx.SHL(srcType, tmp1, src0, regShift_24);
-
-                  ctx.LOADI(ir::TYPE_S32, regDWMask, wMask_L);
-                  ctx.AND(srcType, tmp2, src0, regDWMask);
-                  ctx.LOADI(ir::TYPE_S32, regShift_8, shift_8);
-                  ctx.SHL(srcType, tmp3, tmp2, regShift_8);
-
-                  ctx.LOADI(ir::TYPE_S32, regDWMask, wMask_H);
-                  ctx.AND(srcType, tmp4, src0, regDWMask);
-                  ctx.LOADI(ir::TYPE_S32, regShift_8, shift_8);
-                  ctx.SHR(makeTypeUnsigned(srcType), tmp5, tmp4, regShift_8);
-
-                  ctx.LOADI(ir::TYPE_S32, regShift_24, shift_24);
-                  ctx.SHR(makeTypeUnsigned(srcType), tmp6, src0, regShift_24);
-
-                  ir::Register tmp7 = ctx.reg(getFamily(srcType));
-                  ir::Register tmp8 = ctx.reg(getFamily(srcType));
-                  ctx.OR(srcType, tmp7, tmp1, tmp3);
-                  ctx.OR(srcType, tmp8, tmp5, tmp6);
-                  ctx.OR(srcType, dst0, tmp7, tmp8);
-                }
-                break;
-              case 8:
-                NOT_IMPLEMENTED;
-                break;
-              default:
-                GBE_ASSERT(0);
-            }
-          }
-          break;
           case Intrinsic::ctlz:
           {
             Type *llvmDstType = I.getType();
@@ -3088,6 +3005,8 @@ namespace gbe
           case Intrinsic::cos: this->emitUnaryCallInst(I,CS,ir::OP_COS); break;
           case Intrinsic::log2: this->emitUnaryCallInst(I,CS,ir::OP_LOG); break;
           case Intrinsic::exp2: this->emitUnaryCallInst(I,CS,ir::OP_EXP); break;
+          case Intrinsic::bswap:
+            this->emitUnaryCallInst(I,CS,ir::OP_BSWAP, getUnsignedType(ctx, I.getType())); break;
           default: NOT_IMPLEMENTED;
         }
       } else {
