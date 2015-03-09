@@ -498,6 +498,7 @@ namespace gbe
     ALU1(RNDE)
     ALU1(F16TO32)
     ALU1(F32TO16)
+    ALU1WithTemp(BSWAP)
     ALU2(SEL)
     ALU2(SEL_INT64)
     ALU1(NOT)
@@ -2121,6 +2122,14 @@ namespace gbe
           case ir::OP_SQR: sel.MATH(dst, GEN_MATH_FUNCTION_SQRT, src); break;
           case ir::OP_RSQ: sel.MATH(dst, GEN_MATH_FUNCTION_RSQ, src); break;
           case ir::OP_RCP: sel.MATH(dst, GEN_MATH_FUNCTION_INV, src); break;
+          case ir::OP_BSWAP:
+            {
+              ir::Register tmp = sel.reg(getFamily(insnType));
+              const GenRegister src_ = GenRegister::retype(src, getGenType(insnType));
+              const GenRegister dst_ = GenRegister::retype(dst, getGenType(insnType));
+              sel.BSWAP(dst_, src_, sel.selReg(tmp, insnType));
+              break;
+            }
           case ir::OP_SIMD_ANY:
             {
               const GenRegister constZero = GenRegister::immuw(0);;

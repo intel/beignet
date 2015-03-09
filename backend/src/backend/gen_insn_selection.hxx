@@ -1,5 +1,6 @@
 DECL_SELECTION_IR(LABEL, LabelInstruction)
 DECL_SELECTION_IR(MOV, UnaryInstruction)
+DECL_SELECTION_IR(BSWAP, UnaryWithTempInstruction)
 DECL_SELECTION_IR(MOV_DF, UnaryWithTempInstruction)
 DECL_SELECTION_IR(LOAD_DF_IMM, UnaryWithTempInstruction)
 DECL_SELECTION_IR(LOAD_INT64_IMM, UnaryInstruction)

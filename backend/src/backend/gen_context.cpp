@@ -298,6 +298,136 @@ namespace gbe
           p->MOV(dst.top_half(this->simdWidth), GenRegister::immud(0));
         break;
       }
+      case SEL_OP_BSWAP: {
+        uint32_t simd = p->curr.execWidth;
+        GBE_ASSERT(simd == 8 || simd == 16 || simd == 1);
+        uint16_t new_a0[16];
+        memset(new_a0, 0, sizeof(new_a0));
+
+        GBE_ASSERT(src.type == dst.type);
+        uint32_t start_addr = src.nr*32 + src.subnr;
+
+        if (simd == 1) {
+          GBE_ASSERT(src.hstride == GEN_HORIZONTAL_STRIDE_0
+              && dst.hstride == GEN_HORIZONTAL_STRIDE_0);
+          if (src.type == GEN_TYPE_UD || src.type == GEN_TYPE_D) {
+            GBE_ASSERT(start_addr >= 0);
+            new_a0[0] = start_addr + 3;
+            new_a0[1] = start_addr + 2;
+            new_a0[2] = start_addr + 1;
+            new_a0[3] = start_addr;
+            this->setA0Content(new_a0, 0, 4);
+
+            p->push();
+            p->curr.execWidth = 4;
+            p->curr.predicate = GEN_PREDICATE_NONE;
+            p->curr.noMask = 1;
+            GenRegister ind_src = GenRegister::to_indirect1xN(GenRegister::retype(src, GEN_TYPE_UB),
+                a0[0], new_a0[0] - a0[0]);
+            GenRegister dst_ = dst;
+            dst_.type = GEN_TYPE_UB;
+            dst_.hstride = GEN_HORIZONTAL_STRIDE_1;
+            dst_.width = GEN_WIDTH_4;
+            dst_.vstride = GEN_VERTICAL_STRIDE_4;
+            p->MOV(dst_, ind_src);
+            p->pop();
+          } else if (src.type == GEN_TYPE_UW || src.type == GEN_TYPE_W) {
+            p->MOV(GenRegister::retype(dst, GEN_TYPE_UB),
+                GenRegister::retype(GenRegister::offset(src, 0, 1), GEN_TYPE_UB));
+            p->MOV(GenRegister::retype(GenRegister::offset(dst, 0, 1), GEN_TYPE_UB),
+                GenRegister::retype(src, GEN_TYPE_UB));
+          } else {
+            GBE_ASSERT(0);
+          }
+        } else {
+          if (src.type == GEN_TYPE_UD || src.type == GEN_TYPE_D) {
+            bool uniform_src = (src.hstride == GEN_HORIZONTAL_STRIDE_0);
+            GBE_ASSERT(uniform_src || src.subnr == 0);
+            GBE_ASSERT(dst.subnr == 0);
+            GBE_ASSERT(tmp.subnr == 0);
+            GBE_ASSERT(start_addr >= 0);
+            new_a0[0] = start_addr + 3;
+            new_a0[1] = start_addr + 2;
+            new_a0[2] = start_addr + 1;
+            new_a0[3] = start_addr;
+            if (!uniform_src) {
+              new_a0[4] = start_addr + 7;
+              new_a0[5] = start_addr + 6;
+              new_a0[6] = start_addr + 5;
+              new_a0[7] = start_addr + 4;
+            } else {
+              new_a0[4] = start_addr + 3;
+              new_a0[5] = start_addr + 2;
+              new_a0[6] = start_addr + 1;
+              new_a0[7] = start_addr;
+            }
+            this->setA0Content(new_a0, 56);
+
+            p->push();
+            p->curr.execWidth = 8;
+            p->curr.predicate = GEN_PREDICATE_NONE;
+            p->curr.noMask = 1;
+            GenRegister ind_src = GenRegister::to_indirect1xN(GenRegister::retype(src, GEN_TYPE_UB),
+                a0[0], new_a0[0] - a0[0]);
+            p->MOV(GenRegister::retype(tmp, GEN_TYPE_UB), ind_src);
+            for (int i = 1; i < 4; i++) {
+              ind_src.addr_imm += 8;
+              p->MOV(GenRegister::offset(GenRegister::retype(tmp, GEN_TYPE_UB), 0, 8*i), ind_src);
+            }
+            if (simd == 16) {
+              for (int i = 0; i < 4; i++) {
+                ind_src.addr_imm += 8;
+                p->MOV(GenRegister::offset(GenRegister::retype(tmp, GEN_TYPE_UB), 1, 8*i), ind_src);
+              }
+            }
+            p->pop();
+
+            p->MOV(dst, tmp);
+          } else if (src.type == GEN_TYPE_UW || src.type == GEN_TYPE_W) {
+            bool uniform_src = (src.hstride == GEN_HORIZONTAL_STRIDE_0);
+            GBE_ASSERT(uniform_src || src.subnr == 0 || src.subnr == 16);
+            GBE_ASSERT(dst.subnr == 0 || dst.subnr == 16);
+            GBE_ASSERT(tmp.subnr == 0 || tmp.subnr == 16);
+            GBE_ASSERT(start_addr >= 0);
+            new_a0[0] = start_addr + 1;
+            new_a0[1] = start_addr;
+            if (!uniform_src) {
+              new_a0[2] = start_addr + 3;
+              new_a0[3] = start_addr + 2;
+              new_a0[4] = start_addr + 5;
+              new_a0[5] = start_addr + 4;
+              new_a0[6] = start_addr + 7;
+              new_a0[7] = start_addr + 6;
+            } else {
+              new_a0[2] = start_addr + 1;
+              new_a0[3] = start_addr;
+              new_a0[4] = start_addr + 1;
+              new_a0[5] = start_addr;
+              new_a0[6] = start_addr + 1;
+              new_a0[7] = start_addr;
+            }
+            this->setA0Content(new_a0, 56);
+
+            p->push();
+            p->curr.execWidth = 8;
+            p->curr.predicate = GEN_PREDICATE_NONE;
+            p->curr.noMask = 1;
+            GenRegister ind_src = GenRegister::to_indirect1xN(GenRegister::retype(src, GEN_TYPE_UB),
+                a0[0], new_a0[0] - a0[0]);
+            p->MOV(GenRegister::retype(tmp, GEN_TYPE_UB), ind_src);
+            for (int i = 1; i < (simd == 8 ? 2 : 4); i++) {
+              ind_src.addr_imm += 8;
+              p->MOV(GenRegister::offset(GenRegister::retype(tmp, GEN_TYPE_UB), 0, 8*i), ind_src);
+            }
+            p->pop();
+
+            p->MOV(dst, tmp);
+          } else {
+            GBE_ASSERT(0);
+          }
+        }
+      }
+      break;
       default:
         NOT_IMPLEMENTED;
     }
