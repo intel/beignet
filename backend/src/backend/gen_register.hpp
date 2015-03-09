@@ -205,6 +205,8 @@ namespace gbe
       this->quarter = 0;
       this->nr = this->subnr = 0;
       this->address_mode = GEN_ADDRESS_DIRECT;
+      this->a0_subnr = 0;
+      this->addr_imm = 0;
     }
 
     /*! For specific physical registers only */
@@ -229,6 +231,8 @@ namespace gbe
       this->hstride = hstride;
       this->quarter = 0;
       this->address_mode = GEN_ADDRESS_DIRECT;
+      this->a0_subnr = 0;
+      this->addr_imm = 0;
     }
 
     /*! Return the IR virtual register */
@@ -258,6 +262,8 @@ namespace gbe
     uint32_t hstride:2;      //!< Horizontal stride
     uint32_t quarter:1;      //!< To choose which part we want (Q1 / Q2)
     uint32_t address_mode:1; //!< direct or indirect
+    uint32_t a0_subnr:4;     //!< In indirect mode, use a0.nr as the base.
+    int32_t addr_imm:10;     //!< In indirect mode, the imm as address offset from a0.
 
     static INLINE GenRegister offset(GenRegister reg, int nr, int subnr = 0) {
       GenRegister r = reg;
@@ -835,6 +841,28 @@ namespace gbe
       return reg;
     }
 
+    /*! convert one register to indirectly mode */
+    static INLINE GenRegister to_indirect1xN(GenRegister reg, uint32_t base_addr,
+                                          int32_t imm_off = 4096, int a0_subnr = 0) {
+      GenRegister r = reg;
+      int32_t offset;
+      if (imm_off > 4095) {
+        offset = (r.nr*32 + r.subnr) - base_addr;
+      } else {
+        offset = imm_off;
+      }
+
+      GBE_ASSERT(offset <= 511 && offset>=-512);
+      r.a0_subnr = a0_subnr;
+      r.addr_imm = offset;
+      r.address_mode = GEN_ADDRESS_REGISTER_INDIRECT_REGISTER;
+
+      r.width = GEN_WIDTH_1;
+      r.vstride = GEN_VERTICAL_STRIDE_ONE_DIMENSIONAL;
+      r.hstride = GEN_HORIZONTAL_STRIDE_0;
+      return r;
+    }
+
     static INLINE GenRegister vec16(uint32_t file, uint32_t nr, uint32_t subnr) {
       return GenRegister(file,
                          nr,
@@ -953,7 +981,7 @@ namespace gbe
     }
 
     static INLINE GenRegister uw1(uint32_t file, uint32_t nr, uint32_t subnr) {
-      return suboffset(retype(vec1(file, nr, 0), GEN_TYPE_UW), subnr);
+      return offset(retype(vec1(file, nr, 0), GEN_TYPE_UW), 0, typeSize(GEN_TYPE_UW)*subnr);
     }
 
     static INLINE GenRegister ub16(uint32_t file, uint32_t nr, uint32_t subnr) {
