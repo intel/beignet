@@ -757,10 +757,7 @@ static int intel_buffer_set_tiling(cl_buffer bo,
 static void
 intel_update_device_info(cl_device_id device)
 {
-#ifdef HAS_USERPTR
   intel_driver_t *driver;
-  const size_t sz = 4096;
-  void *host_ptr;
 
   driver = intel_driver_new();
   assert(driver != NULL);
@@ -768,6 +765,10 @@ intel_update_device_info(cl_device_id device)
     intel_driver_delete(driver);
     return;
   }
+
+#ifdef HAS_USERPTR
+  const size_t sz = 4096;
+  void *host_ptr;
 
   host_ptr = cl_aligned_malloc(sz, 4096);
   if (host_ptr != NULL) {
@@ -781,12 +782,28 @@ intel_update_device_info(cl_device_id device)
   }
   else
     device->host_unified_memory = CL_FALSE;
+#endif
+
+#ifdef HAS_EU_TOTAL
+  unsigned int eu_total;
+
+  /* Prefer driver-queried max compute units if supported */
+  if (!drm_intel_get_eu_total(driver->fd, &eu_total))
+    device->max_compute_unit = eu_total;
+#endif
+
+#ifdef HAS_SUBSLICE_TOTAL
+  unsigned int subslice_total;
+
+  /* Prefer driver-queried subslice count if supported */
+  if (!drm_intel_get_subslice_total(driver->fd, &subslice_total))
+    device->sub_slice_count = subslice_total;
+#endif
 
   intel_driver_context_destroy(driver);
   intel_driver_close(driver);
   intel_driver_terminate(driver);
   intel_driver_delete(driver);
-#endif
 }
 
 LOCAL void
