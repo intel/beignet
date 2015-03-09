@@ -24,9 +24,12 @@
 /* From LLVM 3.4, c string are all in constant address space */
 #if 100*__clang_major__ + __clang_minor__ < 304
 int __gen_ocl_printf_stub(const char * format, ...);
+int __gen_ocl_puts_stub(const char * format);
 #else
 int __gen_ocl_printf_stub(constant char * format, ...);
+int __gen_ocl_puts_stub(constant char * format);
 #endif
 #define printf __gen_ocl_printf_stub
+#define puts __gen_ocl_puts_stub
 
 #endif
