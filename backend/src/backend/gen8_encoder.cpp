@@ -369,14 +369,15 @@ namespace gbe
     } else {
       gen8_insn->bits1.ia1.src0_reg_file = GEN_GENERAL_REGISTER_FILE;
       gen8_insn->bits1.ia1.src0_reg_type = reg.type;
-      gen8_insn->bits2.ia1.src0_subreg_nr = 0;
-      gen8_insn->bits2.ia1.src0_indirect_offset = 0;
-      gen8_insn->bits2.ia1.src0_abs = 0;
-      gen8_insn->bits2.ia1.src0_negate = 0;
+      gen8_insn->bits2.ia1.src0_subreg_nr = reg.a0_subnr;
+      gen8_insn->bits2.ia1.src0_indirect_offset = (reg.addr_imm & 0x1ff);
+      gen8_insn->bits2.ia1.src0_abs = reg.absolute;
+      gen8_insn->bits2.ia1.src0_negate = reg.negation;
       gen8_insn->bits2.ia1.src0_address_mode = reg.address_mode;
-      gen8_insn->bits2.ia1.src0_horiz_stride = GEN_HORIZONTAL_STRIDE_0;
-      gen8_insn->bits2.ia1.src0_width = GEN_WIDTH_1;
-      gen8_insn->bits2.ia1.src0_vert_stride = GEN_VERTICAL_STRIDE_ONE_DIMENSIONAL;
+      gen8_insn->bits2.ia1.src0_horiz_stride = reg.hstride;
+      gen8_insn->bits2.ia1.src0_width = reg.width;
+      gen8_insn->bits2.ia1.src0_vert_stride = reg.vstride;
+      gen8_insn->bits2.ia1.src0_indirect_offset_9 = (reg.addr_imm & 0x02) >> 9;
     }
   }
 
