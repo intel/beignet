@@ -65,10 +65,140 @@ namespace gbe
 
   void Gen8Context::emitUnaryWithTempInstruction(const SelectionInstruction &insn)
   {
+    GenRegister dst = ra->genReg(insn.dst(0));
+    GenRegister src = ra->genReg(insn.src(0));
+    GenRegister tmp = ra->genReg(insn.dst(1));
     switch (insn.opcode) {
       case SEL_OP_CONVI_TO_I64:
         /* Should never come to here, just use the common OPCODE. */
         GBE_ASSERT(0);
+        break;
+      case SEL_OP_BSWAP:
+        {
+          uint32_t simd = p->curr.execWidth;
+          GBE_ASSERT(simd == 8 || simd == 16 || simd == 1);
+          uint16_t new_a0[16];
+          memset(new_a0, 0, sizeof(new_a0));
+
+          GBE_ASSERT(src.type == dst.type);
+          uint32_t start_addr = src.nr*32 + src.subnr;
+
+          if (simd == 1) {
+            GBE_ASSERT(src.hstride == GEN_HORIZONTAL_STRIDE_0
+                && dst.hstride == GEN_HORIZONTAL_STRIDE_0);
+            if (src.type == GEN_TYPE_UD || src.type == GEN_TYPE_D) {
+              GBE_ASSERT(start_addr >= 0);
+              new_a0[0] = start_addr + 3;
+              new_a0[1] = start_addr + 2;
+              new_a0[2] = start_addr + 1;
+              new_a0[3] = start_addr;
+              this->setA0Content(new_a0, 0, 4);
+
+              p->push();
+              p->curr.execWidth = 4;
+              p->curr.predicate = GEN_PREDICATE_NONE;
+              p->curr.noMask = 1;
+              GenRegister ind_src = GenRegister::to_indirect1xN(GenRegister::retype(src, GEN_TYPE_UB),
+                  a0[0], new_a0[0] - a0[0]);
+              GenRegister dst_ = dst;
+              dst_.type = GEN_TYPE_UB;
+              dst_.hstride = GEN_HORIZONTAL_STRIDE_1;
+              dst_.width = GEN_WIDTH_4;
+              dst_.vstride = GEN_VERTICAL_STRIDE_4;
+              p->MOV(dst_, ind_src);
+              p->pop();
+            } else if (src.type == GEN_TYPE_UW || src.type == GEN_TYPE_W) {
+              p->MOV(GenRegister::retype(dst, GEN_TYPE_UB),
+                  GenRegister::retype(GenRegister::offset(src, 0, 1), GEN_TYPE_UB));
+              p->MOV(GenRegister::retype(GenRegister::offset(dst, 0, 1), GEN_TYPE_UB),
+                  GenRegister::retype(src, GEN_TYPE_UB));
+            } else {
+              GBE_ASSERT(0);
+            }
+          } else {
+            if (src.type == GEN_TYPE_UD || src.type == GEN_TYPE_D) {
+              GBE_ASSERT(src.subnr == 0);
+              GBE_ASSERT(dst.subnr == 0);
+              GBE_ASSERT(tmp.subnr == 0);
+              GBE_ASSERT(start_addr >= 0);
+              new_a0[0] = start_addr + 3;
+              new_a0[1] = start_addr + 2;
+              new_a0[2] = start_addr + 1;
+              new_a0[3] = start_addr;
+              new_a0[4] = start_addr + 7;
+              new_a0[5] = start_addr + 6;
+              new_a0[6] = start_addr + 5;
+              new_a0[7] = start_addr + 4;
+              new_a0[8] = start_addr + 11;
+              new_a0[9] = start_addr + 10;
+              new_a0[10] = start_addr + 9;
+              new_a0[11] = start_addr + 8;
+              new_a0[12] = start_addr + 15;
+              new_a0[13] = start_addr + 14;
+              new_a0[14] = start_addr + 13;
+              new_a0[15] = start_addr + 12;
+              this->setA0Content(new_a0, 48);
+
+              p->push();
+              p->curr.execWidth = 16;
+              p->curr.predicate = GEN_PREDICATE_NONE;
+              p->curr.noMask = 1;
+              GenRegister ind_src = GenRegister::to_indirect1xN(GenRegister::retype(src, GEN_TYPE_UB),
+                  a0[0], new_a0[0] - a0[0]);
+              p->MOV(GenRegister::retype(tmp, GEN_TYPE_UB), ind_src);
+              ind_src.addr_imm += 16;
+              p->MOV(GenRegister::offset(GenRegister::retype(tmp, GEN_TYPE_UB), 0, 16), ind_src);
+              if (simd == 16) {
+                for (int i = 0; i < 2; i++) {
+                  ind_src.addr_imm += 16;
+                  p->MOV(GenRegister::offset(GenRegister::retype(tmp, GEN_TYPE_UB), 1, 16*i), ind_src);
+                }
+              }
+              p->pop();
+
+              p->MOV(dst, tmp);
+            } else if (src.type == GEN_TYPE_UW || src.type == GEN_TYPE_W) {
+              GBE_ASSERT(src.subnr == 0 || src.subnr == 16);
+              GBE_ASSERT(dst.subnr == 0 || dst.subnr == 16);
+              GBE_ASSERT(tmp.subnr == 0 || tmp.subnr == 16);
+              GBE_ASSERT(start_addr >= 0);
+              new_a0[0] = start_addr + 1;
+              new_a0[1] = start_addr;
+              new_a0[2] = start_addr + 3;
+              new_a0[3] = start_addr + 2;
+              new_a0[4] = start_addr + 5;
+              new_a0[5] = start_addr + 4;
+              new_a0[6] = start_addr + 7;
+              new_a0[7] = start_addr + 6;
+              new_a0[8] = start_addr + 9;
+              new_a0[9] = start_addr + 8;
+              new_a0[10] = start_addr + 11;
+              new_a0[11] = start_addr + 10;
+              new_a0[12] = start_addr + 13;
+              new_a0[13] = start_addr + 12;
+              new_a0[14] = start_addr + 15;
+              new_a0[15] = start_addr + 14;
+              this->setA0Content(new_a0, 48);
+
+              p->push();
+              p->curr.execWidth = 16;
+              p->curr.predicate = GEN_PREDICATE_NONE;
+              p->curr.noMask = 1;
+              GenRegister ind_src = GenRegister::to_indirect1xN(GenRegister::retype(src, GEN_TYPE_UB),
+                  a0[0], new_a0[0] - a0[0]);
+              p->MOV(GenRegister::retype(tmp, GEN_TYPE_UB), ind_src);
+              if (simd == 16) {
+                ind_src.addr_imm += 16;
+                p->MOV(GenRegister::offset(GenRegister::retype(tmp, GEN_TYPE_UB), 0, 16), ind_src);
+              }
+              p->pop();
+
+              p->MOV(dst, tmp);
+            } else {
+              GBE_ASSERT(0);
+            }
+          }
+        }
         break;
       default:
         GenContext::emitUnaryWithTempInstruction(insn);
@@ -782,4 +912,48 @@ namespace gbe
     GBE_ASSERT(dst.hstride != GEN_HORIZONTAL_STRIDE_0 && src.hstride != GEN_HORIZONTAL_STRIDE_0);
     this->unpackLongVec(src, dst, p->curr.execWidth);
   }
+
+  void Gen8Context::setA0Content(uint16_t new_a0[16], uint16_t max_offset, int sz) {
+    int16_t diff = new_a0[0] - this->a0[0];
+    if (sz == 0)
+      sz = 16;
+    GBE_ASSERT(sz%4 == 0);
+    GBE_ASSERT(new_a0[0] >= 0 && new_a0[0] < 4096);
+    bool need_reset = false;
+    for (int i = 1; i < sz; i++) {
+      GBE_ASSERT(new_a0[i] >= 0 && new_a0[0] < 4096);
+      int16_t d = new_a0[i] - this->a0[i];
+      if (diff != d) {
+        need_reset = true;
+        break;
+      }
+    }
+
+    GBE_ASSERT(this->a0[0] + diff < 4096 && this->a0[0] + diff >= 0);
+    if (!need_reset && diff >= -512 && diff + max_offset <= 511) {
+      return;
+    } else if (!need_reset && sz == 16) {
+      p->push();
+      p->curr.execWidth = 16;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->ADD(GenRegister::retype(GenRegister::addr8(0), GEN_TYPE_W),
+          GenRegister::retype(GenRegister::addr8(0), GEN_TYPE_W), GenRegister::immw(diff));
+      p->pop();
+    } else {
+      p->push();
+      p->curr.execWidth = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      for (int i = 0; i < sz/4; i++) {
+        uint64_t addr = (new_a0[i*4 + 3] << 16) | (new_a0[i*4 + 2]);
+        addr = addr << 32;
+        addr = addr | (new_a0[i*4 + 1] << 16) | (new_a0[i*4]);
+        p->MOV(GenRegister::retype(GenRegister::addr1(i*4), GEN_TYPE_UL), GenRegister::immuint64(addr));
+      }
+      p->pop();
+    }
+    memcpy(this->a0, new_a0, sizeof(uint16_t)*sz);
+  }
+
 }
