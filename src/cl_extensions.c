@@ -34,8 +34,12 @@ void check_opt1_extension(cl_extensions_t *extensions)
 {
   int id;
   for(id = OPT1_EXT_START_ID; id <= OPT1_EXT_END_ID; id++)
+  {
     if (id == EXT_ID(khr_icd))
       extensions->extensions[id].base.ext_enabled = 1;
+    if (id == EXT_ID(khr_spir))
+      extensions->extensions[id].base.ext_enabled = 1;
+  }
 }
 
 void

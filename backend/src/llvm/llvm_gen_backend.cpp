@@ -1375,7 +1375,9 @@ namespace gbe
         llvmInfo.typeName = (cast<MDString>(typeNameNode->getOperand(1 + argID)))->getString();
         llvmInfo.accessQual = (cast<MDString>(accessQualNode->getOperand(1 + argID)))->getString();
         llvmInfo.typeQual = (cast<MDString>(typeQualNode->getOperand(1 + argID)))->getString();
-        llvmInfo.argName = (cast<MDString>(argNameNode->getOperand(1 + argID)))->getString();
+        if(argNameNode){
+          llvmInfo.argName = (cast<MDString>(argNameNode->getOperand(1 + argID)))->getString();
+        }
 
         // function arguments are uniform values.
         this->newRegister(I, NULL, true);
@@ -2022,6 +2024,7 @@ namespace gbe
 #else
       case CallingConv::C:
       case CallingConv::Fast:
+      case CallingConv::SPIR_KERNEL:
 #endif
         break;
       default:

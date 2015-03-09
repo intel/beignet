@@ -261,6 +261,11 @@ namespace gbe {
     acquireLLVMContextLock();
     llvm::Module* module = llvm::ParseIR(memory_buffer, Err, c);
 #endif
+    // if load 32 bit spir binary, the triple should be spir-unknown-unknown.
+    llvm::Triple triple(module->getTargetTriple());
+    if(triple.getArchName() == "spir" && triple.getVendorName() == "unknown" && triple.getOSName() == "unknown"){
+      module->setTargetTriple("spir");
+    }
     releaseLLVMContextLock();
     if(module == NULL){
       GBE_ASSERT(0);

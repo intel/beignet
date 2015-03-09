@@ -565,6 +565,7 @@ error:
 #else
       case CallingConv::C:
       case CallingConv::Fast:
+      case CallingConv::SPIR_KERNEL:
 #endif
         break;
       default:
@@ -595,7 +596,7 @@ error:
           continue;
         }
 
-        if (call->getCalledFunction()->getIntrinsicID() != 0)
+        if (call->getCalledFunction() && call->getCalledFunction()->getIntrinsicID() != 0)
           continue;
 
         Value *Callee = call->getCalledValue();

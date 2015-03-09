@@ -231,7 +231,21 @@ cl_program_create_from_binary(cl_context             ctx,
   program->binary_sz = lengths[0];
   program->source_type = FROM_BINARY;
 
-  if(isBitcode((unsigned char*)program->binary+1, (unsigned char*)program->binary+program->binary_sz)) {
+  if(isBitcode((unsigned char*)program->binary, (unsigned char*)program->binary+program->binary_sz)) {
+
+    char* typed_binary;
+    TRY_ALLOC(typed_binary, cl_calloc(lengths[0]+1, sizeof(char)));
+    memcpy(typed_binary+1, binaries[0], lengths[0]);
+    *typed_binary = 1;
+    program->opaque = compiler_program_new_from_llvm_binary(program->ctx->device->vendor_id, typed_binary, program->binary_sz+1);
+    cl_free(typed_binary);
+    if (UNLIKELY(program->opaque == NULL)) {
+      err = CL_INVALID_PROGRAM;
+      goto error;
+    }
+
+    program->source_type = FROM_LLVM_SPIR;
+  }else if(isBitcode((unsigned char*)program->binary+1, (unsigned char*)program->binary+program->binary_sz)) {
     if(*program->binary == 1){
       program->binary_type = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
     }else if(*program->binary == 2){
@@ -499,6 +513,9 @@ cl_program_build(cl_program p, const char *options)
       memcpy(p->build_opts, options, strlen(options));
 
       p->source_type = p->source ? FROM_SOURCE : p->binary ? FROM_BINARY : FROM_LLVM;
+      if (strstr(options, "-x spir")) {
+        p->source_type = FROM_LLVM_SPIR;
+      }
     }
   }
 
@@ -526,7 +543,7 @@ cl_program_build(cl_program p, const char *options)
 
     /* Create all the kernels */
     TRY (cl_program_load_gen_program, p);
-  } else if (p->source_type == FROM_LLVM) {
+  } else if (p->source_type == FROM_LLVM || p->source_type == FROM_LLVM_SPIR) {
     if (!CompilerSupported()) {
       err = CL_COMPILER_NOT_AVAILABLE;
       goto error;

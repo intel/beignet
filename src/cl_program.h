@@ -33,7 +33,8 @@ struct _gbe_program;
 enum {
   FROM_SOURCE = 0,
   FROM_LLVM = 1,
-  FROM_BINARY = 2
+  FROM_BINARY = 2,
+  FROM_LLVM_SPIR = 3
 };
 
 /* This maps an OCL file containing some kernels */

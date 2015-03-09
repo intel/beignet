@@ -789,6 +789,7 @@ namespace gbe {
 #else
     case CallingConv::C:
     case CallingConv::Fast:
+    case CallingConv::SPIR_KERNEL:
 #endif
       break;
     default:
