@@ -45,7 +45,7 @@ DEF(double)
 #undef DEFN
 #undef DEF
 
-void wait_group_events (int num_events, event_t *event_list);
+OVERLOADABLE void wait_group_events (int num_events, event_t *event_list);
 
 #define DEFN(TYPE) \
 OVERLOADABLE void prefetch(const global TYPE *p, size_t num);

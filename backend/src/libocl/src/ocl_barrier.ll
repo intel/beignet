@@ -10,7 +10,7 @@ declare void @__gen_ocl_barrier_local() nounwind alwaysinline noduplicate
 declare void @__gen_ocl_barrier_global() nounwind alwaysinline noduplicate
 declare void @__gen_ocl_barrier_local_and_global() nounwind alwaysinline noduplicate
 
-define void @barrier(i32 %flags) nounwind noduplicate alwaysinline {
+define void @_Z7barrierj(i32 %flags) nounwind noduplicate alwaysinline {
   %1 = icmp eq i32 %flags, 3
   br i1 %1, label %barrier_local_global, label %barrier_local_check
 

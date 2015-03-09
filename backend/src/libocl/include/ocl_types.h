@@ -87,7 +87,5 @@ DEF(double);
 // FIXME:
 // This is a transitional hack to bypass the LLVM 3.3 built-in types.
 // See the Khronos SPIR specification for handling of these types.
-typedef size_t __event_t;
-#define event_t __event_t
 
 #endif /* __OCL_TYPES_H__ */

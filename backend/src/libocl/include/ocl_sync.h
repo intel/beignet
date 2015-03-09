@@ -27,7 +27,7 @@
 #define CLK_GLOBAL_MEM_FENCE (1 << 1)
 
 typedef uint cl_mem_fence_flags;
-void barrier(cl_mem_fence_flags flags);
+OVERLOADABLE void barrier(cl_mem_fence_flags flags);
 void mem_fence(cl_mem_fence_flags flags);
 void read_mem_fence(cl_mem_fence_flags flags);
 void write_mem_fence(cl_mem_fence_flags flags);

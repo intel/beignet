@@ -5,10 +5,10 @@ compiler_async_copy_##TYPE(__global TYPE *dst, __global TYPE *src, __local TYPE 
   event_t event; \
   int copiesPerWorkgroup = copiesPerWorkItem * get_local_size(0); \
   int i; \
-  event = async_work_group_copy((__local TYPE*)localBuffer, (__global const TYPE*)(src+copiesPerWorkgroup*get_group_id(0)), (size_t)copiesPerWorkgroup, (event_t)0 ); \
+  event = async_work_group_copy((__local TYPE*)localBuffer, (__global const TYPE*)(src+copiesPerWorkgroup*get_group_id(0)), (size_t)copiesPerWorkgroup, 0 ); \
   wait_group_events( 1, &event ); \
 \
-  event = async_work_group_copy((__global TYPE*)(dst+copiesPerWorkgroup*get_group_id(0)), (__local const TYPE*)localBuffer, (size_t)copiesPerWorkgroup, (event_t)0 ); \
+  event = async_work_group_copy((__global TYPE*)(dst+copiesPerWorkgroup*get_group_id(0)), (__local const TYPE*)localBuffer, (size_t)copiesPerWorkgroup, 0 ); \
   wait_group_events( 1, &event ); \
 }
 
