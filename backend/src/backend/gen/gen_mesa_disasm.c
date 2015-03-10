@@ -143,7 +143,7 @@ static const char *_abs[2] = {
   [1] = "(abs)",
 };
 
-static const char *vert_stride_gen7[16] = {
+static const char *vert_stride[16] = {
   [0] = "0",
   [1] = "1",
   [2] = "2",
@@ -152,15 +152,6 @@ static const char *vert_stride_gen7[16] = {
   [5] = "16",
   [6] = "32",
   [15] = "VxH",
-};
-static const char *vert_stride_gen8[16] = {
-  [0] = "0",
-  [1] = "1",
-  [2] = "2",
-  [3] = "4",
-  [4] = "8",
-  [5] = "16",
-  [6] = "32",
 };
 
 static const char *width[8] = {
@@ -717,11 +708,7 @@ static int src_align1_region(FILE *file,
 {
   int err = 0;
   string(file, "<");
-  if (gen_version < 80) {
-    err |= control(file, "vert stride", vert_stride_gen7, _vert_stride, NULL);
-  } else {
-    err |= control(file, "vert stride", vert_stride_gen8, _vert_stride, NULL);
-  }
+  err |= control(file, "vert stride", vert_stride, _vert_stride, NULL);
   string(file, ",");
   err |= control(file, "width", width, _width, NULL);
   string(file, ",");
@@ -801,11 +788,7 @@ static int src_da16(FILE *file,
     format(file, ".%d", 16 / reg_type_size[_reg_type]);
   string(file, "<");
 
-  if (gen_version < 80) {
-    err |= control(file, "vert stride", vert_stride_gen7, _vert_stride, NULL);
-  } else {
-    err |= control(file, "vert stride", vert_stride_gen8, _vert_stride, NULL);
-  }
+  err |= control(file, "vert stride", vert_stride, _vert_stride, NULL);
   string(file, ",4,1>");
   /*
    * Three kinds of swizzle display:
@@ -1022,10 +1005,15 @@ static int src0(FILE *file, const void* inst)
                      GEN_BITS_FIELD(inst, bits2.da1.src0_abs),
                      GEN_BITS_FIELD(inst, bits2.da1.src0_negate));
     } else {
+      int32_t imm_off = GEN_BITS_FIELD(inst, bits2.ia1.src0_indirect_offset);
+      if (gen_version >= 80) {
+        imm_off = imm_off +
+          ((((const union Gen8NativeInstruction *)inst)->bits2.ia1.src0_indirect_offset_9) << 9);
+      }
       return src_ia1(file,
                      GEN_BITS_FIELD(inst, bits1.ia1.src0_reg_type),
                      GEN_BITS_FIELD(inst, bits1.ia1.src0_reg_file),
-                     GEN_BITS_FIELD(inst, bits2.ia1.src0_indirect_offset),
+                     imm_off,
                      GEN_BITS_FIELD(inst, bits2.ia1.src0_subreg_nr),
                      GEN_BITS_FIELD(inst, bits2.ia1.src0_negate),
                      GEN_BITS_FIELD(inst, bits2.ia1.src0_abs),
