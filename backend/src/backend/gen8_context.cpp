@@ -117,7 +117,8 @@ namespace gbe
             }
           } else {
             if (src.type == GEN_TYPE_UD || src.type == GEN_TYPE_D) {
-              GBE_ASSERT(src.subnr == 0);
+              bool uniform_src = (src.hstride == GEN_HORIZONTAL_STRIDE_0);
+              GBE_ASSERT(uniform_src || src.subnr == 0);
               GBE_ASSERT(dst.subnr == 0);
               GBE_ASSERT(tmp.subnr == 0);
               GBE_ASSERT(start_addr >= 0);
@@ -125,18 +126,33 @@ namespace gbe
               new_a0[1] = start_addr + 2;
               new_a0[2] = start_addr + 1;
               new_a0[3] = start_addr;
-              new_a0[4] = start_addr + 7;
-              new_a0[5] = start_addr + 6;
-              new_a0[6] = start_addr + 5;
-              new_a0[7] = start_addr + 4;
-              new_a0[8] = start_addr + 11;
-              new_a0[9] = start_addr + 10;
-              new_a0[10] = start_addr + 9;
-              new_a0[11] = start_addr + 8;
-              new_a0[12] = start_addr + 15;
-              new_a0[13] = start_addr + 14;
-              new_a0[14] = start_addr + 13;
-              new_a0[15] = start_addr + 12;
+              if (!uniform_src) {
+                new_a0[4] = start_addr + 7;
+                new_a0[5] = start_addr + 6;
+                new_a0[6] = start_addr + 5;
+                new_a0[7] = start_addr + 4;
+                new_a0[8] = start_addr + 11;
+                new_a0[9] = start_addr + 10;
+                new_a0[10] = start_addr + 9;
+                new_a0[11] = start_addr + 8;
+                new_a0[12] = start_addr + 15;
+                new_a0[13] = start_addr + 14;
+                new_a0[14] = start_addr + 13;
+                new_a0[15] = start_addr + 12;
+              } else {
+                new_a0[4] = start_addr + 3;
+                new_a0[5] = start_addr + 2;
+                new_a0[6] = start_addr + 1;
+                new_a0[7] = start_addr;
+                new_a0[8] = start_addr + 3;
+                new_a0[9] = start_addr + 2;
+                new_a0[10] = start_addr + 1;
+                new_a0[11] = start_addr;
+                new_a0[12] = start_addr + 3;
+                new_a0[13] = start_addr + 2;
+                new_a0[14] = start_addr + 1;
+                new_a0[15] = start_addr;
+              }
               this->setA0Content(new_a0, 48);
 
               p->push();
@@ -158,26 +174,44 @@ namespace gbe
 
               p->MOV(dst, tmp);
             } else if (src.type == GEN_TYPE_UW || src.type == GEN_TYPE_W) {
-              GBE_ASSERT(src.subnr == 0 || src.subnr == 16);
+              bool uniform_src = (src.hstride == GEN_HORIZONTAL_STRIDE_0);
+              GBE_ASSERT(uniform_src || src.subnr == 0 || src.subnr == 16);
               GBE_ASSERT(dst.subnr == 0 || dst.subnr == 16);
               GBE_ASSERT(tmp.subnr == 0 || tmp.subnr == 16);
               GBE_ASSERT(start_addr >= 0);
               new_a0[0] = start_addr + 1;
               new_a0[1] = start_addr;
-              new_a0[2] = start_addr + 3;
-              new_a0[3] = start_addr + 2;
-              new_a0[4] = start_addr + 5;
-              new_a0[5] = start_addr + 4;
-              new_a0[6] = start_addr + 7;
-              new_a0[7] = start_addr + 6;
-              new_a0[8] = start_addr + 9;
-              new_a0[9] = start_addr + 8;
-              new_a0[10] = start_addr + 11;
-              new_a0[11] = start_addr + 10;
-              new_a0[12] = start_addr + 13;
-              new_a0[13] = start_addr + 12;
-              new_a0[14] = start_addr + 15;
-              new_a0[15] = start_addr + 14;
+              if (!uniform_src) {
+                new_a0[2] = start_addr + 3;
+                new_a0[3] = start_addr + 2;
+                new_a0[4] = start_addr + 5;
+                new_a0[5] = start_addr + 4;
+                new_a0[6] = start_addr + 7;
+                new_a0[7] = start_addr + 6;
+                new_a0[8] = start_addr + 9;
+                new_a0[9] = start_addr + 8;
+                new_a0[10] = start_addr + 11;
+                new_a0[11] = start_addr + 10;
+                new_a0[12] = start_addr + 13;
+                new_a0[13] = start_addr + 12;
+                new_a0[14] = start_addr + 15;
+                new_a0[15] = start_addr + 14;
+              } else {
+                new_a0[2] = start_addr + 1;
+                new_a0[3] = start_addr;
+                new_a0[4] = start_addr + 1;
+                new_a0[5] = start_addr;
+                new_a0[6] = start_addr + 1;
+                new_a0[7] = start_addr;
+                new_a0[8] = start_addr + 1;
+                new_a0[9] = start_addr;
+                new_a0[10] = start_addr + 1;
+                new_a0[11] = start_addr;
+                new_a0[12] = start_addr + 1;
+                new_a0[13] = start_addr;
+                new_a0[14] = start_addr + 1;
+                new_a0[15] = start_addr;
+              }
               this->setA0Content(new_a0, 48);
 
               p->push();
