@@ -30,7 +30,7 @@ CONST float __gen_ocl_sqrt(float x) __asm("llvm.sqrt" ".f32");
 PURE CONST float __gen_ocl_rsqrt(float x);
 CONST float __gen_ocl_log(float x) __asm("llvm.log2" ".f32");
 CONST float __gen_ocl_exp(float x) __asm("llvm.exp2" ".f32");
-PURE CONST float __gen_ocl_pow(float x, float y);
+PURE CONST float __gen_ocl_pow(float x, float y) __asm("llvm.pow" ".f32");
 PURE CONST float __gen_ocl_rcp(float x);
 CONST float __gen_ocl_rndz(float x) __asm("llvm.trunc" ".f32");
 CONST float __gen_ocl_rnde(float x) __asm("llvm.rint" ".f32");

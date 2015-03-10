@@ -2618,6 +2618,7 @@ namespace gbe
           case Intrinsic::cos:
           case Intrinsic::log2:
           case Intrinsic::exp2:
+          case Intrinsic::pow:
             this->newRegister(&I);
           break;
           default:
@@ -2672,7 +2673,6 @@ namespace gbe
       case GEN_OCL_FBL:
       case GEN_OCL_CBIT:
       case GEN_OCL_RSQ:
-      case GEN_OCL_POW:
       case GEN_OCL_RCP:
       case GEN_OCL_ABS:
       case GEN_OCL_GET_IMAGE_WIDTH:
@@ -3005,6 +3005,14 @@ namespace gbe
           case Intrinsic::exp2: this->emitUnaryCallInst(I,CS,ir::OP_EXP); break;
           case Intrinsic::bswap:
             this->emitUnaryCallInst(I,CS,ir::OP_BSWAP, getUnsignedType(ctx, I.getType())); break;
+          case Intrinsic::pow:
+          {
+            const ir::Register src0 = this->getRegister(*AI); ++AI;
+            const ir::Register src1 = this->getRegister(*AI);
+            const ir::Register dst = this->getRegister(&I);
+            ctx.POW(ir::TYPE_FLOAT, dst, src0, src1);
+            break;
+          }
           default: NOT_IMPLEMENTED;
         }
       } else {
@@ -3021,14 +3029,6 @@ namespace gbe
 #endif /* GBE_DEBUG */
 
         switch (genIntrinsicID) {
-          case GEN_OCL_POW:
-          {
-            const ir::Register src0 = this->getRegister(*AI); ++AI;
-            const ir::Register src1 = this->getRegister(*AI);
-            const ir::Register dst = this->getRegister(&I);
-            ctx.POW(ir::TYPE_FLOAT, dst, src0, src1);
-            break;
-          }
           case GEN_OCL_FBH: this->emitUnaryCallInst(I,CS,ir::OP_FBH); break;
           case GEN_OCL_FBL: this->emitUnaryCallInst(I,CS,ir::OP_FBL); break;
           case GEN_OCL_CBIT: this->emitUnaryCallInst(I,CS,ir::OP_CBIT, getUnsignedType(ctx, (*AI)->getType())); break;

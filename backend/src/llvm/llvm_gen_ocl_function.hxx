@@ -20,7 +20,6 @@ DECL_LLVM_GEN_FUNCTION(GET_WORK_DIM, __gen_ocl_get_work_dim)
 
 // Math function
 DECL_LLVM_GEN_FUNCTION(RSQ, __gen_ocl_rsqrt)
-DECL_LLVM_GEN_FUNCTION(POW, __gen_ocl_pow)
 DECL_LLVM_GEN_FUNCTION(RCP, __gen_ocl_rcp)
 DECL_LLVM_GEN_FUNCTION(FMAX, __gen_ocl_fmax)
 DECL_LLVM_GEN_FUNCTION(FMIN, __gen_ocl_fmin)
