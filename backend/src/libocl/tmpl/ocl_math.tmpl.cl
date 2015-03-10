@@ -34,7 +34,7 @@ PURE CONST float __gen_ocl_pow(float x, float y);
 PURE CONST float __gen_ocl_rcp(float x);
 CONST float __gen_ocl_rndz(float x) __asm("llvm.trunc" ".f32");
 CONST float __gen_ocl_rnde(float x) __asm("llvm.rint" ".f32");
-PURE CONST float __gen_ocl_rndu(float x);
+CONST float __gen_ocl_rndu(float x) __asm("llvm.ceil" ".f32");
 PURE CONST float __gen_ocl_rndd(float x);
 
 

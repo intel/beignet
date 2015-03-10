@@ -2674,7 +2674,6 @@ namespace gbe
       case GEN_OCL_POW:
       case GEN_OCL_RCP:
       case GEN_OCL_ABS:
-      case GEN_OCL_RNDU:
       case GEN_OCL_RNDD:
       case GEN_OCL_GET_IMAGE_WIDTH:
       case GEN_OCL_GET_IMAGE_HEIGHT:
@@ -3076,7 +3075,6 @@ namespace gbe
           }
           case GEN_OCL_RSQ: this->emitUnaryCallInst(I,CS,ir::OP_RSQ); break;
           case GEN_OCL_RCP: this->emitUnaryCallInst(I,CS,ir::OP_RCP); break;
-          case GEN_OCL_RNDU: this->emitUnaryCallInst(I,CS,ir::OP_RNDU); break;
           case GEN_OCL_RNDD: this->emitUnaryCallInst(I,CS,ir::OP_RNDD); break;
           case GEN_OCL_FORCE_SIMD8: ctx.setSimdWidth(8); break;
           case GEN_OCL_FORCE_SIMD16: ctx.setSimdWidth(16); break;
