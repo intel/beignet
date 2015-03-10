@@ -324,7 +324,7 @@ done
 if [ $1"a" != "-pa" ]; then
 echo '
 CONST float __gen_ocl_rndz(float x) __asm("llvm.trunc" ".f32");
-float __gen_ocl_rnde(float x);
+CONST float __gen_ocl_rnde(float x) __asm("llvm.rint" ".f32");
 float __gen_ocl_rndu(float x);
 float __gen_ocl_rndd(float x);
 OVERLOADABLE float __convert_float_rtz(long x)

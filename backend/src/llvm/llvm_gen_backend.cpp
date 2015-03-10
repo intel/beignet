@@ -2612,6 +2612,7 @@ namespace gbe
           case Intrinsic::ceil:
           case Intrinsic::fma:
           case Intrinsic::trunc:
+          case Intrinsic::rint:
           case Intrinsic::sin:
           case Intrinsic::cos:
           case Intrinsic::log2:
@@ -2673,7 +2674,6 @@ namespace gbe
       case GEN_OCL_POW:
       case GEN_OCL_RCP:
       case GEN_OCL_ABS:
-      case GEN_OCL_RNDE:
       case GEN_OCL_RNDU:
       case GEN_OCL_RNDD:
       case GEN_OCL_GET_IMAGE_WIDTH:
@@ -2999,6 +2999,7 @@ namespace gbe
           case Intrinsic::ceil: this->emitUnaryCallInst(I,CS,ir::OP_RNDU); break;
           case Intrinsic::fabs: this->emitUnaryCallInst(I,CS,ir::OP_ABS); break;
           case Intrinsic::trunc: this->emitUnaryCallInst(I,CS,ir::OP_RNDZ); break;
+          case Intrinsic::rint: this->emitUnaryCallInst(I,CS,ir::OP_RNDE); break;
           case Intrinsic::sin: this->emitUnaryCallInst(I,CS,ir::OP_SIN); break;
           case Intrinsic::cos: this->emitUnaryCallInst(I,CS,ir::OP_COS); break;
           case Intrinsic::log2: this->emitUnaryCallInst(I,CS,ir::OP_LOG); break;
@@ -3075,7 +3076,6 @@ namespace gbe
           }
           case GEN_OCL_RSQ: this->emitUnaryCallInst(I,CS,ir::OP_RSQ); break;
           case GEN_OCL_RCP: this->emitUnaryCallInst(I,CS,ir::OP_RCP); break;
-          case GEN_OCL_RNDE: this->emitUnaryCallInst(I,CS,ir::OP_RNDE); break;
           case GEN_OCL_RNDU: this->emitUnaryCallInst(I,CS,ir::OP_RNDU); break;
           case GEN_OCL_RNDD: this->emitUnaryCallInst(I,CS,ir::OP_RNDD); break;
           case GEN_OCL_FORCE_SIMD8: ctx.setSimdWidth(8); break;
