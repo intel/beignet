@@ -326,7 +326,7 @@ echo '
 CONST float __gen_ocl_rndz(float x) __asm("llvm.trunc" ".f32");
 CONST float __gen_ocl_rnde(float x) __asm("llvm.rint" ".f32");
 CONST float __gen_ocl_rndu(float x) __asm("llvm.ceil" ".f32");
-float __gen_ocl_rndd(float x);
+CONST float __gen_ocl_rndd(float x) __asm("llvm.floor" ".f32");
 OVERLOADABLE float __convert_float_rtz(long x)
 {
   union {
