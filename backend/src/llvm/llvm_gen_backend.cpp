@@ -2673,7 +2673,6 @@ namespace gbe
       case GEN_OCL_POW:
       case GEN_OCL_RCP:
       case GEN_OCL_ABS:
-      case GEN_OCL_FABS:
       case GEN_OCL_RNDZ:
       case GEN_OCL_RNDE:
       case GEN_OCL_RNDU:
@@ -3077,7 +3076,6 @@ namespace gbe
           }
           case GEN_OCL_RSQ: this->emitUnaryCallInst(I,CS,ir::OP_RSQ); break;
           case GEN_OCL_RCP: this->emitUnaryCallInst(I,CS,ir::OP_RCP); break;
-          case GEN_OCL_FABS: this->emitUnaryCallInst(I,CS,ir::OP_ABS); break;
           case GEN_OCL_RNDZ: this->emitUnaryCallInst(I,CS,ir::OP_RNDZ); break;
           case GEN_OCL_RNDE: this->emitUnaryCallInst(I,CS,ir::OP_RNDE); break;
           case GEN_OCL_RNDU: this->emitUnaryCallInst(I,CS,ir::OP_RNDU); break;

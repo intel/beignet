@@ -21,7 +21,7 @@
 #include "ocl_math.h"
 #include "ocl_float.h"
 
-PURE CONST float __gen_ocl_fabs(float x);
+CONST float __gen_ocl_fabs(float x) __asm("llvm.fabs" ".f32");
 
 OVERLOADABLE float dot(float p0, float p1) {
   return p0 * p1;

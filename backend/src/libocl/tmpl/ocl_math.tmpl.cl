@@ -23,7 +23,7 @@
 
 extern constant int __ocl_math_fastpath_flag;
 
-PURE CONST float __gen_ocl_fabs(float x);
+CONST float __gen_ocl_fabs(float x) __asm("llvm.fabs" ".f32");
 CONST float __gen_ocl_sin(float x) __asm("llvm.sin" ".f32");
 CONST float __gen_ocl_cos(float x) __asm("llvm.cos" ".f32");
 CONST float __gen_ocl_sqrt(float x) __asm("llvm.sqrt" ".f32");

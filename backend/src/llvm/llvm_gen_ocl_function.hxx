@@ -19,7 +19,6 @@ DECL_LLVM_GEN_FUNCTION(GET_GLOBAL_OFFSET2, __gen_ocl_get_global_offset2)
 DECL_LLVM_GEN_FUNCTION(GET_WORK_DIM, __gen_ocl_get_work_dim)
 
 // Math function
-DECL_LLVM_GEN_FUNCTION(FABS, __gen_ocl_fabs)
 DECL_LLVM_GEN_FUNCTION(RSQ, __gen_ocl_rsqrt)
 DECL_LLVM_GEN_FUNCTION(POW, __gen_ocl_pow)
 DECL_LLVM_GEN_FUNCTION(RCP, __gen_ocl_rcp)
