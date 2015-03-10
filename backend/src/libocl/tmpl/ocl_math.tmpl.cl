@@ -2616,7 +2616,7 @@ OVERLOADABLE float ldexp(float x, int n) {
   return __gen_ocl_internal_ldexp(x, n);
 }
 
-PURE CONST float __gen_ocl_mad(float a, float b, float c);
+CONST float __gen_ocl_mad(float a, float b, float c) __asm("llvm.fma" ".f32");
 PURE CONST float __gen_ocl_fmax(float a, float b);
 PURE CONST float __gen_ocl_fmin(float a, float b);
 
