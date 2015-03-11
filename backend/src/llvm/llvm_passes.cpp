@@ -346,9 +346,11 @@ namespace gbe
           }
         }
 
-        BinaryOperator* tmpMul = 
-          BinaryOperator::Create(Instruction::Mul, newConstSize, operand,
-              "", GEPInst);
+        Value* tmpMul = operand;
+        if (size != 1) {
+          tmpMul = BinaryOperator::Create(Instruction::Mul, newConstSize, operand,
+                                         "", GEPInst);
+        }
         currentAddrInst = 
           BinaryOperator::Create(Instruction::Add, currentAddrInst, tmpMul,
               "", GEPInst);
