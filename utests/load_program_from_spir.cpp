@@ -21,7 +21,7 @@ static void test_load_program_from_spir(void)
       extensionStr = std::string(&param_value.front(), param_value_size-1);
 
     if (!std::strstr(extensionStr.c_str(), "cl_khr_spir")) {
-      OCL_ASSERT(0);
+      return;
     }
 
     const size_t n = 16;
