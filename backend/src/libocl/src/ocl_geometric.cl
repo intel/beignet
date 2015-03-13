@@ -27,13 +27,13 @@ OVERLOADABLE float dot(float p0, float p1) {
   return p0 * p1;
 }
 OVERLOADABLE float dot(float2 p0, float2 p1) {
-  return mad(p0.x, p1.x, p0.y * p1.y);
+  return p0.x * p1.x + p0.y * p1.y;
 }
 OVERLOADABLE float dot(float3 p0, float3 p1) {
-  return mad(p0.x, p1.x, mad(p0.y, p1.y, p0.z*p1.z));
+  return p0.x * p1.x + p0.y * p1.y + p0.z * p1.z;
 }
 OVERLOADABLE float dot(float4 p0, float4 p1) {
-  return mad(p0.x, p1.x, mad(p0.y, p1.y, mad(p0.z, p1.z, p0.w * p1.w)));
+  return p0.x * p1.x + p0.y * p1.y + p0.z * p1.z + p0.w * p1.w;
 }
 OVERLOADABLE float length(float x) { return __gen_ocl_fabs(x); }
 
