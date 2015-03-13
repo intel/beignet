@@ -237,6 +237,10 @@ namespace gbe
       kernels.push_back(f);
     }
 
+    /* the SPIR binary datalayout maybe different with beignet's bitcode */
+    if(clonedLib->getDataLayout() != mod->getDataLayout())
+      mod->setDataLayout(clonedLib->getDataLayout());
+
     /* We use beignet's bitcode as dst because it will have a lot of
        lazy functions which will not be loaded. */
     char* errorMsg;
