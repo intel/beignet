@@ -1,3 +1,4 @@
+#include "llvm/Config/llvm-config.h"
 #ifdef HAS_EGL
 #include "EGL/egl.h"
 #include "EGL/eglext.h"
@@ -37,8 +38,10 @@ void check_opt1_extension(cl_extensions_t *extensions)
   {
     if (id == EXT_ID(khr_icd))
       extensions->extensions[id].base.ext_enabled = 1;
+#if  LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
     if (id == EXT_ID(khr_spir))
       extensions->extensions[id].base.ext_enabled = 1;
+#endif
   }
 }
 
