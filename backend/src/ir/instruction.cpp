@@ -522,10 +522,13 @@ namespace ir {
         this->outOpcode(out);
         out << "." << this->getDstType()
             << "." << this->getSrcType()
-            << " surface id " << (int)this->getImageIndex()
-            << " coord u %" << this->getSrc(fn, 0)
-            << " coord v %" << this->getSrc(fn, 1)
-            << " coord w %" << this->getSrc(fn, 2)
+            << " surface id " << (int)this->getImageIndex();
+        out << " coord u %" << this->getSrc(fn, 0);
+        if (srcNum >= 2)
+          out << " coord v %" << this->getSrc(fn, 1);
+        if (srcNum >= 3)
+          out << " coord w %" << this->getSrc(fn, 2);
+        out
             << " %" << this->getDst(fn, 0)
             << " %" << this->getDst(fn, 1)
             << " %" << this->getDst(fn, 2)
@@ -567,15 +570,18 @@ namespace ir {
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const {
         this->outOpcode(out);
+        uint32_t srcID = 0;
         out << "." << this->getSrcType()
             << " surface id " << (int)this->getImageIndex()
-            << " coord u %" << this->getSrc(fn, 0)
-            << " coord v %" << this->getSrc(fn, 1)
-            << " coord w %" << this->getSrc(fn, 2)
-            << " %" << this->getSrc(fn, 3)
-            << " %" << this->getSrc(fn, 4)
-            << " %" << this->getSrc(fn, 5)
-            << " %" << this->getSrc(fn, 6);
+            << " coord u %" << this->getSrc(fn, srcID++);
+        if (srcNum >= 6)
+          out << " coord v %" << this->getSrc(fn, srcID++);
+        if (srcNum >= 7)
+          out << " coord w %" << this->getSrc(fn, srcID++);
+        out   << " %" << this->getSrc(fn, srcID++);
+        out   << " %" << this->getSrc(fn, srcID++);
+        out   << " %" << this->getSrc(fn, srcID++);
+        out   << " %" << this->getSrc(fn, srcID++);
       }
 
       Tuple src;

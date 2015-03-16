@@ -4411,19 +4411,20 @@ namespace gbe
           msgs[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
       } else {
         uint32_t valueID = 0;
-        msgs[0] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-        for(uint32_t msgID = 1; msgID < 1 + dim; msgID++, valueID++)
+        uint32_t msgID = 0;
+        msgs[msgID++] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+        for(; msgID < 1 + dim; msgID++, valueID++)
           msgs[msgID] = sel.selReg(insn.getSrc(msgID - 1), insn.getCoordType());
 
         // fake v.
         if (dim < 2)
-          msgs[2] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+          msgs[msgID++] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
         // fake w.
         if (dim < 3)
-          msgs[3] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+          msgs[msgID++] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
         // LOD.
-        msgs[4] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-        for(uint32_t msgID = dim + 2; valueID < insn.getSrcNum(); msgID++, valueID++)
+        msgs[msgID++] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+        for(; valueID < insn.getSrcNum(); msgID++, valueID++)
           msgs[msgID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
       }
 
