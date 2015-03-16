@@ -38,14 +38,15 @@ with anything older.
 
 [http://llvm.org/releases/](http://llvm.org/releases/)
 
-LLVM 3.3 , 3.4 and 3.5 are supported. Till now, the recommended LLVM/CLANG version is 3.5.
-There are some severe OpenCL related regression in clang 3.4 version.
 
-**Note about LLVM 3.4**
+**The recommended LLVM/CLANG version is 3.5 and/or 3.6**
 
-* If you want to try Clang/LLVM 3.4, you need to disable terminfo:
---disable-terminfo. It's a llvm 3.4 bug.
+Based on our test result, LLVM 3.5 has best pass rate on all the test suites. Compare
+to LLVM 3.5, LLVM 3.6 has slightly lower pass rate(caused by one front end bug at clang
+3.6) but has better performance(3% to 8% up).
 
+For LLVM 3.3 and 3.4, Beignet still support them, but it may be limited to support the
+build and major functions.
 
 How to build and install
 ------------------------
