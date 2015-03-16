@@ -3,7 +3,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${DRM_INCLUDE_DIRS}/../
                     ${CMAKE_CURRENT_SOURCE_DIR}/../backend/src/backend/
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include
-                    ${MESA_SOURCE_INCLUDES})
+                    ${MESA_SOURCE_INCLUDES}
+                    ${LLVM_INCLUDE_DIR})
 
 macro (MakeKernelBinStr KERNEL_PATH KERNEL_FILES)
 foreach (KF ${KERNEL_FILES})
