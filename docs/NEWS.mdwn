@@ -1,5 +1,8 @@
 # News
 
+## Mar 16, 2015
+[Beignet 1.0.2](https://01.org/beignet/downloads/beignet-1.0.2-2015-03-16) is released. This is a bug-fix release.
+
 ## Jan 19, 2015
 [Beignet 1.0.1](https://01.org/beignet/downloads/beignet-1.0.1-2015-01-19) is released. This is a bug-fix release.  
 
