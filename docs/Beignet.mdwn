@@ -223,6 +223,19 @@ Beignet project was created by Ben Segovia. Since 2013, Now Intel China OTC grap
 team continue to work on this project. The official contact for this project is:  
 Zou Nanhai (<nanhai.zou@intel.com>).
 
+Maintainers:
+
+* Gong, Zhigang
+* Yang, Rong
+
+Developers:
+
+* Song, Ruiling
+* He, Junyan
+* Luo, Xionghu
+* Wen, Chuanbo
+* Lv, Meng
+
 How to contribute
 -----------------
 You are always welcome to contribute to this project, just need to subscribe
