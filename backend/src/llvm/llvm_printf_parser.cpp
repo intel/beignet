@@ -831,6 +831,12 @@ error:
 
       case Type::DoubleTyID:
       case Type::FloatTyID: {
+        /* llvm 3.6 will give a undef value for NAN. */
+        if (dyn_cast<llvm::UndefValue>(arg)) {
+          APFloat nan = APFloat::getNaN(APFloat::IEEEsingle, false);
+          arg = ConstantFP::get(module->getContext(), nan);
+        }
+
         /* Because the printf is a variable parameter function, it does not have the
            function prototype, so the compiler will always promote the arg to the
            longest precise type for float. So here, we can always find it is double. */
