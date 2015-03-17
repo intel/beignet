@@ -48,10 +48,12 @@ Environment variables are used all over the code. Most important ones are:
 - `OCL_OUTPUT_GEN_IR` `(0 or 1)`. Output Gen IR (scalar intermediate
   representation) code
 
-- `OCL_OUTPUT_LLVM` `(0 or 1)`. Output LLVM code after the lowering passes
+- `OCL_OUTPUT_LLVM_BEFORE_LINK` `(0 or 1)`. Output LLVM code before llvm link
 
-- `OCL_OUTPUT_LLVM_BEFORE_EXTRA_PASS` `(0 or 1)`. Output LLVM code before the
-  lowering passes
+- `OCL_OUTPUT_LLVM_AFTER_LINK` `(0 or 1)`. Output LLVM code after llvm link
+
+- `OCL_OUTPUT_LLVM_AFTER_GEN` `(0 or 1)`. Output LLVM code after the lowering
+  passes, Gen IR is generated based on it.
 
 - `OCL_OUTPUT_ASM` `(0 or 1)`. Output Gen ISA
 
