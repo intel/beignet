@@ -96,8 +96,7 @@ namespace gbe
             call->getCalledFunction()->getIntrinsicID() != 0)
           continue;
 
-        Value *Callee = call->getCalledValue();
-        const std::string fnName = Callee->getName();
+        std::string fnName = call->getCalledValue()->stripPointerCasts()->getName();
 
         if (!MFS.insert(fnName).second) {
           continue;

@@ -2628,7 +2628,7 @@ namespace gbe
       }
     }
     // Get the name of the called function and handle it
-    const std::string fnName = Callee->getName();
+    const std::string fnName = Callee->stripPointerCasts()->getName();
     auto genIntrinsicID = intrinsicMap.find(fnName);
     switch (genIntrinsicID) {
       case GEN_OCL_GET_GROUP_ID0:
@@ -3018,7 +3018,7 @@ namespace gbe
       } else {
         // Get the name of the called function and handle it
         Value *Callee = I.getCalledValue();
-        const std::string fnName = Callee->getName();
+        const std::string fnName = Callee->stripPointerCasts()->getName();
         auto genIntrinsicID = intrinsicMap.find(fnName);
 
         // Get the function arguments
