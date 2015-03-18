@@ -221,6 +221,7 @@ cl_get_kernel_arg_info(cl_kernel k, cl_uint arg_index, cl_kernel_arg_info param_
   assert(k != NULL);
   void *ret_info = interp_kernel_get_arg_info(k->opaque, arg_index,
                            param_name - CL_KERNEL_ARG_ADDRESS_QUALIFIER);
+  uint32_t arg_type = interp_kernel_get_arg_type(k->opaque, arg_index);
   int str_len = 0;
   cl_kernel_arg_type_qualifier type_qual = CL_KERNEL_ARG_TYPE_NONE;
 
@@ -281,7 +282,10 @@ cl_get_kernel_arg_info(cl_kernel k, cl_uint arg_index, cl_kernel_arg_info param_
     if (param_value_size_ret)
       *param_value_size_ret = sizeof(cl_kernel_arg_type_qualifier);
     if (!param_value) return CL_SUCCESS;
-    if (strstr((char*)ret_info, "const"))
+    if (strstr((char*)ret_info, "const") &&
+         (arg_type == GBE_ARG_GLOBAL_PTR   ||
+          arg_type == GBE_ARG_CONSTANT_PTR ||
+          arg_type == GBE_ARG_LOCAL_PTR))
       type_qual = type_qual | CL_KERNEL_ARG_TYPE_CONST;
     if (strstr((char*)ret_info, "volatile"))
       type_qual = type_qual | CL_KERNEL_ARG_TYPE_VOLATILE;
