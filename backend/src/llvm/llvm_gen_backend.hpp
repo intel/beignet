@@ -50,6 +50,7 @@ namespace llvm {
   FunctionPass *createExpandConstantExprPass();
   FunctionPass *createExpandLargeIntegersPass();
   FunctionPass *createPromoteIntegersPass();
+  FunctionPass *createStripAttributesPass();
   // Copy debug information from Original to New, and return New.
   template <typename T> T *CopyDebug(T *New, llvm::Instruction *Original) {
     New->setDebugLoc(Original->getDebugLoc());
@@ -66,6 +67,7 @@ namespace gbe
   enum OCLInstrinsic {
 #define DECL_LLVM_GEN_FUNCTION(ID, NAME) GEN_OCL_##ID,
 #include "llvm_gen_ocl_function.hxx"
+  GEN_OCL_NOT_FOUND,   
 #undef DECL_LLVM_GEN_FUNCTION
   };
 
@@ -97,7 +99,7 @@ namespace gbe
       if (it == map.end()) {
         std::cerr << "Unresolved symbol: " << symbol << std::endl;
         std::cerr << "Aborting..." << std::endl;
-        exit(-1);
+        return GEN_OCL_NOT_FOUND; 
       }
       return it->second;
     }

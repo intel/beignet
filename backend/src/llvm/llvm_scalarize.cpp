@@ -667,6 +667,7 @@ namespace gbe {
         CallSite::arg_iterator CI = CS.arg_begin() + 1;
 
         switch (genIntrinsicID) {
+          case GEN_OCL_NOT_FOUND:
           default: break;
           case GEN_OCL_READ_IMAGE_I:
           case GEN_OCL_READ_IMAGE_UI:

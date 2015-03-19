@@ -2796,8 +2796,13 @@ namespace gbe
         break;
       case GEN_OCL_PRINTF:
         break;
+      case GEN_OCL_NOT_FOUND:
       default:
-        GBE_ASSERTM(false, "Function call are not supported yet");
+        std::cerr << "Caller instruction: " << std::endl;
+        I.dump();
+        std::cerr << "Callee function: " << std::endl;
+        Callee->dump();
+        GBE_ASSERT(0);
     };
   }
 
