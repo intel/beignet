@@ -284,7 +284,6 @@ getDRI2State(Display* dpy, int screen, char **driver_name)
     goto err_out;
 
   fd = open(device_name, O_RDWR);
-  assert(fd >= 0);
 
   if (fd < 0)
     goto err_out;
