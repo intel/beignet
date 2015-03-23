@@ -2516,10 +2516,9 @@ namespace gbe
                 tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
               sel.I64HADD(dst, src0, src1, tmp, 4);
             } else {
-              tmp[0] = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U64);
-              tmp[1] = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U64);
-              tmp[2] = sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U64);
-              sel.I64HADD(dst, src0, src1, tmp, 3);
+              tmp[0] = sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U64);
+              tmp[1] = sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U64);
+              sel.I64HADD(dst, src0, src1, tmp, 2);
             }
             break;
           }
@@ -2531,10 +2530,9 @@ namespace gbe
                 tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD));
               sel.I64RHADD(dst, src0, src1, tmp, 4);
             } else {
-              tmp[0] = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U64);
-              tmp[1] = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U64);
-              tmp[2] = sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U64);
-              sel.I64RHADD(dst, src0, src1, tmp, 3);
+              tmp[0] = sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U64);
+              tmp[1] = sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U64);
+              sel.I64RHADD(dst, src0, src1, tmp, 2);
             }
             break;
           }

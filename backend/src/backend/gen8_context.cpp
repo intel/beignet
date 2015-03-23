@@ -650,60 +650,19 @@ namespace gbe
     GenRegister dst = ra->genReg(insn.dst(0));
     GenRegister tmp0 = ra->genReg(insn.dst(1));
     GenRegister tmp1 = ra->genReg(insn.dst(2));
-    GenRegister tmp_dst = ra->genReg(insn.dst(3));
-    int execWidth = p->curr.execWidth;
 
     /* Src0 and Src1 are always unsigned long type.*/
     GBE_ASSERT(src0.type == GEN_TYPE_UL && src1.type == GEN_TYPE_UL);
     dst.type = src0.type;
-    tmp0.type = tmp1.type = GEN_TYPE_UD;
-    tmp_dst.type = GEN_TYPE_UL;
+    tmp0.type = tmp1.type = GEN_TYPE_UL;
 
-    GBE_ASSERT(tmp_dst.subnr == 0);
-    GenRegister dl = tmp_dst.hstride == GEN_HORIZONTAL_STRIDE_0 ? GenRegister::retype(tmp_dst, GEN_TYPE_UD) :
-      GenRegister::retype(GenRegister::ud16grf(tmp_dst.nr, tmp_dst.subnr), GEN_TYPE_UD);
-    GenRegister dh = tmp_dst.hstride == GEN_HORIZONTAL_STRIDE_0 ?
-      GenRegister::retype(GenRegister::offset(tmp_dst, 0, 4), GEN_TYPE_UD) :
-      GenRegister::retype(GenRegister::ud16grf(tmp_dst.nr + execWidth / 8, tmp_dst.subnr), GEN_TYPE_UD);
-    GenRegister s0l = src0.hstride == GEN_HORIZONTAL_STRIDE_0 ?
-      GenRegister::retype(src0, GEN_TYPE_UD) : GenRegister::unpacked_ud(src0.nr, src0.subnr);
-    GenRegister s0h = src0.hstride == GEN_HORIZONTAL_STRIDE_0 ?
-      GenRegister::retype(GenRegister::offset(src0, 0, 4), GEN_TYPE_UD) :
-      GenRegister::unpacked_ud(src0.nr, src0.subnr + 1);
-    GenRegister s1l = src1.hstride == GEN_HORIZONTAL_STRIDE_0 ?
-      GenRegister::retype(src1, GEN_TYPE_UD) : GenRegister::unpacked_ud(src1.nr, src1.subnr);
-    GenRegister s1h = src1.hstride == GEN_HORIZONTAL_STRIDE_0 ?
-      GenRegister::retype(GenRegister::offset(src1, 0, 4), GEN_TYPE_UD) :
-      GenRegister::unpacked_ud(src1.nr, src1.subnr + 1);
-
-    GenRegister acc0 = GenRegister::retype(GenRegister::acc(), GEN_TYPE_D);
-    p->push();
-    p->curr.execWidth = 8;
-    p->ADDC(dl, s0l, s1l);
-    p->MOV(tmp0, acc0);
-    p->ADDC(dh, s0h, s1h);
-    p->MOV(tmp1, acc0);
-    p->ADDC(dh, dh, tmp0);
-    p->MOV(tmp0, acc0);
-    p->ADD(tmp1, tmp0, tmp1);
-
-    if (execWidth == 16) {
-      p->curr.quarterControl = 1;
-      p->ADDC(GenRegister::Qn(dl, 1), GenRegister::Qn(s0l, 1), GenRegister::Qn(s1l, 1));
-      p->MOV(GenRegister::Qn(tmp0, 1), acc0);
-      p->ADDC(GenRegister::Qn(dh, 1), GenRegister::Qn(s0h, 1), GenRegister::Qn(s1h, 1));
-      p->MOV(GenRegister::Qn(tmp1, 1), acc0);
-      p->ADDC(GenRegister::Qn(dh, 1), GenRegister::Qn(dh, 1), GenRegister::Qn(tmp0, 1));
-      p->MOV(GenRegister::Qn(tmp0, 1), acc0);
-      p->ADD(GenRegister::Qn(tmp1, 1), GenRegister::Qn(tmp0, 1), GenRegister::Qn(tmp1, 1));
-    }
-    p->pop();
-
-    packLongVec(GenRegister::retype(tmp_dst, GEN_TYPE_UD), GenRegister::retype(dst, GEN_TYPE_UD), execWidth);
-
-    p->SHR(dst, dst, GenRegister::immud(1));
-    p->SHL(tmp_dst, tmp1, GenRegister::immud(63));
-    p->ADD(dst, dst, tmp_dst);
+    //hadd = (src0>>1) + (src1>>1) + ((src0&0x1) & (src1&0x1))
+    p->AND(tmp0, src0, GenRegister::immud(1));
+    p->AND(dst, src1, tmp0);
+    p->SHR(tmp0, src0, GenRegister::immud(1));
+    p->SHR(tmp1, src1, GenRegister::immud(1));
+    p->ADD(dst, dst, tmp0);
+    p->ADD(dst, dst, tmp1);
   }
 
   void Gen8Context::emitI64RHADDInstruction(const SelectionInstruction &insn)
@@ -713,68 +672,20 @@ namespace gbe
     GenRegister dst = ra->genReg(insn.dst(0));
     GenRegister tmp0 = ra->genReg(insn.dst(1));
     GenRegister tmp1 = ra->genReg(insn.dst(2));
-    GenRegister tmp_dst = ra->genReg(insn.dst(3));
-    int execWidth = p->curr.execWidth;
 
     /* Src0 and Src1 are always unsigned long type.*/
     GBE_ASSERT(src0.type == GEN_TYPE_UL && src1.type == GEN_TYPE_UL);
     dst.type = src0.type;
-    tmp0.type = tmp1.type = GEN_TYPE_UD;
-    tmp_dst.type = GEN_TYPE_UL;
+    tmp0.type = tmp1.type = GEN_TYPE_UL;
 
-    GBE_ASSERT(tmp_dst.subnr == 0);
-    GenRegister dl = tmp_dst.hstride == GEN_HORIZONTAL_STRIDE_0 ? GenRegister::retype(tmp_dst, GEN_TYPE_UD) :
-      GenRegister::retype(GenRegister::ud16grf(tmp_dst.nr, tmp_dst.subnr), GEN_TYPE_UD);
-    GenRegister dh = tmp_dst.hstride == GEN_HORIZONTAL_STRIDE_0 ?
-      GenRegister::retype(GenRegister::offset(tmp_dst, 0, 4), GEN_TYPE_UD) :
-      GenRegister::retype(GenRegister::ud16grf(tmp_dst.nr + execWidth / 8, tmp_dst.subnr), GEN_TYPE_UD);
-    GenRegister s0l = src0.hstride == GEN_HORIZONTAL_STRIDE_0 ?
-      GenRegister::retype(src0, GEN_TYPE_UD) : GenRegister::unpacked_ud(src0.nr, src0.subnr);
-    GenRegister s0h = src0.hstride == GEN_HORIZONTAL_STRIDE_0 ?
-      GenRegister::retype(GenRegister::offset(src0, 0, 4), GEN_TYPE_UD) :
-      GenRegister::unpacked_ud(src0.nr, src0.subnr + 1);
-    GenRegister s1l = src1.hstride == GEN_HORIZONTAL_STRIDE_0 ?
-      GenRegister::retype(src1, GEN_TYPE_UD) : GenRegister::unpacked_ud(src1.nr, src1.subnr);
-    GenRegister s1h = src1.hstride == GEN_HORIZONTAL_STRIDE_0 ?
-      GenRegister::retype(GenRegister::offset(src1, 0, 4), GEN_TYPE_UD) :
-      GenRegister::unpacked_ud(src1.nr, src1.subnr + 1);
-
-    GenRegister acc0 = GenRegister::retype(GenRegister::acc(), GEN_TYPE_D);
-    p->push();
-    p->curr.execWidth = 8;
-    p->ADDC(dl, s0l, s1l);
-    p->MOV(tmp0, acc0);
-    p->ADDC(dl, dl, GenRegister::immud(1));
-    p->MOV(tmp1, acc0);
-    p->ADD(tmp0, tmp0, tmp1);
-
-    p->ADDC(dh, s0h, s1h);
-    p->MOV(tmp1, acc0);
-    p->ADDC(dh, dh, tmp0);
-    p->MOV(tmp0, acc0);
-    p->ADD(tmp1, tmp0, tmp1);
-
-    if (execWidth == 16) {
-      p->curr.quarterControl = 1;
-      p->ADDC(GenRegister::Qn(dl, 1), GenRegister::Qn(s0l, 1), GenRegister::Qn(s1l, 1));
-      p->MOV(GenRegister::Qn(tmp0, 1), acc0);
-      p->ADDC(GenRegister::Qn(dl, 1), GenRegister::Qn(dl, 1), GenRegister::immud(1));
-      p->MOV(GenRegister::Qn(tmp1, 1), acc0);
-      p->ADD(GenRegister::Qn(tmp0, 1), GenRegister::Qn(tmp0, 1), GenRegister::Qn(tmp1, 1));
-
-      p->ADDC(GenRegister::Qn(dh, 1), GenRegister::Qn(s0h, 1), GenRegister::Qn(s1h, 1));
-      p->MOV(GenRegister::Qn(tmp1, 1), acc0);
-      p->ADDC(GenRegister::Qn(dh, 1), GenRegister::Qn(dh, 1), GenRegister::Qn(tmp0, 1));
-      p->MOV(GenRegister::Qn(tmp0, 1), acc0);
-      p->ADD(GenRegister::Qn(tmp1, 1), GenRegister::Qn(tmp0, 1), GenRegister::Qn(tmp1, 1));
-    }
-    p->pop();
-
-    packLongVec(GenRegister::retype(tmp_dst, GEN_TYPE_UD), GenRegister::retype(dst, GEN_TYPE_UD), execWidth);
-
-    p->SHR(dst, dst, GenRegister::immud(1));
-    p->SHL(tmp_dst, tmp1, GenRegister::immud(63));
-    p->ADD(dst, dst, tmp_dst);
+    //rhadd = (src0>>1) + (src1>>1) + ((src0&0x1) | (src1&0x1))
+    p->AND(tmp0, src0, GenRegister::immud(1));
+    p->AND(tmp1, src1, GenRegister::immud(1));
+    p->OR(dst, tmp0, tmp1);
+    p->SHR(tmp0, src0, GenRegister::immud(1));
+    p->SHR(tmp1, src1, GenRegister::immud(1));
+    p->ADD(dst, dst, tmp0);
+    p->ADD(dst, dst, tmp1);
   }
 
   void Gen8Context::emitI64DIVREMInstruction(const SelectionInstruction &cnst_insn)
