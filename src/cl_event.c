@@ -119,16 +119,7 @@ void cl_event_delete(cl_event event)
     event->queue->last_event = NULL;
 
   /* Call all user's callback if haven't execute */
-  user_callback *cb = event->user_cb;
-  while(event->user_cb) {
-    cb = event->user_cb;
-    if(cb->executed == CL_FALSE) {
-      cb->executed = CL_TRUE;
-      cb->pfn_notify(event, event->status, cb->user_data);
-    }
-    event->user_cb = cb->next;
-    cl_free(cb);
-  }
+  cl_event_call_callback(event, CL_COMPLETE, CL_TRUE); // CL_COMPLETE status will force all callbacks that are not executed to run
 
   /* delete gpgpu event object */
   if(event->gpgpu_event)
@@ -180,8 +171,22 @@ cl_int cl_event_set_callback(cl_event event ,
   cb->status      = command_exec_callback_type;
   cb->executed    = CL_FALSE;
 
-  cb->next        = event->user_cb;
-  event->user_cb  = cb;
+
+  // It is possible that the event enqueued is already completed.
+  // clEnqueueReadBuffer can be synchronous and when the callback
+  // is registered after, it still needs to get executed.
+  pthread_mutex_lock(&event->ctx->event_lock); // Thread safety required: operations on the event->status can be made from many different threads
+  if(event->status <= command_exec_callback_type) {
+    /* Call user callback */
+    pthread_mutex_unlock(&event->ctx->event_lock); // pfn_notify can call clFunctions that use the event_lock and from here it's not required
+    cb->pfn_notify(event, event->status, cb->user_data);
+    cl_free(cb);
+  } else {
+    // Enqueue to callback list
+    cb->next        = event->user_cb;
+    event->user_cb  = cb;
+    pthread_mutex_unlock(&event->ctx->event_lock);
+  }
 
 exit:
   return err;
@@ -388,9 +393,48 @@ error:
   goto exit;
 }
 
+void cl_event_call_callback(cl_event event, cl_int status, cl_bool free_cb) {
+  user_callback *user_cb = NULL;
+  user_callback *queue_cb = NULL; // For thread safety, we create a queue that holds user_callback's pfn_notify contents
+  user_callback *temp_cb = NULL;
+  user_cb = event->user_cb;
+  pthread_mutex_lock(&event->ctx->event_lock);
+  while(user_cb) {
+    if(user_cb->status >= status
+        && user_cb->executed == CL_FALSE) { // Added check to not execute a callback when it was already handled
+      user_cb->executed = CL_TRUE;
+      temp_cb = cl_malloc(sizeof(user_callback));
+      if(!temp_cb) {
+        break; // Out of memory
+      }
+      temp_cb->pfn_notify = user_cb->pfn_notify; // Minor struct copy to call ppfn_notify out of the pthread_mutex
+      temp_cb->user_data = user_cb->user_data;
+      if(free_cb) {
+        cl_free(user_cb);
+      }
+      if(!queue_cb) {
+        queue_cb = temp_cb;
+        queue_cb->next = NULL;
+      } else { // Enqueue First
+        temp_cb->next = queue_cb;
+        queue_cb = temp_cb;
+      }
+    }
+    user_cb = user_cb->next;
+  }
+  pthread_mutex_unlock(&event->ctx->event_lock);
+
+  // Calling the callbacks outside of the event_lock is required because the callback can call cl_api functions and get deadlocked
+  while(queue_cb) { // For each callback queued, actually execute the callback
+    queue_cb->pfn_notify(event, event->status, queue_cb->user_data);
+    temp_cb = queue_cb;
+    queue_cb = queue_cb->next;
+    cl_free(temp_cb);
+  }
+}
+
 void cl_event_set_status(cl_event event, cl_int status)
 {
-  user_callback *user_cb;
   cl_int ret, i;
   cl_event evt;
 
@@ -437,14 +481,7 @@ void cl_event_set_status(cl_event event, cl_int status)
   pthread_mutex_unlock(&event->ctx->event_lock);
 
   /* Call user callback */
-  user_cb = event->user_cb;
-  while(user_cb) {
-    if(user_cb->status >= status) {
-      user_cb->executed = CL_TRUE;
-      user_cb->pfn_notify(event, event->status, user_cb->user_data);
-    }
-    user_cb = user_cb->next;
-  }
+  cl_event_call_callback(event, status, CL_FALSE);
 
   if(event->type == CL_COMMAND_USER) {
     /* Check all defer enqueue */
