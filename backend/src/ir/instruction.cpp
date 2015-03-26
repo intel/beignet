@@ -749,7 +749,7 @@ namespace ir {
                                          const Function &fn,
                                          std::string &whyNot)
     {
-      if (UNLIKELY(uint32_t(ID) >= fn.regNum())) {
+      if (UNLIKELY(ID.value() >= fn.regNum())) {
         whyNot = "Out-of-bound destination register index";
         return false;
       }
@@ -893,9 +893,8 @@ namespace ir {
         return false;
       const RegisterFamily family = getFamily(this->type);
       for (uint32_t srcID = 0; srcID < 2; ++srcID)
-        if (UNLIKELY(checkRegisterData(family, src[srcID], fn, whyNot) == false)) {
+        if (UNLIKELY(checkRegisterData(family, src[srcID], fn, whyNot) == false))
           return false;
-        }
       return true;
     }
 

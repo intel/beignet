@@ -129,8 +129,8 @@ namespace ir {
   public:
     /*! Return the index of a newly allocated register */
     INLINE Register append(RegisterFamily family, bool uniform = false) {
-      GBE_ASSERTM(regNum() < MAX_INDEX,
-                  "Too many defined registers (only 65535 are supported)");
+      GBE_ASSERTM((uint64_t)regNum() < MAX_INDEX,
+                  "Too many defined registers (only 4G are supported)");
       const uint32_t index = regNum();
       const RegisterData reg(family, uniform);
       regs.push_back(reg);
@@ -157,11 +157,11 @@ namespace ir {
     INLINE void setUniform(Register index, bool uniform) { regs[index].setUniform(uniform); }
     /*! Get the register index from the tuple */
     INLINE Register get(Tuple index, uint32_t which) const {
-      return regTuples[uint32_t(index) + which];
+      return regTuples[index.value() + which];
     }
     /*! Set the register index from the tuple */
     INLINE void set(Tuple index, uint32_t which, Register reg) {
-      regTuples[uint32_t(index) + which] = reg;
+      regTuples[index.value() + which] = reg;
     }
     /*! Number of registers in the register file */
     INLINE uint32_t regNum(void) const { return regs.size(); }

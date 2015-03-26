@@ -1048,7 +1048,7 @@ namespace gbe
 
   void Selection::Opaque::LABEL(ir::LabelIndex index) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_LABEL, 0, 0);
-    insn->index = uint32_t(index);
+    insn->index = index.value();
   }
 
   void Selection::Opaque::BARRIER(GenRegister src, GenRegister fence, uint32_t barrierType) {
@@ -1066,7 +1066,7 @@ namespace gbe
   int Selection::Opaque::JMPI(Reg src, ir::LabelIndex index, ir::LabelIndex origin) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_JMPI, 0, 1);
     insn->src(0) = src;
-    insn->index = uint32_t(index);
+    insn->index = index.value();
     insn->extra.longjmp = abs(index - origin) > 800;
     return insn->extra.longjmp ? 2 : 1;
   }
@@ -1074,28 +1074,28 @@ namespace gbe
   void Selection::Opaque::BRD(Reg src, ir::LabelIndex jip) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_BRD, 0, 1);
     insn->src(0) = src;
-    insn->index = uint32_t(jip);
+    insn->index = jip.value();
   }
 
   void Selection::Opaque::BRC(Reg src, ir::LabelIndex jip, ir::LabelIndex uip) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_BRC, 0, 1);
     insn->src(0) = src;
-    insn->index = uint32_t(jip);
-    insn->index1 = uint32_t(uip);
+    insn->index = jip.value();
+    insn->index1 = uip.value();
   }
 
   void Selection::Opaque::IF(Reg src, ir::LabelIndex jip, ir::LabelIndex uip) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_IF, 0, 1);
     insn->src(0) = src;
-    insn->index = uint32_t(jip);
-    insn->index1 = uint32_t(uip);
+    insn->index = jip.value();
+    insn->index1 = uip.value();
   }
 
   void Selection::Opaque::ELSE(Reg src, ir::LabelIndex jip, ir::LabelIndex elseLabel) {
 
     SelectionInstruction *insn = this->appendInsn(SEL_OP_ELSE, 0, 1);
     insn->src(0) = src;
-    insn->index = uint32_t(jip);
+    insn->index = jip.value();
     this->LABEL(elseLabel);
   }
 
@@ -1107,13 +1107,13 @@ namespace gbe
     this->LABEL(this->block->endifLabel);
     SelectionInstruction *insn = this->appendInsn(SEL_OP_ENDIF, 0, 1);
     insn->src(0) = src;
-    insn->index = uint32_t(this->block->endifLabel);
+    insn->index = this->block->endifLabel.value();
   }
 
   void Selection::Opaque::WHILE(Reg src, ir::LabelIndex jip) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_WHILE, 0, 1);
     insn->src(0) = src;
-    insn->index = uint32_t(jip);
+    insn->index = jip.value();
   }
 
   void Selection::Opaque::CMP(uint32_t conditional, Reg src0, Reg src1, Reg dst) {
@@ -1784,7 +1784,7 @@ namespace gbe
         if (this->ctx.getIFENDIFFix() &&
             this->block->insnList.size() != 0 &&
             this->block->insnList.size() % 1000 == 0 &&
-            (uint32_t)this->block->endifLabel != 0) {
+            this->block->endifLabel.value() != 0) {
           ir::LabelIndex jip = this->block->endifLabel;
           this->ENDIF(GenRegister::immd(0), jip);
           this->push();
@@ -2100,7 +2100,7 @@ namespace gbe
                 if (sel.getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL &&
                     dag->isUsed) {
                 sel.curr.physicalFlag = 0;
-                sel.curr.flagIndex = (uint32_t)(insn.getDst(0));
+                sel.curr.flagIndex = insn.getDst(0).value();
                 sel.curr.modFlag = 1;
               }
               sel.MOV(dst, src);
@@ -2334,7 +2334,7 @@ namespace gbe
                    insn.getOpcode() == OP_OR ||
                    insn.getOpcode() == OP_XOR);
         sel.curr.physicalFlag = 0;
-        sel.curr.flagIndex = (uint32_t)(insn.getDst(0));
+        sel.curr.flagIndex = insn.getDst(0).value();
         sel.curr.modFlag = 1;
       }
 
@@ -2934,7 +2934,7 @@ namespace gbe
           if (!sel.isScalarReg(insn.getDst(0)) && sel.regDAG[insn.getDst(0)]->isUsed) {
             sel.curr.modFlag = 1;
             sel.curr.physicalFlag = 0;
-            sel.curr.flagIndex = (uint32_t) insn.getDst(0);
+            sel.curr.flagIndex = insn.getDst(0).value();
           }
           sel.MOV(dst, imm.getIntegerValue() ? GenRegister::immuw(0xffff) : GenRegister::immuw(0));
         break;
@@ -3204,7 +3204,7 @@ namespace gbe
           sel.curr.physicalFlag = 0;
           sel.curr.modFlag = 1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
-          sel.curr.flagIndex = (uint32_t)alignedFlag;
+          sel.curr.flagIndex = alignedFlag.value();
           sel.CMP(GEN_CONDITIONAL_NEQ, GenRegister::unpacked_uw(shiftHReg), GenRegister::immuw(32));
         sel.pop();
 
@@ -3217,7 +3217,7 @@ namespace gbe
             // Only need to consider the tmpH when the addr is not aligned.
             sel.curr.modFlag = 0;
             sel.curr.physicalFlag = 0;
-            sel.curr.flagIndex = (uint32_t)alignedFlag;
+            sel.curr.flagIndex = alignedFlag.value();
             sel.curr.predicate = GEN_PREDICATE_NORMAL;
             sel.SHL(tmpH, tmp[i + 1], shiftH);
             sel.OR(effectData[i], tmpL, tmpH);
@@ -3556,7 +3556,7 @@ namespace gbe
           sel.curr.noMask = 1;
         sel.curr.physicalFlag = 0;
         sel.curr.modFlag = 1;
-        sel.curr.flagIndex = (uint32_t)dst;
+        sel.curr.flagIndex = dst.value();
         sel.curr.grfFlag = needStoreBool; // indicate whether we need to allocate grf to store this boolean.
         if ((type == TYPE_S64 || type == TYPE_U64) && !sel.hasLongType()) {
           GenRegister tmp[3];
@@ -4146,7 +4146,7 @@ namespace gbe
         }
         sel.curr.inversePredicate ^= inverse;
         sel.curr.physicalFlag = 0;
-        sel.curr.flagIndex = (uint32_t) pred;
+        sel.curr.flagIndex = pred.value();
         sel.curr.predicate = GEN_PREDICATE_NORMAL;
         // FIXME in general, if the flag is a uniform flag.
         // we should treat that flag as extern flag, as we
@@ -4279,7 +4279,7 @@ namespace gbe
         // FIXME, if the last BRA is unconditional jump, we don't need to update the label here.
         sel.push();
          sel.curr.predicate = GEN_PREDICATE_NORMAL;
-         sel.MOV(GenRegister::retype(src0, GEN_TYPE_UW), GenRegister::immuw((uint16_t)label));
+         sel.MOV(GenRegister::retype(src0, GEN_TYPE_UW), GenRegister::immuw(label.value()));
         sel.pop();
       }
       else {
@@ -4595,9 +4595,9 @@ namespace gbe
           // as if there is no backward jump latter, then obviously everything will work fine.
           // If there is backward jump latter, then all the pcip will be updated correctly there.
           sel.curr.physicalFlag = 0;
-          sel.curr.flagIndex = (uint32_t) pred;
+          sel.curr.flagIndex = pred.value();
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
-          sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
+          sel.MOV(ip, GenRegister::immuw(dst.value()));
           sel.curr.predicate = GEN_PREDICATE_NONE;
           if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif)
             sel.ENDIF(GenRegister::immd(0), nextLabel);
@@ -4607,7 +4607,7 @@ namespace gbe
         // Update the PcIPs
         const LabelIndex jip = sel.ctx.getLabelIndex(&insn);
         if(insn.getParent()->needEndif)
-          sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
+          sel.MOV(ip, GenRegister::immuw(dst.value()));
 
         if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif) {
           if(insn.getParent()->needEndif && !insn.getParent()->needIf)
@@ -4648,13 +4648,13 @@ namespace gbe
         // block. Next instruction will properly update the IPs of the lanes
         // that actually take the branch
         const LabelIndex next = bb.getNextBlock()->getLabelIndex();
-        sel.MOV(ip, GenRegister::immuw(uint16_t(next)));
+        sel.MOV(ip, GenRegister::immuw(next.value()));
         GBE_ASSERT(jip == dst);
         sel.push();
           sel.curr.physicalFlag = 0;
-          sel.curr.flagIndex = (uint32_t) pred;
+          sel.curr.flagIndex = pred.value();
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
-          sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
+          sel.MOV(ip, GenRegister::immuw(dst.value()));
           sel.block->endifOffset = -1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
           if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif)
@@ -4671,7 +4671,7 @@ namespace gbe
         const LabelIndex next = bb.getNextBlock()->getLabelIndex();
         // Update the PcIPs
         if(insn.getParent()->needEndif)
-          sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
+          sel.MOV(ip, GenRegister::immuw(dst.value()));
         sel.block->endifOffset = -1;
         if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif) {
           if(insn.getParent()->needEndif && !insn.getParent()->needIf)
