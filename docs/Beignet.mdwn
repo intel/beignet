@@ -69,6 +69,7 @@ Please be noted that the code was compiled on GCC 4.6, GCC 4.7 and GCC 4.8 and C
 ICC 14.0.3. Since the code uses really recent C++11 features, you may expect problems with
 older compilers. The default compiler should be GCC, and if you want to choose compiler manually,
 you need to configure it as below:
+
 `> cmake -DCOMPILER=[GCC|CLANG|ICC] ../`
 
 CMake will check the dependencies and will complain if it does not find them.
@@ -83,6 +84,7 @@ directly implements the OpenCL API. A set of tests are also produced. They may
 be found in `utests/`.
 
 Simply invoke:
+
 `> make install`
 
 It installs the following six files to the beignet/ directory relatively to
@@ -142,7 +144,9 @@ Known Issues
 
 * GPU hang issues.
   To check whether GPU hang, you could execute dmesg and check whether it has the following message:
+
   `[17909.175965] [drm:i915_hangcheck_hung] *ERROR* Hangcheck timer elapsed...`
+
   If it does, there was a GPU hang. Usually, this means something wrong in the kernel, as it indicates
   the OCL kernel hasn't finished for about 6 seconds or even more. If you think the OCL kernel does need
   to run that long and have confidence with the kernel, you could disable the linux kernel driver's
@@ -159,6 +163,7 @@ Known Issues
   around 3.15 and 3.16 which have commit f0a346b... but haven't commit c9224f... If it is the case,
   you can apply c9224f... manually and rebuild the kernel or just disable the parse command by
   invoke the following command (use Ubuntu as an example):
+
   `# echo 0 > /sys/module/i915/parameters/enable_cmd_parser`
 
 * Some unit test cases, maybe 20 to 30, fail on 4th Generation (HSW) platform.
@@ -169,7 +174,10 @@ Known Issues
 * Precision issue.
   Currently Gen does not provide native support of high precision math functions
   required by OpenCL. We provide a software version to achieve high precision,
-  which you can turn on through `export OCL_STRICT_CONFORMANCE=1`.
+  which you can turn on through
+
+  `# export OCL_STRICT_CONFORMANCE=1`.
+
   But be careful, this would make your CL kernel run a little longer.
 
 * cl\_khr\_gl\_sharing.
@@ -214,7 +222,7 @@ Project repository
 ------------------
 Right now, we host our project on fdo at:
 [http://cgit.freedesktop.org/beignet/](http://cgit.freedesktop.org/beignet/).  
-And the intel 01.org:
+And the Intel 01.org:
 [https://01.org/beignet](https://01.org/beignet)
 
 The team
@@ -223,18 +231,29 @@ Beignet project was created by Ben Segovia. Since 2013, Now Intel China OTC grap
 team continue to work on this project. The official contact for this project is:  
 Zou Nanhai (<nanhai.zou@intel.com>).
 
-Maintainers:
+Maintainers from Intel:
 
 * Gong, Zhigang
 * Yang, Rong
 
-Developers:
+Developers from Intel:
 
 * Song, Ruiling
 * He, Junyan
 * Luo, Xionghu
 * Wen, Chuanbo
+* Guo, Yejun
 * Lv, Meng
+
+Debian Maintainer:
+
+* Rebecca Palmer
+
+Fedora Maintainer:
+
+* Igor Gnatenko
+
+If I missed any other package maintainers, please feel free to contact the mail list.
 
 How to contribute
 -----------------
