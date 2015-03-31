@@ -43,6 +43,7 @@ namespace ir {
         "zero", "one",
         "retVal", "slm_offset",
         "printf_buffer_pointer", "printf_index_buffer_pointer",
+        "dwblockip",
         "invalid"
     };
 
@@ -86,6 +87,7 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, slmoffset, 1);
       DECL_NEW_REG(FAMILY_DWORD, printfbptr, 1);
       DECL_NEW_REG(FAMILY_DWORD, printfiptr, 1);
+      DECL_NEW_REG(FAMILY_DWORD, dwblockip, 0);
       DECL_NEW_REG(FAMILY_DWORD, invalid, 1);
     }
 #undef DECL_NEW_REG

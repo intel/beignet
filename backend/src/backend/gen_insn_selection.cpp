@@ -653,6 +653,64 @@ namespace gbe
                       SelectionDAG *dag0, SelectionDAG *dag1,
                       GenRegister &src0, GenRegister &src1,
                       ir::Type type, bool &inverse);
+
+    /* Get current block IP register according to label width. */
+    GenRegister getBlockIP() {
+      return ctx.isDWLabel() ? selReg(ir::ocl::dwblockip) : selReg(ir::ocl::blockip);
+    }
+
+    /* Get proper label immediate gen register from label value. */
+    GenRegister getLabelImmReg(uint32_t labelValue) {
+      return ctx.isDWLabel() ? GenRegister::immud(labelValue) : GenRegister::immuw(labelValue);
+    }
+
+    /* Get proper label immediate gen register from label. */
+    GenRegister getLabelImmReg(ir::LabelIndex label) {
+      return getLabelImmReg(label.value());
+    }
+
+    /* Set current label register to a label value. */
+    void setBlockIP(GenRegister blockip, uint32_t labelValue) {
+      if (!ctx.isDWLabel())
+        MOV(GenRegister::retype(blockip, GEN_TYPE_UW), GenRegister::immuw(labelValue));
+      else
+        MOV(GenRegister::retype(blockip, GEN_TYPE_UD), GenRegister::immud(labelValue));
+    }
+
+    /* Generate comparison instruction to compare block ip address and specified label register.*/
+    void cmpBlockIP(uint32_t cond,
+                    GenRegister blockip,
+                    GenRegister labelReg) {
+      if (!ctx.isDWLabel())
+        CMP(cond,
+            GenRegister::retype(blockip, GEN_TYPE_UW),
+            labelReg,
+            GenRegister::retype(GenRegister::null(),
+            GEN_TYPE_UW));
+      else
+        CMP(cond,
+            GenRegister::retype(blockip, GEN_TYPE_UD),
+            labelReg,
+            GenRegister::retype(GenRegister::null(),
+            GEN_TYPE_UD));
+    }
+
+    void cmpBlockIP(uint32_t cond,
+                    GenRegister blockip,
+                    uint32_t labelValue) {
+      if (!ctx.isDWLabel())
+        CMP(cond,
+            GenRegister::retype(blockip, GEN_TYPE_UW),
+            GenRegister::immuw(labelValue),
+            GenRegister::retype(GenRegister::null(),
+            GEN_TYPE_UW));
+      else
+        CMP(cond,
+            GenRegister::retype(blockip, GEN_TYPE_UD),
+            GenRegister::immud(labelValue),
+            GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));
+    }
+
     /*! Use custom allocators */
     GBE_CLASS(Opaque);
     friend class SelectionBlock;
@@ -4225,10 +4283,10 @@ namespace gbe
     {
       using namespace ir;
       const LabelIndex label = insn.getLabelIndex();
-      const GenRegister src0 = sel.selReg(ocl::blockip);
-      const GenRegister src1 = GenRegister::immuw(label);
+      const GenRegister src0 = sel.getBlockIP();
+      const GenRegister src1 = sel.getLabelImmReg(label);
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
-      GBE_ASSERTM(label < GEN_MAX_LABEL, "We reached the maximum label number which is reserved for barrier handling");
+      GBE_ASSERTM(label < sel.ctx.getMaxLabel(), "We reached the maximum label number which is reserved for barrier handling");
       sel.LABEL(label);
 
       if(!insn.getParent()->needIf)
@@ -4249,8 +4307,7 @@ namespace gbe
       sel.push();
         sel.curr.noMask = 1;
         sel.curr.predicate = GEN_PREDICATE_NONE;
-        sel.CMP(GEN_CONDITIONAL_LE, GenRegister::retype(src0, GEN_TYPE_UW), src1,
-                GenRegister::retype(GenRegister::null(), GEN_TYPE_UW));
+        sel.cmpBlockIP(GEN_CONDITIONAL_LE, src0, src1);
       sel.pop();
 
       if (sel.block->hasBarrier) {
@@ -4260,11 +4317,10 @@ namespace gbe
         // this block, as it will always excute with all lanes activated.
         sel.push();
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
-          sel.MOV(GenRegister::retype(src0, GEN_TYPE_UW), GenRegister::immuw(GEN_MAX_LABEL));
+          sel.setBlockIP(src0, sel.ctx.getMaxLabel());
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.curr.noMask = 1;
-          sel.CMP(GEN_CONDITIONAL_EQ, GenRegister::retype(src0, GEN_TYPE_UW), GenRegister::immuw(GEN_MAX_LABEL),
-                  GenRegister::retype(GenRegister::null(), GEN_TYPE_UW));
+          sel.cmpBlockIP(GEN_CONDITIONAL_EQ, src0, sel.ctx.getMaxLabel());
           if (simdWidth == 8)
             sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
           else if (simdWidth == 16)
@@ -4279,7 +4335,7 @@ namespace gbe
         // FIXME, if the last BRA is unconditional jump, we don't need to update the label here.
         sel.push();
          sel.curr.predicate = GEN_PREDICATE_NORMAL;
-         sel.MOV(GenRegister::retype(src0, GEN_TYPE_UW), GenRegister::immuw(label.value()));
+         sel.setBlockIP(src0, label.value());
         sel.pop();
       }
       else {
@@ -4582,7 +4638,7 @@ namespace gbe
                            ir::LabelIndex src) const
     {
       using namespace ir;
-      const GenRegister ip = sel.selReg(ocl::blockip, TYPE_U16);
+      const GenRegister ip = sel.getBlockIP();
 
       // We will not emit any jump if we must go the next block anyway
       const BasicBlock *curr = insn.getParent();
@@ -4597,7 +4653,7 @@ namespace gbe
           sel.curr.physicalFlag = 0;
           sel.curr.flagIndex = pred.value();
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
-          sel.MOV(ip, GenRegister::immuw(dst.value()));
+          sel.setBlockIP(ip, dst.value());
           sel.curr.predicate = GEN_PREDICATE_NONE;
           if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif)
             sel.ENDIF(GenRegister::immd(0), nextLabel);
@@ -4607,7 +4663,7 @@ namespace gbe
         // Update the PcIPs
         const LabelIndex jip = sel.ctx.getLabelIndex(&insn);
         if(insn.getParent()->needEndif)
-          sel.MOV(ip, GenRegister::immuw(dst.value()));
+          sel.setBlockIP(ip, dst.value());
 
         if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif) {
           if(insn.getParent()->needEndif && !insn.getParent()->needIf)
@@ -4633,7 +4689,8 @@ namespace gbe
                             ir::LabelIndex src) const
     {
       using namespace ir;
-      const GenRegister ip = sel.selReg(ocl::blockip, TYPE_U16);
+      //const GenRegister ip = sel.selReg(ocl::blockip, TYPE_U16);
+      const GenRegister ip = sel.getBlockIP();
       const Function &fn = sel.ctx.getFunction();
       const BasicBlock &bb = fn.getBlock(src);
       const LabelIndex jip = sel.ctx.getLabelIndex(&insn);
@@ -4648,13 +4705,13 @@ namespace gbe
         // block. Next instruction will properly update the IPs of the lanes
         // that actually take the branch
         const LabelIndex next = bb.getNextBlock()->getLabelIndex();
-        sel.MOV(ip, GenRegister::immuw(next.value()));
+        sel.setBlockIP(ip, next.value());
         GBE_ASSERT(jip == dst);
         sel.push();
           sel.curr.physicalFlag = 0;
           sel.curr.flagIndex = pred.value();
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
-          sel.MOV(ip, GenRegister::immuw(dst.value()));
+          sel.setBlockIP(ip, dst.value());
           sel.block->endifOffset = -1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
           if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif)
@@ -4671,7 +4728,7 @@ namespace gbe
         const LabelIndex next = bb.getNextBlock()->getLabelIndex();
         // Update the PcIPs
         if(insn.getParent()->needEndif)
-          sel.MOV(ip, GenRegister::immuw(dst.value()));
+        sel.setBlockIP(ip, dst.value());
         sel.block->endifOffset = -1;
         if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif) {
           if(insn.getParent()->needEndif && !insn.getParent()->needIf)

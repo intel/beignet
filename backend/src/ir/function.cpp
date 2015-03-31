@@ -136,8 +136,8 @@ namespace ir {
   }
 
   LabelIndex Function::newLabel(void) {
-    GBE_ASSERTM(labels.size() < 0xffff,
-                "Too many labels are defined (65536 only are supported)");
+    GBE_ASSERTM(labels.size() < 0xffffffffull,
+                "Too many labels are defined (4G only are supported)");
     const LabelIndex index(labels.size());
     labels.push_back(NULL);
     return index;
