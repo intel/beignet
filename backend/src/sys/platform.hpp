@@ -248,7 +248,7 @@ class SAFE \
 { \
 public: \
   INLINE SAFE(void) {} \
-  explicit INLINE SAFE(uint16_t unsafe) : unsafe(unsafe) {} \
+  explicit INLINE SAFE(UNSAFE unsafe) : unsafe(unsafe) {} \
   INLINE operator UNSAFE (void) const { return unsafe; } \
   UNSAFE value(void) const { return unsafe; } \
 private: \
