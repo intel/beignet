@@ -44,7 +44,6 @@ namespace gbe
   /*! Translate IR compare to Gen compare */
   uint32_t getGenCompare(ir::Opcode opcode);
 
-  #define GEN_MAX_LABEL 0xFFFF
 
   /*! Selection opcodes properly encoded from 0 to n for fast jump tables
    *  generations

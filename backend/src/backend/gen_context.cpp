@@ -133,18 +133,36 @@ namespace gbe
     return true;
   }
 
+  /* Get proper block ip register according to current label width. */
+  static GenRegister getBlockIP(GenContext &ctx) {
+    GenRegister blockip;
+    if (!ctx.isDWLabel())
+      blockip = ctx.ra->genReg(GenRegister::uw8grf(ir::ocl::blockip));
+    else
+      blockip = ctx.ra->genReg(GenRegister::ud8grf(ir::ocl::dwblockip));
+    return blockip;
+  }
+
+  /* Set current block ip register to a specified constant label value. */
+  static void setBlockIP(GenContext &ctx, GenRegister blockip, uint32_t label) {
+    if (!ctx.isDWLabel())
+      ctx.p->MOV(blockip, GenRegister::immuw(label));
+    else
+      ctx.p->MOV(blockip, GenRegister::immud(label));
+  }
+
   void GenContext::clearFlagRegister(void) {
     // when group size not aligned to simdWidth, flag register need clear to
     // make prediction(any8/16h) work correctly
-    const GenRegister blockip = ra->genReg(GenRegister::uw8grf(ir::ocl::blockip));
+    const GenRegister blockip = getBlockIP(*this);
     const GenRegister zero = ra->genReg(GenRegister::uw1grf(ir::ocl::zero));
     const GenRegister one = ra->genReg(GenRegister::uw1grf(ir::ocl::one));
     p->push();
       p->curr.noMask = 1;
       p->curr.predicate = GEN_PREDICATE_NONE;
-      p->MOV(blockip, GenRegister::immuw(GEN_MAX_LABEL));
+      setBlockIP(*this, blockip, getMaxLabel());
       p->curr.noMask = 0;
-      p->MOV(blockip, GenRegister::immuw(0));
+      setBlockIP(*this, blockip, 0);
       p->curr.execWidth = 1;
       // FIXME, need to get the final use set of zero/one, if there is no user,
       // no need to generate the following two instructions.
@@ -1808,7 +1826,10 @@ namespace gbe
 
     // We insert the block IP mask first
     using namespace ir::ocl;
-    allocCurbeReg(blockip, GBE_CURBE_BLOCK_IP);
+    if (!isDWLabel())
+      allocCurbeReg(blockip, GBE_CURBE_BLOCK_IP);
+    else
+      allocCurbeReg(dwblockip, GBE_CURBE_DW_BLOCK_IP);
     allocCurbeReg(lid0, GBE_CURBE_LOCAL_ID_X);
     allocCurbeReg(lid1, GBE_CURBE_LOCAL_ID_Y);
     allocCurbeReg(lid2, GBE_CURBE_LOCAL_ID_Z);

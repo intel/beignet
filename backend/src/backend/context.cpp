@@ -354,6 +354,8 @@ namespace gbe
     this->kernel = this->allocateKernel();
     this->kernel->simdWidth = this->simdWidth;
     this->buildArgList();
+    if (fn.labelNum() > 0xffff)
+      this->useDWLabel = true;
     if (usedLabels.size() == 0)
       this->buildUsedLabels();
     if (JIPs.size() == 0)

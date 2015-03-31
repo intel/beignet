@@ -49,23 +49,27 @@ cl_set_varying_payload(const cl_kernel ker,
   size_t i, j, k, curr = 0;
   int32_t id_offset[3], ip_offset;
   cl_int err = CL_SUCCESS;
+  int32_t dw_ip_offset = -1;
 
   id_offset[0] = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_X, 0);
   id_offset[1] = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_Y, 0);
   id_offset[2] = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LOCAL_ID_Z, 0);
   ip_offset = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_BLOCK_IP, 0);
+  if (ip_offset < 0)
+    dw_ip_offset = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_DW_BLOCK_IP, 0);
+  assert(ip_offset < 0 || dw_ip_offset < 0);
   assert(id_offset[0] >= 0 &&
          id_offset[1] >= 0 &&
          id_offset[2] >= 0 &&
-         ip_offset >= 0);
+         (ip_offset >= 0 || dw_ip_offset >= 0));
 
   TRY_ALLOC(ids[0], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
   TRY_ALLOC(ids[1], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
   TRY_ALLOC(ids[2], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
   TRY_ALLOC(block_ips, (uint16_t*) alloca(sizeof(uint16_t)*thread_n*simd_sz));
-
   /* 0xffff means that the lane is inactivated */
-  memset(block_ips, 0xff, sizeof(uint16_t)*thread_n*simd_sz);
+  memset(block_ips, 0xff, sizeof(int16_t)*thread_n*simd_sz);
+
 
   /* Compute the IDs and the block IPs */
   for (k = 0; k < local_wk_sz[2]; ++k)
@@ -84,11 +88,15 @@ cl_set_varying_payload(const cl_kernel ker,
     uint32_t *ids1 = (uint32_t *) (data + id_offset[1]);
     uint32_t *ids2 = (uint32_t *) (data + id_offset[2]);
     uint16_t *ips  = (uint16_t *) (data + ip_offset);
+    uint32_t *dw_ips  = (uint32_t *) (data + dw_ip_offset);
     for (j = 0; j < simd_sz; ++j, ++curr) {
       ids0[j] = ids[0][curr];
       ids1[j] = ids[1][curr];
       ids2[j] = ids[2][curr];
-      ips[j] = block_ips[curr];
+      if (ip_offset >= 0)
+        ips[j] = block_ips[curr];
+      if (dw_ip_offset >= 0)
+        dw_ips[j] = block_ips[curr];
     }
   }
 

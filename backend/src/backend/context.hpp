@@ -100,6 +100,13 @@ namespace gbe
     /*! Preallocated curbe register set including special registers. */
     map<ir::Register, uint32_t> curbeRegs;
     ir::Register getSurfaceBaseReg(unsigned char bti);
+    /* Indicate whether we should use DW label or W label in backend.*/
+    bool isDWLabel(void) const {
+      return useDWLabel;
+    }
+    uint32_t getMaxLabel(void) const {
+      return this->isDWLabel() ? 0xffffffff : 0xffff;
+    }
   protected:
     /*! Build the instruction stream. Return false if failed */
     virtual bool emitCode(void) = 0;
@@ -140,6 +147,7 @@ namespace gbe
     set<ir::LabelIndex> usedLabels;       //!< Set of all used labels
     JIPMap JIPs;                          //!< Where to jump all labels/branches
     uint32_t simdWidth;                   //!< Number of lanes per HW threads
+    bool useDWLabel;                      //!< false means using u16 label, true means using u32 label.
     map<unsigned char, ir::Register> btiRegMap;
     GBE_CLASS(Context);                   //!< Use custom allocators
   };
