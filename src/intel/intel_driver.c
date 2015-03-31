@@ -371,6 +371,10 @@ intel_driver_share_buffer(intel_driver_t *driver, const char *sname, uint32_t na
   dri_bo *bo = intel_bo_gem_create_from_name(driver->bufmgr,
                                              sname,
                                              name);
+  if (bo == NULL) {
+    fprintf(stderr, "intel_bo_gem_create_from_name create \"%s\" bo from name %d failed: %s\n", sname, name, strerror(errno));
+    return NULL;
+  }
   return bo;
 }
 
@@ -683,6 +687,9 @@ cl_buffer intel_share_buffer_from_libva(cl_context ctx,
   drm_intel_bo *intel_bo;
 
   intel_bo = intel_driver_share_buffer((intel_driver_t *)ctx->drv, "shared from libva", bo_name);
+
+  if (intel_bo == NULL)
+    return NULL;
 
   if (sz)
     *sz = intel_bo->size;

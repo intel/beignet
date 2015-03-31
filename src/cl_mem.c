@@ -1976,6 +1976,10 @@ LOCAL cl_mem cl_mem_new_libva_buffer(cl_context ctx,
 
   size_t sz = 0;
   mem->bo = cl_buffer_get_buffer_from_libva(ctx, bo_name, &sz);
+  if (mem->bo == NULL) {
+    err = CL_MEM_OBJECT_ALLOCATION_FAILURE;
+    goto error;
+  }
   mem->size = sz;
 
 exit:
