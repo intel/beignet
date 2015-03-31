@@ -103,7 +103,7 @@ namespace ir {
   ///////////////////////////////////////////////////////////////////////////
 
   /*! Stores instruction internal data and opcode */
-  class ALIGNED(sizeof(uint64_t)*2) InstructionBase
+  class ALIGNED(sizeof(uint64_t)*4) InstructionBase
   {
   public:
     /*! Initialize the instruction from a 8 bytes stream */
@@ -117,7 +117,7 @@ namespace ir {
     /*! Get the instruction opcode */
     INLINE Opcode getOpcode(void) const { return opcode; }
   protected:
-    enum { opaqueSize = sizeof(uint64_t)*2-sizeof(uint8_t) };
+    enum { opaqueSize = sizeof(uint64_t)*4-sizeof(uint8_t) };
     Opcode opcode;               //!< Idendifies the instruction
     char opaque[opaqueSize];     //!< Remainder of it
     GBE_CLASS(InstructionBase);  //!< Use internal allocators

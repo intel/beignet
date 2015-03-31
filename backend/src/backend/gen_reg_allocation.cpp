@@ -54,14 +54,14 @@ namespace gbe
   };
 
   typedef struct GenRegIntervalKey {
-    GenRegIntervalKey(uint16_t reg, int32_t maxID) {
-      key = ((uint64_t)maxID << 16) | reg;
+    GenRegIntervalKey(uint32_t reg, int32_t maxID) {
+      key = ((uint64_t)maxID << 32) | reg;
     }
     const ir::Register getReg() const {
-      return (ir::Register)(key & 0xFFFF);
+      return (ir::Register)(key & 0xFFFFFFFF);
     }
     int32_t getMaxID() const {
-      return key >> 16;
+      return key >> 32;
     }
     uint64_t key;
   } GenRegIntervalKey;
@@ -126,9 +126,9 @@ namespace gbe
     /*! Allocate the virtual boolean (== flags) registers */
     void allocateFlags(Selection &selection);
     /*! validated flags which contains valid value in the physical flag register */
-    set<uint16_t> validatedFlags;
+    set<uint32_t> validatedFlags;
     /*! validated temp flag register which indicate the flag 0,1 contains which virtual flag register. */
-    uint16_t validTempFlagReg;
+    uint32_t validTempFlagReg;
     /*! validate flag for the current flag user instruction */
     void validateFlag(Selection &selection, SelectionInstruction &insn);
     /*! Allocate the GRF registers */

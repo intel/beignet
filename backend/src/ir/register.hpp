@@ -111,7 +111,7 @@ namespace ir {
   /*! Register is the position of the index of the register data in the register
    *  file. We enforce type safety with this class
    */
-  TYPE_SAFE(Register, uint16_t)
+  TYPE_SAFE(Register, uint32_t)
   INLINE bool operator< (const Register &r0, const Register &r1) {
     return r0.value() < r1.value();
   }
@@ -119,7 +119,7 @@ namespace ir {
   /*! Tuple is the position of the first register in the tuple vector. We
    *  enforce type safety with this class
    */
-  TYPE_SAFE(Tuple, uint16_t)
+  TYPE_SAFE(Tuple, uint32_t)
 
   /*! A register file allocates and destroys registers. Basically, we will have
    *  one register file per function
@@ -131,7 +131,7 @@ namespace ir {
     INLINE Register append(RegisterFamily family, bool uniform = false) {
       GBE_ASSERTM(regNum() < MAX_INDEX,
                   "Too many defined registers (only 65535 are supported)");
-      const uint16_t index = regNum();
+      const uint32_t index = regNum();
       const RegisterData reg(family, uniform);
       regs.push_back(reg);
       return Register(index);
@@ -157,18 +157,18 @@ namespace ir {
     INLINE void setUniform(Register index, bool uniform) { regs[index].setUniform(uniform); }
     /*! Get the register index from the tuple */
     INLINE Register get(Tuple index, uint32_t which) const {
-      return regTuples[uint16_t(index) + which];
+      return regTuples[uint32_t(index) + which];
     }
     /*! Set the register index from the tuple */
     INLINE void set(Tuple index, uint32_t which, Register reg) {
-      regTuples[uint16_t(index) + which] = reg;
+      regTuples[uint32_t(index) + which] = reg;
     }
     /*! Number of registers in the register file */
     INLINE uint32_t regNum(void) const { return regs.size(); }
     /*! Number of tuples in the register file */
     INLINE uint32_t tupleNum(void) const { return regTuples.size(); }
     /*! register and tuple indices are short */
-    enum { MAX_INDEX = 0xffff }; 
+    enum { MAX_INDEX = 0xffffffff };
   private:
     vector<RegisterData> regs;   //!< All the registers together
     vector<Register> regTuples;  //!< Tuples are used for many src / dst

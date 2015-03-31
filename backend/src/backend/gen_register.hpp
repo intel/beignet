@@ -132,7 +132,6 @@ namespace gbe
     uint32_t physicalFlag:1; //!< Physical or virtual flag register
     uint32_t flag:1;         //!< Only if physical flag,
     uint32_t subFlag:1;      //!< Only if physical flag
-    uint32_t flagIndex:16;   //!< Only if virtual flag (index of the register)
     uint32_t grfFlag:1;      //!< Only if virtual flag, 0 means we do not need to allocate GRF.
     uint32_t externFlag:1;   //!< Only if virtual flag, 1 means this flag is from external BB.
     uint32_t modFlag:1;      //!< Only if virtual flag, 1 means will modify flag.
@@ -146,6 +145,7 @@ namespace gbe
     uint32_t predicate:4;
     uint32_t inversePredicate:1;
     uint32_t saturate:1;
+    uint32_t flagIndex;   //!< Only if virtual flag (index of the register)
     void chooseNib(int nib) {
       switch (nib) {
         case 0:
@@ -244,7 +244,7 @@ namespace gbe
       float f;
       int32_t d;
       uint32_t ud;
-      uint16_t reg;
+      uint32_t reg;
       int64_t i64;
       uint64_t u64;
     } value;
