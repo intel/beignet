@@ -345,7 +345,7 @@ namespace ir {
   }
 
   /*! A value is stored in a per-function vector. This is the index to it */
-  TYPE_SAFE(ImmediateIndex, uint16_t)
+  TYPE_SAFE(ImmediateIndex, uint32_t)
 
 } /* namespace ir */
 } /* namespace gbe */

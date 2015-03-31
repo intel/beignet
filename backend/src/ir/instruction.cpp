@@ -741,7 +741,7 @@ namespace ir {
                                          const Function &fn,
                                          std::string &whyNot)
     {
-      if (UNLIKELY(uint16_t(ID) >= fn.regNum())) {
+      if (UNLIKELY(uint32_t(ID) >= fn.regNum())) {
         whyNot = "Out-of-bound destination register index";
         return false;
       }
@@ -885,8 +885,9 @@ namespace ir {
         return false;
       const RegisterFamily family = getFamily(this->type);
       for (uint32_t srcID = 0; srcID < 2; ++srcID)
-        if (UNLIKELY(checkRegisterData(family, src[srcID], fn, whyNot) == false))
+        if (UNLIKELY(checkRegisterData(family, src[srcID], fn, whyNot) == false)) {
           return false;
+        }
       return true;
     }
 
@@ -1283,7 +1284,7 @@ namespace ir {
   return HelperIntrospection<CLASS, RefClass>::value == 1;
 
 #define START_INTROSPECTION(CLASS) \
-  static_assert(sizeof(internal::CLASS) == (sizeof(uint64_t)*2), \
+  static_assert(sizeof(internal::CLASS) == (sizeof(uint64_t)*4), \
                 "Bad instruction size"); \
   static_assert(offsetof(internal::CLASS, opcode) == 0, \
                 "Bad opcode offset"); \

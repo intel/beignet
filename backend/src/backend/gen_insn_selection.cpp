@@ -2001,7 +2001,7 @@ namespace gbe
                 if (sel.getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL &&
                     dag->isUsed) {
                 sel.curr.physicalFlag = 0;
-                sel.curr.flagIndex = (uint16_t)(insn.getDst(0));
+                sel.curr.flagIndex = (uint32_t)(insn.getDst(0));
                 sel.curr.modFlag = 1;
               }
               sel.MOV(dst, src);
@@ -2205,7 +2205,7 @@ namespace gbe
                    insn.getOpcode() == OP_OR ||
                    insn.getOpcode() == OP_XOR);
         sel.curr.physicalFlag = 0;
-        sel.curr.flagIndex = (uint16_t)(insn.getDst(0));
+        sel.curr.flagIndex = (uint32_t)(insn.getDst(0));
         sel.curr.modFlag = 1;
       }
 
@@ -2778,7 +2778,7 @@ namespace gbe
           if (!sel.isScalarReg(insn.getDst(0)) && sel.regDAG[insn.getDst(0)]->isUsed) {
             sel.curr.modFlag = 1;
             sel.curr.physicalFlag = 0;
-            sel.curr.flagIndex = (uint16_t) insn.getDst(0);
+            sel.curr.flagIndex = (uint32_t) insn.getDst(0);
           }
           sel.MOV(dst, imm.getIntegerValue() ? GenRegister::immuw(0xffff) : GenRegister::immuw(0));
         break;
@@ -3038,7 +3038,7 @@ namespace gbe
           sel.curr.physicalFlag = 0;
           sel.curr.modFlag = 1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
-          sel.curr.flagIndex = (uint16_t)alignedFlag;
+          sel.curr.flagIndex = (uint32_t)alignedFlag;
           sel.CMP(GEN_CONDITIONAL_NEQ, GenRegister::unpacked_uw(shiftHReg), GenRegister::immuw(32));
         sel.pop();
 
@@ -3051,7 +3051,7 @@ namespace gbe
             // Only need to consider the tmpH when the addr is not aligned.
             sel.curr.modFlag = 0;
             sel.curr.physicalFlag = 0;
-            sel.curr.flagIndex = (uint16_t)alignedFlag;
+            sel.curr.flagIndex = (uint32_t)alignedFlag;
             sel.curr.predicate = GEN_PREDICATE_NORMAL;
             sel.SHL(tmpH, tmp[i + 1], shiftH);
             sel.OR(effectData[i], tmpL, tmpH);
@@ -3381,7 +3381,7 @@ namespace gbe
           sel.curr.noMask = 1;
         sel.curr.physicalFlag = 0;
         sel.curr.modFlag = 1;
-        sel.curr.flagIndex = (uint16_t)dst;
+        sel.curr.flagIndex = (uint32_t)dst;
         sel.curr.grfFlag = needStoreBool; // indicate whether we need to allocate grf to store this boolean.
         if (type == TYPE_S64 || type == TYPE_U64) {
           GenRegister tmp[3];
@@ -3795,7 +3795,7 @@ namespace gbe
         }
         sel.curr.inversePredicate ^= inverse;
         sel.curr.physicalFlag = 0;
-        sel.curr.flagIndex = (uint16_t) pred;
+        sel.curr.flagIndex = (uint32_t) pred;
         sel.curr.predicate = GEN_PREDICATE_NORMAL;
         // FIXME in general, if the flag is a uniform flag.
         // we should treat that flag as extern flag, as we
@@ -4208,7 +4208,7 @@ namespace gbe
           // as if there is no backward jump latter, then obviously everything will work fine.
           // If there is backward jump latter, then all the pcip will be updated correctly there.
           sel.curr.physicalFlag = 0;
-          sel.curr.flagIndex = (uint16_t) pred;
+          sel.curr.flagIndex = (uint32_t) pred;
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
           sel.curr.predicate = GEN_PREDICATE_NONE;
@@ -4265,7 +4265,7 @@ namespace gbe
         GBE_ASSERT(jip == dst);
         sel.push();
           sel.curr.physicalFlag = 0;
-          sel.curr.flagIndex = (uint16_t) pred;
+          sel.curr.flagIndex = (uint32_t) pred;
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
           sel.MOV(ip, GenRegister::immuw(uint16_t(dst)));
           sel.block->endifOffset = -1;
