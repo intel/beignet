@@ -639,7 +639,7 @@ namespace gbe
     friend class SelectionInstruction;
   private:
     /*! Auxiliary label for if/endif. */ 
-    uint16_t currAuxLabel;
+    uint32_t currAuxLabel;
     bool bHas32X32Mul;
     INLINE ir::LabelIndex newAuxLabel()
     {
@@ -1020,7 +1020,7 @@ namespace gbe
 
   void Selection::Opaque::LABEL(ir::LabelIndex index) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_LABEL, 0, 0);
-    insn->index = uint16_t(index);
+    insn->index = uint32_t(index);
   }
 
   void Selection::Opaque::BARRIER(GenRegister src, GenRegister fence, uint32_t barrierType) {
@@ -1038,7 +1038,7 @@ namespace gbe
   int Selection::Opaque::JMPI(Reg src, ir::LabelIndex index, ir::LabelIndex origin) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_JMPI, 0, 1);
     insn->src(0) = src;
-    insn->index = uint16_t(index);
+    insn->index = uint32_t(index);
     insn->extra.longjmp = abs(index - origin) > 800;
     return insn->extra.longjmp ? 2 : 1;
   }
@@ -1046,28 +1046,28 @@ namespace gbe
   void Selection::Opaque::BRD(Reg src, ir::LabelIndex jip) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_BRD, 0, 1);
     insn->src(0) = src;
-    insn->index = uint16_t(jip);
+    insn->index = uint32_t(jip);
   }
 
   void Selection::Opaque::BRC(Reg src, ir::LabelIndex jip, ir::LabelIndex uip) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_BRC, 0, 1);
     insn->src(0) = src;
-    insn->index = uint16_t(jip);
-    insn->index1 = uint16_t(uip);
+    insn->index = uint32_t(jip);
+    insn->index1 = uint32_t(uip);
   }
 
   void Selection::Opaque::IF(Reg src, ir::LabelIndex jip, ir::LabelIndex uip) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_IF, 0, 1);
     insn->src(0) = src;
-    insn->index = uint16_t(jip);
-    insn->index1 = uint16_t(uip);
+    insn->index = uint32_t(jip);
+    insn->index1 = uint32_t(uip);
   }
 
   void Selection::Opaque::ELSE(Reg src, ir::LabelIndex jip, ir::LabelIndex elseLabel) {
 
     SelectionInstruction *insn = this->appendInsn(SEL_OP_ELSE, 0, 1);
     insn->src(0) = src;
-    insn->index = uint16_t(jip);
+    insn->index = uint32_t(jip);
     this->LABEL(elseLabel);
   }
 
@@ -1079,13 +1079,13 @@ namespace gbe
     this->LABEL(this->block->endifLabel);
     SelectionInstruction *insn = this->appendInsn(SEL_OP_ENDIF, 0, 1);
     insn->src(0) = src;
-    insn->index = uint16_t(this->block->endifLabel);
+    insn->index = uint32_t(this->block->endifLabel);
   }
 
   void Selection::Opaque::WHILE(Reg src, ir::LabelIndex jip) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_WHILE, 0, 1);
     insn->src(0) = src;
-    insn->index = uint16_t(jip);
+    insn->index = uint32_t(jip);
   }
 
   void Selection::Opaque::CMP(uint32_t conditional, Reg src0, Reg src1, Reg dst) {
@@ -1687,7 +1687,7 @@ namespace gbe
         if (this->ctx.getIFENDIFFix() &&
             this->block->insnList.size() != 0 &&
             this->block->insnList.size() % 1000 == 0 &&
-            (uint16_t)this->block->endifLabel != 0) {
+            (uint32_t)this->block->endifLabel != 0) {
           ir::LabelIndex jip = this->block->endifLabel;
           this->ENDIF(GenRegister::immd(0), jip);
           this->push();
