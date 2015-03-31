@@ -290,6 +290,19 @@ namespace gbe
     return ir::MEM_GLOBAL;
   }
 
+  static INLINE ir::AddressSpace btiToGen(const ir::BTI &bti) {
+    if (bti.count > 1)
+      return ir::MEM_MIXED;
+    uint8_t singleBti = bti.bti[0];
+    switch (singleBti) {
+      case BTI_CONSTANT: return ir::MEM_CONSTANT;
+      case BTI_PRIVATE: return  ir::MEM_PRIVATE;
+      case BTI_LOCAL: return ir::MEM_LOCAL;
+      default: return ir::MEM_GLOBAL;
+    }
+    return ir::MEM_GLOBAL;
+  }
+
   static Constant *extractConstantElem(Constant *CPV, uint32_t index) {
     ConstantVector *CV = dyn_cast<ConstantVector>(CPV);
     GBE_ASSERT(CV != NULL);
@@ -1443,7 +1456,7 @@ namespace gbe
                 incBtiBase();
               break;
               case ir::MEM_LOCAL:
-                ctx.input(argName, ir::FunctionArgument::LOCAL_POINTER, reg,  llvmInfo, ptrSize, align, 0xfe);
+                ctx.input(argName, ir::FunctionArgument::LOCAL_POINTER, reg,  llvmInfo, ptrSize, align, BTI_LOCAL);
                 ctx.getFunction().setUseSLM(true);
               break;
               case ir::MEM_CONSTANT:
@@ -2817,12 +2830,11 @@ namespace gbe
     CallSite::arg_iterator AE = CS.arg_end();
     GBE_ASSERT(AI != AE);
 
-    unsigned int llvmSpace = (*AI)->getType()->getPointerAddressSpace();
-    const ir::AddressSpace addrSpace = addressSpaceLLVMToGen(llvmSpace);
     const ir::Register dst = this->getRegister(&I);
 
     ir::BTI bti;
     gatherBTI(&I, bti);
+    const ir::AddressSpace addrSpace = btiToGen(bti);
     vector<ir::Register> src;
     uint32_t srcNum = 0;
     while(AI != AE) {
@@ -3646,7 +3658,7 @@ namespace gbe
               new_bti = BTI_CONSTANT;
               break;
             case 3:
-              new_bti = 0xfe;
+              new_bti = BTI_LOCAL;
               break;
             default:
               GBE_ASSERT(0 && "address space not unhandled in gatherBTI()\n");
@@ -3740,15 +3752,14 @@ namespace gbe
   template <bool isLoad, typename T>
   INLINE void GenWriter::emitLoadOrStore(T &I)
   {
-    unsigned int llvmSpace = I.getPointerAddressSpace();
     Value *llvmPtr = I.getPointerOperand();
     Value *llvmValues = getLoadOrStoreValue(I);
     Type *llvmType = llvmValues->getType();
     const bool dwAligned = (I.getAlignment() % 4) == 0;
-    const ir::AddressSpace addrSpace = addressSpaceLLVMToGen(llvmSpace);
     const ir::Register ptr = this->getRegister(llvmPtr);
     ir::BTI binding;
     gatherBTI(&I, binding);
+    const ir::AddressSpace addrSpace = btiToGen(binding);
 
     Type *scalarType = llvmType;
     if (!isScalarType(llvmType)) {
@@ -3795,7 +3806,7 @@ namespace gbe
       const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
       const ir::RegisterFamily dataFamily = getFamily(type);
 
-      if(dataFamily == ir::FAMILY_DWORD && addrSpace != ir::MEM_CONSTANT) {
+      if(dataFamily == ir::FAMILY_DWORD && addrSpace != ir::MEM_CONSTANT && addrSpace != ir::MEM_MIXED) {
         // One message is enough here. Nothing special to do
         if (elemNum <= 4) {
           // Build the tuple data in the vector
