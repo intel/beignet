@@ -234,6 +234,20 @@ namespace gbe {
     }
 
     DenseMap<Value*, VectorValues> vectorVals;
+    struct VecValElement{
+      VecValElement(VectorValues *v, uint32_t i) : vecVals(v), id(i) {}
+      VectorValues *vecVals;
+      uint32_t id;
+    };
+    DenseMap<Value*, SmallVector<VecValElement, 16>> usedVecVals;
+
+    void setComponent(VectorValues &vecVals, uint32_t c, llvm::Value* val) {
+      vecVals.setComponent(c, val);
+      usedVecVals[val].push_back(VecValElement(&vecVals, c));
+    }
+
+    void replaceAllUsesOfWith(Instruction* from, Instruction* to);
+
     Module* module;
     IRBuilder<>* builder;
 
@@ -461,7 +475,7 @@ namespace gbe {
       callArgs.push_back(ConstantInt::get(intTy, i));
 
       res = builder->CreateCall(f, callArgs);
-      vVals.setComponent(i, res);
+      setComponent(vVals, i, res);
     }
   }
 
@@ -481,7 +495,7 @@ namespace gbe {
 
       Instruction* res = createScalarInstruction(inst, callArgs);
 
-      vVals.setComponent(i, res);
+      setComponent(vVals, i, res);
       builder->Insert(res);
     }
   }
@@ -562,7 +576,7 @@ namespace gbe {
       int select = sv->getMaskValue(i);
 
       if (select < 0) {
-        vVals.setComponent(i, UndefValue::get(GetBasicType(sv->getOperand(0))));
+        setComponent(vVals, i, UndefValue::get(GetBasicType(sv->getOperand(0))));
         continue;
       }
 
@@ -577,7 +591,7 @@ namespace gbe {
         selectee = sv->getOperand(1);
       }
 
-      vVals.setComponent(i, getComponent(select, selectee));
+      setComponent(vVals, i, getComponent(select, selectee));
     }
 
     return true;
@@ -624,7 +638,7 @@ namespace gbe {
     for (int i = 0; i < GetComponentCount(insn); ++i) {
       Value *cv = ConstantInt::get(intTy, i);
       Value *EI = builder->CreateExtractElement(insn, cv);
-      vVals.setComponent(i, EI);
+      setComponent(vVals, i, EI);
     }
   }
 
@@ -704,6 +718,7 @@ namespace gbe {
       setAppendPoint(bt);
       extractFromVector(bt);
     }
+
     return false;
   }
 
@@ -717,6 +732,16 @@ namespace gbe {
   bool Scalarize::scalarizeStore(StoreInst* st) {
     st->setOperand(0, InsertToVector(st, st->getValueOperand()));
     return false;
+  }
+
+  void Scalarize::replaceAllUsesOfWith(Instruction* from, Instruction* to) {
+    GBE_ASSERT(from != NULL);
+    if (from == to)
+      return;
+    for (auto &it : usedVecVals[from])
+      setComponent(*(it.vecVals), it.id, to);
+    usedVecVals[from].clear();
+    from->replaceAllUsesWith(to);
   }
 
   bool Scalarize::scalarizeExtract(ExtractElementInst* extr)
@@ -735,7 +760,7 @@ namespace gbe {
     Value* v = getComponent(component, extr->getOperand(0));
     if(extr == v)
       return false;
-    extr->replaceAllUsesWith(v);
+    replaceAllUsesOfWith(dyn_cast<Instruction>(extr), dyn_cast<Instruction>(v));
 
     return true;
   }
@@ -755,8 +780,8 @@ namespace gbe {
 
     VectorValues& vVals = vectorVals[ins];
     for (int i = 0; i < GetComponentCount(ins); ++i) {
-      vVals.setComponent(i, i == component ? ins->getOperand(1)
-                                           : getComponent(i, ins->getOperand(0)));
+      setComponent(vVals, i, i == component ? ins->getOperand(1)
+                   : getComponent(i, ins->getOperand(0)));
     }
 
     return true;
@@ -841,9 +866,9 @@ namespace gbe {
     }
 
     dce();
-
     incompletePhis.clear();
     vectorVals.clear();
+    usedVecVals.clear();
 
     delete builder;
     builder = 0;
