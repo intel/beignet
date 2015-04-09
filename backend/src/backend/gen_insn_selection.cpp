@@ -2951,12 +2951,13 @@ namespace gbe
     {
       using namespace ir;
         Register tmpReg = sel.reg(FAMILY_DWORD, simdWidth == 1);
-        GenRegister tmpAddr = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+        GenRegister tmpAddr = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
         GenRegister tmpData = GenRegister::udxgrf(simdWidth, tmpReg);
         // Get dword aligned addr
         sel.push();
           if (simdWidth == 1) {
             sel.curr.noMask = 1;
+            sel.curr.execWidth = 1;
           }
           sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UD), GenRegister::immud(0xfffffffc));
         sel.pop();
@@ -3003,7 +3004,7 @@ namespace gbe
       vector<GenRegister> tmp2(tmpRegNum);
       vector<Register> tmpReg(tmpRegNum);
       for(uint32_t i = 0; i < tmpRegNum; i++) {
-        tmpReg[i] = sel.reg(FAMILY_DWORD);
+        tmpReg[i] = sel.reg(FAMILY_DWORD, simdWidth == 1);
         tmp2[i] = tmp[i] = GenRegister::udxgrf(simdWidth, tmpReg[i]);
       }
 
@@ -3029,9 +3030,9 @@ namespace gbe
       GBE_ASSERT(effectData.size() == effectDataNum);
       GBE_ASSERT(tmp.size() == effectDataNum + 1);
       sel.push();
-        Register alignedFlag = sel.reg(FAMILY_BOOL);
+        Register alignedFlag = sel.reg(FAMILY_BOOL, simdWidth == 1);
         GenRegister shiftL = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
-        Register shiftHReg = sel.reg(FAMILY_DWORD);
+        Register shiftHReg = sel.reg(FAMILY_DWORD, simdWidth == 1);
         GenRegister shiftH = GenRegister::udxgrf(simdWidth, shiftHReg);
         sel.push();
           if (simdWidth == 1)
@@ -3048,7 +3049,7 @@ namespace gbe
 
         sel.curr.noMask = 1;
         for(uint32_t i = 0; i < effectDataNum; i++) {
-          GenRegister tmpH = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+          GenRegister tmpH = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
           GenRegister tmpL = effectData[i];
           sel.SHR(tmpL, tmp[i], shiftL);
           sel.push();
@@ -3088,9 +3089,9 @@ namespace gbe
         vector<GenRegister> tmp2(effectDataNum + 1);
         vector<GenRegister> effectData(effectDataNum);
         for(uint32_t i = 0; i < effectDataNum + 1; i++)
-          tmp2[i] = tmp[i] = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+          tmp2[i] = tmp[i] = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
 
-        GenRegister alignedAddr = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+        GenRegister alignedAddr = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
         sel.push();
           if (simdWidth == 1)
             sel.curr.noMask = 1;
@@ -3116,7 +3117,7 @@ namespace gbe
         } while(remainedReg);
 
         for(uint32_t i = 0; i < effectDataNum; i++)
-          effectData[i] = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+          effectData[i] = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
 
         getEffectByteData(sel, effectData, tmp, effectDataNum, address, simdWidth);
 
@@ -3168,7 +3169,9 @@ namespace gbe
 
       sel.push();
         sel.curr.noMask = 1;
-        GenRegister temp = sel.selReg(sel.reg(ir::FAMILY_DWORD), ir::TYPE_U32);
+        if (GenRegister::hstride_size(address) == 0)
+          sel.curr.execWidth = 1;
+        GenRegister temp = sel.selReg(sel.reg(ir::FAMILY_DWORD, sel.curr.execWidth == 1), ir::TYPE_U32);
         sel.ADD(temp, address, GenRegister::negate(sel.selReg(sel.ctx.getSurfaceBaseReg(bti), ir::TYPE_U32)));
       sel.pop();
       return temp;
@@ -3282,7 +3285,7 @@ namespace gbe
         uint32_t tmpRegNum = typeSize*valueNum / 4;
         vector<GenRegister> tmp(tmpRegNum);
         for(uint32_t i = 0; i < tmpRegNum; i++) {
-          tmp[i] = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+          tmp[i] = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
           sel.PACK_BYTE(tmp[i], value.data() + i * 4/typeSize, typeSize, 4/typeSize);
         }
 
@@ -3290,7 +3293,7 @@ namespace gbe
       } else {
         const GenRegister value = sel.selReg(insn.getValue(0));
         GBE_ASSERT(insn.getValueNum() == 1);
-        const GenRegister tmp = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+        const GenRegister tmp = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
         if (elemSize == GEN_BYTE_SCATTER_WORD) {
           sel.MOV(tmp, GenRegister::retype(value, GEN_TYPE_UW));
         } else if (elemSize == GEN_BYTE_SCATTER_BYTE) {
@@ -3306,7 +3309,9 @@ namespace gbe
 
       sel.push();
         sel.curr.noMask = 1;
-        GenRegister temp = sel.selReg(sel.reg(ir::FAMILY_DWORD), ir::TYPE_U32);
+        if (GenRegister::hstride_size(address) == 0)
+          sel.curr.execWidth = 1;
+        GenRegister temp = sel.selReg(sel.reg(ir::FAMILY_DWORD, sel.curr.execWidth == 1), ir::TYPE_U32);
         sel.ADD(temp, address, GenRegister::negate(sel.selReg(sel.ctx.getSurfaceBaseReg(bti), ir::TYPE_U32)));
       sel.pop();
       return temp;

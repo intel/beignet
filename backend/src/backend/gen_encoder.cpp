@@ -70,6 +70,8 @@ namespace gbe
   INLINE bool isSrcDstDiffSpan(GenRegister dst, GenRegister src) {
     if (src.hstride == GEN_HORIZONTAL_STRIDE_0) return false;
 
+    GBE_ASSERT(dst.hstride != GEN_HORIZONTAL_STRIDE_0 && "dst register is uniform but src is not.");
+
     uint32_t typeSz = typeSize(dst.type);
     uint32_t horizontal = stride(dst.hstride);
     uint32_t spans = (dst.subnr / (horizontal * typeSz)) * (horizontal * typeSz)  + horizontal * typeSz * 16;
