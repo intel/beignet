@@ -15,6 +15,7 @@ set (benchmark_sources
   benchmark_use_host_ptr_buffer.cpp
   benchmark_read_buffer.cpp
   benchmark_read_image.cpp
+  benchmark_copy_buffer_to_image.cpp
   benchmark_copy_image_to_buffer.cpp)
 
 
