@@ -80,7 +80,7 @@ extern cl_int cl_command_queue_set_report_buffer(cl_command_queue, cl_mem);
 extern cl_int cl_command_queue_flush(cl_command_queue);
 
 /* Flush for the specified gpgpu */
-extern void cl_command_queue_flush_gpgpu(cl_command_queue, cl_gpgpu);
+extern int cl_command_queue_flush_gpgpu(cl_command_queue, cl_gpgpu);
 
 /* Wait for the completion of the command queue */
 extern cl_int cl_command_queue_finish(cl_command_queue);

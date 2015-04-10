@@ -52,6 +52,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <errno.h>
 
 LOCAL int
 intel_batchbuffer_reset(intel_batchbuffer_t *batch, size_t sz)
@@ -102,14 +103,15 @@ intel_batchbuffer_terminate(intel_batchbuffer_t *batch)
   batch->buffer = NULL;
 }
 
-LOCAL void
+LOCAL int
 intel_batchbuffer_flush(intel_batchbuffer_t *batch)
 {
   uint32_t used = batch->ptr - batch->map;
   int is_locked = batch->intel->locked;
+  int err = 0;
 
   if (used == 0)
-    return;
+    return 0;
 
   if ((used & 4) == 0) {
     *(uint32_t*) batch->ptr = 0;
@@ -131,14 +133,15 @@ intel_batchbuffer_flush(intel_batchbuffer_t *batch)
      * I915_EXEC_ENABLE_SLM when it drm accept the patch */
     flag |= (1<<13);
   }
-  drm_intel_gem_bo_context_exec(batch->buffer, batch->intel->ctx, used, flag);
+  if (drm_intel_gem_bo_context_exec(batch->buffer, batch->intel->ctx, used, flag) < 0) {
+    fprintf(stderr, "drm_intel_gem_bo_context_exec() failed: %s\n", strerror(errno));
+    err = -1;
+  }
 
   if (!is_locked)
     intel_driver_unlock_hardware(batch->intel);
 
-  // Can't release buffer here. gpgpu only can be delete only when the batch buffer is complete.
-  // Remain the buffer for gpgpu delete check.
-  //intel_batchbuffer_terminate(batch);
+  return err;
 }
 
 LOCAL void 

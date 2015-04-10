@@ -202,7 +202,7 @@ typedef void (cl_gpgpu_batch_end_cb)(cl_gpgpu, int32_t flush_mode);
 extern cl_gpgpu_batch_end_cb *cl_gpgpu_batch_end;
 
 /* Flush the command buffer */
-typedef void (cl_gpgpu_flush_cb)(cl_gpgpu);
+typedef int (cl_gpgpu_flush_cb)(cl_gpgpu);
 extern cl_gpgpu_flush_cb *cl_gpgpu_flush;
 
 /* new a event for a batch buffer */

@@ -98,7 +98,7 @@ extern void intel_batchbuffer_emit_reloc(intel_batchbuffer_t*,
                                          uint32_t delta);
 extern void intel_batchbuffer_init(intel_batchbuffer_t*, struct intel_driver*);
 extern void intel_batchbuffer_terminate(intel_batchbuffer_t*);
-extern void intel_batchbuffer_flush(intel_batchbuffer_t*);
+extern int intel_batchbuffer_flush(intel_batchbuffer_t*);
 extern int intel_batchbuffer_reset(intel_batchbuffer_t*, size_t sz);
 
 static INLINE uint32_t

@@ -46,16 +46,18 @@ cl_event_is_gpu_command_type(cl_command_type type)
   }
 }
 
-void cl_event_flush(cl_event event)
+int cl_event_flush(cl_event event)
 {
+  int err = CL_SUCCESS;
   assert(event->gpgpu_event != NULL);
   if (event->gpgpu) {
-    cl_command_queue_flush_gpgpu(event->queue, event->gpgpu);
+    err = cl_command_queue_flush_gpgpu(event->queue, event->gpgpu);
     cl_gpgpu_delete(event->gpgpu);
     event->gpgpu = NULL;
   }
   cl_gpgpu_event_flush(event->gpgpu_event);
   event->queue->last_event = event;
+  return err;
 }
 
 cl_event cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type type, cl_bool emplict)
