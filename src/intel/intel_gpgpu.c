@@ -853,19 +853,12 @@ intel_gpgpu_batch_reset(intel_gpgpu_t *gpgpu, size_t sz)
   return intel_batchbuffer_reset(gpgpu->batch, sz);
 }
 
-static void
-intel_gpgpu_flush_batch_buffer(intel_batchbuffer_t *batch)
-{
-  assert(batch);
-  intel_batchbuffer_flush(batch);
-}
-
-static void
+static int
 intel_gpgpu_flush(intel_gpgpu_t *gpgpu)
 {
   if (!gpgpu->batch || !gpgpu->batch->buffer)
-    return;
-  intel_gpgpu_flush_batch_buffer(gpgpu->batch);
+    return 0;
+  return intel_batchbuffer_flush(gpgpu->batch);
   /* FIXME:
      Remove old assert here for binded buffer offset 0 which
      tried to guard possible NULL buffer pointer check in kernel, as

@@ -216,14 +216,15 @@ error:
   return err;
 }
 
-LOCAL void
+LOCAL int
 cl_command_queue_flush_gpgpu(cl_command_queue queue, cl_gpgpu gpgpu)
 {
   size_t global_wk_sz[3];
   size_t outbuf_sz = 0;
   void* printf_info = cl_gpgpu_get_printf_info(gpgpu, global_wk_sz, &outbuf_sz);
 
-  cl_gpgpu_flush(gpgpu);
+  if (cl_gpgpu_flush(gpgpu) < 0)
+    return CL_OUT_OF_RESOURCES;
 
   if (printf_info && interp_get_printf_num(printf_info)) {
     void *index_addr = cl_gpgpu_map_printf_buffer(gpgpu, 0);
@@ -244,13 +245,15 @@ cl_command_queue_flush_gpgpu(cl_command_queue queue, cl_gpgpu gpgpu)
     global_wk_sz[0] = global_wk_sz[1] = global_wk_sz[2] = 0;
     cl_gpgpu_set_printf_info(gpgpu, NULL, global_wk_sz);
   }
+  return CL_SUCCESS;
 }
 
 LOCAL cl_int
 cl_command_queue_flush(cl_command_queue queue)
 {
+  int err;
   GET_QUEUE_THREAD_GPGPU(queue);
-  cl_command_queue_flush_gpgpu(queue, gpgpu);
+  err = cl_command_queue_flush_gpgpu(queue, gpgpu);
   // As we don't have a deadicate timer thread to take care the possible
   // event which has a call back function registerred and the event will
   // be released at the call back function, no other function will access
@@ -258,10 +261,10 @@ cl_command_queue_flush(cl_command_queue queue)
   // and all the corresponding buffers which is really bad.
   if (queue->last_event && queue->last_event->user_cb)
     cl_event_update_status(queue->last_event, 1);
-  if (queue->current_event)
-    cl_event_flush(queue->current_event);
+  if (queue->current_event && err == CL_SUCCESS)
+    err = cl_event_flush(queue->current_event);
   cl_invalid_thread_gpgpu(queue);
-  return CL_SUCCESS;
+  return err;
 }
 
 LOCAL cl_int

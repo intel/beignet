@@ -471,8 +471,7 @@ cl_int cl_enqueue_handle(cl_event event, enqueue_data* data)
     case EnqueueNDRangeKernel:
     case EnqueueFillBuffer:
     case EnqueueFillImage:
-      cl_event_flush(event);
-      return CL_SUCCESS;
+      return cl_event_flush(event);
     case EnqueueNativeKernel:
       return cl_enqueue_native_kernel(data);
     case EnqueueMigrateMemObj:

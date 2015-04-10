@@ -103,6 +103,6 @@ cl_int cl_event_insert_user_event(user_event** p_u_ev, cl_event event);
 /* remove the user event */
 cl_int cl_event_remove_user_event(user_event** p_u_ev, cl_event event);
 /* flush the event's pending gpgpu batch buffer and notify driver this gpgpu event has been flushed. */
-void cl_event_flush(cl_event event);
+cl_int cl_event_flush(cl_event event);
 #endif /* __CL_EVENT_H__ */
 
