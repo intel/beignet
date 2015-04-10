@@ -2110,6 +2110,7 @@ namespace gbe
       GenRegister src0 = sel.selReg(insn.getSrc(0), type);
       GenRegister src1 = sel.selReg(insn.getSrc(1), type);
       const uint32_t simdWidth = sel.curr.execWidth;
+      const bool isUniform = simdWidth == 1;
       const RegisterFamily family = getFamily(type);
       uint32_t function = (op == OP_DIV)?
                           GEN_MATH_FUNCTION_INT_DIV_QUOTIENT :
@@ -2118,16 +2119,11 @@ namespace gbe
       //bytes and shorts must be converted to int for DIV and REM per GEN restriction
       if((family == FAMILY_WORD || family == FAMILY_BYTE)) {
         GenRegister tmp0, tmp1;
-        ir::Register reg = sel.reg(FAMILY_DWORD, simdWidth == 1);
-
-        tmp0 = GenRegister::udxgrf(simdWidth, reg);
-        tmp0 = GenRegister::retype(tmp0, GEN_TYPE_D);
+        ir::Register reg = sel.reg(FAMILY_DWORD, isUniform);
+        tmp0 = sel.selReg(reg, ir::TYPE_S32);
         sel.MOV(tmp0, src0);
-
-        tmp1 = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
-        tmp1 = GenRegister::retype(tmp1, GEN_TYPE_D);
+        tmp1 = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_S32);
         sel.MOV(tmp1, src1);
-
         sel.MATH(tmp0, function, tmp0, tmp1);
         GenRegister unpacked;
         if(family == FAMILY_WORD) {
@@ -2899,10 +2895,10 @@ namespace gbe
     {
       using namespace ir;
       GBE_ASSERT(bti.count == 1);
-      const uint32_t simdWidth = sel.isScalarReg(insn.getValue(0)) ? 1 : sel.ctx.getSimdWidth();
+      const uint32_t isUniform = sel.isScalarReg(insn.getValue(0));
       GBE_ASSERT(insn.getValueNum() == 1);
 
-      if(simdWidth == 1) {
+      if(isUniform) {
         GenRegister dst = sel.selReg(insn.getValue(0), ir::TYPE_U32);
         sel.push();
           sel.curr.noMask = 1;
@@ -2913,7 +2909,7 @@ namespace gbe
 
       GenRegister dst = GenRegister::retype(sel.selReg(insn.getValue(0)), GEN_TYPE_F);
       // get dword based address
-      GenRegister addrDW = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
+      GenRegister addrDW = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
 
       sel.push();
         if (sel.isScalarReg(addr.reg())) {
@@ -2946,27 +2942,27 @@ namespace gbe
                         const uint32_t elemSize,
                         GenRegister address,
                         GenRegister dst,
-                        uint32_t simdWidth,
+                        bool isUniform,
                         uint8_t bti) const
     {
       using namespace ir;
-        Register tmpReg = sel.reg(FAMILY_DWORD, simdWidth == 1);
-        GenRegister tmpAddr = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
-        GenRegister tmpData = GenRegister::udxgrf(simdWidth, tmpReg);
+        Register tmpReg = sel.reg(FAMILY_DWORD, isUniform);
+        GenRegister tmpAddr = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
+        GenRegister tmpData = sel.selReg(tmpReg, ir::TYPE_U32);
         // Get dword aligned addr
         sel.push();
-          if (simdWidth == 1) {
+          if (isUniform) {
             sel.curr.noMask = 1;
             sel.curr.execWidth = 1;
           }
           sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UD), GenRegister::immud(0xfffffffc));
         sel.pop();
         sel.push();
-          if (simdWidth == 1)
+          if (isUniform)
             sel.curr.noMask = 1;
           sel.UNTYPED_READ(tmpAddr, &tmpData, 1, bti);
 
-          if (simdWidth == 1)
+          if (isUniform)
             sel.curr.execWidth = 1;
           // Get the remaining offset from aligned addr
           sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UD), GenRegister::immud(0x3));
@@ -2989,8 +2985,7 @@ namespace gbe
     {
       using namespace ir;
       const uint32_t valueNum = insn.getValueNum();
-      const uint32_t simdWidth = sel.isScalarReg(insn.getValue(0)) ?
-                                 1 : sel.ctx.getSimdWidth();
+      const bool isUniform = sel.isScalarReg(insn.getValue(0));
       RegisterFamily family = getFamily(insn.getValueType());
 
       vector<GenRegister> dst(valueNum);
@@ -3004,8 +2999,8 @@ namespace gbe
       vector<GenRegister> tmp2(tmpRegNum);
       vector<Register> tmpReg(tmpRegNum);
       for(uint32_t i = 0; i < tmpRegNum; i++) {
-        tmpReg[i] = sel.reg(FAMILY_DWORD, simdWidth == 1);
-        tmp2[i] = tmp[i] = GenRegister::udxgrf(simdWidth, tmpReg[i]);
+        tmpReg[i] = sel.reg(FAMILY_DWORD, isUniform);
+        tmp2[i] = tmp[i] = sel.selReg(tmpReg[i], ir::TYPE_U32);
       }
 
       readDWord(sel, tmp, tmp2, address, tmpRegNum, bti);
@@ -3024,18 +3019,18 @@ namespace gbe
                            vector<GenRegister> &tmp,
                            uint32_t effectDataNum,
                            const GenRegister &address,
-                           uint32_t simdWidth) const
+                           bool isUniform) const
     {
       using namespace ir;
       GBE_ASSERT(effectData.size() == effectDataNum);
       GBE_ASSERT(tmp.size() == effectDataNum + 1);
       sel.push();
-        Register alignedFlag = sel.reg(FAMILY_BOOL, simdWidth == 1);
-        GenRegister shiftL = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD));
-        Register shiftHReg = sel.reg(FAMILY_DWORD, simdWidth == 1);
-        GenRegister shiftH = GenRegister::udxgrf(simdWidth, shiftHReg);
+        Register alignedFlag = sel.reg(FAMILY_BOOL, isUniform);
+        GenRegister shiftL = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
+        Register shiftHReg = sel.reg(FAMILY_DWORD, isUniform);
+        GenRegister shiftH = sel.selReg(shiftHReg, ir::TYPE_U32);
         sel.push();
-          if (simdWidth == 1)
+          if (isUniform)
             sel.curr.noMask = 1;
           sel.AND(shiftL, GenRegister::retype(address, GEN_TYPE_UD), GenRegister::immud(0x3));
           sel.SHL(shiftL, shiftL, GenRegister::immud(0x3));
@@ -3049,7 +3044,7 @@ namespace gbe
 
         sel.curr.noMask = 1;
         for(uint32_t i = 0; i < effectDataNum; i++) {
-          GenRegister tmpH = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
+          GenRegister tmpH = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
           GenRegister tmpL = effectData[i];
           sel.SHR(tmpL, tmp[i], shiftL);
           sel.push();
@@ -3075,9 +3070,11 @@ namespace gbe
       const uint32_t valueNum = insn.getValueNum();
       const uint32_t simdWidth = sel.isScalarReg(insn.getValue(0)) ?
                                  1 : sel.ctx.getSimdWidth();
+      const bool isUniform = simdWidth == 1;
       RegisterFamily family = getFamily(insn.getValueType());
 
       if(valueNum > 1) {
+        GBE_ASSERT(!isUniform && "vector load should not be uniform. Something went wrong.");
         vector<GenRegister> dst(valueNum);
         const uint32_t typeSize = getFamilySize(family);
 
@@ -3089,11 +3086,11 @@ namespace gbe
         vector<GenRegister> tmp2(effectDataNum + 1);
         vector<GenRegister> effectData(effectDataNum);
         for(uint32_t i = 0; i < effectDataNum + 1; i++)
-          tmp2[i] = tmp[i] = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
+          tmp2[i] = tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
 
-        GenRegister alignedAddr = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
+        GenRegister alignedAddr = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
         sel.push();
-          if (simdWidth == 1)
+          if (isUniform)
             sel.curr.noMask = 1;
           sel.AND(alignedAddr, GenRegister::retype(address, GEN_TYPE_UD), GenRegister::immud(~0x3));
         sel.pop();
@@ -3106,7 +3103,7 @@ namespace gbe
           vector<GenRegister> t2(tmp2.begin() + pos, tmp2.begin() + pos + width);
           if (pos != 0) {
             sel.push();
-              if (simdWidth == 1)
+              if (isUniform)
                 sel.curr.noMask = 1;
               sel.ADD(alignedAddr, alignedAddr, GenRegister::immud(pos * 4));
             sel.pop();
@@ -3117,9 +3114,9 @@ namespace gbe
         } while(remainedReg);
 
         for(uint32_t i = 0; i < effectDataNum; i++)
-          effectData[i] = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
+          effectData[i] = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
 
-        getEffectByteData(sel, effectData, tmp, effectDataNum, address, simdWidth);
+        getEffectByteData(sel, effectData, tmp, effectDataNum, address, isUniform);
 
         for(uint32_t i = 0; i < effectDataNum; i++) {
           unsigned int elemNum = (valueNum - i * (4 / typeSize)) > 4/typeSize ?
@@ -3134,13 +3131,13 @@ namespace gbe
 
         for (int x = 0; x < bti.count; x++) {
           if (x > 0)
-            tmp = sel.selReg(sel.reg(family, simdWidth == 1), insn.getValueType());
+            tmp = sel.selReg(sel.reg(family, isUniform), insn.getValueType());
 
           GenRegister addr = getRelativeAddress(sel, address, bti.bti[x]);
-          readByteAsDWord(sel, elemSize, addr, tmp, simdWidth, bti.bti[x]);
+          readByteAsDWord(sel, elemSize, addr, tmp, isUniform, bti.bti[x]);
           if (x > 0) {
             sel.push();
-              if (simdWidth == 1) {
+              if (isUniform) {
                 sel.curr.noMask = 1;
                 sel.curr.execWidth = 1;
               }
@@ -3264,10 +3261,10 @@ namespace gbe
                          const ir::StoreInstruction &insn,
                          const uint32_t elemSize,
                          GenRegister addr,
-                         uint32_t bti) const
+                         uint32_t bti,
+                         bool isUniform) const
     {
       using namespace ir;
-      const uint32_t simdWidth = sel.ctx.getSimdWidth();
       uint32_t valueNum = insn.getValueNum();
 
       if(valueNum > 1) {
@@ -3285,7 +3282,7 @@ namespace gbe
         uint32_t tmpRegNum = typeSize*valueNum / 4;
         vector<GenRegister> tmp(tmpRegNum);
         for(uint32_t i = 0; i < tmpRegNum; i++) {
-          tmp[i] = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
+          tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
           sel.PACK_BYTE(tmp[i], value.data() + i * 4/typeSize, typeSize, 4/typeSize);
         }
 
@@ -3293,7 +3290,7 @@ namespace gbe
       } else {
         const GenRegister value = sel.selReg(insn.getValue(0));
         GBE_ASSERT(insn.getValueNum() == 1);
-        const GenRegister tmp = GenRegister::udxgrf(simdWidth, sel.reg(FAMILY_DWORD, simdWidth == 1));
+        const GenRegister tmp = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
         if (elemSize == GEN_BYTE_SCATTER_WORD) {
           sel.MOV(tmp, GenRegister::retype(value, GEN_TYPE_UW));
         } else if (elemSize == GEN_BYTE_SCATTER_BYTE) {
@@ -3303,15 +3300,15 @@ namespace gbe
       }
     }
 
-    INLINE GenRegister getRelativeAddress(Selection::Opaque &sel, GenRegister address, uint8_t bti) const {
+    INLINE GenRegister getRelativeAddress(Selection::Opaque &sel, GenRegister address, uint8_t bti, bool isUniform) const {
       if(bti == 0xfe)
         return address;
 
       sel.push();
         sel.curr.noMask = 1;
-        if (GenRegister::hstride_size(address) == 0)
+        if (isUniform)
           sel.curr.execWidth = 1;
-        GenRegister temp = sel.selReg(sel.reg(ir::FAMILY_DWORD, sel.curr.execWidth == 1), ir::TYPE_U32);
+        GenRegister temp = sel.selReg(sel.reg(ir::FAMILY_DWORD, isUniform), ir::TYPE_U32);
         sel.ADD(temp, address, GenRegister::negate(sel.selReg(sel.ctx.getSurfaceBaseReg(bti), ir::TYPE_U32)));
       sel.pop();
       return temp;
@@ -3324,15 +3321,17 @@ namespace gbe
       const uint32_t elemSize = getByteScatterGatherSize(type);
       GenRegister address = sel.selReg(insn.getAddress(), ir::TYPE_U32);
 
+      const bool isUniform = sel.isScalarReg(insn.getAddress()) && sel.isScalarReg(insn.getValue(0));
+
       BTI bti = insn.getBTI();
       for (int x = 0; x < bti.count; x++) {
-        GenRegister temp = getRelativeAddress(sel, address, bti.bti[x]);
+        GenRegister temp = getRelativeAddress(sel, address, bti.bti[x], isUniform);
         if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
           this->emitWrite64(sel, insn, temp, bti.bti[x]);
         else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
           this->emitUntypedWrite(sel, insn, temp,  bti.bti[x]);
         else {
-          this->emitByteScatter(sel, insn, elemSize, temp, bti.bti[x]);
+          this->emitByteScatter(sel, insn, elemSize, temp, bti.bti[x], isUniform);
         }
       }
       return true;
