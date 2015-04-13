@@ -3350,11 +3350,17 @@ namespace gbe
         const GenRegister value = sel.selReg(insn.getValue(0));
         GBE_ASSERT(insn.getValueNum() == 1);
         const GenRegister tmp = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
-        if (elemSize == GEN_BYTE_SCATTER_WORD) {
-          sel.MOV(tmp, GenRegister::retype(value, GEN_TYPE_UW));
-        } else if (elemSize == GEN_BYTE_SCATTER_BYTE) {
-          sel.MOV(tmp, GenRegister::retype(value, GEN_TYPE_UB));
-        }
+        sel.push();
+          if (isUniform) {
+            sel.curr.noMask = 1;
+            sel.curr.execWidth = 1;
+          }
+
+          if (elemSize == GEN_BYTE_SCATTER_WORD)
+            sel.MOV(tmp, GenRegister::retype(value, GEN_TYPE_UW));
+          else if (elemSize == GEN_BYTE_SCATTER_BYTE)
+            sel.MOV(tmp, GenRegister::retype(value, GEN_TYPE_UB));
+        sel.pop();
         sel.BYTE_SCATTER(addr, tmp, elemSize, bti);
       }
     }
