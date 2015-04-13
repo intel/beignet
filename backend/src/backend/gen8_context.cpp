@@ -320,6 +320,17 @@ namespace gbe
     GBE_ASSERT(0);
   }
 
+  static GenRegister unpacked_ud(GenRegister reg, uint32_t offset = 0)
+  {
+    if(reg.hstride == GEN_HORIZONTAL_STRIDE_0) {
+      if(offset == 0)
+        return GenRegister::retype(reg, GEN_TYPE_UD);
+      else
+        return GenRegister::retype(GenRegister::offset(reg, 0, typeSize(GEN_TYPE_UD)*offset), GEN_TYPE_UD);
+    } else
+      return GenRegister::unpacked_ud(reg.nr, reg.subnr + offset);
+  }
+
   static void calculateFullU64MUL(GenEncoder* p, GenRegister src0, GenRegister src1, GenRegister dst_h,
                                   GenRegister dst_l, GenRegister s0l_s1h, GenRegister s0h_s1l)
   {
@@ -327,10 +338,8 @@ namespace gbe
     dst_h.type = dst_l.type = GEN_TYPE_UL;
     s0l_s1h.type = s0h_s1l.type = GEN_TYPE_UL;
 
-    GenRegister s0l = src0.hstride == GEN_HORIZONTAL_STRIDE_0 ?
-      GenRegister::retype(src0, GEN_TYPE_UD) : GenRegister::unpacked_ud(src0.nr, src0.subnr);
-    GenRegister s1l = src1.hstride == GEN_HORIZONTAL_STRIDE_0 ?
-      GenRegister::retype(src1, GEN_TYPE_UD)  : GenRegister::unpacked_ud(src1.nr, src1.subnr);
+    GenRegister s0l = unpacked_ud(src0);
+    GenRegister s1l = unpacked_ud(src1);
     GenRegister s0h = GenRegister::offset(s0l, 0, 4);
     GenRegister s1h = GenRegister::offset(s1l, 0, 4);
 
@@ -350,22 +359,18 @@ namespace gbe
         overflow and have no carry.
         By this manner, we can avoid using acc register, which has a lot of restrictions. */
 
-    GenRegister dst_l_h = dst_l.hstride == GEN_HORIZONTAL_STRIDE_0 ? GenRegister::retype(dst_l, GEN_TYPE_UD) :
-      GenRegister::unpacked_ud(dst_l.nr, dst_l.subnr + 1);
+    GenRegister dst_l_h = unpacked_ud(dst_l, 1);
     p->ADD(s0h_s1l, s0h_s1l, dst_l_h);
-    GenRegister s0l_s1h_l = s0l_s1h.hstride == GEN_HORIZONTAL_STRIDE_0 ? GenRegister::retype(s0l_s1h, GEN_TYPE_UD) :
-      GenRegister::unpacked_ud(s0l_s1h.nr, s0l_s1h.subnr);
+    GenRegister s0l_s1h_l = unpacked_ud(s0l_s1h);
     p->ADD(s0h_s1l, s0h_s1l, s0l_s1h_l);
-    GenRegister s0l_s1h_h = s0l_s1h.hstride == GEN_HORIZONTAL_STRIDE_0 ? GenRegister::retype(s0l_s1h, GEN_TYPE_UD) :
-      GenRegister::unpacked_ud(s0l_s1h.nr, s0l_s1h.subnr + 1);
+    GenRegister s0l_s1h_h = unpacked_ud(s0l_s1h, 1);
     p->ADD(dst_h, dst_h, s0l_s1h_h);
 
     // No longer need s0l_s1h
     GenRegister tmp = s0l_s1h;
 
     p->SHL(tmp, s0h_s1l, GenRegister::immud(32));
-    GenRegister tmp_unpacked = tmp.hstride == GEN_HORIZONTAL_STRIDE_0 ? GenRegister::retype(tmp, GEN_TYPE_UD) :
-      GenRegister::unpacked_ud(tmp.nr, tmp.subnr + 1);
+    GenRegister tmp_unpacked = unpacked_ud(tmp, 1);
     p->MOV(dst_l_h, tmp_unpacked);
 
     p->SHR(tmp, s0h_s1l, GenRegister::immud(32));
@@ -624,10 +629,8 @@ namespace gbe
     res.type = GEN_TYPE_UL;
 
     /* Low 32 bits X low 32 bits. */
-    GenRegister s0l = src0.hstride == GEN_HORIZONTAL_STRIDE_0 ?
-      GenRegister::retype(src0, GEN_TYPE_UD) : GenRegister::unpacked_ud(src0.nr, src0.subnr);
-    GenRegister s1l = src1.hstride == GEN_HORIZONTAL_STRIDE_0 ?
-      GenRegister::retype(src1, GEN_TYPE_UD)  : GenRegister::unpacked_ud(src1.nr, src1.subnr);
+    GenRegister s0l = unpacked_ud(src0);
+    GenRegister s1l = unpacked_ud(src1);
     p->MUL(dst, s0l, s1l);
 
     /* Low 32 bits X high 32 bits. */
