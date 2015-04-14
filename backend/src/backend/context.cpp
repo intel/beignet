@@ -319,7 +319,7 @@ namespace gbe
   IVAR(OCL_SIMD_WIDTH, 8, 15, 16);
 
   Context::Context(const ir::Unit &unit, const std::string &name) :
-    unit(unit), fn(*unit.getFunction(name)), name(name), liveness(NULL), dag(NULL)
+    unit(unit), fn(*unit.getFunction(name)), name(name), liveness(NULL), dag(NULL), useDWLabel(false)
   {
     GBE_ASSERT(unit.getPointerSize() == ir::POINTER_32_BITS);
     this->liveness = GBE_NEW(ir::Liveness, const_cast<ir::Function&>(fn));
