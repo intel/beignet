@@ -58,7 +58,10 @@ int main(int argc, char *argv[])
 {
 
   int c = 0;
-  cl_ocl_init();
+  if (cl_ocl_init() != CL_SUCCESS) {
+    fprintf(stderr, "Failed to initialize cl device.\n");
+    goto clean;
+  }
 
   c = getopt_long (argc, argv, shortopts, longopts, NULL);
 
@@ -124,6 +127,7 @@ int main(int argc, char *argv[])
     }
   } while ((c = getopt_long (argc, argv, shortopts, longopts, NULL)) != -1);
 
+clean:
   cl_ocl_destroy();
 }
 
