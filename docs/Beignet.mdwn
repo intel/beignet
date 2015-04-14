@@ -36,6 +36,12 @@ Note that the compiler depends on LLVM (Low-Level Virtual Machine project).
 Right now, the code has been compiled with LLVM 3.3/3.4. It will not compile
 with anything older.
 
+A simple command to install all the above dependencies for ubuntu or debian is:
+
+`sudo apt-get install cmake pkg-config python ocl-icd-dev`
+`     ocl-icd-opencl-dev libdrm-dev libxfixes-dev libxext-dev llvm-3.5-dev`
+`     clang-3.5 libclang-3.5-dev libtinfo-dev libedit-dev zlib1g-dev`
+
 [http://llvm.org/releases/](http://llvm.org/releases/)
 
 
