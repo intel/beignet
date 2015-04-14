@@ -101,8 +101,7 @@ IF (USE_STANDALONE_GBE_COMPILER STREQUAL "true")
   Find_Package(StandaloneGbeCompiler)
 ELSE (USE_STANDALONE_GBE_COMPILER STREQUAL "true")
   # Front end stuff we need
-  #INCLUDE(CMake/FindLLVM.cmake)
-  Find_Package(LLVM 3.5)
+  Find_Package(LLVM 3.3)
   SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
 ENDIF (USE_STANDALONE_GBE_COMPILER STREQUAL "true")
 
