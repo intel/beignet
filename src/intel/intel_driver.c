@@ -223,6 +223,8 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
     char card_name[20];
     for(cardi = 0; cardi < 16; cardi++) {
       sprintf(card_name, "/dev/dri/renderD%d", 128+cardi);
+      if (access(card_name, R_OK) != 0)
+        continue;
       if(intel_driver_init_render(intel, card_name))
         break;
     }
@@ -232,6 +234,8 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
     char card_name[20];
     for(cardi = 0; cardi < 16; cardi++) {
       sprintf(card_name, "/dev/dri/card%d", cardi);
+      if (access(card_name, R_OK) != 0)
+        continue;
       if(intel_driver_init_master(intel, card_name))
         break;
     }
@@ -325,7 +329,6 @@ intel_driver_init_render(intel_driver_t *driver, const char* dev_name)
 {
   int dev_fd, ret;
 
-  // usually dev_name = "/dev/dri/renderD%d"
   dev_fd = open(dev_name, O_RDWR);
   if (dev_fd == -1)
     return 0;
