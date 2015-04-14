@@ -163,14 +163,17 @@ Known Issues
   But this command is a little bit dangerous, as if your kernel really hang, then the gpu will lock up
   forever until a reboot.
 
-* Almost all unit tests fail on Linux kernel 3.15/3.16.
+* Almost all unit tests fail.
   There is a known issue in some versions of linux kernel which enable register whitelist feature
-  but miss some necessary registers which are required for beignet. The problematic version are
-  around 3.15 and 3.16 which have commit f0a346b... but haven't commit c9224f... If it is the case,
-  you can apply c9224f... manually and rebuild the kernel or just disable the parse command by
-  invoke the following command (use Ubuntu as an example):
+  but miss some necessary registers which are required for beignet. For non-HSW platforms, the
+  problematic version are around 3.15 and 3.16 which have commit f0a346b... but haven't commit
+  c9224f... If it is the case, you can apply c9224f... manually and rebuild the kernel or just
+  disable the parse command by invoke the following command (use Ubuntu as an example):
 
   `# echo 0 > /sys/module/i915/parameters/enable_cmd_parser`
+
+  For HSW platforms, this issue exists in all linux kernel version after 3.15. We always need
+  to execute the above command.
 
 * Some unit test cases, maybe 20 to 30, fail on 4th Generation (HSW) platform.
   _The 4th Generation Intel Core Processors's support requires some Linux kernel
