@@ -195,6 +195,17 @@ Known Issues
   extension. This feature used to work with a previous mesa git version. But now, it's
   simply broken.
 
+* Illegal pointer issue.
+  If you met the following error message:
+
+  `Illegal pointer which is not from a valid memory space.`  
+  `Aborting...`  
+   
+  That means the computing kernel is running into an unsupported feature which is to
+  store/load pointers to/from memory. As we know, this feature has been used in Luxmark
+  3.0 and maybe the latest BOINC. Beignet could support them currently. We plan to fix
+  it in next major release 1.1.0.
+
 TODO
 ----
 
