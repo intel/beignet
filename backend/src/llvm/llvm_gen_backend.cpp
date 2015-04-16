@@ -2803,6 +2803,7 @@ namespace gbe
       case GEN_OCL_CONV_F32_TO_F16:
       case GEN_OCL_SIMD_ANY:
       case GEN_OCL_SIMD_ALL:
+      case GEN_OCL_SIMD_SIZE:
       case GEN_OCL_READ_TM:
       case GEN_OCL_REGION:
         this->newRegister(&I);
@@ -3452,6 +3453,12 @@ namespace gbe
             ir::PrintfSet::PrintfFmt* fmt = (ir::PrintfSet::PrintfFmt*)getPrintfInfo(&I);
             ctx.getFunction().getPrintfSet()->append(fmt, unit);
             assert(fmt);
+            break;
+          }
+          case GEN_OCL_SIMD_SIZE:
+          {
+            const ir::Register dst = this->getRegister(&I);
+            ctx.ALU0(ir::OP_SIMD_SIZE, getType(ctx, I.getType()), dst);
             break;
           }
           default: break;

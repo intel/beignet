@@ -199,6 +199,15 @@ namespace ir {
   /*! Output the instruction string in the given stream */
   std::ostream &operator<< (std::ostream &out, const Instruction &proxy);
 
+  /*! Nullary instruction instructions are typed. */
+  class NullaryInstruction : public Instruction {
+  public:
+    /*! Get the type manipulated by the instruction */
+    Type getType(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
   /*! Unary instructions are typed. dst and sources share the same type */
   class UnaryInstruction : public Instruction {
   public:
@@ -559,6 +568,10 @@ namespace ir {
   /// All emission functions
   ///////////////////////////////////////////////////////////////////////////
 
+  /*! alu0.type dst */
+  Instruction ALU0(Opcode opcode, Type type, Register dst);
+  /*! simd_size.type dst */
+  Instruction SIMD_SIZE(Type type, Register dst);
   /*! alu1.type dst src */
   Instruction ALU1(Opcode opcode, Type type, Register dst, Register src);
   /*! mov.type dst src */

@@ -2112,6 +2112,38 @@ namespace gbe
 #define DECL_CTOR(FAMILY, INSN_NUM, COST) \
   FAMILY##Pattern(void) : OneToManyPattern<FAMILY##Pattern, ir::FAMILY>(INSN_NUM, COST) {}
 
+  /*! Nullary instruction patterns */
+  class NullaryInstructionPattern : public SelectionPattern
+  {
+  public:
+    NullaryInstructionPattern(void) : SelectionPattern(1,1) {
+      for (uint32_t op = 0; op < ir::OP_INVALID; ++op)
+        if (ir::isOpcodeFrom<ir::NullaryInstruction>(ir::Opcode(op)) == true)
+          this->opcodes.push_back(ir::Opcode(op));
+    }
+
+    INLINE bool emit(Selection::Opaque &sel, SelectionDAG &dag) const {
+      using namespace ir;
+      const ir::NullaryInstruction &insn = cast<NullaryInstruction>(dag.insn);
+      const Opcode opcode = insn.getOpcode();
+      const Type type = insn.getType();
+      GenRegister dst = sel.selReg(insn.getDst(0), type);
+
+      sel.push();
+      switch (opcode) {
+        case ir::OP_SIMD_SIZE:
+          {
+            const GenRegister src = GenRegister::immud(sel.curr.execWidth);
+            sel.MOV(dst, src);
+          }
+          break;
+        default: NOT_SUPPORTED;
+      }
+      sel.pop();
+      return true;
+    }
+  };
+
   /*! Unary instruction patterns */
   DECL_PATTERN(UnaryInstruction)
   {
@@ -4855,6 +4887,7 @@ namespace gbe
     this->insert<GetImageInfoInstructionPattern>();
     this->insert<ReadARFInstructionPattern>();
     this->insert<RegionInstructionPattern>();
+    this->insert<NullaryInstructionPattern>();
 
     // Sort all the patterns with the number of instructions they output
     for (uint32_t op = 0; op < ir::OP_INVALID; ++op)

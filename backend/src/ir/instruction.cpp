@@ -131,6 +131,17 @@ namespace ir {
       Register src[srcNum]; //!< Indices of the sources
     };
 
+    /*! All 0-source arithmetic instructions */
+    class ALIGNED_INSTRUCTION NullaryInstruction : public NaryInstruction<0>
+    {
+    public:
+      NullaryInstruction(Opcode opcode, Type type, Register dst) {
+        this->opcode = opcode;
+        this->type = type;
+        this->dst[0] = dst;
+      }
+    };
+
     /*! All 1-source arithmetic instructions */
     class ALIGNED_INSTRUCTION UnaryInstruction : public NaryInstruction<1>
     {
@@ -1306,6 +1317,10 @@ namespace ir {
     }; \
   }
 
+START_INTROSPECTION(NullaryInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(NullaryInstruction)
+
 START_INTROSPECTION(UnaryInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(UnaryInstruction)
@@ -1533,6 +1548,7 @@ END_FUNCTION(Instruction, Register)
     return reinterpret_cast<const internal::CLASS*>(this)->CALL; \
   }
 
+DECL_MEM_FN(NullaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(UnaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(BinaryInstruction, Type, getType(void), getType())
 DECL_MEM_FN(BinaryInstruction, bool, commutes(void), commutes())
@@ -1586,6 +1602,20 @@ DECL_MEM_FN(GetImageInfoInstruction, uint8_t, getImageIndex(void), getImageIndex
   ///////////////////////////////////////////////////////////////////////////
   // Implements the emission functions
   ///////////////////////////////////////////////////////////////////////////
+  // For all nullary functions with given opcode
+  Instruction ALU0(Opcode opcode, Type type, Register dst) {
+    return internal::NullaryInstruction(opcode, type, dst).convert();
+  }
+
+  // All nullary functions
+#define DECL_EMIT_FUNCTION(NAME) \
+  Instruction NAME(Type type, Register dst) { \
+    return ALU0(OP_##NAME, type, dst);\
+  }
+
+  DECL_EMIT_FUNCTION(SIMD_SIZE)
+
+#undef DECL_EMIT_FUNCTION
 
   // For all unary functions with given opcode
   Instruction ALU1(Opcode opcode, Type type, Register dst, Register src) {

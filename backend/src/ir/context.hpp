@@ -176,6 +176,12 @@ namespace ir {
     DECL_THREE_SRC_INSN(MAD);
 #undef DECL_THREE_SRC_INSN
 
+    /*! For all nullary functions */
+    void ALU0(Opcode opcode, Type type, Register dst) {
+      const Instruction insn = gbe::ir::ALU0(opcode, type, dst);
+      this->append(insn);
+    }
+
     /*! For all unary functions */
     void ALU1(Opcode opcode, Type type, Register dst, Register src) {
       const Instruction insn = gbe::ir::ALU1(opcode, type, dst, src);
