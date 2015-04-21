@@ -209,7 +209,8 @@ set (utests_sources
   vload_bench.cpp
   runtime_use_host_ptr_buffer.cpp
   runtime_alloc_host_ptr_buffer.cpp
-  compiler_get_simd_size.cpp)
+  compiler_get_simd_size.cpp
+  compiler_get_simd_id.cpp)
 
 if (LLVM_VERSION_NODOT VERSION_GREATER 34)
   SET(utests_sources
