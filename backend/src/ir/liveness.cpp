@@ -66,6 +66,11 @@ namespace ir {
         const uint32_t srcNum = insn.getSrcNum();
         const uint32_t dstNum = insn.getDstNum();
         bool uniform = true;
+
+        //do not change dst uniform for simd id
+        if (insn.getOpcode() == ir::OP_SIMD_ID)
+          uniform = false;
+
         for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
           const Register reg = insn.getSrc(srcID);
           if (!fn.isUniformRegister(reg))

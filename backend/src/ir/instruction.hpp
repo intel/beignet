@@ -572,6 +572,8 @@ namespace ir {
   Instruction ALU0(Opcode opcode, Type type, Register dst);
   /*! simd_size.type dst */
   Instruction SIMD_SIZE(Type type, Register dst);
+  /*! simd_id.type dst */
+  Instruction SIMD_ID(Type type, Register dst);
   /*! alu1.type dst src */
   Instruction ALU1(Opcode opcode, Type type, Register dst, Register src);
   /*! mov.type dst src */

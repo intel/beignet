@@ -2137,6 +2137,12 @@ namespace gbe
             sel.MOV(dst, src);
           }
           break;
+        case ir::OP_SIMD_ID:
+          {
+            const GenRegister selLaneID = sel.selReg(ir::ocl::laneid, ir::TYPE_U32);
+            sel.MOV(dst, selLaneID);
+          }
+          break;
         default: NOT_SUPPORTED;
       }
       sel.pop();

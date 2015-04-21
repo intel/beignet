@@ -210,6 +210,14 @@ cl_curbe_fill(cl_kernel ker,
   UPLOAD(GBE_CURBE_WORK_DIM, work_dim);
 #undef UPLOAD
 
+  /* __gen_ocl_get_simd_id needs it */
+  if ((offset = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_LANE_ID, 0)) >= 0) {
+    const uint32_t simd_sz = interp_kernel_get_simd_width(ker->opaque);
+    uint32_t *laneid = (uint32_t *) (ker->curbe + offset);
+    int32_t i;
+    for (i = 0; i < (int32_t) simd_sz; ++i) laneid[i] = i;
+  }
+
   /* Write identity for the stack pointer. This is required by the stack pointer
    * computation in the kernel
    */

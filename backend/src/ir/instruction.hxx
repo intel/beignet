@@ -26,6 +26,7 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 DECL_INSN(SIMD_SIZE, NullaryInstruction)
+DECL_INSN(SIMD_ID, NullaryInstruction)
 DECL_INSN(MOV, UnaryInstruction)
 DECL_INSN(COS, UnaryInstruction)
 DECL_INSN(SIN, UnaryInstruction)

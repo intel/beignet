@@ -2013,9 +2013,14 @@ namespace gbe
       if (curbeRegs.find(reg) != curbeRegs.end()) continue; \
       allocCurbeReg(reg, GBE_CURBE_##PATCH); \
     } else
-  
+
+    bool needLaneID = false;
     fn.foreachInstruction([&](ir::Instruction &insn) {
       const uint32_t srcNum = insn.getSrcNum();
+      if (insn.getOpcode() == ir::OP_SIMD_ID) {
+        GBE_ASSERT(srcNum == 0);
+        needLaneID = true;
+      }
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
         const ir::Register reg = insn.getSrc(srcID);
         if (insn.getOpcode() == ir::OP_GET_IMAGE_INFO) {
@@ -2054,6 +2059,8 @@ namespace gbe
     });
 #undef INSERT_REG
 
+    if (needLaneID)
+      allocCurbeReg(laneid, GBE_CURBE_LANE_ID);
 
     // After this point the vector is immutable. Sorting it will make
     // research faster

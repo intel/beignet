@@ -1614,6 +1614,7 @@ DECL_MEM_FN(GetImageInfoInstruction, uint8_t, getImageIndex(void), getImageIndex
   }
 
   DECL_EMIT_FUNCTION(SIMD_SIZE)
+  DECL_EMIT_FUNCTION(SIMD_ID)
 
 #undef DECL_EMIT_FUNCTION
 
