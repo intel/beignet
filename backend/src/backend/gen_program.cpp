@@ -167,7 +167,7 @@ namespace gbe {
     } else if (IS_BROADWELL(deviceID)) {
       ctx = GBE_NEW(Gen8Context, unit, name, deviceID, relaxMath);
     } else if (IS_CHERRYVIEW(deviceID)) {
-      ctx = GBE_NEW(Gen8Context, unit, name, deviceID, relaxMath);
+      ctx = GBE_NEW(ChvContext, unit, name, deviceID, relaxMath);
     } else if (IS_SKYLAKE(deviceID)) {
       ctx = GBE_NEW(Gen9Context, unit, name, deviceID, relaxMath);
     }

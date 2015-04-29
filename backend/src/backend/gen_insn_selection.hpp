@@ -293,6 +293,13 @@ namespace gbe
       Selection8(GenContext &ctx);
   };
 
+  class SelectionChv: public Selection
+  {
+    public:
+      /*! Initialize internal structures used for the selection */
+      SelectionChv(GenContext &ctx);
+  };
+
   class Selection9: public Selection
   {
     public:

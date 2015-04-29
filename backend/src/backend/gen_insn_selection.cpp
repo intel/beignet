@@ -361,6 +361,8 @@ namespace gbe
     void setHas32X32Mul(bool b) { bHas32X32Mul = b; }
     bool hasLongType() const { return bHasLongType; }
     void setHasLongType(bool b) { bHasLongType = b; }
+    bool hasLongRegRestrict() { return bLongRegRestrict; }
+    void setLongRegRestrict(bool b) { bLongRegRestrict = b; }
     void setLdMsgOrder(uint32_t type)  { ldMsgOrder = type; }
     uint32_t getLdMsgOrder()  const { return ldMsgOrder; }
     /*! indicate whether a register is a scalar/uniform register. */
@@ -720,6 +722,7 @@ namespace gbe
     uint32_t currAuxLabel;
     bool bHas32X32Mul;
     bool bHasLongType;
+    bool bLongRegRestrict;
     uint32_t ldMsgOrder;
     INLINE ir::LabelIndex newAuxLabel()
     {
@@ -760,7 +763,7 @@ namespace gbe
     curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
     maxInsnNum(ctx.getFunction().getLargestBlockSize()), dagPool(maxInsnNum),
     stateNum(0), vectorNum(0), bwdCodeGeneration(false), currAuxLabel(ctx.getFunction().labelNum()),
-    bHas32X32Mul(false), bHasLongType(false), ldMsgOrder(LD_MSG_ORDER_IVB)
+    bHas32X32Mul(false), bHasLongType(false), bLongRegRestrict(false), ldMsgOrder(LD_MSG_ORDER_IVB)
   {
     const ir::Function &fn = ctx.getFunction();
     this->regNum = fn.regNum();
@@ -1916,6 +1919,12 @@ namespace gbe
   Selection8::Selection8(GenContext &ctx) : Selection(ctx) {
     this->opaque->setHas32X32Mul(true);
     this->opaque->setHasLongType(true);
+  }
+
+  SelectionChv::SelectionChv(GenContext &ctx) : Selection(ctx) {
+    this->opaque->setHas32X32Mul(true);
+    this->opaque->setHasLongType(true);
+    this->opaque->setLongRegRestrict(true);
   }
 
   Selection9::Selection9(GenContext &ctx) : Selection(ctx) {
@@ -4137,7 +4146,41 @@ namespace gbe
             sel.MOV(dst, unpacked);
           }
         }
-      } else if ((dst.isdf() && srcType == ir::TYPE_FLOAT) ||
+      }   else if (sel.hasLongType() && sel.hasLongRegRestrict() && dstFamily == FAMILY_QWORD && srcFamily != FAMILY_QWORD) {
+        // Convert i32/i16/i8/float to i64/double if hasLongRegRestrict(src and dst hstride must be aligned to the same qword).
+        GenRegister unpacked;
+        GenRegister unpacked_src = src;
+
+        sel.push();
+          if (sel.isScalarReg(insn.getSrc(0))) {
+            sel.curr.execWidth = 1;
+            sel.curr.predicate = GEN_PREDICATE_NONE;
+            sel.curr.noMask = 1;
+          }
+
+          if(srcType == ir::TYPE_FLOAT) {
+            unpacked = sel.unpacked_ud(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+            unpacked = GenRegister::retype(unpacked, GEN_TYPE_F);
+          } else if(srcFamily == FAMILY_DWORD) {
+            unpacked = sel.unpacked_ud(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+            unpacked = GenRegister::retype(unpacked, dstType == TYPE_U64 ? GEN_TYPE_UD : GEN_TYPE_D);
+          } else if(srcFamily == FAMILY_WORD) {
+            unpacked = sel.unpacked_uw(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+            unpacked = GenRegister::retype(unpacked, dstType == TYPE_U64 ? GEN_TYPE_UW : GEN_TYPE_W);
+          } else if(srcFamily == FAMILY_BYTE) {
+            GenRegister tmp = sel.selReg(sel.reg(FAMILY_WORD, sel.isScalarReg(insn.getSrc(0))));
+            tmp = GenRegister::retype(tmp, dstType == TYPE_U64 ? GEN_TYPE_UW : GEN_TYPE_W);
+            unpacked = sel.unpacked_uw(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+            unpacked = GenRegister::retype(unpacked, dstType == TYPE_U64 ? GEN_TYPE_UW : GEN_TYPE_W);
+            sel.MOV(tmp, src);
+            unpacked_src = tmp;
+          } else
+            GBE_ASSERT(0);
+
+          sel.MOV(unpacked, unpacked_src);
+        sel.pop();
+        sel.MOV(dst, unpacked);
+      }else if ((dst.isdf() && srcType == ir::TYPE_FLOAT) ||
                  (src.isdf() && dstType == ir::TYPE_FLOAT)) { // float and double conversion
         ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
         sel.MOV_DF(dst, src, sel.selReg(r, TYPE_U64));

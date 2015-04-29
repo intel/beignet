@@ -82,6 +82,29 @@ namespace gbe
     virtual void newSelection(void);
     void packLongVec(GenRegister unpacked, GenRegister packed, uint32_t simd);
     void unpackLongVec(GenRegister packed, GenRegister unpacked, uint32_t simd);
+    void calculateFullS64MUL(GenRegister src0, GenRegister src1, GenRegister dst_h,
+                             GenRegister dst_l, GenRegister s0_abs, GenRegister s1_abs,
+                             GenRegister tmp0, GenRegister tmp1, GenRegister sign, GenRegister flagReg);
+    virtual void calculateFullU64MUL(GenRegister src0, GenRegister src1, GenRegister dst_h,
+                                           GenRegister dst_l, GenRegister s0l_s1h, GenRegister s0h_s1l);
+  };
+
+  class ChvContext : public Gen8Context
+  {
+  public:
+    virtual ~ChvContext(void) { }
+    ChvContext(const ir::Unit &unit, const std::string &name, uint32_t deviceID, bool relaxMath = false)
+            : Gen8Context(unit, name, deviceID, relaxMath) {
+    };
+    virtual void emitI64MULInstruction(const SelectionInstruction &insn);
+
+  protected:
+    virtual void setA0Content(uint16_t new_a0[16], uint16_t max_offset = 0, int sz = 0);
+
+  private:
+    virtual void newSelection(void);
+    virtual void calculateFullU64MUL(GenRegister src0, GenRegister src1, GenRegister dst_h,
+                                           GenRegister dst_l, GenRegister s0l_s1h, GenRegister s0h_s1l);
   };
 }
 #endif /* __GBE_GEN8_CONTEXT_HPP__ */
