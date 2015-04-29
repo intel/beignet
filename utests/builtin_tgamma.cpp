@@ -20,10 +20,15 @@ void builtin_tgamma(void)
   if (env_strict == NULL || strcmp(env_strict, "0") == 0)
     ULPSIZE_FACTOR = 10000.;
 
-  for (int j = 0; j < 1024; j ++) {
+  cl_device_fp_config fp_config;
+  clGetDeviceInfo(device, CL_DEVICE_SINGLE_FP_CONFIG, sizeof(cl_device_fp_config), &fp_config, 0);
+  bool denormals_supported = fp_config & CL_FP_DENORM;
+  float max_ulp = 0, max_ulp_at = 0;
+
+  for (int j = 0; j < 128; j ++) {
     OCL_MAP_BUFFER(0);
     for (int i = 0; i < n; ++i) {
-      src[i] = ((float*)buf_data[0])[i] = (j*n+i+1) * 0.001f;
+      src[i] = ((float*)buf_data[0])[i] = j - 64 + i*0.001f;
     }
     OCL_UNMAP_BUFFER(0);
 
@@ -32,7 +37,14 @@ void builtin_tgamma(void)
     OCL_MAP_BUFFER(1);
     float *dst = (float*)buf_data[1];
     for (int i = 0; i < n; ++i) {
-      float cpu = tgammaf(src[i]);
+      float cpu = tgamma(src[i]);
+      if (!denormals_supported && std::fpclassify(cpu)==FP_SUBNORMAL && dst[i]==0) {
+        cpu = 0;
+      }
+      if (fabsf(cpu - dst[i]) > cl_FLT_ULP(cpu) * max_ulp) {
+        max_ulp = fabsf(cpu - dst[i]) / cl_FLT_ULP(cpu);
+        max_ulp_at = src[i];
+      }
       if (isinf(cpu)) {
         OCL_ASSERT(isinf(dst[i]));
       } else if (fabsf(cpu - dst[i]) >= cl_FLT_ULP(cpu) * ULPSIZE_FACTOR) {
@@ -42,6 +54,7 @@ void builtin_tgamma(void)
     }
     OCL_UNMAP_BUFFER(1);
   }
+  printf("max error=%f ulp at x=%f ", max_ulp, max_ulp_at);
 }
 
 MAKE_UTEST_FROM_FUNCTION(builtin_tgamma);
