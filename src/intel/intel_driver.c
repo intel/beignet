@@ -764,6 +764,8 @@ static int intel_buffer_set_tiling(cl_buffer bo,
   return ret;
 }
 
+#define CHV_CONFIG_WARNING \
+        "Warning: can't get GPU's configurations, will use the minimal one. Please update your drm to 2.4.59+ and linux kernel to 4.0.0+.\n"
 static void
 intel_update_device_info(cl_device_id device)
 {
@@ -800,6 +802,11 @@ intel_update_device_info(cl_device_id device)
   /* Prefer driver-queried max compute units if supported */
   if (!drm_intel_get_eu_total(driver->fd, &eu_total))
     device->max_compute_unit = eu_total;
+  else if (IS_CHERRYVIEW(device->vendor_id))
+    printf(CHV_CONFIG_WARNING);
+#else
+  if (IS_CHERRYVIEW(device->vendor_id))
+    printf(CHV_CONFIG_WARNING);
 #endif
 
 #ifdef HAS_SUBSLICE_TOTAL
@@ -808,6 +815,11 @@ intel_update_device_info(cl_device_id device)
   /* Prefer driver-queried subslice count if supported */
   if (!drm_intel_get_subslice_total(driver->fd, &subslice_total))
     device->sub_slice_count = subslice_total;
+  else if (IS_CHERRYVIEW(device->vendor_id))
+    printf(CHV_CONFIG_WARNING);
+#else
+  if (IS_CHERRYVIEW(device->vendor_id))
+    printf(CHV_CONFIG_WARNING);
 #endif
 
   intel_driver_context_destroy(driver);

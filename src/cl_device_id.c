@@ -140,6 +140,18 @@ static struct _cl_device_id intel_brw_gt3_device = {
 #include "cl_gen75_device.h"
 };
 
+//Cherryview has the same pciid, must get the max_compute_unit and max_thread_per_unit from drm
+static struct _cl_device_id intel_chv_device = {
+  INIT_ICD(dispatch)
+  .max_compute_unit = 8,
+  .max_thread_per_unit = 7,
+  .sub_slice_count = 2,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+#include "cl_gen75_device.h"
+};
+
 /* XXX we clone brw now */
 static struct _cl_device_id intel_skl_gt1_device = {
   INIT_ICD(dispatch)
@@ -423,6 +435,18 @@ brw_gt3_break:
       ret = &intel_brw_gt3_device;
       break;
 
+    case PCI_CHIP_CHV_0:
+    case PCI_CHIP_CHV_1:
+    case PCI_CHIP_CHV_2:
+    case PCI_CHIP_CHV_3:
+      DECL_INFO_STRING(chv_break, intel_chv_device, name, "Intel(R) HD Graphics Cherryview");
+chv_break:
+      intel_chv_device.vendor_id = device_id;
+      intel_chv_device.platform = intel_platform;
+      ret = &intel_chv_device;
+      break;
+
+
 	  case PCI_CHIP_SKYLAKE_ULT_GT1:
 		DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake ULT GT1");
 	  case PCI_CHIP_SKYLAKE_ULX_GT1:
@@ -590,6 +614,7 @@ cl_get_device_info(cl_device_id     device,
                device != &intel_brw_gt1_device &&
                device != &intel_brw_gt2_device &&
                device != &intel_brw_gt3_device &&
+               device != &intel_chv_device &&
                device != &intel_skl_gt1_device &&
                device != &intel_skl_gt2_device &&
                device != &intel_skl_gt3_device &&
@@ -699,6 +724,7 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
                device != &intel_brw_gt1_device &&
                device != &intel_brw_gt2_device &&
                device != &intel_brw_gt3_device &&
+               device != &intel_chv_device &&
                device != &intel_skl_gt1_device &&
                device != &intel_skl_gt2_device &&
                device != &intel_skl_gt3_device &&
@@ -714,7 +740,7 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
         || device == &intel_hsw_gt3_device) {
     *ver = 75;
   } else if (device == &intel_brw_gt1_device || device == &intel_brw_gt2_device
-        || device == &intel_brw_gt3_device) {
+        || device == &intel_brw_gt3_device || device == &intel_chv_device) {
     *ver = 8;
   } else if (device == &intel_skl_gt1_device || device == &intel_skl_gt2_device
         || device == &intel_skl_gt3_device || device == &intel_skl_gt4_device) {
@@ -801,6 +827,7 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
                device != &intel_brw_gt1_device &&
                device != &intel_brw_gt2_device &&
                device != &intel_brw_gt3_device &&
+               device != &intel_chv_device &&
                device != &intel_skl_gt1_device &&
                device != &intel_skl_gt2_device &&
                device != &intel_skl_gt3_device &&

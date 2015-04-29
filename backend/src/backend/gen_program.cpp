@@ -166,6 +166,8 @@ namespace gbe {
       ctx = GBE_NEW(Gen75Context, unit, name, deviceID, relaxMath);
     } else if (IS_BROADWELL(deviceID)) {
       ctx = GBE_NEW(Gen8Context, unit, name, deviceID, relaxMath);
+    } else if (IS_CHERRYVIEW(deviceID)) {
+      ctx = GBE_NEW(Gen8Context, unit, name, deviceID, relaxMath);
     } else if (IS_SKYLAKE(deviceID)) {
       ctx = GBE_NEW(Gen9Context, unit, name, deviceID, relaxMath);
     }
@@ -210,6 +212,7 @@ namespace gbe {
                                       (IS_BAYTRAIL_T(typeA) && !strcmp(src_hw_info, "BYT")) ||  \
                                       (IS_HASWELL(typeA) && !strcmp(src_hw_info, "HSW")) ||  \
                                       (IS_BROADWELL(typeA) && !strcmp(src_hw_info, "BDW")) ||  \
+                                      (IS_CHERRYVIEW(typeA) && !strcmp(src_hw_info, "CHV")) ||  \
                                       (IS_SKYLAKE(typeA) && !strcmp(src_hw_info, "SKL")) )
 
   static gbe_program genProgramNewFromBinary(uint32_t deviceID, const char *binary, size_t size) {
@@ -316,6 +319,10 @@ namespace gbe {
         src_hw_info[0]='B';
         src_hw_info[1]='D';
         src_hw_info[2]='W';
+      }else if(IS_CHERRYVIEW(prog->deviceID)){
+        src_hw_info[0]='C';
+        src_hw_info[1]='H';
+        src_hw_info[2]='V';
       }else if(IS_SKYLAKE(prog->deviceID)){
         src_hw_info[0]='S';
         src_hw_info[1]='K';

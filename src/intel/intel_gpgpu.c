@@ -1135,6 +1135,7 @@ static uint32_t get_surface_type(intel_gpgpu_t *gpgpu, int index, cl_mem_object_
   if (((IS_IVYBRIDGE(gpgpu->drv->device_id) ||
         IS_HASWELL(gpgpu->drv->device_id) ||
         IS_BROADWELL(gpgpu->drv->device_id) ||
+        IS_CHERRYVIEW(gpgpu->drv->device_id) ||
         IS_SKYLAKE(gpgpu->drv->device_id))) &&
       index >= BTI_WORKAROUND_IMAGE_OFFSET + BTI_RESERVED_NUM &&
       type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
@@ -2149,13 +2150,15 @@ intel_set_gpgpu_callbacks(int device_id)
   cl_gpgpu_set_printf_info = (cl_gpgpu_set_printf_info_cb *)intel_gpgpu_set_printf_info;
   cl_gpgpu_get_printf_info = (cl_gpgpu_get_printf_info_cb *)intel_gpgpu_get_printf_info;
 
-  if (IS_BROADWELL(device_id)) {
+  if (IS_BROADWELL(device_id) || IS_CHERRYVIEW(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen8;
     intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen8;
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen8;
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen8;
     intel_gpgpu_post_action = intel_gpgpu_post_action_gen7; //BDW need not restore SLM, same as gen7
     intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_gen7;
+    if(IS_CHERRYVIEW(device_id))
+      intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_baytrail;
     intel_gpgpu_set_base_address = intel_gpgpu_set_base_address_gen8;
     intel_gpgpu_setup_bti = intel_gpgpu_setup_bti_gen8;
     intel_gpgpu_load_vfe_state = intel_gpgpu_load_vfe_state_gen8;

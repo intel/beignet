@@ -1136,13 +1136,13 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
 {
   int err = 0;
   int space = 0;
-  if (IS_IVYBRIDGE(deviceID)) {
+  if (IS_GEN7(deviceID)) {
     gen_version = 70;
-  } else if (IS_HASWELL(deviceID)) {
+  } else if (IS_GEN75(deviceID)) {
     gen_version = 75;
-  } else if (IS_BROADWELL(deviceID)) {
+  } else if (IS_GEN8(deviceID)) {
     gen_version = 80;
-  } else if (IS_SKYLAKE(deviceID)) {
+  } else if (IS_GEN9(deviceID)) {
     gen_version = 90;
   }
 
