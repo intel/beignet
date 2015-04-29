@@ -1746,13 +1746,6 @@ OVERLOADABLE float __gen_ocl_internal_exp(float x) {
   }
 }
 
-INLINE_OVERLOADABLE float tgamma(float x) {
-  float y;
-  int s;
-  y=lgamma_r(x,&s);
-  return __gen_ocl_internal_exp(y)*s;
-}
-
 /* erf,erfc from glibc s_erff.c -- float version of s_erf.c.
  * Conversion to float by Ian Lance Taylor, Cygnus Support, ian@cygnus.com.
  */
@@ -2961,6 +2954,95 @@ OVERLOADABLE float __gen_ocl_internal_pow(float x, float y) {
   if((j>>23)<=0) z = __gen_ocl_scalbnf(z,n);	/* subnormal output */
   else GEN_OCL_SET_FLOAT_WORD(z,j);
   return sn*z;
+}
+
+OVERLOADABLE float tgamma (float x)
+{
+  /* based on glibc __ieee754_gammaf_r by Ulrich Drepper <drepper@cygnus.com> */
+
+  unsigned int hx;
+  GEN_OCL_GET_FLOAT_WORD(hx,x);
+  if (hx == 0xff800000)
+    {
+      /* x == -Inf.  According to ISO this is NaN.  */
+      return NAN;
+    }
+  if ((hx & 0x7f800000) == 0x7f800000)
+    {
+      /* Positive infinity (return positive infinity) or NaN (return
+	 NaN).  */
+      return x;
+    }
+  if (x < 0.0f && __gen_ocl_internal_floor (x) == x)
+    {
+      /* integer x < 0 */
+      return NAN;
+    }
+
+  if (x >= 36.0f)
+    {
+      /* Overflow.  */
+      return INFINITY;
+    }
+  else if (x <= 0.0f && x >= -FLT_EPSILON / 4.0f)
+    {
+      return 1.0f / x;
+    }
+  else
+    {
+      float sinpix = __gen_ocl_internal_sinpi(x);
+      if (x <= -42.0f)
+	/* Underflow.  */
+	{return 0.0f * sinpix /*for sign*/;}
+      int exp2_adj = 0;
+      float x_abs = __gen_ocl_fabs(x);
+      float gam0;
+
+      if (x_abs < 4.0f) {
+        /* gamma = exp(lgamma) is only accurate for small lgamma */
+        float prod,x_adj;
+        if (x_abs < 0.5f) {
+          prod = 1.0f / x_abs;
+          x_adj = x_abs + 1.0f;
+        } else if (x_abs <= 1.5f) {
+          prod = 1.0f;
+          x_adj = x_abs;
+        } else if (x_abs < 2.5f) {
+          x_adj = x_abs - 1.0f;
+          prod = x_adj;
+        } else {
+          x_adj = x_abs - 2.0f;
+          prod = x_adj * (x_abs - 1.0f);
+        }
+        gam0 = __gen_ocl_internal_exp (lgamma (x_adj)) * prod;
+      }
+      else {
+        /* Compute gamma (X) using Stirling's approximation,
+  	 starting by computing pow (X, X) with a power of 2
+  	 factored out to avoid intermediate overflow.  */
+        float x_int = __gen_ocl_internal_round (x_abs);
+        float x_frac = x_abs - x_int;
+        int x_log2;
+        float x_mant = frexp (x_abs, &x_log2);
+        if (x_mant < M_SQRT1_2_F)
+          {
+          x_log2--;
+          x_mant *= 2.0f;
+          }
+        exp2_adj = x_log2 * (int) x_int;
+        float ret = (__gen_ocl_internal_pow(x_mant, x_abs)
+  		   * exp2 (x_log2 * x_frac)
+  		   * __gen_ocl_internal_exp (-x_abs)
+  		   * sqrt (2.0f * M_PI_F / x_abs) );
+
+        float x2 = x_abs * x_abs;
+        float bsum = (0x3.403404p-12f / x2 -0xb.60b61p-12f) / x2 + 0x1.555556p-4f;
+        gam0 = ret + ret * __gen_ocl_internal_expm1 (bsum / x_abs);
+      }
+      if (x > 0.0f) {return __gen_ocl_internal_ldexp (gam0, exp2_adj);}
+      float gam1 = M_PI_F / (-x * sinpix * gam0);
+      return __gen_ocl_internal_ldexp (gam1, -exp2_adj);
+    }
 }
 
 float __gen_ocl_internal_pown(float x, int y) {
