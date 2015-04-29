@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from __future__ import print_function
 import os,sys,re
 
 FLT_MAX_POSI='0x1.fffffep127f'
@@ -326,7 +327,7 @@ which can print more values and information to assist debuging the issue.
     file_object.close()
 
   def nameForCmake(self,content,namesuffix):
-    print("generated/%s_%s.cpp"%(self.fileName,namesuffix)),
+    print("generated/%s_%s.cpp"%(self.fileName,namesuffix),end=" ")
 
   def utestFunc(self,index):
     funcLines=[]
