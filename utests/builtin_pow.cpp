@@ -37,6 +37,9 @@ static void builtin_pow(void)
       input_data2[i*count_input_ori+k] = ori_data[k];
     }
 
+  cl_device_fp_config fp_config;
+  clGetDeviceInfo(device, CL_DEVICE_SINGLE_FP_CONFIG, sizeof(cl_device_fp_config), &fp_config, 0);
+  bool denormals_supported = fp_config & CL_FP_DENORM;
   const char* env_strict = getenv("OCL_STRICT_CONFORMANCE");
   float ULPSIZE_FACTOR = 16.0;
   if (env_strict == NULL || strcmp(env_strict, "0") == 0)
@@ -75,7 +78,9 @@ static void builtin_pow(void)
 #if udebug
       if ( (isinf(cpu_data[index_cur]) && !isinf(gpu_data[index_cur])) ||
            (isnan(cpu_data[index_cur]) && !isnan(gpu_data[index_cur])) ||
-           (fabs(gpu_data[index_cur] - cpu_data[index_cur]) > cl_FLT_ULP(cpu_data[index_cur]) * ULPSIZE_FACTOR)   )
+           (fabs(gpu_data[index_cur] - cpu_data[index_cur]) > cl_FLT_ULP(cpu_data[index_cur]) * ULPSIZE_FACTOR
+           && (denormals_supported || gpu_data[index_cur]!=0 || std::fpclassify(cpu_data[index_cur])!=FP_SUBNORMAL) ) )
+
       {
         printf_c("%d/%d: x:%f, y:%f -> gpu:%f  cpu:%f\n", k, i, input_data1[k], input_data2[k], gpu_data[index_cur], cpu_data[index_cur]);
       }
@@ -88,7 +93,8 @@ static void builtin_pow(void)
        OCL_ASSERT(isnan(gpu_data[index_cur]));
      else
      {
-       OCL_ASSERT(fabs(gpu_data[index_cur] - cpu_data[index_cur]) < cl_FLT_ULP(cpu_data[index_cur]) * ULPSIZE_FACTOR);
+       OCL_ASSERT((fabs(gpu_data[index_cur] - cpu_data[index_cur]) < cl_FLT_ULP(cpu_data[index_cur]) * ULPSIZE_FACTOR) ||
+       (!denormals_supported && gpu_data[index_cur]==0 && std::fpclassify(cpu_data[index_cur])==FP_SUBNORMAL) );
      }
 #endif
     }
