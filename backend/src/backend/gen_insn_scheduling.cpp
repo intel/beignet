@@ -159,7 +159,7 @@ namespace gbe
     /*! Get an index in the node array for the given register */
     uint32_t getIndex(GenRegister reg) const;
     /*! Get an index in the node array for the given memory system */
-    uint32_t getIndex(uint32_t bti) const;
+    uint32_t getMemoryIndex() const;
     /*! Add a new dependency "node0 depends on node1" */
     void addDependency(ScheduleDAGNode *node0, ScheduleDAGNode *node1, DepMode m);
     /*! Add a new dependency "node0 depends on node located at index" */
@@ -353,9 +353,9 @@ namespace gbe
       return reg.value.reg;
   }
 
-  uint32_t DependencyTracker::getIndex(uint32_t bti) const {
+  uint32_t DependencyTracker::getMemoryIndex() const {
     const uint32_t memDelta = grfNum + MAX_ARF_REGISTER;
-    return bti == 0xfe ? memDelta + LOCAL_MEMORY : (bti == 0xff ? memDelta + SCRATCH_MEMORY : memDelta + GLOBAL_MEMORY);
+    return memDelta;
   }
 
   void DependencyTracker::updateWrites(ScheduleDAGNode *node) {
@@ -386,22 +386,21 @@ namespace gbe
 
     // Track writes in memory
     if (insn.isWrite()) {
-      const uint32_t index = this->getIndex(insn.getbti());
+      const uint32_t index = this->getMemoryIndex();
       this->nodes[index] = node;
     }
 
     // Track writes in scratch memory
     if(insn.opcode == SEL_OP_SPILL_REG) {
-      const uint32_t index = this->getIndex(0xff);
+      const uint32_t index = this->getMemoryIndex();
       this->nodes[index] = node;
     }
     // Consider barriers and wait write to memory
     if (insn.opcode == SEL_OP_BARRIER ||
         insn.opcode == SEL_OP_FENCE ||
         insn.opcode == SEL_OP_WAIT) {
-      const uint32_t local = this->getIndex(0xfe);
-      const uint32_t global = this->getIndex(0x00);
-      this->nodes[local] = this->nodes[global] = node;
+      const uint32_t memIndex = this->getMemoryIndex();
+      this->nodes[memIndex] = node;
     }
   }
 
@@ -489,12 +488,12 @@ namespace gbe
 
       // read-after-write in memory
       if (insn.isRead()) {
-        const uint32_t index = tracker.getIndex(insn.getbti());
+        const uint32_t index = tracker.getMemoryIndex();
         tracker.addDependency(node, index, READ_AFTER_WRITE);
       }
       //read-after-write of scratch memory
       if (insn.opcode == SEL_OP_UNSPILL_REG) {
-        const uint32_t index = tracker.getIndex(0xff);
+        const uint32_t index = tracker.getMemoryIndex();
         tracker.addDependency(node, index, READ_AFTER_WRITE);
       }
 
@@ -502,10 +501,8 @@ namespace gbe
     if (insn.opcode == SEL_OP_BARRIER ||
         insn.opcode == SEL_OP_FENCE ||
         insn.opcode == SEL_OP_WAIT) {
-        const uint32_t local = tracker.getIndex(0xfe);
-        const uint32_t global = tracker.getIndex(0x00);
-        tracker.addDependency(node, local, READ_AFTER_WRITE);
-        tracker.addDependency(node, global, READ_AFTER_WRITE);
+        const uint32_t memIndex = tracker.getMemoryIndex();
+        tracker.addDependency(node, memIndex, READ_AFTER_WRITE);
       }
 
       // write-after-write in registers
@@ -522,13 +519,13 @@ namespace gbe
 
       // write-after-write in memory
       if (insn.isWrite()) {
-        const uint32_t index = tracker.getIndex(insn.getbti());
+        const uint32_t index = tracker.getMemoryIndex();
         tracker.addDependency(node, index, WRITE_AFTER_WRITE);
       }
 
       // write-after-write in scratch memory
       if (insn.opcode == SEL_OP_SPILL_REG) {
-        const uint32_t index = tracker.getIndex(0xff);
+        const uint32_t index = tracker.getMemoryIndex();
         tracker.addDependency(node, index, WRITE_AFTER_WRITE);
       }
 
@@ -552,13 +549,13 @@ namespace gbe
 
       // write-after-read in memory
       if (insn.isRead()) {
-        const uint32_t index = tracker.getIndex(insn.getbti());
+        const uint32_t index = tracker.getMemoryIndex();
         tracker.addDependency(index, node, WRITE_AFTER_READ);
       }
 
       // write-after-read in scratch memory
       if (insn.opcode == SEL_OP_UNSPILL_REG) {
-        const uint32_t index = tracker.getIndex(0xff);
+        const uint32_t index = tracker.getMemoryIndex();
         tracker.addDependency(index, node, WRITE_AFTER_READ);
       }
 
@@ -566,10 +563,8 @@ namespace gbe
       if (insn.opcode == SEL_OP_BARRIER ||
           insn.opcode == SEL_OP_FENCE ||
           insn.opcode == SEL_OP_WAIT) {
-        const uint32_t local = tracker.getIndex(0xfe);
-        const uint32_t global = tracker.getIndex(0x00);
-        tracker.addDependency(local, node, WRITE_AFTER_READ);
-        tracker.addDependency(global, node, WRITE_AFTER_READ);
+        const uint32_t memIndex = tracker.getMemoryIndex();
+        tracker.addDependency(memIndex, node, WRITE_AFTER_READ);
       }
 
       // Track all writes done by the instruction
