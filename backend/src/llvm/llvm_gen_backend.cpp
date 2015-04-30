@@ -3546,7 +3546,7 @@ namespace gbe
       if (step != 0) {
         ir::ImmediateIndex stepImm = ctx.newIntegerImmediate(step, ir::TYPE_U32);
         ir::Register stepReg = ctx.reg(ctx.getPointerFamily());
-        ctx.LOADI(ir::TYPE_S32, stepReg, stepImm);
+        ctx.LOADI(ir::TYPE_U32, stepReg, stepImm);
         ctx.ADD(ir::TYPE_U32, stack, stack, stepReg);
         ctx.getFunction().pushStackSize(step);
       }
