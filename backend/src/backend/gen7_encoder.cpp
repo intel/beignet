@@ -132,7 +132,6 @@ namespace gbe
   void Gen7Encoder::setSrc1(GenNativeInstruction *insn, GenRegister reg) {
     Gen7NativeInstruction *gen7_insn = &insn->gen7_insn;
     assert(reg.nr < 128);
-    assert(reg.file != GEN_ARCHITECTURE_REGISTER_FILE || reg.nr == 0);
 
     gen7_insn->bits1.da1.src1_reg_file = reg.file;
     gen7_insn->bits1.da1.src1_reg_type = reg.type;

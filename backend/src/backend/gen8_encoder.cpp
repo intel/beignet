@@ -384,7 +384,6 @@ namespace gbe
   void Gen8Encoder::setSrc1(GenNativeInstruction *insn, GenRegister reg) {
     Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
     assert(reg.nr < 128);
-    assert(reg.file != GEN_ARCHITECTURE_REGISTER_FILE || reg.nr == 0);
 
     gen8_insn->bits2.da1.src1_reg_file = reg.file;
     gen8_insn->bits2.da1.src1_reg_type = reg.type;
