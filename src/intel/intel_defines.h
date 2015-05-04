@@ -305,10 +305,6 @@
 #define URB_SIZE(intel)         (IS_IGDNG(intel->device_id) ? 1024 : \
                                  IS_G4X(intel->device_id) ? 384 : 256)
 
-// HSW
-#define HSW_SCRATCH1_OFFSET                      (0xB038)
-#define HSW_ROW_CHICKEN3_HDC_OFFSET              (0xE49C)
-
 // L3 cache stuff 
 #define GEN7_L3_SQC_REG1_ADDRESS_OFFSET          (0XB010)
 #define GEN7_L3_CNTL_REG2_ADDRESS_OFFSET         (0xB020)

@@ -719,16 +719,7 @@ static void
 intel_gpgpu_set_L3_gen75(intel_gpgpu_t *gpgpu, uint32_t use_slm)
 {
   /* still set L3 in batch buffer for fulsim. */
-  BEGIN_BATCH(gpgpu->batch, 15);
-  OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
-  /* FIXME: KMD always disable the atomic in L3 for some reason.
-     I checked the spec, and don't think we need that workaround now.
-     Before I send a patch to kernel, let's just enable it here. */
-  OUT_BATCH(gpgpu->batch, HSW_SCRATCH1_OFFSET);
-  OUT_BATCH(gpgpu->batch, 0);                         /* enable atomic in L3 */
-  OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
-  OUT_BATCH(gpgpu->batch, HSW_ROW_CHICKEN3_HDC_OFFSET);
-  OUT_BATCH(gpgpu->batch, (1 << 6ul) << 16);          /* enable atomic in L3 */
+  BEGIN_BATCH(gpgpu->batch, 9);
   OUT_BATCH(gpgpu->batch, CMD_LOAD_REGISTER_IMM | 1); /* length - 2 */
   OUT_BATCH(gpgpu->batch, GEN7_L3_SQC_REG1_ADDRESS_OFFSET);
   OUT_BATCH(gpgpu->batch, 0x08800000);
