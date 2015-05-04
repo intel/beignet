@@ -844,7 +844,10 @@ static int src0_3src(FILE *file, const void* inst)
     return 0;
   if (GEN_BITS_FIELD(inst, bits2.da3src.src0_subreg_nr))
     format(file, ".%d", GEN_BITS_FIELD(inst, bits2.da3src.src0_subreg_nr));
-  string(file, "<4,1,1>");
+  if (GEN_BITS_FIELD(inst, bits2.da3src.src0_rep_ctrl))
+    string(file, "<0,1,0>");
+  else
+    string(file, "<8,8,1>");
   err |= control(file, "src da16 reg type", reg_encoding,
                  GEN_TYPE_F, NULL);
   /*
@@ -889,7 +892,10 @@ static int src1_3src(FILE *file, const void* inst)
     return 0;
   if (src1_subreg_nr)
     format(file, ".%d", src1_subreg_nr);
-  string(file, "<4,1,1>");
+  if (GEN_BITS_FIELD(inst, bits2.da3src.src1_rep_ctrl))
+    string(file, "<0,1,0>");
+  else
+    string(file, "<8,8,1>");
   err |= control(file, "src da16 reg type", reg_encoding,
                  GEN_TYPE_F, NULL);
   /*
@@ -931,7 +937,10 @@ static int src2_3src(FILE *file, const void* inst)
     return 0;
   if (GEN_BITS_FIELD(inst, bits3.da3src.src2_subreg_nr))
     format(file, ".%d", GEN_BITS_FIELD(inst, bits3.da3src.src2_subreg_nr));
-  string(file, "<4,1,1>");
+  if (GEN_BITS_FIELD(inst, bits3.da3src.src2_rep_ctrl))
+    string(file, "<0,1,0>");
+  else
+    string(file, "<8,8,1>");
   err |= control(file, "src da16 reg type", reg_encoding,
                  GEN_TYPE_F, NULL);
   /*
