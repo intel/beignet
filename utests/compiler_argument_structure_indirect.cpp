@@ -1,6 +1,6 @@
 #include "utest_helper.hpp"
 
-struct hop { int x[16]; };
+struct hop { int a, x[16]; };
 
 void compiler_argument_structure_indirect(void)
 {
@@ -21,8 +21,9 @@ void compiler_argument_structure_indirect(void)
   OCL_MAP_BUFFER(0);
 
   // Check results
-  for (uint32_t i = 0; i < n; ++i)
-    OCL_ASSERT(((uint32_t*)buf_data[0])[i] == 7);
+  for (uint32_t i = 0; i < n; ++i ) {
+    OCL_ASSERT(((uint32_t*)buf_data[0])[i] == (i%16));
+  }
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_argument_structure_indirect);

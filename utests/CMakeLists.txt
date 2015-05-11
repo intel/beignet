@@ -39,6 +39,8 @@ set (utests_sources
   compiler_box_blur.cpp
   compiler_insert_to_constant.cpp
   compiler_argument_structure.cpp
+  compiler_argument_structure_indirect.cpp
+  compiler_argument_structure_select.cpp
   compiler_arith_shift_right.cpp
   compiler_mixed_pointer.cpp
   compiler_array0.cpp
