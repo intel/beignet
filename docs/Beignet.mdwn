@@ -289,7 +289,7 @@ by running the beignet's unit test.
 
 Documents for OpenCL application developers
 -------------------------------------------
-- [[Cross compile|Beignet/howto/cross-compiler-howto]]
+- [[Cross compile (yocto)|Beignet/howto/cross-compiler-howto]]
 - [[Work with old system without c++11|Beignet/howto/oldgcc-howto]]
 - [[Kernel Optimization Guide|Beignet/optimization-guide]]
 - [[Libva Buffer Sharing|Beignet/howto/libva-buffer-sharing-howto]]
