@@ -259,11 +259,12 @@ namespace ir {
         replaced = true;
       }
 
-      if (replaced)
+      if (replaced) {
         dead.insert(load);
+        load->remove();
+      }
     }
 
-    REMOVE_INSN(load)
     REMOVE_INSN(add)
     REMOVE_INSN(loadImm)
   }
@@ -298,6 +299,7 @@ namespace ir {
   {
     const FunctionArgument &arg = fn->getArg(argID);
     LoadAddImmSeq tmpSeq;
+    bool match = true;
 
     // Inspect all uses of the function argument pointer
     const UseSet &useSet = dag->getUse(&arg);
@@ -345,7 +347,8 @@ namespace ir {
         if (matchLoad(insn, add, loadImm, offset, argID, loadAddImm)) {
           tmpSeq.push_back(loadAddImm);
           continue;
-        }
+        } else
+          match = false;
       }
     }
 
@@ -353,7 +356,7 @@ namespace ir {
     // direct load definitions we found
     for (const auto &loadImmSeq : tmpSeq)
       seq.push_back(loadImmSeq);
-    return true;
+    return match;
   }
 
   ArgUse FunctionArgumentLowerer::getArgUse(uint32_t argID)
