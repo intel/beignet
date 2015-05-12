@@ -128,14 +128,6 @@ DEF(ulong)
 #undef DEC16
 #undef DEC16X
 
-
-/* Temp to add the SIMD functions here. */
-/////////////////////////////////////////////////////////////////////////////
-// SIMD level function
-/////////////////////////////////////////////////////////////////////////////
-short __gen_ocl_simd_any(short);
-short __gen_ocl_simd_all(short);
-
 struct time_stamp {
   // time tick
   ulong tick;

@@ -152,8 +152,8 @@ DECL_LLVM_GEN_FUNCTION(CONV_F16_TO_F32, __gen_ocl_f16to32)
 DECL_LLVM_GEN_FUNCTION(CONV_F32_TO_F16, __gen_ocl_f32to16)
 
 // SIMD level function for internal usage
-DECL_LLVM_GEN_FUNCTION(SIMD_ANY, __gen_ocl_simd_any)
-DECL_LLVM_GEN_FUNCTION(SIMD_ALL, __gen_ocl_simd_all)
+DECL_LLVM_GEN_FUNCTION(SIMD_ANY, sub_group_any)
+DECL_LLVM_GEN_FUNCTION(SIMD_ALL, sub_group_all)
 DECL_LLVM_GEN_FUNCTION(SIMD_SIZE, get_sub_group_size)
 DECL_LLVM_GEN_FUNCTION(SIMD_ID, get_sub_group_id)
 DECL_LLVM_GEN_FUNCTION(SIMD_SHUFFLE, intel_sub_group_shuffle)

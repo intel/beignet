@@ -2170,6 +2170,8 @@ namespace gbe
         return insnType;
       if (opcode == ir::OP_FBH || opcode == ir::OP_FBL || opcode == ir::OP_LZD)
         return ir::TYPE_U32;
+      if (opcode == ir::OP_SIMD_ANY || opcode == ir::OP_SIMD_ALL)
+        return ir::TYPE_S32;
       if (insnType == ir::TYPE_S16 || insnType == ir::TYPE_U16)
         return insnType;
       if (insnType == ir::TYPE_BOOL)

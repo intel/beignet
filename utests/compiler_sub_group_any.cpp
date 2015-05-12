@@ -1,11 +1,11 @@
 #include "utest_helper.hpp"
 
-void compiler_simd_all(void)
+void compiler_sub_group_any(void)
 {
   const size_t n = 40;
 
   // Setup kernel and buffers
-  OCL_CREATE_KERNEL("compiler_simd_all");
+  OCL_CREATE_KERNEL("compiler_sub_group_any");
   OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(int), NULL);
   OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(int), NULL);
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
@@ -26,7 +26,7 @@ void compiler_simd_all(void)
 
   // Compare
   OCL_MAP_BUFFER(1);
-  for (int32_t i = 0; i < (int32_t) n; ++i) {
+  for (int32_t i = 0; i < (int32_t) n; ++i){
     //printf("%d %d\n", i, ((int *)buf_data[1])[i]);
     if (i % 2 == 1) {
       if (i < (int32_t)locals[0])
@@ -40,4 +40,4 @@ void compiler_simd_all(void)
   OCL_UNMAP_BUFFER(1);
 }
 
-MAKE_UTEST_FROM_FUNCTION(compiler_simd_all);
+MAKE_UTEST_FROM_FUNCTION(compiler_sub_group_any);
