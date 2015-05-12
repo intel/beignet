@@ -45,6 +45,9 @@ Environment variables are used all over the code. Most important ones are:
   Normally, you don't need to set it, we will select suitable simd width for
   a given kernel. Default value is 16.
 
+- `OCL_OUTPUT_KENERL_SOURCE` `(0 or 1)`. Output the building or compiling kernel's
+  source code.
+
 - `OCL_OUTPUT_GEN_IR` `(0 or 1)`. Output Gen IR (scalar intermediate
   representation) code
 

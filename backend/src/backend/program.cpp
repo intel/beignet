@@ -634,6 +634,7 @@ namespace gbe {
 
   SVAR(OCL_PCH_PATH, OCL_PCH_OBJECT);
   SVAR(OCL_HEADER_FILE_DIR, OCL_HEADER_DIR);
+  BVAR(OCL_OUTPUT_KERNEL_SOURCE, false);
 
   static bool processSourceAndOption(const char *source,
                                      const char *options,
@@ -665,6 +666,14 @@ namespace gbe {
       }
     }
     assert(findOcl);
+    if (OCL_OUTPUT_KERNEL_SOURCE) {
+      if(options) {
+        std::cout << "Build options:" << std::endl;
+        std::cout << options << std::endl;
+      }
+      std::cout << "CL kernel source:" << std::endl;
+      std::cout << source;
+    }
     std::string includePath  = "-I" + headerFilePath;
     clOpt.push_back(includePath);
     bool useDefaultCLCVersion = true;
