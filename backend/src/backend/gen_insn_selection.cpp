@@ -523,6 +523,7 @@ namespace gbe
     ALU1(RNDD)
     ALU1(RNDU)
     ALU2(MACH)
+    ALU2(SIMD_SHUFFLE)
     ALU1(LZD)
     ALU3(MAD)
     ALU2WithTemp(MUL_HI)
@@ -2661,6 +2662,17 @@ namespace gbe
         }
         case OP_UPSAMPLE_LONG:
           sel.UPSAMPLE_LONG(dst, src0, src1);
+          break;
+        case OP_SIMD_SHUFFLE:
+          {
+            if (src1.file == GEN_IMMEDIATE_VALUE)
+              sel.SIMD_SHUFFLE(dst, src0, src1);
+            else {
+              GenRegister shiftL = GenRegister::udxgrf(sel.curr.execWidth, sel.reg(FAMILY_DWORD));
+              sel.SHL(shiftL, src1, GenRegister::immud(0x2));
+              sel.SIMD_SHUFFLE(dst, src0, shiftL);
+            }
+          }
           break;
         default: NOT_IMPLEMENTED;
       }

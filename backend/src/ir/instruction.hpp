@@ -686,6 +686,8 @@ namespace ir {
   Instruction GT(Type type, Register dst, Register src0, Register src1);
   /*! ord.type dst src0 src1 */
   Instruction ORD(Type type, Register dst, Register src0, Register src1);
+  /*! sub_group_shuffle.type dst src0 src1 */
+  Instruction SIMD_SHUFFLE(Type type, Register dst, Register src0, Register src1);
   /*! BITCAST.{dstType <- srcType} dst src */
   Instruction BITCAST(Type dstType, Type srcType, Tuple dst, Tuple src, uint8_t dstNum, uint8_t srcNum);
   /*! cvt.{dstType <- srcType} dst src */

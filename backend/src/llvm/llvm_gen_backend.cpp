@@ -2807,6 +2807,7 @@ namespace gbe
       case GEN_OCL_READ_TM:
       case GEN_OCL_REGION:
       case GEN_OCL_SIMD_ID:
+      case GEN_OCL_SIMD_SHUFFLE:
         this->newRegister(&I);
         break;
       case GEN_OCL_PRINTF:
@@ -3466,6 +3467,14 @@ namespace gbe
           {
             const ir::Register dst = this->getRegister(&I);
             ctx.ALU0(ir::OP_SIMD_ID, getType(ctx, I.getType()), dst);
+            break;
+          }
+          case GEN_OCL_SIMD_SHUFFLE:
+          {
+            const ir::Register src0 = this->getRegister(*AI); ++AI;
+            const ir::Register src1 = this->getRegister(*AI); ++AI;
+            const ir::Register dst = this->getRegister(&I);
+            ctx.SIMD_SHUFFLE(getType(ctx, I.getType()), dst, src0, src1);
             break;
           }
           default: break;

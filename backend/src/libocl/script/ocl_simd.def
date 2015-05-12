@@ -1,1 +1,4 @@
 ##simd level functions
+floatn intel_sub_group_shuffle(floatn x, uint c)
+intn intel_sub_group_shuffle(intn x, uint c)
+uintn intel_sub_group_shuffle(uintn x, uint c)
