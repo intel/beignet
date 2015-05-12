@@ -4587,7 +4587,7 @@ namespace gbe
       sel.curr.execWidth = 8;
       // Set zero LOD.
       if (simdWidth == 8)
-        sel.MOV(msgs[dim + 1], GenRegister::immud(0));
+        sel.MOV(msgs[4], GenRegister::immud(0));
       else
         sel.MOV(GenRegister::Qn(msgs[2], 0), GenRegister::immud(0));
       sel.pop();
