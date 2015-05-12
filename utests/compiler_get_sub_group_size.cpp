@@ -1,11 +1,11 @@
 #include "utest_helper.hpp"
 
-void compiler_get_simd_size(void)
+void compiler_get_sub_group_size(void)
 {
   const size_t n = 256;
 
   // Setup kernel and buffers
-  OCL_CREATE_KERNEL("compiler_get_simd_size");
+  OCL_CREATE_KERNEL("compiler_get_sub_group_size");
   OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(int), NULL);
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
 
@@ -29,4 +29,4 @@ void compiler_get_simd_size(void)
   OCL_UNMAP_BUFFER(0);
 }
 
-MAKE_UTEST_FROM_FUNCTION(compiler_get_simd_size);
+MAKE_UTEST_FROM_FUNCTION(compiler_get_sub_group_size);
