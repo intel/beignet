@@ -4168,15 +4168,15 @@ namespace gbe
             unpacked = GenRegister::retype(unpacked, GEN_TYPE_F);
           } else if(srcFamily == FAMILY_DWORD) {
             unpacked = sel.unpacked_ud(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
-            unpacked = GenRegister::retype(unpacked, dstType == TYPE_U64 ? GEN_TYPE_UD : GEN_TYPE_D);
+            unpacked = GenRegister::retype(unpacked, srcType == TYPE_U32 ? GEN_TYPE_UD : GEN_TYPE_D);
           } else if(srcFamily == FAMILY_WORD) {
             unpacked = sel.unpacked_uw(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
-            unpacked = GenRegister::retype(unpacked, dstType == TYPE_U64 ? GEN_TYPE_UW : GEN_TYPE_W);
+            unpacked = GenRegister::retype(unpacked, srcType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W);
           } else if(srcFamily == FAMILY_BYTE) {
             GenRegister tmp = sel.selReg(sel.reg(FAMILY_WORD, sel.isScalarReg(insn.getSrc(0))));
-            tmp = GenRegister::retype(tmp, dstType == TYPE_U64 ? GEN_TYPE_UW : GEN_TYPE_W);
+            tmp = GenRegister::retype(tmp, srcType == TYPE_U8 ? GEN_TYPE_UW : GEN_TYPE_W);
             unpacked = sel.unpacked_uw(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
-            unpacked = GenRegister::retype(unpacked, dstType == TYPE_U64 ? GEN_TYPE_UW : GEN_TYPE_W);
+            unpacked = GenRegister::retype(unpacked, srcType == TYPE_U8 ? GEN_TYPE_UW : GEN_TYPE_W);
             sel.MOV(tmp, src);
             unpacked_src = tmp;
           } else
