@@ -131,6 +131,7 @@ namespace gbe
       };
       uint32_t barrierType;
       bool longjmp;
+      uint32_t indirect_offset;
     } extra;
     /*! Gen opcode */
     uint8_t opcode;

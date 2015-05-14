@@ -272,6 +272,10 @@ namespace gbe
       return r;
     }
 
+    static INLINE uint32_t grfOffset(GenRegister reg) {
+      return reg.nr * GEN_REG_SIZE + reg.subnr;
+    }
+
     // split a DWORD register into unpacked Byte or Short register
     static INLINE GenRegister splitReg(GenRegister reg, uint32_t count, uint32_t sub_part) {
       GenRegister r = reg;
@@ -826,7 +830,8 @@ namespace gbe
     }
 
     /*! Build an indirectly addressed source */
-    static INLINE GenRegister indirect(uint32_t type, uint32_t subnr, uint32_t width) {
+    static INLINE GenRegister indirect(uint32_t type, uint32_t subnr, uint32_t width,
+                                        uint32_t vstride, uint32_t hstride) {
       GenRegister reg;
       reg.type = type;
       reg.file = GEN_GENERAL_REGISTER_FILE;
@@ -836,8 +841,8 @@ namespace gbe
       reg.nr = 0;
       reg.negation = 0;
       reg.absolute = 0;
-      reg.vstride = 0;
-      reg.hstride = 0;
+      reg.vstride = vstride;
+      reg.hstride = hstride;
       return reg;
     }
 

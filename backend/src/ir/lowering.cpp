@@ -87,9 +87,15 @@ namespace ir {
     uint64_t offset;      //!< Offset where to load in the structure
     uint32_t argID;       //!< Associated function argument
   };
+  struct IndirectLoad {
+    Instruction *load;           //!< Load from the argument
+    vector<Instruction *> adds;  //!< Can be NULL if we only have load(arg)
+    uint32_t argID;              //!< Associated function argument
+  };
 
   /*! List of direct loads */
   typedef vector<LoadAddImm> LoadAddImmSeq;
+  typedef vector<IndirectLoad> IndirectLoadSeq;
 
   /*! Helper class to lower function arguments if required */
   class FunctionArgumentLowerer : public Context
@@ -102,9 +108,13 @@ namespace ir {
     /*! Perform all function arguments substitution if needed */
     void lower(const std::string &name);
     /*! Lower the given function argument accesses */
-    void lower(uint32_t argID);
+    ArgUse lower(uint32_t argID);
     /*! Build the constant push for the function */
     void buildConstantPush(void);
+    /* Lower indirect Read to indirct Mov */
+    void lowerIndirectRead(uint32_t argID);
+    /* Convert indirectLoad to indirect Mov */
+    void ReplaceIndirectLoad(void);
     /*! Inspect the given function argument to see how it is used. If this is
      *  direct loads only, we also output the list of instructions used for each
      *  load
@@ -117,6 +127,7 @@ namespace ir {
     Liveness *liveness; //!< To compute the function graph
     FunctionDAG *dag;   //!< Contains complete dependency information
     LoadAddImmSeq seq;  //!< All the direct loads
+    IndirectLoadSeq indirectSeq;  //!< All the indirect loads
   };
 
   INLINE uint64_t getOffsetFromImm(const Immediate &imm) {
@@ -183,15 +194,21 @@ namespace ir {
     // Process all structure arguments and find all the direct loads we can
     // replace
     const uint32_t argNum = fn->argNum();
+    vector<uint32_t> indirctReadArgs;
     for (uint32_t argID = 0; argID < argNum; ++argID) {
       FunctionArgument &arg = fn->getArg(argID);
       if (arg.type != FunctionArgument::STRUCTURE) continue;
-      this->lower(argID);
+      if(this->lower(argID) == ARG_INDIRECT_READ)
+        indirctReadArgs.push_back(argID);
     }
 
     // Build the constant push description and remove the instruction that
     // therefore become useless
     this->buildConstantPush();
+    for (uint32_t i = 0; i < indirctReadArgs.size(); ++i){
+      lowerIndirectRead(indirctReadArgs[i]);
+    }
+    ReplaceIndirectLoad();
   }
 
 // Remove all the given instructions from the stream (if dead)
@@ -270,6 +287,115 @@ namespace ir {
   }
 
 #undef REMOVE_INSN
+
+  void FunctionArgumentLowerer::lowerIndirectRead(uint32_t argID)
+  {
+    FunctionArgument &arg = fn->getArg(argID);
+
+    vector<Register> derivedRegs;
+    map<Register, vector<Instruction *>> addPtrInsns;
+    derivedRegs.push_back(arg.reg);
+
+    //Collect all load from this argument.
+    for(uint32_t i=0; i<derivedRegs.size(); i++) {
+      const UseSet *useSet = dag->getRegUse(derivedRegs[i]);
+      for (const auto &use : *useSet) {
+        Instruction *insn = const_cast<Instruction*>(use->getInstruction());
+        const Opcode opcode = insn->getOpcode();
+        const uint32_t dstNum = insn->getDstNum();
+        GBE_ASSERT(dstNum == 1 || opcode == OP_LOAD);
+        const Register dst = insn->getDst();
+        auto it = addPtrInsns.find(derivedRegs[i]);
+
+        if((opcode == OP_ADD) && (derivedRegs[i] == arg.reg)) {
+          GBE_ASSERT(it == addPtrInsns.end());
+
+          vector<Instruction *> addInsns;
+          addInsns.push_back(insn);
+          addPtrInsns.insert(std::make_pair(dst, addInsns));
+          derivedRegs.push_back(dst);
+        } else if(opcode == OP_LOAD) {
+          LoadInstruction *load = cast<LoadInstruction>(insn);
+          if (load->getAddressSpace() != MEM_PRIVATE)
+            continue;
+
+          IndirectLoad indirectLoad;
+          Register addr = load->getAddress();
+          indirectLoad.argID = argID;
+          indirectLoad.load = insn;
+
+          auto addrIt = addPtrInsns.find(addr);
+          GBE_ASSERT(addrIt != addPtrInsns.end());
+          indirectLoad.adds = addrIt->second;
+
+          indirectSeq.push_back(indirectLoad);
+        } else {
+          auto dstIt = addPtrInsns.find(dst);
+          if(dstIt == addPtrInsns.end())
+            addPtrInsns.insert(std::make_pair(dst, it->second));
+          else {
+            //Muilt src from both argument, such as select, or phi, merge the vector
+            dstIt->second.insert(dstIt->second.end(), it->second.begin(), it->second.end());
+          }
+          derivedRegs.push_back(dst);
+        }
+      }
+    }
+  }
+
+  void FunctionArgumentLowerer::ReplaceIndirectLoad(void)
+  {
+    if (indirectSeq.size() == 0)
+      return;
+
+    // Track instructions we remove to recursively kill them properly
+    set<const Instruction*> dead;
+
+    set<PushLocation> inserted;
+    for (const auto &indirectLoad : indirectSeq) {
+      const Register arg = fn->getArg(indirectLoad.argID).reg;
+      if(dead.contains(indirectLoad.load)) continue;  //repetitive load in the indirectSeq, skip.
+      LoadInstruction *load = cast<LoadInstruction>(indirectLoad.load);
+      const uint32_t valueNum = load->getValueNum();
+      bool replaced = false;
+      Instruction *ins_after = load; // the instruction to insert after.
+      for (uint32_t valueID = 0; valueID < valueNum; ++valueID) {
+        const Type type = load->getValueType();
+        const RegisterFamily family = getFamily(type);
+        const uint32_t size = getFamilySize(family);
+        const uint32_t offset = valueID * size;
+
+        const Register reg = load->getValue(valueID);
+
+        Instruction mov = ir::INDIRECT_MOV(type, reg, arg, load->getAddress(), offset);
+        mov.insert(ins_after, &ins_after);
+        replaced = true;
+      }
+
+      if (replaced && !dead.contains(load)) {
+        dead.insert(load);
+        load->remove();
+      }
+
+      vector<Instruction *> adds = indirectLoad.adds;
+      for (uint32_t i=0; i<adds.size(); i++) {
+        BinaryInstruction *add = cast<BinaryInstruction>(adds[i]);
+        if (!dead.contains(add)) {
+          Register dst = add->getDst();
+          const Register src0 = add->getSrc(0);
+          const Register src1 = add->getSrc(1);
+
+          GBE_ASSERT(src0 == arg || src1 == arg);
+          Register src = (src0 == arg) ? src1 : src0;
+          Instruction mov = ir::MOV(add->getType(), dst, src);
+
+          //MOV instruction could optimize if the dst don't write later
+          mov.replace(add);
+          dead.insert(add);
+        }
+      }
+    }
+  }
 
   bool FunctionArgumentLowerer::useStore(const ValueDef &def, set<const Instruction*> &visited)
   {
@@ -376,17 +502,18 @@ namespace ir {
     return ARG_INDIRECT_READ;
   }
 
-  void FunctionArgumentLowerer::lower(uint32_t argID) {
-    IF_DEBUG(const ArgUse argUse = )this->getArgUse(argID);
+  ArgUse FunctionArgumentLowerer::lower(uint32_t argID) {
+    const ArgUse argUse = this->getArgUse(argID);
 #if GBE_DEBUG
     GBE_ASSERTM(argUse != ARG_WRITTEN,
                 "TODO A store to a structure argument "
                 "(i.e. not a char/short/int/float argument) has been found. "
                 "This is not supported yet");
-    GBE_ASSERTM(argUse != ARG_INDIRECT_READ,
-                "TODO Only direct loads of structure arguments are "
-                "supported now");
+    //GBE_ASSERTM(argUse != ARG_INDIRECT_READ,
+    //            "TODO Only direct loads of structure arguments are "
+    //            "supported now");
 #endif /* GBE_DEBUG */
+    return argUse;
   }
 
   void lowerFunctionArguments(Unit &unit, const std::string &functionName) {

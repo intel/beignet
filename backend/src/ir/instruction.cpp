@@ -729,6 +729,30 @@ namespace ir {
       Register src[1];
     };
 
+    class ALIGNED_INSTRUCTION IndirectMovInstruction :
+      public BasePolicy,
+      public NSrcPolicy<IndirectMovInstruction, 2>,
+      public NDstPolicy<IndirectMovInstruction, 1>
+    {
+    public:
+      INLINE IndirectMovInstruction(Type type, Register dst, Register src0, Register src1, uint32_t offset) {
+        this->type = type;
+        this->offset = offset;
+        this->dst[0] = dst;
+        this->src[0] = src0;
+        this->src[1] = src1;
+        this->opcode = OP_INDIRECT_MOV;
+      }
+      INLINE Type getType(void) const { return this->type; }
+      INLINE uint32_t getOffset(void) const { return this->offset; }
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const;
+      Type type;
+      uint32_t offset;
+      Register dst[1];
+      Register src[2];
+    };
+
     class ALIGNED_INSTRUCTION LabelInstruction :
       public BasePolicy,
       public NSrcPolicy<LabelInstruction, 0>,
@@ -1106,6 +1130,16 @@ namespace ir {
       return true;
     }
 
+    INLINE bool IndirectMovInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      const RegisterFamily family = getFamily(this->type);
+      if (UNLIKELY(checkSpecialRegForWrite(dst[0], fn, whyNot) == false))
+        return false;
+      if (UNLIKELY(checkRegisterData(family, dst[0], fn, whyNot) == false))
+        return false;
+      return true;
+    }
+
     // Only a label index is required
     INLINE bool LabelInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
@@ -1230,6 +1264,12 @@ namespace ir {
     INLINE void RegionInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
       out << " %" << this->getDst(fn, 0) << " %" << this->getSrc(fn, 0) << " offset: " << this->offset;
+    }
+
+    INLINE void IndirectMovInstruction::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+      out << "." << type << " %" << this->getDst(fn, 0) << " %" << this->getSrc(fn, 0);
+      out << " %" << this->getSrc(fn, 1) << " offset: " << this->offset;
     }
 
     INLINE void LabelInstruction::out(std::ostream &out, const Function &fn) const {
@@ -1392,6 +1432,10 @@ END_INTROSPECTION(ReadARFInstruction)
 START_INTROSPECTION(RegionInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(RegionInstruction)
+
+START_INTROSPECTION(IndirectMovInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(IndirectMovInstruction)
 
 START_INTROSPECTION(LabelInstruction)
 #include "ir/instruction.hxx"
@@ -1581,6 +1625,8 @@ DECL_MEM_FN(SyncInstruction, uint32_t, getParameters(void), getParameters())
 DECL_MEM_FN(ReadARFInstruction, Type, getType(void), getType())
 DECL_MEM_FN(ReadARFInstruction, ARFRegister, getARFRegister(void), getARFRegister())
 DECL_MEM_FN(RegionInstruction, uint32_t, getOffset(void), getOffset())
+DECL_MEM_FN(IndirectMovInstruction, uint32_t, getOffset(void), getOffset())
+DECL_MEM_FN(IndirectMovInstruction, Type, getType(void), getType())
 DECL_MEM_FN(SampleInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(SampleInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(SampleInstruction, uint8_t, getSamplerIndex(void), getSamplerIndex())
@@ -1805,6 +1851,10 @@ DECL_MEM_FN(GetImageInfoInstruction, uint8_t, getImageIndex(void), getImageIndex
   }
   Instruction REGION(Register dst, Register src, uint32_t offset) {
     return internal::RegionInstruction(dst, src, offset).convert();
+  }
+
+  Instruction INDIRECT_MOV(Type type, Register dst, Register src0, Register src1, uint32_t offset) {
+    return internal::IndirectMovInstruction(type, dst, src0, src1, offset).convert();
   }
 
   // LABEL

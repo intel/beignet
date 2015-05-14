@@ -590,7 +590,7 @@ namespace gbe
     /*! Select instruction with embedded comparison */
     void SEL_CMP(uint32_t conditional, Reg dst, Reg src0, Reg src1);
     /* Constant buffer move instruction */
-    void INDIRECT_MOVE(Reg dst, Reg src);
+    void INDIRECT_MOVE(Reg dst, Reg tmp, Reg base, Reg regOffset, uint32_t immOffset);
     /*! EOT is used to finish GPGPU threads */
     void EOT(void);
     /*! No-op */
@@ -1193,10 +1193,13 @@ namespace gbe
     insn->src(1) = src1;
     insn->extra.function = conditional;
   }
-  void Selection::Opaque::INDIRECT_MOVE(Reg dst, Reg src) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_INDIRECT_MOVE, 1, 1);
+  void Selection::Opaque::INDIRECT_MOVE(Reg dst, Reg tmp, Reg base, Reg regOffset, uint32_t immOffset) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_INDIRECT_MOVE, 2, 2);
     insn->dst(0) = dst;
-    insn->src(0) = src;
+    insn->dst(1) = tmp;
+    insn->src(0) = base;
+    insn->src(1) = regOffset;
+    insn->extra.indirect_offset = immOffset;
   }
 
   void Selection::Opaque::ATOMIC(Reg dst, uint32_t function,
@@ -3433,18 +3436,6 @@ namespace gbe
       }
     }
 
-    void emitIndirectMove(Selection::Opaque &sel,
-                         const ir::LoadInstruction &insn,
-                         GenRegister address) const
-    {
-      using namespace ir;
-      GBE_ASSERT(insn.getValueNum() == 1);   //todo: handle vec later
-
-      const GenRegister dst = sel.selReg(insn.getValue(0), insn.getValueType());
-      const GenRegister src = address;
-      sel.INDIRECT_MOVE(dst, src);
-    }
-
     INLINE GenRegister getRelativeAddress(Selection::Opaque &sel, GenRegister address, uint8_t bti) const {
       if (bti == 0xfe || bti == BTI_CONSTANT)
         return address;
@@ -4724,6 +4715,29 @@ namespace gbe
     }
   };
 
+  /*! Get a region of a register */
+  class IndirectMovInstructionPattern : public SelectionPattern
+  {
+  public:
+    IndirectMovInstructionPattern(void) : SelectionPattern(1,1) {
+      this->opcodes.push_back(ir::OP_INDIRECT_MOV);
+    }
+    INLINE bool emit(Selection::Opaque &sel, SelectionDAG &dag) const {
+      using namespace ir;
+      const ir::IndirectMovInstruction &insn = cast<ir::IndirectMovInstruction>(dag.insn);
+      GenRegister dst, src0, src1;
+      uint32_t offset = insn.getOffset();
+      dst = sel.selReg(insn.getDst(0), insn.getType());
+      src0 = sel.selReg(insn.getSrc(0), TYPE_U32);
+      src1 = sel.selReg(insn.getSrc(1), TYPE_U32);
+      GenRegister tmp = sel.selReg(sel.reg(FAMILY_WORD), TYPE_U16);
+
+      sel.INDIRECT_MOVE(dst, tmp, src0, src1, offset);
+      markAllChildren(dag);
+      return true;
+    }
+  };
+
   /*! Branch instruction pattern */
   class BranchInstructionPattern : public SelectionPattern
   {
@@ -4950,6 +4964,7 @@ namespace gbe
     this->insert<GetImageInfoInstructionPattern>();
     this->insert<ReadARFInstructionPattern>();
     this->insert<RegionInstructionPattern>();
+    this->insert<IndirectMovInstructionPattern>();
     this->insert<NullaryInstructionPattern>();
 
     // Sort all the patterns with the number of instructions they output

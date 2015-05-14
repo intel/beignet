@@ -522,6 +522,15 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
+  /*! Indirect Move instruction */
+  class IndirectMovInstruction : public Instruction {
+  public:
+    Type getType(void) const;
+    uint32_t getOffset(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
   /*! Specialize the instruction. Also performs typechecking first based on the
    *  opcode. Crashes if it fails
    */
@@ -725,6 +734,7 @@ namespace ir {
 
   Instruction READ_ARF(Type type, Register dst, ARFRegister arf);
   Instruction REGION(Register dst, Register src, uint32_t offset);
+  Instruction INDIRECT_MOV(Type type, Register dst, Register src0, Register src1, uint32_t offset);
   /*! typed write */
   Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, uint8_t srcNum, Type srcType, Type coordType);
   /*! sample textures */

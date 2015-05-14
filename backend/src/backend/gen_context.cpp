@@ -1727,21 +1727,33 @@ namespace gbe
   }
 
   void GenContext::emitIndirectMoveInstruction(const SelectionInstruction &insn) {
-    GenRegister src = ra->genReg(insn.src(0));
-    if(sel->isScalarReg(src.reg()))
-      src = GenRegister::retype(src, GEN_TYPE_UW);
-    else
-      src = GenRegister::unpacked_uw(src.nr, src.subnr / typeSize(GEN_TYPE_UW));
+    GenRegister baseReg = ra->genReg(insn.src(0));
+    GenRegister offset = ra->genReg(insn.src(1));
+    uint32_t immoffset = insn.extra.indirect_offset;
 
     const GenRegister dst = ra->genReg(insn.dst(0));
+    GenRegister tmp = ra->genReg(insn.dst(1));
     const GenRegister a0 = GenRegister::addr8(0);
     uint32_t simdWidth = p->curr.execWidth;
+    GenRegister indirect_src;
+
+    if(sel->isScalarReg(offset.reg()))
+      offset = GenRegister::retype(offset, GEN_TYPE_UW);
+    else
+      offset = GenRegister::unpacked_uw(offset.nr, offset.subnr / typeSize(GEN_TYPE_UW));
+    uint32_t baseRegOffset = GenRegister::grfOffset(baseReg);
+    //There is a restrict that: lower 5 bits indirect reg SubRegNum and
+    //the lower 5 bits of indirect imm SubRegNum cannot exceed 5 bits.
+    //So can't use AddrImm field, need a add.
+    p->ADD(tmp, offset, GenRegister::immuw(baseRegOffset + immoffset));
+    indirect_src = GenRegister::indirect(dst.type, 0, GEN_WIDTH_1,
+                                         GEN_VERTICAL_STRIDE_ONE_DIMENSIONAL, GEN_HORIZONTAL_STRIDE_0);
 
     p->push();
       p->curr.execWidth = 8;
       p->curr.quarterControl = GEN_COMPRESSION_Q1;
-      p->MOV(a0, src);
-      p->MOV(dst, GenRegister::indirect(dst.type, 0, GEN_WIDTH_8));
+      p->MOV(a0, tmp);
+      p->MOV(dst, indirect_src);
     p->pop();
 
     if (simdWidth == 16) {
@@ -1750,9 +1762,9 @@ namespace gbe
         p->curr.quarterControl = GEN_COMPRESSION_Q2;
 
         const GenRegister nextDst = GenRegister::Qn(dst, 1);
-        const GenRegister nextSrc = GenRegister::Qn(src, 1);
-        p->MOV(a0, nextSrc);
-        p->MOV(nextDst, GenRegister::indirect(dst.type, 0, GEN_WIDTH_8));
+        const GenRegister nextOffset = GenRegister::Qn(tmp, 1);
+        p->MOV(a0, nextOffset);
+        p->MOV(nextDst, indirect_src);
       p->pop();
     }
   }
