@@ -441,7 +441,7 @@ brw_gt3_break:
 LOCAL cl_int
 cl_self_test(cl_device_id device)
 {
-  cl_int status, ret;
+  cl_int status;
   cl_context ctx;
   cl_command_queue queue;
   cl_program program;
@@ -456,7 +456,11 @@ cl_self_test(cl_device_id device)
   "  barrier(CLK_LOCAL_MEM_FENCE);"
   "  buf[get_global_id(0)] = tmp[2 - get_local_id(0)] + buf[get_global_id(0)];"
   "}"; // using __local to catch the "no SLM on Haswell" problem
-  ret = 2;
+  static int tested = 0;
+  static cl_int ret = 2;
+  if (tested != 0)
+    return ret;
+  tested = 1;
   ctx = clCreateContext(NULL, 1, &device, NULL, NULL, &status);
   if (status == CL_SUCCESS) {
     queue = clCreateCommandQueue(ctx, device, 0, &status);
@@ -480,8 +484,8 @@ cl_self_test(cl_device_id device)
                     } else {
                       ret = 1;
                       printf("Beignet: self-test failed: (3, 7, 5) + (5, 7, 3) returned (%i, %i, %i)\n"
-                      "See README.md or http://www.freedesktop.org/wiki/Software/Beignet/\n",
-                      test_data[0], test_data[1], test_data[2]);
+                             "See README.md or http://www.freedesktop.org/wiki/Software/Beignet/\n",
+                             test_data[0], test_data[1], test_data[2]);
                     }
                   }
                 }
@@ -499,7 +503,7 @@ cl_self_test(cl_device_id device)
   clReleaseContext(ctx);
   if (ret == 2) {
     printf("Beignet: self-test failed: error %i\n"
-    "See README.md or http://www.freedesktop.org/wiki/Software/Beignet/\n", status);
+           "See README.md or http://www.freedesktop.org/wiki/Software/Beignet/\n", status);
   }
   return ret;
 }

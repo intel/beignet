@@ -142,7 +142,7 @@ Supported Targets
 
  * 3rd Generation Intel Core Processors
  * Intel “Bay Trail” platforms with Intel HD Graphics
- * 4th Generation Intel Core Processors, need kernel patch currently, see the "Known Issues" section.
+ * 4th Generation Intel Core Processors "Haswell", need kernel patch currently, see the "Known Issues" section.
  * 5th Generation Intel Core Processors "Broadwell".
 
 Known Issues
@@ -163,22 +163,34 @@ Known Issues
   But this command is a little bit dangerous, as if your kernel really hang, then the gpu will lock up
   forever until a reboot.
 
-* Almost all unit tests fail.
-  There is a known issue in some versions of linux kernel which enable register whitelist feature
-  but miss some necessary registers which are required for beignet. For non-HSW platforms, the
-  problematic version are around 3.15 and 3.16 which have commit f0a346b... but haven't commit
-  c9224f... If it is the case, you can apply c9224f... manually and rebuild the kernel or just
-  disable the parse command by invoke the following command (use Ubuntu as an example):
+* "Beignet: self-test failed" and almost all unit tests fail.
+  Linux 3.15 and 3.16 (commits [f0a346b](https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=f0a346bdafaf6fc4a51df9ddf1548fd888f860d8)
+  to [c9224fa](https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=c9224faa59c3071ecfa2d4b24592f4eb61e57069))
+  enable the register whitelist by default but miss some registers needed
+  for Beignet.
+  
+  This can be fixed by upgrading Linux, or by disabling the whitelist:
 
   `# echo 0 > /sys/module/i915/parameters/enable_cmd_parser`
 
-  For HSW platforms, this issue exists in all linux kernel version after 3.15. We always need
-  to execute the above command.
+  On Haswell hardware, Beignet 1.0.1 to 1.0.3 also required the
+  above workaround on later Linux versions, but this _should not_ be
+  required in current (after [83f8739](http://cgit.freedesktop.org/beignet/commit/?id=83f8739b6fc4893fac60145326052ccb5cf653dc))
+  git master.
 
-* Some unit test cases, maybe 20 to 30, fail on 4th Generation (HSW) platform.
-  _The 4th Generation Intel Core Processors's support requires some Linux kernel
-  modification_. You need to apply the patch at:  
-  [https://01.org/zh/beignet/downloads/linux-kernel-patch-hsw-support](https://01.org/zh/beignet/downloads/linux-kernel-patch-hsw-support)
+* "Beignet: self-test failed" and 15-30 unit tests fail on 4th Generation (Haswell) hardware.
+  On Haswell, shared local memory (\_\_local) does not work at all on
+  Linux <= 4.0, and requires the i915.enable_ppgtt=2 [boot parameter](https://wiki.ubuntu.com/Kernel/KernelBootParameters)
+  on Linux 4.1.
+  
+  This will be fixed in Linux 4.2; older versions can be fixed with
+  [this patch](https://01.org/zh/beignet/downloads/linux-kernel-patch-hsw-support).
+  
+  If you do not need \_\_local, you can override the self-test with
+  
+  `export OCL_IGNORE_SELF_TEST=1`
+  
+  but using \_\_local after this may silently give wrong results.
 
 * Precision issue.
   Currently Gen does not provide native support of high precision math functions
