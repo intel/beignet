@@ -6,3 +6,5 @@ export OCL_PCH_PATH=@LOCAL_OCL_PCH_OBJECT@
 export OCL_KERNEL_PATH=@CMAKE_CURRENT_SOURCE_DIR@/../kernels
 export OCL_GBE_PATH=@LOCAL_GBE_OBJECT_DIR@
 export OCL_INTERP_PATH=@LOCAL_INTERP_OBJECT_DIR@
+#disable self-test so we can get something more precise than "doesn't work"
+export OCL_IGNORE_SELF_TEST=1

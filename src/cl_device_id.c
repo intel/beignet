@@ -545,6 +545,74 @@ skl_gt4_break:
   return ret;
 }
 
+/* Runs a small kernel to check that the device works; returns
+ * 0 for success, 1 for silently wrong result, 2 for error */
+LOCAL cl_int
+cl_self_test(cl_device_id device)
+{
+  cl_int status, ret;
+  cl_context ctx;
+  cl_command_queue queue;
+  cl_program program;
+  cl_kernel kernel;
+  cl_mem buffer;
+  cl_event kernel_finished;
+  size_t n = 3;
+  cl_int test_data[3] = {3, 7, 5};
+  const char* kernel_source = "__kernel void self_test(__global int *buf) {"
+  "  __local int tmp[3];"
+  "  tmp[get_local_id(0)] = buf[get_local_id(0)];"
+  "  barrier(CLK_LOCAL_MEM_FENCE);"
+  "  buf[get_global_id(0)] = tmp[2 - get_local_id(0)] + buf[get_global_id(0)];"
+  "}"; // using __local to catch the "no SLM on Haswell" problem
+  ret = 2;
+  ctx = clCreateContext(NULL, 1, &device, NULL, NULL, &status);
+  if (status == CL_SUCCESS) {
+    queue = clCreateCommandQueue(ctx, device, 0, &status);
+    if (status == CL_SUCCESS) {
+      program = clCreateProgramWithSource(ctx, 1, &kernel_source, NULL, &status);
+      if (status == CL_SUCCESS) {
+        status = clBuildProgram(program, 1, &device, "", NULL, NULL);
+        if (status == CL_SUCCESS) {
+          kernel = clCreateKernel(program, "self_test", &status);
+          if (status == CL_SUCCESS) {
+            buffer = clCreateBuffer(ctx, CL_MEM_COPY_HOST_PTR, n*4, test_data, &status);
+            if (status == CL_SUCCESS) {
+              status = clSetKernelArg(kernel, 0, sizeof(cl_mem), &buffer);
+              if (status == CL_SUCCESS) {
+                status = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &n, &n, 0, NULL, &kernel_finished);
+                if (status == CL_SUCCESS) {
+                  status = clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, n*4, test_data, 1, &kernel_finished, NULL);
+                  if (status == CL_SUCCESS) {
+                    if (test_data[0] == 8 && test_data[1] == 14 && test_data[2] == 8){
+                      ret = 0;
+                    } else {
+                      ret = 1;
+                      printf("Beignet: self-test failed: (3, 7, 5) + (5, 7, 3) returned (%i, %i, %i)\n"
+                      "See README.md or http://www.freedesktop.org/wiki/Software/Beignet/\n",
+                      test_data[0], test_data[1], test_data[2]);
+                    }
+                  }
+                }
+              }
+            }
+            clReleaseMemObject(buffer);
+          }
+          clReleaseKernel(kernel);
+        }
+      }
+      clReleaseProgram(program);
+    }
+    clReleaseCommandQueue(queue);
+  }
+  clReleaseContext(ctx);
+  if (ret == 2) {
+    printf("Beignet: self-test failed: error %i\n"
+    "See README.md or http://www.freedesktop.org/wiki/Software/Beignet/\n", status);
+  }
+  return ret;
+}
+
 LOCAL cl_int
 cl_get_device_ids(cl_platform_id    platform,
                   cl_device_type    device_type,
@@ -556,6 +624,20 @@ cl_get_device_ids(cl_platform_id    platform,
 
   /* Do we have a usable device? */
   device = cl_get_gt_device();
+  if (device && cl_self_test(device)) {
+    int disable_self_test = 0;
+    // can't use BVAR (backend/src/sys/cvar.hpp) here as it's C++
+    const char *env = getenv("OCL_IGNORE_SELF_TEST");
+    if (env != NULL) {
+      sscanf(env, "%i", &disable_self_test);
+    }
+    if (disable_self_test) {
+      printf("Beignet: Warning - overriding self-test failure\n");
+    } else {
+      printf("Beignet: disabling non-working device\n");
+      device = 0;
+    }
+  }
   if (!device) {
     if (num_devices)
       *num_devices = 0;
