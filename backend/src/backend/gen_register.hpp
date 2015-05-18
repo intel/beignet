@@ -837,8 +837,9 @@ namespace gbe
       reg.file = GEN_GENERAL_REGISTER_FILE;
       reg.address_mode = GEN_ADDRESS_REGISTER_INDIRECT_REGISTER;
       reg.width = width;
-      reg.subnr = subnr;
+      reg.a0_subnr = subnr;
       reg.nr = 0;
+      reg.addr_imm = 0;
       reg.negation = 0;
       reg.absolute = 0;
       reg.vstride = vstride;
