@@ -61,7 +61,6 @@
 #include "sys/cvar.hpp"
 #include "sys/platform.hpp"
 #include "ir/unit.hpp"
-#include "ir/structural_analysis.hpp"
 
 #include <clang/CodeGen/CodeGenAction.h>
 
@@ -307,16 +306,6 @@ namespace gbe
 
     // Print the code extra optimization passes
     OUTPUT_BITCODE(AFTER_GEN, mod);
-
-    const ir::Unit::FunctionSet& fs = unit.getFunctionSet();
-    ir::Unit::FunctionSet::const_iterator iter = fs.begin();
-    while(iter != fs.end())
-    {
-      analysis::ControlTree *ct = new analysis::ControlTree(iter->second);
-      ct->analyze();
-      delete ct;
-      iter++;
-    }
 
     delete libraryInfo;
     return true;
