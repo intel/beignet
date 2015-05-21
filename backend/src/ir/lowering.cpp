@@ -330,6 +330,7 @@ namespace ir {
 
           indirectSeq.push_back(indirectLoad);
         } else {
+          if(it == addPtrInsns.end()) continue;  //use arg as phi or selection, no add, skip it.
           auto dstIt = addPtrInsns.find(dst);
           if(dstIt == addPtrInsns.end())
             addPtrInsns.insert(std::make_pair(dst, it->second));
