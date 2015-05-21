@@ -36,10 +36,13 @@
 namespace gbe {
 namespace ir {
   struct BTI {
-    uint8_t bti[MAX_MIXED_POINTER];
-    uint8_t count;
-    BTI() : count(0) {
-      memset(bti, 0, MAX_MIXED_POINTER);
+    uint8_t isConst; // whether fixed bti
+    union {
+      Register reg;  // mixed reg
+      unsigned short imm;  // fixed bti
+    };
+
+    BTI() : isConst(0) {
     }
     ~BTI() {}
   };
@@ -289,10 +292,12 @@ namespace ir {
   class AtomicInstruction : public Instruction {
   public:
     /*! Where the address register goes */
-    static const uint32_t addressIndex = 0;
+    static const uint32_t btiIndex = 0;
+    static const uint32_t addressIndex = 1;
     /*! Address space that is manipulated here */
     AddressSpace getAddressSpace(void) const;
-    BTI getBTI(void) const;
+    Register getBTI(void) const { return this->getSrc(btiIndex); }
+    bool isFixedBTI(void) const;
     /*! Return the atomic function code */
     AtomicOps getAtomicOpcode(void) const;
     /*! Return the register that contains the addresses */
@@ -307,12 +312,14 @@ namespace ir {
   class StoreInstruction : public Instruction {
   public:
     /*! Where the address register goes */
-    static const uint32_t addressIndex = 0;
+    static const uint32_t btiIndex = 0;
+    static const uint32_t addressIndex = 1;
     /*! Return the types of the values to store */
     Type getValueType(void) const;
     /*! Give the number of values the instruction is storing (srcNum-1) */
     uint32_t getValueNum(void) const;
-    BTI getBTI(void) const;
+    Register getBTI(void) const { return this->getSrc(btiIndex); }
+    bool isFixedBTI(void) const;
     /*! Address space that is manipulated here */
     AddressSpace getAddressSpace(void) const;
     /*! DWORD aligned means untyped read for Gen. That is what matters */
@@ -322,7 +329,7 @@ namespace ir {
     /*! Return the register that contain value valueID */
     INLINE Register getValue(uint32_t valueID) const {
       GBE_ASSERT(valueID < this->getValueNum());
-      return this->getSrc(valueID + 1u);
+      return this->getSrc(valueID + 2u);
     }
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
@@ -343,8 +350,9 @@ namespace ir {
     /*! DWORD aligned means untyped read for Gen. That is what matters */
     bool isAligned(void) const;
     /*! Return the register that contains the addresses */
-    INLINE Register getAddress(void) const { return this->getSrc(0u); }
-    BTI getBTI(void) const;
+    INLINE Register getAddress(void) const { return this->getSrc(1u); }
+    Register getBTI(void) const {return this->getSrc(0u);}
+    bool isFixedBTI(void) const;
     /*! Return the register that contain value valueID */
     INLINE Register getValue(uint32_t valueID) const {
       return this->getDst(valueID);
@@ -708,7 +716,7 @@ namespace ir {
   /*! F32TO16.{dstType <- srcType} dst src */
   Instruction F32TO16(Type dstType, Type srcType, Register dst, Register src);
   /*! atomic dst addr.space {src1 {src2}} */
-  Instruction ATOMIC(AtomicOps opcode, Register dst, AddressSpace space, BTI bti, Tuple src);
+  Instruction ATOMIC(AtomicOps opcode, Register dst, AddressSpace space, Register bti, bool fixedBTI, Tuple src);
   /*! bra labelIndex */
   Instruction BRA(LabelIndex labelIndex);
   /*! (pred) bra labelIndex */
@@ -724,9 +732,9 @@ namespace ir {
   /*! ret */
   Instruction RET(void);
   /*! load.type.space {dst1,...,dst_valueNum} offset value */
-  Instruction LOAD(Type type, Tuple dst, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, BTI bti);
+  Instruction LOAD(Type type, Tuple dst, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, bool fixedBTI, Register bti);
   /*! store.type.space offset {src1,...,src_valueNum} value */
-  Instruction STORE(Type type, Tuple src, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, BTI bti);
+  Instruction STORE(Type type, Tuple src, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, bool fixedBTI, Register bti);
   /*! loadi.type dst value */
   Instruction LOADI(Type type, Register dst, ImmediateIndex value);
   /*! sync.params... (see Sync instruction) */

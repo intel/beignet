@@ -96,8 +96,7 @@ namespace gbe
     gen7_insn->bits3.gen7_typed_rw.slot = 1;
   }
 
-  void Gen75Encoder::ATOMIC(GenRegister dst, uint32_t function, GenRegister src, uint32_t bti, uint32_t srcNum) {
-    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+  unsigned Gen75Encoder::setAtomicMessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum) {
     Gen7NativeInstruction *gen7_insn = &insn->gen7_insn;
     uint32_t msg_length = 0;
     uint32_t response_length = 0;
@@ -110,11 +109,6 @@ namespace gbe
       response_length = 2;
     } else
       NOT_IMPLEMENTED;
-
-    this->setHeader(insn);
-    this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
-    this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
-    this->setSrc1(insn, GenRegister::immud(0));
 
     const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA;
     setMessageDescriptor(insn, sfid, msg_length, response_length);
@@ -129,11 +123,26 @@ namespace gbe
       gen7_insn->bits3.gen7_atomic_op.simd_mode = GEN_ATOMIC_SIMD16;
     else
       NOT_SUPPORTED;
+    return gen7_insn->bits3.ud;
   }
 
-  void Gen75Encoder::UNTYPED_READ(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum) {
+  void Gen75Encoder::ATOMIC(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
-    assert(elemNum >= 1 || elemNum <= 4);
+
+    this->setHeader(insn);
+    insn->header.destreg_or_condmod = GEN_SFID_DATAPORT1_DATA;
+
+    this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
+    this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
+    if (bti.file == GEN_IMMEDIATE_VALUE) {
+      this->setSrc1(insn, GenRegister::immud(0));
+      setAtomicMessageDesc(insn, function, bti.value.ud, srcNum);
+    } else {
+      this->setSrc1(insn, bti);
+    }
+  }
+
+  unsigned Gen75Encoder::setUntypedReadMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum) {
     uint32_t msg_length = 0;
     uint32_t response_length = 0;
     if (this->curr.execWidth == 8) {
@@ -144,43 +153,74 @@ namespace gbe
       response_length = 2 * elemNum;
     } else
       NOT_IMPLEMENTED;
-
-    this->setHeader(insn);
-    this->setDst(insn,  GenRegister::uw16grf(dst.nr, 0));
-    this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
-    this->setSrc1(insn, GenRegister::immud(0));
     setDPUntypedRW(insn,
                    bti,
                    untypedRWMask[elemNum],
                    GEN75_P1_UNTYPED_READ,
                    msg_length,
                    response_length);
+    return insn->bits3.ud;
   }
 
-  void Gen75Encoder::UNTYPED_WRITE(GenRegister msg, uint32_t bti, uint32_t elemNum) {
+  void Gen75Encoder::UNTYPED_READ(GenRegister dst, GenRegister src, GenRegister bti, uint32_t elemNum) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     assert(elemNum >= 1 || elemNum <= 4);
+
+    this->setHeader(insn);
+    this->setDst(insn,  GenRegister::uw16grf(dst.nr, 0));
+    this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
+    this->setSrc1(insn, GenRegister::immud(0));
+    insn->header.destreg_or_condmod = GEN_SFID_DATAPORT1_DATA;
+
+    if (bti.file == GEN_IMMEDIATE_VALUE) {
+      this->setSrc1(insn, GenRegister::immud(0));
+      setUntypedReadMessageDesc(insn, bti.value.ud, elemNum);
+    } else {
+      this->setSrc1(insn, bti);
+    }
+  }
+
+  unsigned Gen75Encoder::setUntypedWriteMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum) {
     uint32_t msg_length = 0;
     uint32_t response_length = 0;
-    this->setHeader(insn);
     if (this->curr.execWidth == 8) {
-      this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));
       msg_length = 1 + elemNum;
     } else if (this->curr.execWidth == 16) {
-      this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UW));
       msg_length = 2 * (1 + elemNum);
     }
     else
       NOT_IMPLEMENTED;
-    this->setSrc0(insn, GenRegister::ud8grf(msg.nr, 0));
-    this->setSrc1(insn, GenRegister::immud(0));
     setDPUntypedRW(insn,
                    bti,
                    untypedRWMask[elemNum],
                    GEN75_P1_UNTYPED_SURFACE_WRITE,
                    msg_length,
                    response_length);
+    return insn->bits3.ud;
   }
+
+  void Gen75Encoder::UNTYPED_WRITE(GenRegister msg, GenRegister bti, uint32_t elemNum) {
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    assert(elemNum >= 1 || elemNum <= 4);
+    this->setHeader(insn);
+    insn->header.destreg_or_condmod = GEN_SFID_DATAPORT_DATA;
+    if (this->curr.execWidth == 8) {
+      this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));
+    } else if (this->curr.execWidth == 16) {
+      this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UW));
+    }
+    else
+      NOT_IMPLEMENTED;
+    this->setSrc0(insn, GenRegister::ud8grf(msg.nr, 0));
+
+    if (bti.file == GEN_IMMEDIATE_VALUE) {
+      this->setSrc1(insn, GenRegister::immud(0));
+      setUntypedWriteMessageDesc(insn, bti.value.ud, elemNum);
+    } else {
+      this->setSrc1(insn, bti);
+    }
+  }
+
 
   void Gen75Encoder::LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value) {
     union { double d; unsigned u[2]; } u;

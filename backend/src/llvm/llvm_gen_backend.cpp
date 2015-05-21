@@ -87,6 +87,7 @@
 #endif  /* LLVM_VERSION_MINOR <= 2 */
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
+#include "llvm/IR/IRBuilder.h"
 #if LLVM_VERSION_MINOR <= 2
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
@@ -290,11 +291,8 @@ namespace gbe
     return ir::MEM_GLOBAL;
   }
 
-  static INLINE ir::AddressSpace btiToGen(const ir::BTI &bti) {
-    if (bti.count > 1)
-      return ir::MEM_MIXED;
-    uint8_t singleBti = bti.bti[0];
-    switch (singleBti) {
+  static INLINE ir::AddressSpace btiToGen(const unsigned bti) {
+    switch (bti) {
       case BTI_CONSTANT: return ir::MEM_CONSTANT;
       case BTI_PRIVATE: return  ir::MEM_PRIVATE;
       case BTI_LOCAL: return ir::MEM_LOCAL;
@@ -485,7 +483,14 @@ namespace gbe
 
     map<Value *, SmallVector<Value *, 4>> pointerOrigMap;
     typedef map<Value *, SmallVector<Value *, 4>>::iterator PtrOrigMapIter;
+    // map pointer source to bti
+    map<Value *, unsigned> BtiMap;
+    // map ptr to its bti register
+    map<Value *, Value *> BtiValueMap;
+    // map ptr to it's base
+    map<Value *, Value *> pointerBaseMap;
 
+    typedef map<Value *, Value *>::iterator PtrBaseMapIter;
     /*! We visit each function twice. Once to allocate the registers and once to
      *  emit the Gen IR instructions
      */
@@ -501,6 +506,7 @@ namespace gbe
     } ConstTypeId;
 
     LoopInfo *LI;
+    Function *Func;
     const Module *TheModule;
     int btiBase;
   public:
@@ -547,23 +553,35 @@ namespace gbe
       bool bKernel = isKernelFunction(F);
       if(!bKernel) return false;
 
+      Func = &F;
+      assignBti(F);
       analyzePointerOrigin(F);
+
       LI = &getAnalysis<LoopInfo>();
       emitFunction(F);
       phiMap.clear();
       globalPointer.clear();
       pointerOrigMap.clear();
+      BtiMap.clear();
+      BtiValueMap.clear();
+      pointerBaseMap.clear();
       // Reset for next function
       btiBase = BTI_RESERVED_NUM;
       return false;
     }
     /*! Given a possible pointer value, find out the interested escape like
         load/store or atomic instruction */
-    void findPointerEscape(Value *ptr);
+    void findPointerEscape(Value *ptr, std::set<Value *> &mixedPtr, bool recordMixed);
     /*! For all possible pointers, GlobalVariable, function pointer argument,
         alloca instruction, find their pointer escape points */
     void analyzePointerOrigin(Function &F);
+    unsigned getNewBti(Value *origin);
+    void assignBti(Function &F);
+    bool isSingleBti(Value *Val);
+    Value *getBtiRegister(Value *v);
+    Value *getPointerBase(Value *ptr);
 
+    MDNode *getKernelFunctionMetadata(Function *F);
     virtual bool doFinalization(Module &M) { return false; }
     /*! handle global variable register allocation (local, constant space) */
     void allocateGlobalVariableRegister(Function &F);
@@ -660,10 +678,10 @@ namespace gbe
     // batch vec4/8/16 load/store
     INLINE void emitBatchLoadOrStore(const ir::Type type, const uint32_t elemNum,
                   Value *llvmValue, const ir::Register ptr,
-                  const ir::AddressSpace addrSpace, Type * elemType, bool isLoad, ir::BTI bti,
-                  bool dwAligned);
+                  const ir::AddressSpace addrSpace, Type * elemType, bool isLoad, ir::Register bti,
+                  bool dwAligned, bool fixedBTI);
     // handle load of dword/qword with unaligned address
-    void emitUnalignedDQLoadStore(Value *llvmPtr, Value *llvmValues, ir::AddressSpace addrSpace, ir::BTI &binding, bool isLoad, bool dwAligned);
+    void emitUnalignedDQLoadStore(ir::Register ptr, Value *llvmValues, ir::AddressSpace addrSpace, ir::Register bti, bool isLoad, bool dwAligned, bool fixedBTI);
     void visitInstruction(Instruction &I) {NOT_SUPPORTED;}
     private:
       ir::ImmediateIndex processConstantImmIndexImpl(Constant *CPV, int32_t index = 0u);
@@ -675,7 +693,44 @@ namespace gbe
 
   char GenWriter::ID = 0;
 
-  void GenWriter::findPointerEscape(Value *ptr) {
+  static void updatePointerSource(Value *parent, Value *theUser, Value *source, SmallVector<Value *, 4> &pointers) {
+    if (isa<SelectInst>(theUser)) {
+      SelectInst *si = dyn_cast<SelectInst>(theUser);
+      if (si->getTrueValue() == parent)
+        pointers[0] = source;
+      else
+        pointers[1] = source;
+    } else if (isa<PHINode>(theUser)) {
+      PHINode *phi = dyn_cast<PHINode>(theUser);
+      unsigned opNum = phi->getNumIncomingValues();
+      for (unsigned j = 0; j < opNum; j++) {
+        if (phi->getIncomingValue(j) == parent) {
+          pointers[j] = source;
+        }
+      }
+    } else {
+      pointers[0] = source;
+    }
+  }
+
+  bool isMixedPoint(Value *val, SmallVector<Value *, 4> &pointers) {
+    Value *validSrc = NULL;
+    unsigned i = 0;
+    if (pointers.size() < 2) return false;
+    while(i < pointers.size()) {
+      if (pointers[i] != NULL && validSrc != NULL && pointers[i] != validSrc)
+        return true;
+      // when source is same as itself, we don't treat it as a new source
+      // this often occurs for PHINode
+      if (pointers[i] != NULL && validSrc == NULL && pointers[i] != val) {
+        validSrc = pointers[i];
+      }
+      i++;
+    }
+    return false;
+  }
+
+  void GenWriter::findPointerEscape(Value *ptr,  std::set<Value *> &mixedPtr, bool bFirstPass) {
     std::vector<Value*> workList;
     std::set<Value *> visited;
 
@@ -695,7 +750,52 @@ namespace gbe
   #else
         User *theUser = iter->getUser();
   #endif
-        if (visited.find(theUser) != visited.end()) continue;
+        bool visitedInThisSource = visited.find(theUser) != visited.end();
+
+        if (isa<SelectInst>(theUser) || isa<PHINode>(theUser))
+        {
+          // reached from another source, update pointer source
+          PtrOrigMapIter ptrIter = pointerOrigMap.find(theUser);
+          if (ptrIter == pointerOrigMap.end()) {
+            // create new one
+            unsigned capacity = 1;
+            if (isa<SelectInst>(theUser)) capacity = 2;
+            if (isa<PHINode>(theUser)) {
+              PHINode *phi = dyn_cast<PHINode>(theUser);
+              capacity = phi->getNumIncomingValues();
+            }
+
+            SmallVector<Value *, 4> pointers;
+
+            unsigned k = 0;
+            while (k++ < capacity) {
+              pointers.push_back(NULL);
+            }
+
+            updatePointerSource(work, theUser, ptr, pointers);
+            pointerOrigMap.insert(std::make_pair(theUser, pointers));
+          } else {
+            // update pointer source
+            updatePointerSource(work, theUser, ptr, (*ptrIter).second);
+          }
+          ptrIter = pointerOrigMap.find(theUser);
+
+          if (isMixedPoint(theUser, (*ptrIter).second)) {
+            // for the first pass, we need to record the mixed point instruction.
+            // for the second pass, we don't need to go further, the reason is:
+            // we always use it's 'direct mixed pointer parent' as origin, if we don't
+            // stop here, we may set wrong pointer origin.
+            if (bFirstPass)
+              mixedPtr.insert(theUser);
+            else
+              continue;
+          }
+          // don't fall into dead loop,
+          if (visitedInThisSource || theUser == ptr) {
+            continue;
+          }
+        }
+
         // pointer address is used as the ValueOperand in store instruction, should be skipped
         if (StoreInst *load = dyn_cast<StoreInst>(theUser)) {
           if (load->getValueOperand() == work) {
@@ -710,16 +810,33 @@ namespace gbe
             Function *F = dyn_cast<CallInst>(theUser)->getCalledFunction();
             if (!F || F->getIntrinsicID() != 0) continue;
           }
+          Value *pointer = NULL;
+          if (isa<LoadInst>(theUser)) {
+            pointer = dyn_cast<LoadInst>(theUser)->getPointerOperand();
+          } else if (isa<StoreInst>(theUser)) {
+            pointer = dyn_cast<StoreInst>(theUser)->getPointerOperand();
+          } else if (isa<CallInst>(theUser)) {
+            // atomic/read(write)image
+            CallInst *ci = dyn_cast<CallInst>(theUser);
+            pointer = ci->getArgOperand(0);
+          } else {
+            theUser->dump();
+            GBE_ASSERT(0 && "Unknown instruction operating on pointers\n");
+          }
 
-          PtrOrigMapIter ptrIter = pointerOrigMap.find(theUser);
+          // the pointer operand is same as pointer origin, don't add to pointerOrigMap
+          if (ptr == pointer) continue;
+
+          // load/store/atomic instruction, we have reached the end, stop further traversing
+          PtrOrigMapIter ptrIter = pointerOrigMap.find(pointer);
           if (ptrIter == pointerOrigMap.end()) {
             // create new one
             SmallVector<Value *, 4> pointers;
             pointers.push_back(ptr);
-            pointerOrigMap.insert(std::make_pair(theUser, pointers));
+            pointerOrigMap.insert(std::make_pair(pointer, pointers));
           } else {
-            // append it
-            (*ptrIter).second.push_back(ptr);
+            // update the pointer source here,
+            (*ptrIter).second[0] = ptr;
           }
         } else {
           workList.push_back(theUser);
@@ -727,27 +844,306 @@ namespace gbe
       }
     }
   }
+  bool GenWriter::isSingleBti(Value *Val) {
+    // self + others same --> single
+    // all same  ---> single
+    if (!isa<SelectInst>(Val) && !isa<PHINode>(Val)) {
+      return true;
+    } else {
+      PtrOrigMapIter iter = pointerOrigMap.find(Val);
+      SmallVector<Value *, 4> &pointers = (*iter).second;
+      unsigned srcNum = pointers.size();
+      Value *source = NULL;
+      for (unsigned x = 0; x < srcNum; x++) {
+        // often happend in phiNode where one source is same as PHINode itself, skip it
+        if (pointers[x] == Val) continue;
+
+        if (source == NULL) source = pointers[x];
+        else {
+          if (source != pointers[x])
+            return false;
+        }
+      }
+      return true;
+    }
+  }
+  Value *GenWriter::getPointerBase(Value *ptr) {
+    PtrBaseMapIter baseIter = pointerBaseMap.find(ptr);
+    if (baseIter != pointerBaseMap.end()) {
+      return baseIter->second;
+    }
+    typedef std::map<Value *, unsigned>::iterator BtiIter;
+    // for pointers that already assigned a bti, it is the base pointer,
+    BtiIter found = BtiMap.find(ptr);
+    if (found != BtiMap.end()) {
+      if (isa<PointerType>(ptr->getType())) {
+        PointerType *ty = cast<PointerType>(ptr->getType());
+        // only global pointer will have starting address
+        if (ty->getAddressSpace() == 1) {
+          return ptr;
+        } else {
+          return ConstantPointerNull::get(ty);
+        }
+      } else {
+          PointerType *ty = PointerType::get(ptr->getType(), 0);
+          return ConstantPointerNull::get(ty);
+      }
+    }
+
+    PtrOrigMapIter iter = pointerOrigMap.find(ptr);
+    SmallVector<Value *, 4> &pointers = (*iter).second;
+    if (isSingleBti(ptr)) {
+      Value *base = getPointerBase(pointers[0]);
+      pointerBaseMap.insert(std::make_pair(ptr, base));
+      return base;
+    } else {
+      if (isa<SelectInst>(ptr)) {
+          SelectInst *si = dyn_cast<SelectInst>(ptr);
+          IRBuilder<> Builder(si->getParent());
+
+          Value *trueVal = getPointerBase((*iter).second[0]);
+          Value *falseVal = getPointerBase((*iter).second[1]);
+          Builder.SetInsertPoint(si);
+          Value *base = Builder.CreateSelect(si->getCondition(), trueVal, falseVal);
+          pointerBaseMap.insert(std::make_pair(ptr, base));
+        return base;
+      } else if (isa<PHINode>(ptr)) {
+          PHINode *phi = dyn_cast<PHINode>(ptr);
+          IRBuilder<> Builder(phi->getParent());
+          Builder.SetInsertPoint(phi);
+
+          PHINode *basePhi = Builder.CreatePHI(ptr->getType(), phi->getNumIncomingValues());
+          unsigned srcNum = pointers.size();
+          for (unsigned x = 0; x < srcNum; x++) {
+            Value *base = NULL;
+            if (pointers[x] != ptr) {
+              base = getPointerBase(pointers[x]);
+            } else {
+              base = basePhi;
+            }
+            IRBuilder<> Builder2(phi->getIncomingBlock(x));
+            BasicBlock *predBB = phi->getIncomingBlock(x);
+            if (predBB->getTerminator())
+              Builder2.SetInsertPoint(predBB->getTerminator());
+
+#if (LLVM_VERSION_MAJOR== 3 && LLVM_VERSION_MINOR < 6)
+  // llvm 3.5 and older version don't have CreateBitOrPointerCast() define
+            Type *srcTy = base->getType();
+            Type *dstTy = ptr->getType();
+            if (srcTy->isPointerTy() && dstTy->isIntegerTy())
+              base = Builder2.CreatePtrToInt(base, dstTy);
+            else if (srcTy->isIntegerTy() && dstTy->isPointerTy())
+              base = Builder2.CreateIntToPtr(base, dstTy);
+            else if (srcTy != dstTy)
+              base = Builder2.CreateBitCast(base, dstTy);
+#else
+            base = Builder2.CreateBitOrPointerCast(base, ptr->getType());
+#endif
+            basePhi->addIncoming(base, phi->getIncomingBlock(x));
+          }
+          pointerBaseMap.insert(std::make_pair(ptr, basePhi));
+          return basePhi;
+      } else {
+        ptr->dump();
+        GBE_ASSERT(0 && "Unhandled instruction in getBtiRegister\n");
+        return ptr;
+      }
+    }
+  }
+
+  Value *GenWriter::getBtiRegister(Value *Val) {
+    typedef std::map<Value *, unsigned>::iterator BtiIter;
+    typedef std::map<Value *, Value *>::iterator BtiValueIter;
+    BtiIter found = BtiMap.find(Val);
+    BtiValueIter valueIter = BtiValueMap.find(Val);
+    if (valueIter != BtiValueMap.end())
+      return valueIter->second;
+
+    if (found != BtiMap.end()) {
+      // the Val already got assigned an BTI, return it
+      Value *bti = ConstantInt::get(IntegerType::get(Val->getContext(), 32), found->second);
+      BtiValueMap.insert(std::make_pair(Val, bti));
+      return bti;
+    } else {
+      if (isSingleBti(Val)) {
+        PtrOrigMapIter iter = pointerOrigMap.find(Val);
+        Value * bti = getBtiRegister((*iter).second[0]);
+        BtiValueMap.insert(std::make_pair(Val, bti));
+        return bti;
+      } else {
+        if (isa<SelectInst>(Val)) {
+          SelectInst *si = dyn_cast<SelectInst>(Val);
+
+          IRBuilder<> Builder(si->getParent());
+          PtrOrigMapIter iter = pointerOrigMap.find(Val);
+          Value *trueVal = getBtiRegister((*iter).second[0]);
+          Value *falseVal = getBtiRegister((*iter).second[1]);
+          Builder.SetInsertPoint(si);
+          Value *bti = Builder.CreateSelect(si->getCondition(), trueVal, falseVal);
+          BtiValueMap.insert(std::make_pair(Val, bti));
+          return bti;
+        } else if (isa<PHINode>(Val)) {
+          PHINode *phi = dyn_cast<PHINode>(Val);
+          IRBuilder<> Builder(phi->getParent());
+          Builder.SetInsertPoint(phi);
+
+          PHINode *btiPhi = Builder.CreatePHI(IntegerType::get(Val->getContext(), 32), phi->getNumIncomingValues());
+          PtrOrigMapIter iter = pointerOrigMap.find(Val);
+          SmallVector<Value *, 4> &pointers = (*iter).second;
+          unsigned srcNum = pointers.size();
+          for (unsigned x = 0; x < srcNum; x++) {
+            Value *bti = NULL;
+            if (pointers[x] != Val) {
+              bti = getBtiRegister(pointers[x]);
+            } else {
+              bti = btiPhi;
+            }
+            btiPhi->addIncoming(bti, phi->getIncomingBlock(x));
+          }
+          BtiValueMap.insert(std::make_pair(Val, btiPhi));
+          return btiPhi;
+        } else {
+          Val->dump();
+          GBE_ASSERT(0 && "Unhandled instruction in getBtiRegister\n");
+          return Val;
+        }
+      }
+    }
+  }
+
+  unsigned GenWriter::getNewBti(Value *origin) {
+    unsigned new_bti = 0;
+    if(origin->getName().equals(StringRef("__gen_ocl_printf_buf"))) {
+      new_bti = btiBase;
+      incBtiBase();
+    } else if (origin->getName().equals(StringRef("__gen_ocl_printf_index_buf"))) {
+      new_bti = btiBase;
+      incBtiBase();
+    }
+    else if (isa<GlobalVariable>(origin)
+        && dyn_cast<GlobalVariable>(origin)->isConstant()) {
+      new_bti = BTI_CONSTANT;
+    } else {
+      unsigned space = origin->getType()->getPointerAddressSpace();
+      switch (space) {
+        case 0:
+          new_bti = BTI_PRIVATE;
+          break;
+        case 1:
+        {
+          new_bti = btiBase;
+          incBtiBase();
+          break;
+        }
+        case 2:
+          new_bti = BTI_CONSTANT;
+
+          break;
+        case 3:
+          new_bti = BTI_LOCAL;
+          break;
+        default:
+          GBE_ASSERT(0);
+          break;
+      }
+    }
+    return new_bti;
+  }
+
+  MDNode *GenWriter::getKernelFunctionMetadata(Function *F) {
+    NamedMDNode *clKernels = TheModule->getNamedMetadata("opencl.kernels");
+     uint32_t ops = clKernels->getNumOperands();
+      for(uint32_t x = 0; x < ops; x++) {
+        MDNode* node = clKernels->getOperand(x);
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+        Value * op = node->getOperand(0);
+#else
+        auto *V = cast<ValueAsMetadata>(node->getOperand(0));
+        Value *op = V ? V->getValue() : NULL;
+#endif
+        if(op == F) {
+          return node;
+        }
+      }
+    return NULL;
+  }
+
+  void GenWriter::assignBti(Function &F) {
+    Module::GlobalListType &globalList = const_cast<Module::GlobalListType &> (TheModule->getGlobalList());
+    for(auto i = globalList.begin(); i != globalList.end(); i ++) {
+      GlobalVariable &v = *i;
+      if(!v.isConstantUsed()) continue;
+
+      BtiMap.insert(std::make_pair(&v, getNewBti(&v)));
+    }
+    MDNode *typeNameNode = NULL;
+    MDNode *node = getKernelFunctionMetadata(&F);
+    for(uint j = 0; j < node->getNumOperands() - 1; j++) {
+      MDNode *attrNode = dyn_cast_or_null<MDNode>(node->getOperand(1 + j));
+      if (attrNode == NULL) break;
+      MDString *attrName = dyn_cast_or_null<MDString>(attrNode->getOperand(0));
+      if (!attrName) continue;
+      if (attrName->getString() == "kernel_arg_type") {
+        typeNameNode = attrNode;
+      }
+    }
+
+    unsigned argID = 0;
+    ir::FunctionArgument::InfoFromLLVM llvmInfo;
+    for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I, argID++) {
+      llvmInfo.typeName= (cast<MDString>(typeNameNode->getOperand(1 + argID)))->getString();
+      if (I->getType()->isPointerTy() || llvmInfo.isImageType()) {
+        BtiMap.insert(std::make_pair(I, getNewBti(I)));
+      }
+    }
+
+    BasicBlock &bb = F.getEntryBlock();
+    for (BasicBlock::iterator iter = bb.begin(), iterE = bb.end(); iter != iterE; ++iter) {
+      if (AllocaInst *ai = dyn_cast<AllocaInst>(iter)) {
+        BtiMap.insert(std::make_pair(ai, BTI_PRIVATE));
+      }
+    }
+  }
 
   void GenWriter::analyzePointerOrigin(Function &F) {
+    // used to record where the pointers get mixed (i.e. select or phi instruction)
+    std::set<Value *> mixedPtr;
+    // This is a two-pass algorithm, the 1st pass will try to update the pointer sources for
+    // every instruction reachable from pointers and record mix-point in this pass.
+    // The second pass will start from really mixed-pointer instruction like select or phinode.
+    // and update the sources correctly. For pointers reachable from mixed-pointer, we will set
+    // its direct mixed-pointer parent as it's pointer origin.
+
     // GlobalVariable
     Module::GlobalListType &globalList = const_cast<Module::GlobalListType &> (TheModule->getGlobalList());
     for(auto i = globalList.begin(); i != globalList.end(); i ++) {
       GlobalVariable &v = *i;
       if(!v.isConstantUsed()) continue;
-      findPointerEscape(&v);
+      findPointerEscape(&v, mixedPtr, true);
     }
     // function argument
     for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
       if (I->getType()->isPointerTy()) {
-        findPointerEscape(I);
+        findPointerEscape(I, mixedPtr, true);
       }
     }
     // alloca
     BasicBlock &bb = F.getEntryBlock();
     for (BasicBlock::iterator iter = bb.begin(), iterE = bb.end(); iter != iterE; ++iter) {
       if (AllocaInst *ai = dyn_cast<AllocaInst>(iter)) {
-        findPointerEscape(ai);
+        findPointerEscape(ai, mixedPtr, true);
       }
+    }
+    // the second pass starts from mixed pointer
+    for (std::set<Value *>::iterator iter = mixedPtr.begin(); iter != mixedPtr.end(); ++iter) {
+      findPointerEscape(*iter, mixedPtr, false);
+    }
+
+    for (std::set<Value *>::iterator iter = mixedPtr.begin(); iter != mixedPtr.end(); ++iter) {
+      getBtiRegister(*iter);
+    }
+    for (std::set<Value *>::iterator iter = mixedPtr.begin(); iter != mixedPtr.end(); ++iter) {
+      getPointerBase(*iter);
     }
   }
 
@@ -1253,11 +1649,9 @@ namespace gbe
                 "Returned value for kernel functions is forbidden");
 
     // Loop over the kernel metadatas to set the required work group size.
-    NamedMDNode *clKernelMetaDatas = TheModule->getNamedMetadata("opencl.kernels");
     size_t reqd_wg_sz[3] = {0, 0, 0};
     size_t hint_wg_sz[3] = {0, 0, 0};
     ir::FunctionArgument::InfoFromLLVM llvmInfo;
-    MDNode *node = NULL;
     MDNode *addrSpaceNode = NULL;
     MDNode *typeNameNode = NULL;
     MDNode *accessQualNode = NULL;
@@ -1267,16 +1661,7 @@ namespace gbe
     std::string functionAttributes;
 
     /* First find the meta data belong to this function. */
-    for(uint i = 0; i < clKernelMetaDatas->getNumOperands(); i++) {
-      node = clKernelMetaDatas->getOperand(i);
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
-      if (node->getOperand(0) == &F) break;
-#else
-      auto *V = cast<ValueAsMetadata>(node->getOperand(0));
-      if (V && V->getValue() == &F) break;
-#endif
-      node = NULL;
-    }
+    MDNode *node = getKernelFunctionMetadata(&F);
 
     /* because "-cl-kernel-arg-info", should always have meta data. */
     if (!F.arg_empty())
@@ -1362,7 +1747,6 @@ namespace gbe
         functionAttributes += " ";
       }
     }
-    ctx.appendSurface(1, ir::ocl::stackbuffer);
 
     ctx.getFunction().setCompileWorkGroupSize(reqd_wg_sz[0], reqd_wg_sz[1], reqd_wg_sz[2]);
 
@@ -1419,7 +1803,7 @@ namespace gbe
         const ir::Register reg = getRegister(I);
         if (llvmInfo.isImageType()) {
           ctx.input(argName, ir::FunctionArgument::IMAGE, reg, llvmInfo, 4, 4, 0);
-          ctx.getFunction().getImageSet()->append(reg, &ctx, incBtiBase());
+          ctx.getFunction().getImageSet()->append(reg, &ctx, BtiMap.find(I)->second);
           collectImageArgs(llvmInfo.accessQual, imageArgsInfo);
           continue;
         }
@@ -1452,10 +1836,7 @@ namespace gbe
             const uint32_t align = getAlignmentByte(unit, pointed);
               switch (addrSpace) {
               case ir::MEM_GLOBAL:
-                globalPointer.insert(std::make_pair(I, btiBase));
-                ctx.appendSurface(btiBase, reg);
-                ctx.input(argName, ir::FunctionArgument::GLOBAL_POINTER, reg, llvmInfo, ptrSize, align, btiBase);
-                incBtiBase();
+                ctx.input(argName, ir::FunctionArgument::GLOBAL_POINTER, reg, llvmInfo, ptrSize, align, BtiMap.find(I)->second);
               break;
               case ir::MEM_LOCAL:
                 ctx.input(argName, ir::FunctionArgument::LOCAL_POINTER, reg,  llvmInfo, ptrSize, align, BTI_LOCAL);
@@ -1806,14 +2187,10 @@ namespace gbe
         ctx.LOADI(ir::TYPE_S32, reg, ctx.newIntegerImmediate(con.getOffset(), ir::TYPE_S32));
       } else {
         if(v.getName().equals(StringRef("__gen_ocl_printf_buf"))) {
-          ctx.appendSurface(btiBase, ir::ocl::printfbptr);
-          ctx.getFunction().getPrintfSet()->setBufBTI(btiBase);
-          globalPointer.insert(std::make_pair(&v, incBtiBase()));
+          ctx.getFunction().getPrintfSet()->setBufBTI(BtiMap.find(const_cast<GlobalVariable*>(&v))->second);
           regTranslator.newScalarProxy(ir::ocl::printfbptr, const_cast<GlobalVariable*>(&v));
         } else if(v.getName().equals(StringRef("__gen_ocl_printf_index_buf"))) {
-          ctx.appendSurface(btiBase, ir::ocl::printfiptr);
-          ctx.getFunction().getPrintfSet()->setIndexBufBTI(btiBase);
-          globalPointer.insert(std::make_pair(&v, incBtiBase()));
+          ctx.getFunction().getPrintfSet()->setIndexBufBTI(BtiMap.find(const_cast<GlobalVariable*>(&v))->second);
           regTranslator.newScalarProxy(ir::ocl::printfiptr, const_cast<GlobalVariable*>(&v));
         } else if(v.getName().str().substr(0, 4) == ".str") {
           /* When there are multi printf statements in multi kernel fucntions within the same
@@ -2045,6 +2422,7 @@ namespace gbe
     }
 
     ctx.startFunction(F.getName());
+
     ir::Function &fn = ctx.getFunction();
     this->regTranslator.clear();
     this->labelMap.clear();
@@ -2838,19 +3216,46 @@ namespace gbe
     CallSite::arg_iterator AE = CS.arg_end();
     GBE_ASSERT(AI != AE);
 
+    ir::AddressSpace addrSpace;
+
+    Value *llvmPtr = *AI;
+    Value *bti = getBtiRegister(llvmPtr);
+    Value *ptrBase = getPointerBase(llvmPtr);
+    ir::Register pointer = this->getRegister(llvmPtr);
+    ir::Register baseReg = this->getRegister(ptrBase);
+
+    ir::Register btiReg;
+    bool fixedBTI = false;
+    if (isa<ConstantInt>(bti)) {
+      fixedBTI = true;
+      unsigned index = cast<ConstantInt>(bti)->getZExtValue();
+      addrSpace = btiToGen(index);
+      ir::ImmediateIndex immIndex = ctx.newImmediate((uint32_t)index);
+      btiReg = ctx.reg(ir::FAMILY_DWORD);
+      ctx.LOADI(ir::TYPE_U32, btiReg, immIndex);
+    } else {
+      addrSpace = ir::MEM_MIXED;
+      btiReg = this->getRegister(bti);
+    }
+
+    const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
+    const ir::Register ptr = ctx.reg(pointerFamily);
+    ctx.SUB(ir::TYPE_U32, ptr, pointer, baseReg);
+
     const ir::Register dst = this->getRegister(&I);
 
-    ir::BTI bti;
-    gatherBTI(&I, bti);
-    const ir::AddressSpace addrSpace = btiToGen(bti);
-    vector<ir::Register> src;
     uint32_t srcNum = 0;
+    vector<ir::Register> src;
+    src.push_back(ptr);
+    srcNum++;
+    AI++;
+
     while(AI != AE) {
       src.push_back(this->getRegister(*(AI++)));
       srcNum++;
     }
     const ir::Tuple srcTuple = ctx.arrayTuple(&src[0], srcNum);
-    ctx.ATOMIC(opcode, dst, addrSpace, bti, srcTuple);
+    ctx.ATOMIC(opcode, dst, addrSpace, btiReg, fixedBTI, srcTuple);
   }
 
   /* append a new sampler. should be called before any reference to
@@ -3555,8 +3960,8 @@ namespace gbe
   void GenWriter::emitBatchLoadOrStore(const ir::Type type, const uint32_t elemNum,
                                       Value *llvmValues, const ir::Register ptr,
                                       const ir::AddressSpace addrSpace,
-                                      Type * elemType, bool isLoad, ir::BTI bti,
-                                      bool dwAligned) {
+                                      Type * elemType, bool isLoad, ir::Register bti,
+                                      bool dwAligned, bool fixedBTI) {
     const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
     uint32_t totalSize = elemNum * getFamilySize(getFamily(type));
     uint32_t msgNum = totalSize > 16 ? totalSize / 16 : 1;
@@ -3602,79 +4007,18 @@ namespace gbe
 
       // Emit the instruction
       if (isLoad)
-        ctx.LOAD(type, tuple, addr, addrSpace, perMsgNum, dwAligned, bti);
+        ctx.LOAD(type, tuple, addr, addrSpace, perMsgNum, dwAligned, fixedBTI, bti);
       else
-        ctx.STORE(type, tuple, addr, addrSpace, perMsgNum, dwAligned, bti);
+        ctx.STORE(type, tuple, addr, addrSpace, perMsgNum, dwAligned, fixedBTI, bti);
     }
   }
 
-  // The idea behind is to search along the use-def chain, and find out all
-  // possible sources of the pointer. Then in later codeGen, we can emit
-  // read/store instructions to these BTIs gathered.
-  void GenWriter::gatherBTI(Value *insn, ir::BTI &bti) {
-    PtrOrigMapIter iter = pointerOrigMap.find(insn);
-    if (iter != pointerOrigMap.end()) {
-      SmallVectorImpl<Value *> &origins = iter->second;
-      uint8_t nBTI = 0;
-      for (unsigned i = 0; i < origins.size(); i++) {
-        uint8_t new_bti = 0;
-        Value *origin = origins[i];
-        // all constant put into constant cache, including __constant & const __private
-        if (isa<GlobalVariable>(origin)
-            && dyn_cast<GlobalVariable>(origin)->isConstant()) {
-          new_bti = BTI_CONSTANT;
-        } else {
-          unsigned space = origin->getType()->getPointerAddressSpace();
-          switch (space) {
-            case 0:
-              new_bti = BTI_PRIVATE;
-              break;
-            case 1:
-            {
-              GlobalPtrIter iter = globalPointer.find(origin);
-              GBE_ASSERT(iter != globalPointer.end());
-              new_bti = iter->second;
-              break;
-            }
-            case 2:
-              new_bti = BTI_CONSTANT;
-              break;
-            case 3:
-              new_bti = BTI_LOCAL;
-              break;
-            default:
-              GBE_ASSERT(0 && "address space not unhandled in gatherBTI()\n");
-              break;
-          }
-        }
-
-        // avoid duplicate
-        bool bFound = false;
-        for (int j = 0; j < nBTI; j++) {
-          if (bti.bti[j] == new_bti) {
-            bFound = true; break;
-          }
-        }
-        if (bFound == false) {
-          bti.bti[nBTI++] = new_bti;
-          bti.count = nBTI;
-        }
-      }
-    } else {
-      insn->dump();
-      std::cerr << "Illegal pointer which is not from a valid memory space." << std::endl;
-      std::cerr << "Aborting..." << std::endl;
-      exit(-1);
-    }
-    GBE_ASSERT(bti.count <= MAX_MIXED_POINTER);
-  }
   // handle load of dword/qword with unaligned address
-  void GenWriter::emitUnalignedDQLoadStore(Value *llvmPtr, Value *llvmValues, ir::AddressSpace addrSpace, ir::BTI &binding, bool isLoad, bool dwAligned)
+  void GenWriter::emitUnalignedDQLoadStore(ir::Register ptr, Value *llvmValues, ir::AddressSpace addrSpace, ir::Register bti, bool isLoad, bool dwAligned, bool fixedBTI)
   {
     Type *llvmType = llvmValues->getType();
     const ir::Type type = getType(ctx, llvmType);
     unsigned byteSize = getTypeByteSize(unit, llvmType);
-    const ir::Register ptr = this->getRegister(llvmPtr);
 
     Type *elemType = llvmType;
     unsigned elemNum = 1;
@@ -3704,13 +4048,13 @@ namespace gbe
     const ir::Tuple byteTuple = ctx.arrayTuple(&byteTupleData[0], byteSize);
 
     if (isLoad) {
-      ctx.LOAD(ir::TYPE_U8, byteTuple, ptr, addrSpace, byteSize, dwAligned, binding);
+      ctx.LOAD(ir::TYPE_U8, byteTuple, ptr, addrSpace, byteSize, dwAligned, fixedBTI, bti);
       ctx.BITCAST(type, ir::TYPE_U8, tuple, byteTuple, elemNum, byteSize);
     } else {
       ctx.BITCAST(ir::TYPE_U8, type, byteTuple, tuple, byteSize, elemNum);
       // FIXME: byte scatter does not handle correctly vector store, after fix that,
       //        we can directly use on store instruction like:
-      //        ctx.STORE(ir::TYPE_U8, byteTuple, ptr, addrSpace, byteSize, dwAligned, binding);
+      //        ctx.STORE(ir::TYPE_U8, byteTuple, ptr, addrSpace, byteSize, dwAligned, fixedBTI, bti);
       const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
       for (uint32_t elemID = 0; elemID < byteSize; elemID++) {
         const ir::Register reg = byteTupleData[elemID];
@@ -3725,7 +4069,7 @@ namespace gbe
           ctx.LOADI(ir::TYPE_S32, offset, immIndex);
           ctx.ADD(ir::TYPE_S32, addr, ptr, offset);
         }
-       ctx.STORE(type, addr, addrSpace, dwAligned, binding, reg);
+       ctx.STORE(type, addr, addrSpace, dwAligned, fixedBTI, bti, reg);
       }
     }
   }
@@ -3738,10 +4082,31 @@ namespace gbe
     Value *llvmValues = getLoadOrStoreValue(I);
     Type *llvmType = llvmValues->getType();
     const bool dwAligned = (I.getAlignment() % 4) == 0;
-    const ir::Register ptr = this->getRegister(llvmPtr);
-    ir::BTI binding;
-    gatherBTI(&I, binding);
-    const ir::AddressSpace addrSpace = btiToGen(binding);
+    ir::AddressSpace addrSpace;
+    const ir::Register pointer = this->getRegister(llvmPtr);
+    const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
+
+    Value *bti = getBtiRegister(llvmPtr);
+    Value *ptrBase = getPointerBase(llvmPtr);
+    ir::Register baseReg = this->getRegister(ptrBase);
+    bool zeroBase = false;
+    if (isa<ConstantPointerNull>(ptrBase)) {
+      zeroBase = true;
+    }
+
+    ir::Register btiReg;
+    bool fixedBTI = false;
+    if (isa<ConstantInt>(bti)) {
+      fixedBTI = true;
+      unsigned index = cast<ConstantInt>(bti)->getZExtValue();
+      addrSpace = btiToGen(index);
+      ir::ImmediateIndex immIndex = ctx.newImmediate((uint32_t)index);
+      btiReg = ctx.reg(ir::FAMILY_DWORD);
+      ctx.LOADI(ir::TYPE_U32, btiReg, immIndex);
+    } else {
+      addrSpace = ir::MEM_MIXED;
+      btiReg = this->getRegister(bti);
+    }
 
     Type *scalarType = llvmType;
     if (!isScalarType(llvmType)) {
@@ -3749,11 +4114,20 @@ namespace gbe
       scalarType = vectorType->getElementType();
     }
 
+    ir::Register ptr = ctx.reg(pointerFamily);
+    // FIXME: avoid subtraction zero at this stage is not a good idea,
+    // but later ArgumentLower pass need to match exact load/addImm pattern
+    // so, I avoid subtracting zero base to satisfy ArgumentLower pass.
+    if (!zeroBase)
+      ctx.SUB(ir::TYPE_U32, ptr, pointer, baseReg);
+    else
+      ptr = pointer;
+
     if (!dwAligned
        && (scalarType == IntegerType::get(I.getContext(), 64)
           || scalarType == IntegerType::get(I.getContext(), 32))
        ) {
-      emitUnalignedDQLoadStore(llvmPtr, llvmValues, addrSpace, binding, isLoad, dwAligned);
+      emitUnalignedDQLoadStore(ptr, llvmValues, addrSpace, btiReg, isLoad, dwAligned, fixedBTI);
       return;
     }
     // Scalar is easy. We neednot build register tuples
@@ -3761,9 +4135,9 @@ namespace gbe
       const ir::Type type = getType(ctx, llvmType);
       const ir::Register values = this->getRegister(llvmValues);
       if (isLoad)
-        ctx.LOAD(type, ptr, addrSpace, dwAligned, binding, values);
+        ctx.LOAD(type, ptr, addrSpace, dwAligned, fixedBTI, btiReg, values);
       else
-        ctx.STORE(type, ptr, addrSpace, dwAligned, binding, values);
+        ctx.STORE(type, ptr, addrSpace, dwAligned, fixedBTI, btiReg, values);
     }
     // A vector type requires to build a tuple
     else {
@@ -3785,10 +4159,9 @@ namespace gbe
       // The code is going to be fairly different from types to types (based on
       // size of each vector element)
       const ir::Type type = getType(ctx, elemType);
-      const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
       const ir::RegisterFamily dataFamily = getFamily(type);
 
-      if(dataFamily == ir::FAMILY_DWORD && addrSpace != ir::MEM_CONSTANT && addrSpace != ir::MEM_MIXED) {
+      if(dataFamily == ir::FAMILY_DWORD && addrSpace != ir::MEM_CONSTANT) {
         // One message is enough here. Nothing special to do
         if (elemNum <= 4) {
           // Build the tuple data in the vector
@@ -3807,19 +4180,19 @@ namespace gbe
 
           // Emit the instruction
           if (isLoad)
-            ctx.LOAD(type, tuple, ptr, addrSpace, elemNum, dwAligned, binding);
+            ctx.LOAD(type, tuple, ptr, addrSpace, elemNum, dwAligned, fixedBTI, btiReg);
           else
-            ctx.STORE(type, tuple, ptr, addrSpace, elemNum, dwAligned, binding);
+            ctx.STORE(type, tuple, ptr, addrSpace, elemNum, dwAligned, fixedBTI, btiReg);
         }
         // Not supported by the hardware. So, we split the message and we use
         // strided loads and stores
         else {
-          emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad, binding, dwAligned);
+          emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad, btiReg, dwAligned, fixedBTI);
         }
       }
       else if((dataFamily == ir::FAMILY_WORD && (isLoad || elemNum % 2 == 0)) ||
               (dataFamily == ir::FAMILY_BYTE && (isLoad || elemNum % 4 == 0))) {
-          emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad, binding, dwAligned);
+          emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad, btiReg, dwAligned, fixedBTI);
       } else {
         for (uint32_t elemID = 0; elemID < elemNum; elemID++) {
           if(regTranslator.isUndefConst(llvmValues, elemID))
@@ -3839,9 +4212,9 @@ namespace gbe
               ctx.ADD(ir::TYPE_S32, addr, ptr, offset);
           }
           if (isLoad)
-           ctx.LOAD(type, addr, addrSpace, dwAligned, binding, reg);
+           ctx.LOAD(type, addr, addrSpace, dwAligned, fixedBTI, btiReg, reg);
           else
-           ctx.STORE(type, addr, addrSpace, dwAligned, binding, reg);
+           ctx.STORE(type, addr, addrSpace, dwAligned, fixedBTI, btiReg, reg);
         }
       }
     }

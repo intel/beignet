@@ -99,8 +99,8 @@ static const struct {
   [GEN_OPCODE_CMP] = { .name = "cmp", .nsrc = 2, .ndst = 1 },
   [GEN_OPCODE_CMPN] = { .name = "cmpn", .nsrc = 2, .ndst = 1 },
 
-  [GEN_OPCODE_SEND] = { .name = "send", .nsrc = 1, .ndst = 1 },
-  [GEN_OPCODE_SENDC] = { .name = "sendc", .nsrc = 1, .ndst = 1 },
+  [GEN_OPCODE_SEND] = { .name = "send", .nsrc = 2, .ndst = 1 },
+  [GEN_OPCODE_SENDC] = { .name = "sendc", .nsrc = 2, .ndst = 1 },
   [GEN_OPCODE_NOP] = { .name = "nop", .nsrc = 0, .ndst = 0 },
   [GEN_OPCODE_JMPI] = { .name = "jmpi", .nsrc = 0, .ndst = 0 },
   [GEN_OPCODE_BRD] = { .name = "brd", .nsrc = 0, .ndst = 0 },
@@ -1258,59 +1258,61 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
                      target, &space);
     }
 
-    switch (target) {
-      case GEN_SFID_SAMPLER:
-        format(file, " (%d, %d, %d, %d)",
-               SAMPLE_BTI(inst),
-               SAMPLER(inst),
-               SAMPLER_MSG_TYPE(inst),
-               SAMPLER_SIMD_MODE(inst));
-        break;
-      case GEN_SFID_DATAPORT_DATA:
-        if(UNTYPED_RW_CATEGORY(inst) == 0) {
+    if (GEN_BITS_FIELD2(inst, bits1.da1.src1_reg_file, bits2.da1.src1_reg_file) == GEN_IMMEDIATE_VALUE) {
+      switch (target) {
+        case GEN_SFID_SAMPLER:
+          format(file, " (%d, %d, %d, %d)",
+                 SAMPLE_BTI(inst),
+                 SAMPLER(inst),
+                 SAMPLER_MSG_TYPE(inst),
+                 SAMPLER_SIMD_MODE(inst));
+          break;
+        case GEN_SFID_DATAPORT_DATA:
+          if(UNTYPED_RW_CATEGORY(inst) == 0) {
+            format(file, " (bti: %d, rgba: %d, %s, %s, %s)",
+                   UNTYPED_RW_BTI(inst),
+                   UNTYPED_RW_RGBA(inst),
+                   data_port_data_cache_simd_mode[UNTYPED_RW_SIMD_MODE(inst)],
+                   data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
+                   data_port_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
+          } else {
+            format(file, " (addr: %d, blocks: %s, %s, mode: %s, %s)",
+                   SCRATCH_RW_OFFSET(inst),
+                   data_port_scratch_block_size[SCRATCH_RW_BLOCK_SIZE(inst)],
+                   data_port_scratch_invalidate[SCRATCH_RW_INVALIDATE_AFTER_READ(inst)],
+                   data_port_scratch_channel_mode[SCRATCH_RW_CHANNEL_MODE(inst)],
+                   data_port_scratch_msg_type[SCRATCH_RW_MSG_TYPE(inst)]);
+          }
+          break;
+        case GEN_SFID_DATAPORT1_DATA:
           format(file, " (bti: %d, rgba: %d, %s, %s, %s)",
                  UNTYPED_RW_BTI(inst),
                  UNTYPED_RW_RGBA(inst),
                  data_port_data_cache_simd_mode[UNTYPED_RW_SIMD_MODE(inst)],
                  data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
-                 data_port_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
-        } else {
-          format(file, " (addr: %d, blocks: %s, %s, mode: %s, %s)",
-                 SCRATCH_RW_OFFSET(inst),
-                 data_port_scratch_block_size[SCRATCH_RW_BLOCK_SIZE(inst)],
-                 data_port_scratch_invalidate[SCRATCH_RW_INVALIDATE_AFTER_READ(inst)],
-                 data_port_scratch_channel_mode[SCRATCH_RW_CHANNEL_MODE(inst)],
-                 data_port_scratch_msg_type[SCRATCH_RW_MSG_TYPE(inst)]);
-        }
-        break;
-      case GEN_SFID_DATAPORT1_DATA:
-        format(file, " (bti: %d, rgba: %d, %s, %s, %s)",
-               UNTYPED_RW_BTI(inst),
-               UNTYPED_RW_RGBA(inst),
-               data_port_data_cache_simd_mode[UNTYPED_RW_SIMD_MODE(inst)],
-               data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
-               data_port1_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
-        break;
-      case GEN_SFID_DATAPORT_CONSTANT:
-        format(file, " (bti: %d, %s)",
-               DWORD_RW_BTI(inst),
-               data_port_data_cache_msg_type[DWORD_RW_MSG_TYPE(inst)]);
-        break;
-      case GEN_SFID_MESSAGE_GATEWAY:
-        format(file, " (subfunc: %s, notify: %d, ackreq: %d)",
-               gateway_sub_function[MSG_GW_SUBFUNC(inst)],
-               MSG_GW_NOTIFY(inst),
-               MSG_GW_ACKREQ(inst));
-        break;
+                 data_port1_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
+          break;
+        case GEN_SFID_DATAPORT_CONSTANT:
+          format(file, " (bti: %d, %s)",
+                 DWORD_RW_BTI(inst),
+                 data_port_data_cache_msg_type[DWORD_RW_MSG_TYPE(inst)]);
+          break;
+        case GEN_SFID_MESSAGE_GATEWAY:
+          format(file, " (subfunc: %s, notify: %d, ackreq: %d)",
+                 gateway_sub_function[MSG_GW_SUBFUNC(inst)],
+                 MSG_GW_NOTIFY(inst),
+                 MSG_GW_ACKREQ(inst));
+          break;
 
-      default:
-        format(file, "unsupported target %d", target);
-        break;
+        default:
+          format(file, "unsupported target %d", target);
+          break;
+      }
+      if (space)
+        string(file, " ");
+      format(file, "mlen %d", GENERIC_MSG_LENGTH(inst));
+      format(file, " rlen %d", GENERIC_RESPONSE_LENGTH(inst));
     }
-    if (space)
-      string(file, " ");
-    format(file, "mlen %d", GENERIC_MSG_LENGTH(inst));
-    format(file, " rlen %d", GENERIC_RESPONSE_LENGTH(inst));
   }
   pad(file, 64);
   if (OPCODE(inst) != GEN_OPCODE_NOP) {

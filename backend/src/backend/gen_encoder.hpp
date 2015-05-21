@@ -169,15 +169,15 @@ namespace gbe
     /*! Wait instruction (used for the barrier) */
     void WAIT(void);
     /*! Atomic instructions */
-    virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, uint32_t bti, uint32_t srcNum);
+    virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum);
     /*! Untyped read (upto 4 channels) */
-    virtual void UNTYPED_READ(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum);
+    virtual void UNTYPED_READ(GenRegister dst, GenRegister src, GenRegister bti, uint32_t elemNum);
     /*! Untyped write (upto 4 channels) */
-    virtual void UNTYPED_WRITE(GenRegister src, uint32_t bti, uint32_t elemNum);
+    virtual void UNTYPED_WRITE(GenRegister src, GenRegister bti, uint32_t elemNum);
     /*! Byte gather (for unaligned bytes, shorts and ints) */
-    void BYTE_GATHER(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemSize);
+    void BYTE_GATHER(GenRegister dst, GenRegister src, GenRegister bti, uint32_t elemSize);
     /*! Byte scatter (for unaligned bytes, shorts and ints) */
-    void BYTE_SCATTER(GenRegister src, uint32_t bti, uint32_t elemSize);
+    void BYTE_SCATTER(GenRegister src, GenRegister bti, uint32_t elemSize);
     /*! DWord gather (for constant cache read) */
     void DWORD_GATHER(GenRegister dst, GenRegister src, uint32_t bti);
     /*! for scratch memory read */
@@ -230,6 +230,18 @@ namespace gbe
     void setMessageDescriptor(GenNativeInstruction *inst, enum GenMessageTarget sfid,
                               unsigned msg_length, unsigned response_length,
                               bool header_present = false, bool end_of_thread = false);
+    virtual unsigned setAtomicMessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum);
+    virtual unsigned setUntypedReadMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
+    virtual unsigned setUntypedWriteMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
+    unsigned setByteGatherMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemSize);
+    unsigned setByteScatterMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemSize);
+
+    unsigned generateAtomicMessageDesc(unsigned function, unsigned bti, unsigned srcNum);
+    unsigned generateUntypedReadMessageDesc(unsigned bti, unsigned elemNum);
+    unsigned generateUntypedWriteMessageDesc(unsigned bti, unsigned elemNum);
+    unsigned generateByteGatherMessageDesc(unsigned bti, unsigned elemSize);
+    unsigned generateByteScatterMessageDesc(unsigned bti, unsigned elemSize);
+
     virtual void setHeader(GenNativeInstruction *insn) = 0;
     virtual void setDst(GenNativeInstruction *insn, GenRegister dest) = 0;
     virtual void setSrc0(GenNativeInstruction *insn, GenRegister reg) = 0;

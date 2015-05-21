@@ -84,10 +84,9 @@ namespace gbe
       GenRegister::ud8grf(ir::ocl::stackptr) :
       GenRegister::ud16grf(ir::ocl::stackptr);
     const GenRegister stackptr = ra->genReg(selStatckPtr);
-    const GenRegister selStackBuffer = GenRegister::ud1grf(ir::ocl::stackbuffer);
-    const GenRegister bufferptr = ra->genReg(selStackBuffer);
 
     // We compute the per-lane stack pointer here
+    // private address start from zero
     p->push();
       p->curr.execWidth = 1;
       p->curr.predicate = GEN_PREDICATE_NONE;
@@ -102,7 +101,6 @@ namespace gbe
       p->ADD(GenRegister::ud1grf(126,0), GenRegister::ud1grf(126,0), GenRegister::ud1grf(126, 4));
       p->SHL(GenRegister::ud1grf(126,0), GenRegister::ud1grf(126,0), GenRegister::immud(perThreadShift));
       p->curr.execWidth = this->simdWidth;
-      p->ADD(stackptr, stackptr, bufferptr);
       p->ADD(stackptr, stackptr, GenRegister::ud1grf(126,0));
     p->pop();
   }

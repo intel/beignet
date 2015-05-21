@@ -48,15 +48,18 @@ namespace gbe
     virtual int getDoubleExecWidth(void) { return GEN75_DOUBLE_EXEC_WIDTH; }
     virtual void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
     virtual void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);
-    virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, uint32_t bti, uint32_t srcNum);
-    virtual void UNTYPED_READ(GenRegister dst, GenRegister src, uint32_t bti, uint32_t elemNum);
-    virtual void UNTYPED_WRITE(GenRegister src, uint32_t bti, uint32_t elemNum);
+    virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum);
+    virtual void UNTYPED_READ(GenRegister dst, GenRegister src, GenRegister bti, uint32_t elemNum);
+    virtual void UNTYPED_WRITE(GenRegister src, GenRegister bti, uint32_t elemNum);
     virtual void setHeader(GenNativeInstruction *insn);
     virtual void setDPUntypedRW(GenNativeInstruction *insn, uint32_t bti, uint32_t rgba,
                    uint32_t msg_type, uint32_t msg_length, uint32_t response_length);
     virtual void setTypedWriteMessage(GenNativeInstruction *insn, unsigned char bti,
                                       unsigned char msg_type, uint32_t msg_length,
                                       bool header_present);
+    virtual unsigned setAtomicMessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum);
+    virtual unsigned setUntypedReadMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
+    virtual unsigned setUntypedWriteMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
   };
 }
 #endif /* __GBE_GEN75_ENCODER_HPP__ */

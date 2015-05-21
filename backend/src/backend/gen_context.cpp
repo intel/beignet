@@ -192,10 +192,10 @@ namespace gbe
       GenRegister::ud8grf(ir::ocl::stackptr) :
       GenRegister::ud16grf(ir::ocl::stackptr);
     const GenRegister stackptr = ra->genReg(selStatckPtr);
-    const GenRegister selStackBuffer = GenRegister::ud1grf(ir::ocl::stackbuffer);
-    const GenRegister bufferptr = ra->genReg(selStackBuffer);
 
     // We compute the per-lane stack pointer here
+    // threadId * perThreadSize + laneId*perLaneSize
+    // let private address start from zero
     p->push();
       p->curr.execWidth = 1;
       p->curr.predicate = GEN_PREDICATE_NONE;
@@ -205,7 +205,6 @@ namespace gbe
       p->curr.execWidth = 1;
       p->SHL(GenRegister::ud1grf(126,0), GenRegister::ud1grf(126,0), GenRegister::immud(perThreadShift));
       p->curr.execWidth = this->simdWidth;
-      p->ADD(stackptr, stackptr, bufferptr);
       p->ADD(stackptr, stackptr, GenRegister::ud1grf(126,0));
     p->pop();
   }
@@ -1721,9 +1720,25 @@ namespace gbe
     const GenRegister src = ra->genReg(insn.src(0));
     const GenRegister dst = ra->genReg(insn.dst(0));
     const uint32_t function = insn.extra.function;
-    const uint32_t bti = insn.getbti();
+    unsigned srcNum = insn.extra.elem;
 
-    p->ATOMIC(dst, function, src, bti, insn.srcNum);
+    const GenRegister bti = ra->genReg(insn.src(srcNum));
+
+    if (bti.file == GEN_IMMEDIATE_VALUE) {
+      p->ATOMIC(dst, function, src, bti, srcNum);
+    } else {
+      GenRegister flagTemp = ra->genReg(insn.dst(1));
+
+      unsigned desc = p->generateAtomicMessageDesc(function, 0, srcNum);
+
+      unsigned jip0 = beforeMessage(insn, bti, flagTemp, desc);
+      p->push();
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.useFlag(insn.state.flag, insn.state.subFlag);
+        p->ATOMIC(dst, function, src, GenRegister::addr1(0), srcNum);
+      p->pop();
+      afterMessage(insn, bti, flagTemp, jip0);
+    }
   }
 
   void GenContext::emitIndirectMoveInstruction(const SelectionInstruction &insn) {
@@ -1855,48 +1870,188 @@ namespace gbe
   }
 
   void GenContext::emitRead64Instruction(const SelectionInstruction &insn) {
-    const uint32_t elemNum = insn.extra.elem;
+    const uint32_t elemNum = insn.extra.elem * 2;
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src = ra->genReg(insn.src(0));
-    const uint32_t bti = insn.getbti();
-    p->UNTYPED_READ(dst, src, bti, elemNum*2);
+    const GenRegister bti = ra->genReg(insn.src(1));
+
+    if (bti.file == GEN_IMMEDIATE_VALUE) {
+      p->UNTYPED_READ(dst, src, bti, elemNum);
+    } else {
+      const GenRegister tmp = ra->genReg(insn.dst(elemNum));
+      unsigned desc = p->generateUntypedReadMessageDesc(0, elemNum);
+
+      unsigned jip0 = beforeMessage(insn, bti, tmp, desc);
+
+      //predicated load
+      p->push();
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.useFlag(insn.state.flag, insn.state.subFlag);
+        p->UNTYPED_READ(dst, src, GenRegister::retype(GenRegister::addr1(0), GEN_TYPE_UD), elemNum);
+      p->pop();
+      afterMessage(insn, bti, tmp, jip0);
+    }
+  }
+  unsigned GenContext::beforeMessage(const SelectionInstruction &insn, GenRegister bti, GenRegister tmp, unsigned desc) {
+      const GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
+      setFlag(flagReg, GenRegister::immuw(0));
+      p->CMP(GEN_CONDITIONAL_NZ, flagReg, GenRegister::immuw(1));
+
+      GenRegister btiUD = ra->genReg(GenRegister::ud1grf(ir::ocl::btiUtil));
+      GenRegister btiUW = ra->genReg(GenRegister::uw1grf(ir::ocl::btiUtil));
+      GenRegister btiUB = ra->genReg(GenRegister::ub1grf(ir::ocl::btiUtil));
+      unsigned jip0 = p->n_instruction();
+      p->push();
+        p->curr.execWidth = 1;
+        p->curr.noMask = 1;
+        p->AND(btiUD, flagReg, GenRegister::immud(0xffffffff));
+        p->LZD(btiUD, btiUD);
+        p->ADD(btiUW, GenRegister::negate(btiUW), GenRegister::immuw(0x1f));
+        p->MUL(btiUW, btiUW, GenRegister::immuw(0x4));
+        p->ADD(GenRegister::addr1(0), btiUW, GenRegister::immud(bti.nr*32));
+        p->MOV(btiUD, GenRegister::indirect(GEN_TYPE_UD, 0, GEN_WIDTH_1, GEN_VERTICAL_STRIDE_ONE_DIMENSIONAL, GEN_HORIZONTAL_STRIDE_0));
+        //save flag
+        p->MOV(tmp, flagReg);
+      p->pop();
+
+      p->CMP(GEN_CONDITIONAL_Z, bti, btiUD);
+      p->push();
+        p->curr.execWidth = 1;
+        p->curr.noMask = 1;
+        p->OR(GenRegister::retype(GenRegister::addr1(0), GEN_TYPE_UD), btiUB, GenRegister::immud(desc));
+      p->pop();
+      return jip0;
+  }
+  void GenContext::afterMessage(const SelectionInstruction &insn, GenRegister bti, GenRegister tmp, unsigned jip0) {
+    const GenRegister btiUD = ra->genReg(GenRegister::ud1grf(ir::ocl::btiUtil));
+      //restore flag
+      setFlag(GenRegister::flag(insn.state.flag, insn.state.subFlag), tmp);
+      // get active channel
+      p->push();
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.useFlag(insn.state.flag, insn.state.subFlag);
+        p->CMP(GEN_CONDITIONAL_NZ, bti, btiUD);
+        unsigned jip1 = p->n_instruction();
+        p->WHILE(GenRegister::immud(0));
+      p->pop();
+      p->patchJMPI(jip1, jip0 - jip1, 0);
   }
 
   void GenContext::emitUntypedReadInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src = ra->genReg(insn.src(0));
-    const uint32_t bti = insn.getbti();
+    const GenRegister bti = ra->genReg(insn.src(1));
+
     const uint32_t elemNum = insn.extra.elem;
-    p->UNTYPED_READ(dst, src, bti, elemNum);
+    if (bti.file == GEN_IMMEDIATE_VALUE) {
+      p->UNTYPED_READ(dst, src, bti, elemNum);
+    } else {
+      const GenRegister tmp = ra->genReg(insn.dst(elemNum));
+      unsigned desc = p->generateUntypedReadMessageDesc(0, elemNum);
+
+      unsigned jip0 = beforeMessage(insn, bti, tmp, desc);
+
+      //predicated load
+      p->push();
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.useFlag(insn.state.flag, insn.state.subFlag);
+        p->UNTYPED_READ(dst, src, GenRegister::retype(GenRegister::addr1(0), GEN_TYPE_UD), elemNum);
+      p->pop();
+      afterMessage(insn, bti, tmp, jip0);
+    }
   }
 
   void GenContext::emitWrite64Instruction(const SelectionInstruction &insn) {
     const GenRegister src = ra->genReg(insn.dst(0));
     const uint32_t elemNum = insn.extra.elem;
-    const uint32_t bti = insn.getbti();
-    p->UNTYPED_WRITE(src, bti, elemNum*2);
+    const GenRegister bti = ra->genReg(insn.src(elemNum+1));
+
+    if (bti.file == GEN_IMMEDIATE_VALUE) {
+      p->UNTYPED_WRITE(src, bti, elemNum*2);
+    } else {
+      const GenRegister tmp = ra->genReg(insn.dst(0));
+      unsigned desc = p->generateUntypedWriteMessageDesc(0, elemNum*2);
+
+      unsigned jip0 = beforeMessage(insn, bti, tmp, desc);
+
+      //predicated load
+      p->push();
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.useFlag(insn.state.flag, insn.state.subFlag);
+        p->UNTYPED_WRITE(src, GenRegister::addr1(0), elemNum*2);
+      p->pop();
+      afterMessage(insn, bti, tmp, jip0);
+    }
   }
 
   void GenContext::emitUntypedWriteInstruction(const SelectionInstruction &insn) {
     const GenRegister src = ra->genReg(insn.src(0));
-    const uint32_t bti = insn.getbti();
     const uint32_t elemNum = insn.extra.elem;
-    p->UNTYPED_WRITE(src, bti, elemNum);
+    const GenRegister bti = ra->genReg(insn.src(elemNum+1));
+    if (bti.file == GEN_IMMEDIATE_VALUE) {
+      p->UNTYPED_WRITE(src, bti, elemNum);
+    } else {
+      const GenRegister tmp = ra->genReg(insn.dst(0));
+      unsigned desc = p->generateUntypedWriteMessageDesc(0, elemNum);
+
+      unsigned jip0 = beforeMessage(insn, bti, tmp, desc);
+
+      //predicated load
+      p->push();
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.useFlag(insn.state.flag, insn.state.subFlag);
+        p->UNTYPED_WRITE(src, GenRegister::addr1(0), elemNum);
+      p->pop();
+      afterMessage(insn, bti, tmp, jip0);
+    }
   }
 
   void GenContext::emitByteGatherInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src = ra->genReg(insn.src(0));
-    const uint32_t bti = insn.getbti();
+    const GenRegister bti = ra->genReg(insn.src(1));
     const uint32_t elemSize = insn.extra.elem;
-    p->BYTE_GATHER(dst, src, bti, elemSize);
+
+    if (bti.file == GEN_IMMEDIATE_VALUE) {
+      p->BYTE_GATHER(dst, src, bti, elemSize);
+    } else {
+      const GenRegister tmp = ra->genReg(insn.dst(1));
+      unsigned desc = p->generateByteGatherMessageDesc(0, elemSize);
+
+      unsigned jip0 = beforeMessage(insn, bti, tmp, desc);
+
+      //predicated load
+      p->push();
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.useFlag(insn.state.flag, insn.state.subFlag);
+        p->BYTE_GATHER(dst, src, GenRegister::addr1(0), elemSize);
+      p->pop();
+      afterMessage(insn, bti, tmp, jip0);
+    }
   }
 
   void GenContext::emitByteScatterInstruction(const SelectionInstruction &insn) {
     const GenRegister src = ra->genReg(insn.src(0));
-    const uint32_t bti = insn.getbti();
     const uint32_t elemSize = insn.extra.elem;
-    p->BYTE_SCATTER(src, bti, elemSize);
+    const GenRegister bti = ra->genReg(insn.src(2));
+
+    if (bti.file == GEN_IMMEDIATE_VALUE) {
+      p->BYTE_SCATTER(src, bti, elemSize);
+    } else {
+      const GenRegister tmp = ra->genReg(insn.dst(0));
+      unsigned desc = p->generateByteScatterMessageDesc(0, elemSize);
+
+      unsigned jip0 = beforeMessage(insn, bti, tmp, desc);
+
+      //predicated load
+      p->push();
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.useFlag(insn.state.flag, insn.state.subFlag);
+        p->BYTE_SCATTER(src, GenRegister::addr1(0), elemSize);
+      p->pop();
+      afterMessage(insn, bti, tmp, jip0);
+    }
+
   }
 
   void GenContext::emitUnpackByteInstruction(const SelectionInstruction &insn) {
@@ -2032,6 +2187,7 @@ namespace gbe
     allocCurbeReg(lid2, GBE_CURBE_LOCAL_ID_Z);
     allocCurbeReg(zero, GBE_CURBE_ZERO);
     allocCurbeReg(one, GBE_CURBE_ONE);
+    allocCurbeReg(btiUtil, GBE_CURBE_BTI_UTIL);
     if (stackUse.size() != 0)
       allocCurbeReg(stackbuffer, GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER);
     // Go over the arguments and find the related patch locations

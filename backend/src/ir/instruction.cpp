@@ -318,14 +318,14 @@ namespace ir {
 
     class ALIGNED_INSTRUCTION AtomicInstruction :
       public BasePolicy,
-      public TupleSrcPolicy<AtomicInstruction>,
       public NDstPolicy<AtomicInstruction, 1>
     {
     public:
       AtomicInstruction(AtomicOps atomicOp,
                          Register dst,
                          AddressSpace addrSpace,
-                         BTI bti,
+                         Register bti,
+                         bool fixedBTI,
                          Tuple src)
       {
         this->opcode = OP_ATOMIC;
@@ -334,23 +334,43 @@ namespace ir {
         this->src = src;
         this->addrSpace = addrSpace;
         this->bti = bti;
+        this->fixedBTI = fixedBTI ? 1: 0;
         srcNum = 2;
         if((atomicOp == ATOMIC_OP_INC) ||
           (atomicOp == ATOMIC_OP_DEC))
           srcNum = 1;
         if(atomicOp == ATOMIC_OP_CMPXCHG)
           srcNum = 3;
+        srcNum++;
       }
+      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
+        GBE_ASSERTM(ID < srcNum, "Out-of-bound source register for atomic");
+        if (ID == 0u)
+          return bti;
+        else
+          return fn.getRegister(src, ID -1);
+      }
+      INLINE void setSrc(Function &fn, uint32_t ID, Register reg) {
+        GBE_ASSERTM(ID < srcNum, "Out-of-bound source register for atomic");
+        if (ID == 0u)
+          bti = reg;
+        else
+          fn.setRegister(src, ID - 1, reg);
+      }
+      INLINE uint32_t getSrcNum(void) const { return srcNum; }
+
       INLINE AddressSpace getAddressSpace(void) const { return this->addrSpace; }
-      INLINE BTI getBTI(void) const { return bti; }
+      INLINE Register getBTI(void) const { return bti; }
+      INLINE bool isFixedBTI(void) const { return !!fixedBTI; }
       INLINE AtomicOps getAtomicOpcode(void) const { return this->atomicOp; }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
       Register dst[1];
       Tuple src;
       AddressSpace addrSpace; //!< Address space
-      BTI bti;               //!< bti
-      uint8_t srcNum:2;     //!<Source Number
+      Register bti;               //!< bti
+      uint8_t fixedBTI:1;      //!< fixed bti or not
+      uint8_t srcNum:3;     //!<Source Number
       AtomicOps atomicOp:6;     //!<Source Number
     };
 
@@ -410,7 +430,7 @@ namespace ir {
 
     class ALIGNED_INSTRUCTION LoadInstruction :
       public BasePolicy,
-      public NSrcPolicy<LoadInstruction, 1>
+      public NSrcPolicy<LoadInstruction, 2>
     {
     public:
       LoadInstruction(Type type,
@@ -419,7 +439,8 @@ namespace ir {
                       AddressSpace addrSpace,
                       uint32_t valueNum,
                       bool dwAligned,
-                      BTI bti)
+                      bool fixedBTI,
+                      Register bti)
       {
         GBE_ASSERT(valueNum < 128);
         this->opcode = OP_LOAD;
@@ -429,6 +450,7 @@ namespace ir {
         this->addrSpace = addrSpace;
         this->valueNum = valueNum;
         this->dwAligned = dwAligned ? 1 : 0;
+        this->fixedBTI = fixedBTI ? 1 : 0;
         this->bti = bti;
       }
       INLINE Register getDst(const Function &fn, uint32_t ID) const {
@@ -443,16 +465,18 @@ namespace ir {
       INLINE Type getValueType(void) const { return type; }
       INLINE uint32_t getValueNum(void) const { return valueNum; }
       INLINE AddressSpace getAddressSpace(void) const { return addrSpace; }
-      INLINE BTI getBTI(void) const { return bti; }
+      INLINE Register getBTI(void) const { return bti; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
       INLINE bool isAligned(void) const { return !!dwAligned; }
+      INLINE bool isFixedBTI(void) const { return !!fixedBTI; }
       Type type;              //!< Type to store
       Register src[0];        //!< Address where to load from
+      Register bti;
       Register offset;        //!< Alias to make it similar to store
       Tuple values;           //!< Values to load
       AddressSpace addrSpace; //!< Where to load
-      BTI bti;
+      uint8_t fixedBTI:1;
       uint8_t valueNum:7;     //!< Number of values to load
       uint8_t dwAligned:1;    //!< DWORD aligned is what matters with GEN
     };
@@ -467,7 +491,8 @@ namespace ir {
                        AddressSpace addrSpace,
                        uint32_t valueNum,
                        bool dwAligned,
-                       BTI bti)
+                       bool fixedBTI,
+                       Register bti)
       {
         GBE_ASSERT(valueNum < 255);
         this->opcode = OP_STORE;
@@ -477,35 +502,42 @@ namespace ir {
         this->addrSpace = addrSpace;
         this->valueNum = valueNum;
         this->dwAligned = dwAligned ? 1 : 0;
+        this->fixedBTI = fixedBTI ? 1 : 0;
         this->bti = bti;
       }
       INLINE Register getSrc(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID < valueNum + 1u, "Out-of-bound source register for store");
+        GBE_ASSERTM(ID < valueNum + 2u, "Out-of-bound source register for store");
         if (ID == 0u)
+          return bti;
+        else if (ID == 1u)
           return offset;
         else
-          return fn.getRegister(values, ID - 1);
+          return fn.getRegister(values, ID - 2);
       }
       INLINE void setSrc(Function &fn, uint32_t ID, Register reg) {
-        GBE_ASSERTM(ID < valueNum + 1u, "Out-of-bound source register for store");
+        GBE_ASSERTM(ID < valueNum + 2u, "Out-of-bound source register for store");
         if (ID == 0u)
+          bti = reg;
+        else if (ID == 1u)
           offset = reg;
         else
-          fn.setRegister(values, ID - 1, reg);
+          fn.setRegister(values, ID - 2, reg);
       }
-      INLINE uint32_t getSrcNum(void) const { return valueNum + 1u; }
+      INLINE uint32_t getSrcNum(void) const { return valueNum + 2u; }
       INLINE uint32_t getValueNum(void) const { return valueNum; }
       INLINE Type getValueType(void) const { return type; }
       INLINE AddressSpace getAddressSpace(void) const { return addrSpace; }
-      INLINE BTI getBTI(void) const { return bti; }
+      INLINE Register getBTI(void) const { return bti; }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
       INLINE bool isAligned(void) const { return !!dwAligned; }
+      INLINE bool isFixedBTI(void) const { return !!fixedBTI; }
       Type type;              //!< Type to store
+      Register bti;
       Register offset;        //!< First source is the offset where to store
       Tuple values;           //!< Values to store
       AddressSpace addrSpace; //!< Where to store
-      BTI bti;                //!< Which btis need access
+      uint8_t fixedBTI:1;                //!< Which btis need access
       uint8_t valueNum:7;     //!< Number of values to store
       uint8_t dwAligned:1;    //!< DWORD aligned is what matters with GEN
       Register dst[0];        //!< No destination
@@ -985,10 +1017,12 @@ namespace ir {
         return false;
       if (UNLIKELY(checkRegisterData(FAMILY_DWORD, dst[0], fn, whyNot) == false))
         return false;
-      for (uint32_t srcID = 0; srcID < srcNum; ++srcID)
-        if (UNLIKELY(checkRegisterData(FAMILY_DWORD, getSrc(fn, srcID), fn, whyNot) == false))
+      for (uint32_t srcID = 0; srcID < srcNum-1u; ++srcID)
+        if (UNLIKELY(checkRegisterData(FAMILY_DWORD, getSrc(fn, srcID+1u), fn, whyNot) == false))
           return false;
 
+      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, bti, fn, whyNot) == false))
+        return false;
       return true;
     }
 
@@ -1199,12 +1233,10 @@ namespace ir {
       this->outOpcode(out);
       out << "." << addrSpace;
       out << " %" << this->getDst(fn, 0);
-      out << " {" << "%" << this->getSrc(fn, 0) << "}";
-      for (uint32_t i = 1; i < srcNum; ++i)
+      out << " {" << "%" << this->getSrc(fn, 1) << "}";
+      for (uint32_t i = 2; i < srcNum; ++i)
         out << " %" << this->getSrc(fn, i);
-      out << " bti";
-      for (uint32_t i = 0; i < bti.count; ++i)
-        out << ": " << (int)bti.bti[i];
+      out <<  (fixedBTI ? " bti" : " bti(mixed)") << " %" << this->getBTI();
     }
 
 
@@ -1238,22 +1270,18 @@ namespace ir {
       for (uint32_t i = 0; i < valueNum; ++i)
         out << "%" << this->getDst(fn, i) << (i != (valueNum-1u) ? " " : "");
       out << "}";
-      out << " %" << this->getSrc(fn, 0);
-      out << " bti";
-      for (uint32_t i = 0; i < bti.count; ++i)
-        out << ": " << (int)bti.bti[i];
+      out << " %" << this->getSrc(fn, 1);
+      out << (fixedBTI ? " bti" : " bti(mixed)") << " %" << this->getBTI();
     }
 
     INLINE void StoreInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
       out << "." << type << "." << addrSpace << (dwAligned ? "." : ".un") << "aligned";
-      out << " %" << this->getSrc(fn, 0) << " {";
+      out << " %" << this->getSrc(fn, 1) << " {";
       for (uint32_t i = 0; i < valueNum; ++i)
-        out << "%" << this->getSrc(fn, i+1) << (i != (valueNum-1u) ? " " : "");
+        out << "%" << this->getSrc(fn, i+2) << (i != (valueNum-1u) ? " " : "");
       out << "}";
-      out << " bti";
-      for (uint32_t i = 0; i < bti.count; ++i)
-        out << ": " << (int)bti.bti[i];
+      out <<  (fixedBTI ? " bti" : " bti(mixed)") << " %" << this->getBTI();
     }
 
     INLINE void ReadARFInstruction::out(std::ostream &out, const Function &fn) const {
@@ -1604,18 +1632,18 @@ DECL_MEM_FN(BitCastInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(ConvertInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(ConvertInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(AtomicInstruction, AddressSpace, getAddressSpace(void), getAddressSpace())
-DECL_MEM_FN(AtomicInstruction, BTI, getBTI(void), getBTI())
 DECL_MEM_FN(AtomicInstruction, AtomicOps, getAtomicOpcode(void), getAtomicOpcode())
+DECL_MEM_FN(AtomicInstruction, bool, isFixedBTI(void), isFixedBTI())
 DECL_MEM_FN(StoreInstruction, Type, getValueType(void), getValueType())
 DECL_MEM_FN(StoreInstruction, uint32_t, getValueNum(void), getValueNum())
 DECL_MEM_FN(StoreInstruction, AddressSpace, getAddressSpace(void), getAddressSpace())
-DECL_MEM_FN(StoreInstruction, BTI, getBTI(void), getBTI())
 DECL_MEM_FN(StoreInstruction, bool, isAligned(void), isAligned())
+DECL_MEM_FN(StoreInstruction, bool, isFixedBTI(void), isFixedBTI())
 DECL_MEM_FN(LoadInstruction, Type, getValueType(void), getValueType())
 DECL_MEM_FN(LoadInstruction, uint32_t, getValueNum(void), getValueNum())
 DECL_MEM_FN(LoadInstruction, AddressSpace, getAddressSpace(void), getAddressSpace())
-DECL_MEM_FN(LoadInstruction, BTI, getBTI(void), getBTI())
 DECL_MEM_FN(LoadInstruction, bool, isAligned(void), isAligned())
+DECL_MEM_FN(LoadInstruction, bool, isFixedBTI(void), isFixedBTI())
 DECL_MEM_FN(LoadImmInstruction, Type, getType(void), getType())
 DECL_MEM_FN(LabelInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
@@ -1782,8 +1810,8 @@ DECL_MEM_FN(GetImageInfoInstruction, uint8_t, getImageIndex(void), getImageIndex
   }
 
   // For all unary functions with given opcode
-  Instruction ATOMIC(AtomicOps atomicOp, Register dst, AddressSpace space, BTI bti, Tuple src) {
-    return internal::AtomicInstruction(atomicOp, dst, space, bti, src).convert();
+  Instruction ATOMIC(AtomicOps atomicOp, Register dst, AddressSpace space, Register bti, bool fixedBTI, Tuple src) {
+    return internal::AtomicInstruction(atomicOp, dst, space, bti, fixedBTI, src).convert();
   }
 
   // BRA
@@ -1831,9 +1859,10 @@ DECL_MEM_FN(GetImageInfoInstruction, uint8_t, getImageIndex(void), getImageIndex
                    AddressSpace space, \
                    uint32_t valueNum, \
                    bool dwAligned, \
-                   BTI bti) \
+                   bool fixedBTI, \
+                   Register bti) \
   { \
-    return internal::CLASS(type,tuple,offset,space,valueNum,dwAligned,bti).convert(); \
+    return internal::CLASS(type,tuple,offset,space,valueNum,dwAligned,fixedBTI,bti).convert(); \
   }
 
   DECL_EMIT_FUNCTION(LOAD, LoadInstruction)

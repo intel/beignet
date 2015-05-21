@@ -817,19 +817,33 @@ namespace gbe
       p->pop();
     }
   }
-
   void Gen8Context::emitRead64Instruction(const SelectionInstruction &insn)
   {
-    const uint32_t bti = insn.getbti();
     const uint32_t elemNum = insn.extra.elem;
     GBE_ASSERT(elemNum == 1);
 
-    const GenRegister addr = ra->genReg(insn.src(0));
-    const GenRegister tmp_dst = ra->genReg(insn.dst(0));
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    const GenRegister src = ra->genReg(insn.src(0));
+    const GenRegister bti = ra->genReg(insn.src(1));
 
     /* Because BDW's store and load send instructions for 64 bits require the bti to be surfaceless,
        which we can not accept. We just fallback to 2 DW untyperead here. */
-    p->UNTYPED_READ(tmp_dst, addr, bti, elemNum*2);
+    if (bti.file == GEN_IMMEDIATE_VALUE) {
+      p->UNTYPED_READ(dst, src, bti, 2*elemNum);
+    } else {
+      const GenRegister tmp = ra->genReg(insn.dst(2*elemNum));
+      unsigned desc = p->generateUntypedReadMessageDesc(0, 2*elemNum);
+
+      unsigned jip0 = beforeMessage(insn, bti, tmp, desc);
+
+      //predicated load
+      p->push();
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.useFlag(insn.state.flag, insn.state.subFlag);
+        p->UNTYPED_READ(dst, src, GenRegister::retype(GenRegister::addr1(0), GEN_TYPE_UD), 2*elemNum);
+      p->pop();
+      afterMessage(insn, bti, tmp, jip0);
+    }
 
     for (uint32_t elemID = 0; elemID < elemNum; elemID++) {
       GenRegister long_tmp = ra->genReg(insn.dst(elemID));
@@ -840,11 +854,10 @@ namespace gbe
 
   void Gen8Context::emitWrite64Instruction(const SelectionInstruction &insn)
   {
-    const uint32_t bti = insn.getbti();
     const uint32_t elemNum = insn.extra.elem;
     GBE_ASSERT(elemNum == 1);
-
     const GenRegister addr = ra->genReg(insn.src(elemNum));
+    const GenRegister bti = ra->genReg(insn.src(elemNum*2+1));
 
     /* Because BDW's store and load send instructions for 64 bits require the bti to be surfaceless,
        which we can not accept. We just fallback to 2 DW untypewrite here. */
@@ -854,9 +867,23 @@ namespace gbe
       this->unpackLongVec(the_long, long_tmp, p->curr.execWidth);
     }
 
-    p->UNTYPED_WRITE(addr, bti, elemNum*2);
-  }
+    if (bti.file == GEN_IMMEDIATE_VALUE) {
+      p->UNTYPED_WRITE(addr, bti, elemNum*2);
+    } else {
+      const GenRegister tmp = ra->genReg(insn.dst(elemNum));
+      unsigned desc = p->generateUntypedWriteMessageDesc(0, elemNum*2);
 
+      unsigned jip0 = beforeMessage(insn, bti, tmp, desc);
+
+      //predicated load
+      p->push();
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.useFlag(insn.state.flag, insn.state.subFlag);
+        p->UNTYPED_WRITE(addr, GenRegister::addr1(0), elemNum*2);
+      p->pop();
+      afterMessage(insn, bti, tmp, jip0);
+    }
+  }
   void Gen8Context::emitPackLongInstruction(const SelectionInstruction &insn) {
     const GenRegister src = ra->genReg(insn.src(0));
     const GenRegister dst = ra->genReg(insn.dst(0));

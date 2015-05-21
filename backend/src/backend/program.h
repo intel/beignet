@@ -103,6 +103,7 @@ enum gbe_curbe_type {
   GBE_CURBE_ONE,
   GBE_CURBE_LANE_ID,
   GBE_CURBE_SLM_OFFSET,
+  GBE_CURBE_BTI_UTIL,
 };
 
 /*! Extra arguments use the negative range of sub-values */

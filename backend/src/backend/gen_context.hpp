@@ -169,6 +169,8 @@ namespace gbe
     virtual void emitI64DIVREMInstruction(const SelectionInstruction &insn);
     void scratchWrite(const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode);
     void scratchRead(const GenRegister dst, const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode);
+    unsigned beforeMessage(const SelectionInstruction &insn, GenRegister bti, GenRegister flagTemp, unsigned desc);
+    void afterMessage(const SelectionInstruction &insn, GenRegister bti, GenRegister flagTemp, unsigned jip0);
 
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);
