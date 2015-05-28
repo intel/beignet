@@ -366,6 +366,9 @@ namespace gbe
     void setLdMsgOrder(uint32_t type)  { ldMsgOrder = type; }
     uint32_t getLdMsgOrder()  const { return ldMsgOrder; }
     /*! indicate whether a register is a scalar/uniform register. */
+    INLINE bool isPartialWrite(const ir::Register &reg) const {
+      return partialWriteRegs.find(reg.value()) != partialWriteRegs.end();
+    }
     INLINE bool isScalarReg(const ir::Register &reg) const {
       const ir::RegisterData &regData = getRegisterData(reg);
       return regData.isUniform();
@@ -386,6 +389,13 @@ namespace gbe
     INLINE GenRegister unpacked_ub(const ir::Register &reg) const {
       return GenRegister::unpacked_ub(reg, isScalarReg(reg));
     }
+
+    INLINE GenRegister getOffsetReg(GenRegister reg, int nr, int subnr, bool isDst = true) {
+      if (isDst)
+        partialWriteRegs.insert(reg.value.reg);
+      return GenRegister::offset(reg, nr, subnr);
+    }
+
     /*! Implement public class */
     INLINE uint32_t getRegNum(void) const { return file.regNum(); }
     /*! Implements public interface */
@@ -478,6 +488,11 @@ namespace gbe
     bool bwdCodeGeneration;
     /*! To make function prototypes more readable */
     typedef const GenRegister &Reg;
+
+    /*! Check for destination register. Major purpose is to find
+        out partially updated dst registers. These registers will
+        be unspillable. */
+    set<uint32_t> partialWriteRegs;
 
 #define ALU1(OP) \
   INLINE void OP(Reg dst, Reg src) { ALU1(SEL_OP_##OP, dst, src); }
@@ -2094,6 +2109,10 @@ namespace gbe
     return this->opaque->isScalarReg(reg);
   }
 
+  bool Selection::isPartialWrite(const ir::Register &reg) const {
+    return this->opaque->isPartialWrite(reg);
+  }
+
   SelectionInstruction *Selection::create(SelectionOpcode opcode, uint32_t dstNum, uint32_t srcNum) {
     return this->opaque->create(opcode, dstNum, srcNum);
   }
@@ -2745,8 +2764,7 @@ namespace gbe
           src0 = GenRegister::retype(sel.unpacked_uw(src0.reg()), GEN_TYPE_B);
           src1 = GenRegister::retype(sel.unpacked_uw(src1.reg()), GEN_TYPE_B);
           sel.MOV(dst, src1);
-          dst.subphysical = 1;
-          dst = dst.offset(dst, 0, typeSize(GEN_TYPE_B));
+          dst = sel.getOffsetReg(dst, 0, typeSize(GEN_TYPE_B));
           sel.MOV(dst, src0);
           break;
         }
@@ -2756,8 +2774,7 @@ namespace gbe
           src0 = sel.unpacked_uw(src0.reg());
           src1 = sel.unpacked_uw(src1.reg());
           sel.MOV(dst, src1);
-          dst.subphysical = 1;
-          dst = dst.offset(dst, 0, typeSize(GEN_TYPE_W));
+          dst = sel.getOffsetReg(dst, 0, typeSize(GEN_TYPE_W));
           sel.MOV(dst, src0);
           break;
         }
@@ -3927,17 +3944,15 @@ namespace gbe
         }
 
         if((!isInt64 || (sel.hasLongType() && multiple != 8)) && index % multiple) {
-          wideReg = GenRegister::offset(wideReg, 0, (index % multiple) * typeSize(wideReg.type));
-          wideReg.subphysical = 1;
+          wideReg = sel.getOffsetReg(wideReg, 0, (index % multiple) * typeSize(wideReg.type));
         }
         if(isInt64 && (multiple == 8 || !sel.hasLongType())) {
-          wideReg.subphysical = 1;
           // Offset to next half
           if((i % multiple) >= multiple/2)
-            wideReg = GenRegister::offset(wideReg, 0, sel.isScalarReg(wideReg.reg()) ? 4 : simdWidth*4);
+            wideReg = sel.getOffsetReg(wideReg, 0, sel.isScalarReg(wideReg.reg()) ? 4 : simdWidth*4);
           // Offset to desired narrow element in wideReg
           if(index % (multiple/2))
-            wideReg = GenRegister::offset(wideReg, 0, (index % (multiple/2)) * typeSize(wideReg.type));
+            wideReg = sel.getOffsetReg(wideReg, 0, (index % (multiple/2)) * typeSize(wideReg.type));
         }
 
         GenRegister xdst = narrowDst ? narrowReg : wideReg;
@@ -3948,13 +3963,11 @@ namespace gbe
         } else if(srcType == TYPE_DOUBLE || dstType == TYPE_DOUBLE) {
           sel.push();
             sel.curr.execWidth = 8;
-            xdst.subphysical = 1;
-            xsrc.subphysical = 1;
             for(int i = 0; i < simdWidth/4; i ++) {
               sel.curr.chooseNib(i);
               sel.MOV(xdst, xsrc);
-              xdst = GenRegister::offset(xdst, 0, 4 * typeSize(getGenType(dstType)));
-              xsrc = GenRegister::offset(xsrc, 0, 4 * typeSize(getGenType(srcType)));
+              xdst = sel.getOffsetReg(xdst, 0, 4 * typeSize(getGenType(dstType)));
+              xsrc = sel.getOffsetReg(xsrc, 0, 4 * typeSize(getGenType(srcType)));
             }
           sel.pop();
         } else
@@ -4705,8 +4718,7 @@ namespace gbe
       sel.MOV(msgs[0], GenRegister::immud(0));
       sel.curr.execWidth = 1;
 
-      GenRegister channelEn = GenRegister::offset(msgs[0], 0, 7*4);
-      channelEn.subphysical = 1;
+      GenRegister channelEn = sel.getOffsetReg(msgs[0], 0, 7*4);
       // Enable all channels.
       sel.MOV(channelEn, GenRegister::immud(0xffff));
       sel.curr.execWidth = 8;
@@ -4822,8 +4834,7 @@ namespace gbe
       GenRegister dst, src;
       dst = sel.selReg(insn.getDst(0), ir::TYPE_U32);
       src = GenRegister::ud1grf(insn.getSrc(0));
-      src.subphysical = 1;
-      src = GenRegister::offset(src, 0, insn.getOffset()*4);
+      src = sel.getOffsetReg(src, 0, insn.getOffset()*4);
 
       sel.push();
         sel.curr.noMask = 1;

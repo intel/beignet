@@ -269,6 +269,7 @@ namespace gbe
       GenRegister r = reg;
       r.nr += nr;
       r.subnr += subnr;
+      r.subphysical = 1;
       return r;
     }
 

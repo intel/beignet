@@ -256,6 +256,8 @@ namespace gbe
     bool spillRegs(const SpilledRegs &spilledRegs, uint32_t registerPool);
     /*! Indicate if a register is scalar or not */
     bool isScalarReg(const ir::Register &reg) const;
+    /*! is this register a partially written register.*/
+    bool isPartialWrite(const ir::Register &reg) const;
     /*! Create a new selection instruction */
     SelectionInstruction *create(SelectionOpcode, uint32_t dstNum, uint32_t srcNum);
     /*! List of emitted blocks */
