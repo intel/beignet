@@ -186,6 +186,8 @@ namespace gbe
     GenRegister *reg;
     /*! Number of registers in the vector */
     uint16_t regNum;
+    /*! offset in insn src() or dst() */
+    uint16_t offsetID;
     /*! Indicate if this a destination or a source vector */
     uint16_t isSrc;
   };

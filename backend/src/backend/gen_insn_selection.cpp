@@ -1225,6 +1225,7 @@ namespace gbe
 
     SelectionVector *vector = this->appendVector();
     vector->regNum = srcNum;
+    vector->offsetID = 0;
     vector->reg = &insn->src(0);
     vector->isSrc = 1;
   }
@@ -1286,9 +1287,11 @@ namespace gbe
 
     dstVector->regNum = elemNum;
     dstVector->isSrc = 0;
+    dstVector->offsetID = 0;
     dstVector->reg = &insn->dst(0);
 
     srcVector->regNum = 1;
+    srcVector->offsetID = 0;
     srcVector->isSrc = 1;
     srcVector->reg = &insn->src(0);
   }
@@ -1323,10 +1326,12 @@ namespace gbe
     // Sends require contiguous allocation
     dstVector->regNum = elemNum;
     dstVector->isSrc = 0;
+    dstVector->offsetID = 0;
     dstVector->reg = &insn->dst(0);
 
     srcVector->regNum = 1;
     srcVector->isSrc = 1;
+    srcVector->offsetID = 0;
     srcVector->reg = &insn->src(0);
   }
 
@@ -1358,6 +1363,7 @@ namespace gbe
       insn->extra.elem = srcNum;
 
       vector->regNum = srcNum + 1;
+      vector->offsetID = 0;
       vector->reg = &insn->src(0);
       vector->isSrc = 1;
     } else { // handle the native long case
@@ -1386,6 +1392,7 @@ namespace gbe
       insn->extra.elem = srcNum;
 
       vector->regNum = srcNum + 1;
+      vector->offsetID = srcNum;
       vector->reg = &insn->src(srcNum);
       vector->isSrc = 1;
     }
@@ -1424,6 +1431,7 @@ namespace gbe
     // Sends require contiguous allocation for the sources
     vector->regNum = elemNum+1;
     vector->reg = &insn->src(0);
+    vector->offsetID = 0;
     vector->isSrc = 1;
   }
 
@@ -1453,9 +1461,11 @@ namespace gbe
     // (yet)
     dstVector->regNum = 1;
     dstVector->isSrc = 0;
+    dstVector->offsetID = 0;
     dstVector->reg = &insn->dst(0);
     srcVector->regNum = 1;
     srcVector->isSrc = 1;
+    srcVector->offsetID = 0;
     srcVector->reg = &insn->src(0);
   }
 
@@ -1480,6 +1490,7 @@ namespace gbe
     // value and address are contiguous in the send
     vector->regNum = 2;
     vector->isSrc = 1;
+    vector->offsetID = 0;
     vector->reg = &insn->src(0);
   }
 
@@ -1495,9 +1506,11 @@ namespace gbe
     insn->setbti(bti);
     vector->regNum = 1;
     vector->isSrc = 0;
+    vector->offsetID = 0;
     vector->reg = &insn->dst(0);
     srcVector->regNum = 1;
     srcVector->isSrc = 1;
+    srcVector->offsetID = 0;
     srcVector->reg = &insn->src(0);
   }
 
@@ -1974,11 +1987,13 @@ namespace gbe
     // Sends require contiguous allocation
     dstVector->regNum = dstNum;
     dstVector->isSrc = 0;
+    dstVector->offsetID = 0;
     dstVector->reg = &insn->dst(0);
 
     // Only the messages require contiguous registers.
     msgVector->regNum = msgNum;
     msgVector->isSrc = 1;
+    msgVector->offsetID = 0;
     msgVector->reg = &insn->src(0);
 
     insn->setbti(bti);
@@ -2033,6 +2048,7 @@ namespace gbe
     // Sends require contiguous allocation
     msgVector->regNum = msgNum;
     msgVector->isSrc = 1;
+    msgVector->offsetID = 0;
     msgVector->reg = &insn->src(0);
   }
 

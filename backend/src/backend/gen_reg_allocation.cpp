@@ -319,7 +319,7 @@ namespace gbe
       else {
         ir::Register tmp;
         ir::Type type = getIRType(vector->reg[regID].type);
-        tmp = this->replaceReg(selection, vector->insn, regID, vector->isSrc, type);
+        tmp = this->replaceReg(selection, vector->insn, regID + vector->offsetID, vector->isSrc, type);
         const VectorLocation location = std::make_pair(vector, regID);
         this->vectorMap.insert(std::make_pair(tmp, location));
       }
