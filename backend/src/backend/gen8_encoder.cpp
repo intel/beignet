@@ -210,7 +210,7 @@ namespace gbe
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     assert(elemNum >= 1 || elemNum <= 4);
     this->setHeader(insn);
-    insn->header.destreg_or_condmod = GEN_SFID_DATAPORT_DATA;
+    insn->header.destreg_or_condmod = GEN_SFID_DATAPORT1_DATA;
     if (this->curr.execWidth == 8) {
       this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));
     } else if (this->curr.execWidth == 16) {
