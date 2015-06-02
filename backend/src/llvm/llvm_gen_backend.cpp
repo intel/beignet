@@ -489,7 +489,7 @@ namespace gbe
     map<Value *, Value *> BtiValueMap;
     // map ptr to it's base
     map<Value *, Value *> pointerBaseMap;
-
+    std::set<Value *> addrStoreInst;
     typedef map<Value *, Value *>::iterator PtrBaseMapIter;
     /*! We visit each function twice. Once to allocate the registers and once to
      *  emit the Gen IR instructions
@@ -565,13 +565,14 @@ namespace gbe
       BtiMap.clear();
       BtiValueMap.clear();
       pointerBaseMap.clear();
+      addrStoreInst.clear();
       // Reset for next function
       btiBase = BTI_RESERVED_NUM;
       return false;
     }
     /*! Given a possible pointer value, find out the interested escape like
         load/store or atomic instruction */
-    void findPointerEscape(Value *ptr, std::set<Value *> &mixedPtr, bool recordMixed);
+    void findPointerEscape(Value *ptr, std::set<Value *> &mixedPtr, bool recordMixed, std::vector<Value *> &revisit);
     /*! For all possible pointers, GlobalVariable, function pointer argument,
         alloca instruction, find their pointer escape points */
     void analyzePointerOrigin(Function &F);
@@ -579,7 +580,12 @@ namespace gbe
     void assignBti(Function &F);
     bool isSingleBti(Value *Val);
     Value *getBtiRegister(Value *v);
+    /*! get the pointer origin */
+    Value *getSinglePointerOrigin(Value *ptr);
+    /*! get the bti base address */
     Value *getPointerBase(Value *ptr);
+    void processPointerArray(Value *ptr, Value *bti, Value *base);
+    void handleStoreLoadAddress(Function &F);
 
     MDNode *getKernelFunctionMetadata(Function *F);
     virtual bool doFinalization(Module &M) { return false; }
@@ -730,10 +736,13 @@ namespace gbe
     return false;
   }
 
-  void GenWriter::findPointerEscape(Value *ptr,  std::set<Value *> &mixedPtr, bool bFirstPass) {
+  void GenWriter::findPointerEscape(Value *ptr,  std::set<Value *> &mixedPtr, bool bFirstPass, std::vector<Value *> &revisit) {
     std::vector<Value*> workList;
     std::set<Value *> visited;
+    // loadInst result maybe used as pointer
+    std::set<LoadInst *> ptrCandidate;
 
+    bool isPointerArray = false;
     if (ptr->use_empty()) return;
 
     workList.push_back(ptr);
@@ -741,7 +750,6 @@ namespace gbe
     for (unsigned i = 0; i < workList.size(); i++) {
       Value *work = workList[i];
       if (work->use_empty()) continue;
-
       for (Value::use_iterator iter = work->use_begin(); iter != work->use_end(); ++iter) {
       // After LLVM 3.5, use_iterator points to 'Use' instead of 'User',
       // which is more straightforward.
@@ -750,6 +758,24 @@ namespace gbe
   #else
         User *theUser = iter->getUser();
   #endif
+        // becareful with sub operation
+        if (isa<BinaryOperator>(theUser) && dyn_cast<BinaryOperator>(theUser)->getOpcode() == Instruction::Sub) {
+          // check both comes from ptrtoInt, don't need to traverse ptrdiff
+          Value *op0 = theUser->getOperand(0);
+          Value *op1 = theUser->getOperand(1);
+          if ((isa<Instruction>(op0) && dyn_cast<Instruction>(op0)->getOpcode() == Instruction::PtrToInt)
+              &&(isa<Instruction>(op1) && dyn_cast<Instruction>(op1)->getOpcode() == Instruction::PtrToInt)) {
+            continue;
+          }
+        }
+
+        if (isa<Instruction>(theUser)) {
+          // some GlobalVariable maybe used in the function which is not current processed.
+          // such kind of user should be skipped
+          if (dyn_cast<Instruction>(theUser)->getParent()->getParent() != Func)
+            continue;
+        }
+
         bool visitedInThisSource = visited.find(theUser) != visited.end();
 
         if (isa<SelectInst>(theUser) || isa<PHINode>(theUser))
@@ -797,8 +823,32 @@ namespace gbe
         }
 
         // pointer address is used as the ValueOperand in store instruction, should be skipped
-        if (StoreInst *load = dyn_cast<StoreInst>(theUser)) {
-          if (load->getValueOperand() == work) {
+        if (StoreInst *store = dyn_cast<StoreInst>(theUser)) {
+          if (store->getValueOperand() == work) {
+            addrStoreInst.insert(store);
+            Value * pointerOperand = store->getPointerOperand();
+            // check whether the pointerOperand already visited or not,
+            // if not visited, then we need to record all the loadInst
+            // on the origin of pointerOperand
+            // if visited, that is the origin of the pointerOperand already
+            // traversed, we need to the traverse again to record all the LoadInst
+            PtrOrigMapIter pointerOpIter = pointerOrigMap.find(pointerOperand);
+            bool pointerVisited = pointerOpIter != pointerOrigMap.end();
+            if (pointerVisited) {
+              revisit.push_back((*pointerOpIter).second[0]);
+            }
+
+            PtrOrigMapIter ptrIter = pointerOrigMap.find(work);
+            if (ptrIter == pointerOrigMap.end()) {
+              // create new one
+              SmallVector<Value *, 4> pointers;
+              pointers.push_back(ptr);
+              pointerOrigMap.insert(std::make_pair(work, pointers));
+            } else {
+              // update the pointer source here,
+              (*ptrIter).second[0] = ptr;
+            }
+
             continue;
           }
         }
@@ -812,9 +862,15 @@ namespace gbe
           }
           Value *pointer = NULL;
           if (isa<LoadInst>(theUser)) {
+            ptrCandidate.insert(cast<LoadInst>(theUser));
             pointer = dyn_cast<LoadInst>(theUser)->getPointerOperand();
           } else if (isa<StoreInst>(theUser)) {
             pointer = dyn_cast<StoreInst>(theUser)->getPointerOperand();
+            // Check whether we have stored a address to this pointer
+            // if yes, we need to traverse the ptrCandidate, as they are loaded pointers
+            if (addrStoreInst.find(theUser) != addrStoreInst.end()) {
+              isPointerArray = true;
+            }
           } else if (isa<CallInst>(theUser)) {
             // atomic/read(write)image
             CallInst *ci = dyn_cast<CallInst>(theUser);
@@ -843,7 +899,17 @@ namespace gbe
         }
       }
     }
+
+    if (isPointerArray) {
+      GBE_ASSERT((isa<AllocaInst>(ptr) || ptrCandidate.empty())
+                && "storing/loading pointers only support private array");
+      for (auto x : ptrCandidate) {
+        revisit.push_back(x);
+      }
+    }
+    ptrCandidate.clear();
   }
+
   bool GenWriter::isSingleBti(Value *Val) {
     // self + others same --> single
     // all same  ---> single
@@ -951,6 +1017,17 @@ namespace gbe
     }
   }
 
+  Value *GenWriter::getSinglePointerOrigin(Value *ptr) {
+    typedef std::map<Value *, unsigned>::iterator BtiIter;
+    // for pointers that already assigned a bti, it is the pointer origin,
+    BtiIter found = BtiMap.find(ptr);
+    if (found != BtiMap.end())
+      return ptr;
+    PtrOrigMapIter iter = pointerOrigMap.find(ptr);
+    GBE_ASSERT(iter != pointerOrigMap.end());
+    return iter->second[0];
+  }
+
   Value *GenWriter::getBtiRegister(Value *Val) {
     typedef std::map<Value *, unsigned>::iterator BtiIter;
     typedef std::map<Value *, Value *>::iterator BtiValueIter;
@@ -967,6 +1044,7 @@ namespace gbe
     } else {
       if (isSingleBti(Val)) {
         PtrOrigMapIter iter = pointerOrigMap.find(Val);
+        GBE_ASSERT(iter != pointerOrigMap.end());
         Value * bti = getBtiRegister((*iter).second[0]);
         BtiValueMap.insert(std::make_pair(Val, bti));
         return bti;
@@ -976,6 +1054,7 @@ namespace gbe
 
           IRBuilder<> Builder(si->getParent());
           PtrOrigMapIter iter = pointerOrigMap.find(Val);
+          GBE_ASSERT(iter != pointerOrigMap.end());
           Value *trueVal = getBtiRegister((*iter).second[0]);
           Value *falseVal = getBtiRegister((*iter).second[1]);
           Builder.SetInsertPoint(si);
@@ -989,6 +1068,7 @@ namespace gbe
 
           PHINode *btiPhi = Builder.CreatePHI(IntegerType::get(Val->getContext(), 32), phi->getNumIncomingValues());
           PtrOrigMapIter iter = pointerOrigMap.find(Val);
+          GBE_ASSERT(iter != pointerOrigMap.end());
           SmallVector<Value *, 4> &pointers = (*iter).second;
           unsigned srcNum = pointers.size();
           for (unsigned x = 0; x < srcNum; x++) {
@@ -1105,6 +1185,88 @@ namespace gbe
     }
   }
 
+  void GenWriter::processPointerArray(Value *ptr, Value *bti, Value *base) {
+    std::vector<Value*> workList;
+    std::set<Value *> visited;
+
+    if (ptr->use_empty()) return;
+
+    workList.push_back(ptr);
+
+    for (unsigned i = 0; i < workList.size(); i++) {
+      Value *work = workList[i];
+      if (work->use_empty()) continue;
+
+      for (Value::use_iterator iter = work->use_begin(); iter != work->use_end(); ++iter) {
+      // After LLVM 3.5, use_iterator points to 'Use' instead of 'User',
+      // which is more straightforward.
+  #if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 5)
+        User *theUser = *iter;
+  #else
+        User *theUser = iter->getUser();
+  #endif
+        if(visited.find(theUser) != visited.end())
+          continue;
+
+        visited.insert(theUser);
+
+        if (isa<LoadInst>(theUser) || isa<StoreInst>(theUser) || isa<CallInst>(theUser)) {
+          if (isa<CallInst>(theUser)) {
+            Function *F = dyn_cast<CallInst>(theUser)->getCalledFunction();
+            if (!F || F->getIntrinsicID() != 0) continue;
+          }
+          bool isLoad; Value *pointerOp;
+
+          IRBuilder<> Builder(cast<Instruction>(theUser)->getParent());
+          if (isa<LoadInst>(theUser)) {
+            pointerOp = dyn_cast<LoadInst>(theUser)->getPointerOperand();
+            isLoad = true;
+          } else {
+            pointerOp = dyn_cast<StoreInst>(theUser)->getPointerOperand();
+            isLoad = false;
+          }
+          Builder.SetInsertPoint(cast<Instruction>(theUser));
+
+          Type *int32Ty = Type::getInt32Ty(ptr->getContext());
+          Value *v1 = Builder.CreatePtrToInt(pointerOp, int32Ty);
+
+          Value *v2 = Builder.CreatePtrToInt(getSinglePointerOrigin(pointerOp), int32Ty);
+          Value *v3 = Builder.CreatePtrToInt(base, int32Ty);
+          Value *v4 = Builder.CreatePtrToInt(bti, int32Ty);
+          // newLocBase = (pointer - origin) + base_start
+          Value *diff = Builder.CreateSub(v1, v2);
+          Value *newLocBase = Builder.CreateAdd(v3, diff);
+          newLocBase = Builder.CreateIntToPtr(newLocBase, Type::getInt32PtrTy(ptr->getContext()));
+          // newLocBti = (pointer - origin) + bti_start
+          Value *newLocBti = Builder.CreateAdd(v4, diff);
+          newLocBti = Builder.CreateIntToPtr(newLocBti, Type::getInt32PtrTy(ptr->getContext()));
+
+          // later GenWriter instruction translation needs this map info
+          BtiValueMap.insert(std::make_pair(newLocBti, ConstantInt::get(Type::getInt32Ty(ptr->getContext()), BTI_PRIVATE)));
+          pointerBaseMap.insert(std::make_pair(newLocBti, ConstantPointerNull::get(cast<PointerType>(pointerOp->getType()))));
+
+          BtiValueMap.insert(std::make_pair(newLocBase, ConstantInt::get(Type::getInt32Ty(ptr->getContext()), BTI_PRIVATE)));
+          pointerBaseMap.insert(std::make_pair(newLocBase, ConstantPointerNull::get(cast<PointerType>(pointerOp->getType()))));
+
+          if (isLoad) {
+            Value *loadedBase = Builder.CreateLoad(newLocBase);
+            Value *loadedBti = Builder.CreateLoad(newLocBti);
+
+            BtiValueMap.insert(std::make_pair(theUser, loadedBti));
+            pointerBaseMap.insert(std::make_pair(theUser, loadedBase));
+          } else {
+            Value *valueOp = cast<StoreInst>(theUser)->getValueOperand();
+            Value *tmp = Builder.CreatePtrToInt(getPointerBase(valueOp), Type::getInt32Ty(ptr->getContext()));
+            Builder.CreateStore(tmp, newLocBase);
+            Builder.CreateStore(getBtiRegister(valueOp), newLocBti);
+          }
+        } else {
+          workList.push_back(theUser);
+        }
+      }
+    }
+  }
+
   void GenWriter::analyzePointerOrigin(Function &F) {
     // used to record where the pointers get mixed (i.e. select or phi instruction)
     std::set<Value *> mixedPtr;
@@ -1114,36 +1276,73 @@ namespace gbe
     // and update the sources correctly. For pointers reachable from mixed-pointer, we will set
     // its direct mixed-pointer parent as it's pointer origin.
 
+    std::vector<Value *> revisit;
     // GlobalVariable
     Module::GlobalListType &globalList = const_cast<Module::GlobalListType &> (TheModule->getGlobalList());
     for(auto i = globalList.begin(); i != globalList.end(); i ++) {
       GlobalVariable &v = *i;
       if(!v.isConstantUsed()) continue;
-      findPointerEscape(&v, mixedPtr, true);
+      findPointerEscape(&v, mixedPtr, true, revisit);
     }
     // function argument
     for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
       if (I->getType()->isPointerTy()) {
-        findPointerEscape(I, mixedPtr, true);
+        findPointerEscape(I, mixedPtr, true, revisit);
       }
     }
     // alloca
     BasicBlock &bb = F.getEntryBlock();
     for (BasicBlock::iterator iter = bb.begin(), iterE = bb.end(); iter != iterE; ++iter) {
       if (AllocaInst *ai = dyn_cast<AllocaInst>(iter)) {
-        findPointerEscape(ai, mixedPtr, true);
+        findPointerEscape(ai, mixedPtr, true, revisit);
       }
     }
+    // storing/loading pointer would introduce revisit
+    for (std::vector<Value *>::iterator iter = revisit.begin(); iter != revisit.end(); ++iter) {
+      findPointerEscape(*iter, mixedPtr, true, revisit);
+    }
+
     // the second pass starts from mixed pointer
     for (std::set<Value *>::iterator iter = mixedPtr.begin(); iter != mixedPtr.end(); ++iter) {
-      findPointerEscape(*iter, mixedPtr, false);
+      findPointerEscape(*iter, mixedPtr, false, revisit);
     }
 
     for (std::set<Value *>::iterator iter = mixedPtr.begin(); iter != mixedPtr.end(); ++iter) {
       getBtiRegister(*iter);
     }
+
     for (std::set<Value *>::iterator iter = mixedPtr.begin(); iter != mixedPtr.end(); ++iter) {
       getPointerBase(*iter);
+    }
+    handleStoreLoadAddress(F);
+  }
+  void GenWriter::handleStoreLoadAddress(Function &F) {
+    std::set<Value *> processed;
+    for (std::set<Value *>::iterator iter = addrStoreInst.begin(); iter != addrStoreInst.end(); ++iter) {
+      StoreInst *store = cast<StoreInst>(*iter);
+      Value *pointerOp = store->getPointerOperand();
+      Value *base = getSinglePointerOrigin(pointerOp);
+      if (processed.find(base) != processed.end()) {
+        continue;
+      }
+      processed.insert(base);
+
+      if (!isa<AllocaInst>(base)) continue;
+
+      Value *ArraySize = cast<AllocaInst>(base)->getArraySize();
+
+      BasicBlock &entry = F.getEntryBlock();
+      BasicBlock::iterator bbIter = entry.begin();
+      while (isa<AllocaInst>(bbIter)) ++bbIter;
+
+      IRBuilder<> Builder(&entry);
+      Builder.SetInsertPoint(bbIter);
+
+      PointerType * AITy = cast<AllocaInst>(base)->getType();
+      Value * btiArray = Builder.CreateAlloca(AITy->getElementType(), ArraySize, base->getName() + ".bti");
+      Value * pointerBaseArray = Builder.CreateAlloca(AITy->getElementType(), ArraySize, base->getName() + ".pointer-base");
+
+      processPointerArray(base, btiArray, pointerBaseArray);
     }
   }
 
