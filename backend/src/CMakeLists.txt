@@ -68,6 +68,8 @@ set (GBE_SRC
     ir/printf.hpp
     ir/immediate.hpp
     ir/immediate.cpp
+    ir/structurizer.hpp
+    ir/structurizer.cpp
     backend/context.cpp
     backend/context.hpp
     backend/program.cpp

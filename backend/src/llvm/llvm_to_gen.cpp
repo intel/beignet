@@ -61,6 +61,8 @@
 #include "sys/cvar.hpp"
 #include "sys/platform.hpp"
 #include "ir/unit.hpp"
+#include "ir/function.hpp"
+#include "ir/structurizer.hpp"
 
 #include <clang/CodeGen/CodeGenAction.h>
 
@@ -307,6 +309,19 @@ namespace gbe
 
     // Print the code extra optimization passes
     OUTPUT_BITCODE(AFTER_GEN, mod);
+
+    const ir::Unit::FunctionSet& fs = unit.getFunctionSet();
+    ir::Unit::FunctionSet::const_iterator iter = fs.begin();
+    while(iter != fs.end())
+    {
+      ir::CFGStructurizer *structurizer = new ir::CFGStructurizer(iter->second);
+      structurizer->StructurizeBlocks();
+      delete structurizer;
+      if (OCL_OUTPUT_CFG_GEN_IR)
+        iter->second->outputCFG();
+      iter++;
+    }
+
 
     delete libraryInfo;
     return true;
