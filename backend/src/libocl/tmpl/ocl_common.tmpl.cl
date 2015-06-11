@@ -22,8 +22,8 @@
 /////////////////////////////////////////////////////////////////////////////
 // Common Functions
 /////////////////////////////////////////////////////////////////////////////
-PURE CONST float __gen_ocl_fmax(float a, float b);
-PURE CONST float __gen_ocl_fmin(float a, float b);
+PURE CONST OVERLOADABLE float __gen_ocl_fmax(float a, float b);
+PURE CONST OVERLOADABLE float __gen_ocl_fmin(float a, float b);
 
 OVERLOADABLE float step(float edge, float x) {
   return x < edge ? 0.0 : 1.0;
@@ -74,4 +74,46 @@ OVERLOADABLE float sign(float x) {
   float s = 0.0f * r;
   s = (x == 0.0f) ? s : r;
   return isnan(x) ? 0.0f : s;
+}
+
+// Half float version.
+PURE CONST OVERLOADABLE half __gen_ocl_fmax(half a, half b);
+PURE CONST OVERLOADABLE half __gen_ocl_fmin(half a, half b);
+
+OVERLOADABLE half step(half edge, half x) {
+  return x < edge ? 0.0 : 1.0;
+}
+OVERLOADABLE half max(half a, half b) {
+  return __gen_ocl_fmax(a, b);
+}
+OVERLOADABLE half min(half a, half b) {
+  return __gen_ocl_fmin(a, b);
+}
+OVERLOADABLE half mix(half x, half y, half a) {
+  return x + (y-x)*a;
+}
+OVERLOADABLE half clamp(half v, half l, half u) {
+  return max(min(v, u), l);
+}
+OVERLOADABLE half degrees(half radians) {
+  return ((half)(180 / M_PI_F)) * radians;
+}
+OVERLOADABLE half radians(half degrees) {
+  return ((half)(M_PI_F / 180)) * degrees;
+}
+
+OVERLOADABLE half smoothstep(half e0, half e1, half x) {
+  x = clamp((x - e0) / (e1 - e0), (half)0.0, (half)1.0);
+  return x * x * (3 - 2 * x);
+}
+
+OVERLOADABLE half sign(half x) {
+  union {half h; ushort u;} ieee;
+  ieee.h = x;
+  unsigned k = ieee.u;
+  half r = (k&0x8000) ? -1.0 : 1.0;
+  // differentiate +0.0f -0.0f
+  half s = (half)0.0 * r;
+  s = (x == (half)0.0) ? s : r;
+  return isnan(x) ? 0.0 : s;
 }

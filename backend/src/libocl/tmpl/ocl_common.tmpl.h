@@ -34,3 +34,16 @@ OVERLOADABLE float radians(float degrees);
 OVERLOADABLE float smoothstep(float e0, float e1, float x);
 
 OVERLOADABLE float sign(float x);
+
+// Half half version.
+OVERLOADABLE half step(half edge, half x);
+OVERLOADABLE half max(half a, half b);
+OVERLOADABLE half min(half a, half b);
+OVERLOADABLE half mix(half x, half y, half a);
+OVERLOADABLE half clamp(half v, half l, half u);
+
+OVERLOADABLE half degrees(half radians);
+OVERLOADABLE half radians(half degrees);
+OVERLOADABLE half smoothstep(half e0, half e1, half x);
+
+OVERLOADABLE half sign(half x);
