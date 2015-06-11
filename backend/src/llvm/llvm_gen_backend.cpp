@@ -3037,6 +3037,12 @@ namespace gbe
           const ir::Register src = this->getRegister(I.getOperand(0));
           ctx.SEL(dstType, dst, src, oneReg, zeroReg);
         }
+        /* For half <---> float conversion, we use F16TO32 or F32TO16, make the code path same. */
+        else if (srcType == ir::TYPE_HALF && dstType == ir::TYPE_FLOAT) {
+          ctx.F16TO32(ir::TYPE_FLOAT, ir::TYPE_U16, getRegister(&I), getRegister(I.getOperand(0)));
+        } else if (srcType == ir::TYPE_FLOAT && dstType == ir::TYPE_HALF) {
+          ctx.F32TO16(ir::TYPE_U16, ir::TYPE_FLOAT, getRegister(&I), getRegister(I.getOperand(0)));
+        }
         // Use a convert for the other cases
         else {
           const ir::Register dst = this->getRegister(&I);
@@ -3398,6 +3404,12 @@ namespace gbe
       case GEN_OCL_SAT_CONV_F32_TO_I32:
       case GEN_OCL_SAT_CONV_I32_TO_U32:
       case GEN_OCL_SAT_CONV_F32_TO_U32:
+      case GEN_OCL_SAT_CONV_F16_TO_I8:
+      case GEN_OCL_SAT_CONV_F16_TO_U8:
+      case GEN_OCL_SAT_CONV_F16_TO_I16:
+      case GEN_OCL_SAT_CONV_F16_TO_U16:
+      case GEN_OCL_SAT_CONV_F16_TO_I32:
+      case GEN_OCL_SAT_CONV_F16_TO_U32:
       case GEN_OCL_CONV_F16_TO_F32:
       case GEN_OCL_CONV_F32_TO_F16:
       case GEN_OCL_SIMD_ANY:
@@ -4068,6 +4080,18 @@ namespace gbe
             DEF(ir::TYPE_U32, ir::TYPE_S32);
           case GEN_OCL_SAT_CONV_F32_TO_U32:
             DEF(ir::TYPE_U32, ir::TYPE_FLOAT);
+          case GEN_OCL_SAT_CONV_F16_TO_I8:
+            DEF(ir::TYPE_S8, ir::TYPE_HALF);
+          case GEN_OCL_SAT_CONV_F16_TO_U8:
+            DEF(ir::TYPE_U8, ir::TYPE_HALF);
+          case GEN_OCL_SAT_CONV_F16_TO_I16:
+            DEF(ir::TYPE_S16, ir::TYPE_HALF);
+          case GEN_OCL_SAT_CONV_F16_TO_U16:
+            DEF(ir::TYPE_U16, ir::TYPE_HALF);
+          case GEN_OCL_SAT_CONV_F16_TO_I32:
+            DEF(ir::TYPE_S32, ir::TYPE_HALF);
+          case GEN_OCL_SAT_CONV_F16_TO_U32:
+            DEF(ir::TYPE_U32, ir::TYPE_HALF);
           case GEN_OCL_CONV_F16_TO_F32:
             ctx.F16TO32(ir::TYPE_FLOAT, ir::TYPE_U16, getRegister(&I), getRegister(I.getOperand(0)));
             break;
