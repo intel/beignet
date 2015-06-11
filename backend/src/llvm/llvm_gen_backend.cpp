@@ -155,6 +155,7 @@
 #include "llvm/llvm_gen_backend.hpp"
 #include "ir/context.hpp"
 #include "ir/unit.hpp"
+#include "ir/half.hpp"
 #include "ir/liveness.hpp"
 #include "ir/value.hpp"
 #include "sys/set.hpp"
@@ -183,6 +184,7 @@ namespace gbe
   static bool isScalarType(const Type *type)
   {
     return type->isFloatTy()   ||
+           type->isHalfTy()    ||
            type->isIntegerTy() ||
            type->isDoubleTy()  ||
            type->isPointerTy();
@@ -194,6 +196,8 @@ namespace gbe
     GBE_ASSERT(isScalarType(type));
     if (type->isFloatTy() == true)
       return ir::TYPE_FLOAT;
+    if (type->isHalfTy() == true)
+      return ir::TYPE_HALF;
     if (type->isDoubleTy() == true)
       return ir::TYPE_DOUBLE;
     if (type->isPointerTy() == true) {
@@ -242,7 +246,7 @@ namespace gbe
       return ir::FAMILY_BOOL;
     if (type == Type::getInt8Ty(type->getContext()))
       return ir::FAMILY_BYTE;
-    if (type == Type::getInt16Ty(type->getContext()))
+    if (type == Type::getInt16Ty(type->getContext()) || type->isHalfTy())
       return ir::FAMILY_WORD;
     if (type == Type::getInt32Ty(type->getContext()) || type->isFloatTy())
       return ir::FAMILY_DWORD;
@@ -359,6 +363,7 @@ namespace gbe
       switch (typeID) {
         case Type::IntegerTyID:
         case Type::FloatTyID:
+        case Type::HalfTyID:
         case Type::DoubleTyID:
         case Type::PointerTyID:
           GBE_ASSERT(index == 0);
@@ -371,6 +376,7 @@ namespace gbe
           auto elementTypeID = elementType->getTypeID();
           if (elementTypeID != Type::IntegerTyID &&
               elementTypeID != Type::FloatTyID &&
+              elementTypeID != Type::HalfTyID &&
               elementTypeID != Type::DoubleTyID)
             GBE_ASSERTM(false, "Vectors of elements are not supported");
             return this->_newScalar(value, key, elementType, index, uniform);
@@ -383,6 +389,7 @@ namespace gbe
           auto elementTypeID = elementType->getTypeID();
           if (elementTypeID != Type::IntegerTyID &&
               elementTypeID != Type::FloatTyID &&
+              elementTypeID != Type::HalfTyID &&
               elementTypeID != Type::DoubleTyID)
             GBE_ASSERTM(false, "Strcuts of elements are not supported");
             return this->_newScalar(value, key, elementType, index, uniform);
@@ -1537,6 +1544,8 @@ namespace gbe
         return processSeqConstant<float>(seq, index, CONST_FLOAT);
       } else if (Ty == Type::getDoubleTy(CPV->getContext())) {
         return processSeqConstant<double>(seq, index, CONST_DOUBLE);
+      } else if (Ty == Type::getHalfTy(CPV->getContext())) {
+        GBE_ASSERTM(0, "Const data array never be half float\n");
       }
     } else
 #endif /* LLVM_VERSION_MINOR > 0 */
@@ -1563,6 +1572,9 @@ namespace gbe
       } else if (Ty == Type::getFloatTy(CPV->getContext())) {
         const float f32 = 0;
         return ctx.newImmediate(f32);
+      } else if (Ty == Type::getHalfTy(CPV->getContext())) {
+        const ir::half f16 = 0;
+        return ctx.newImmediate(f16);
       } else if (Ty == Type::getDoubleTy(CPV->getContext())) {
         const double f64 = 0;
         return ctx.newImmediate(f64);
@@ -1616,6 +1628,7 @@ namespace gbe
         if (Ty == Type::getInt32Ty(CPV->getContext())) return ctx.newImmediate((uint32_t)0);
         if (Ty == Type::getInt64Ty(CPV->getContext())) return ctx.newImmediate((uint64_t)0);
         if (Ty == Type::getFloatTy(CPV->getContext())) return ctx.newImmediate((float)0);
+        if (Ty == Type::getHalfTy(CPV->getContext())) return ctx.newImmediate((ir::half)0);
         if (Ty == Type::getDoubleTy(CPV->getContext())) return ctx.newImmediate((double)0);
         GBE_ASSERT(0 && "Unsupported undef value type.\n");
       }
@@ -1623,6 +1636,7 @@ namespace gbe
       // Floats and doubles
       switch (typeID) {
         case Type::FloatTyID:
+        case Type::HalfTyID:
         case Type::DoubleTyID:
         {
           ConstantFP *FPC = cast<ConstantFP>(CPV);
@@ -1631,9 +1645,16 @@ namespace gbe
           if (FPC->getType() == Type::getFloatTy(CPV->getContext())) {
             const float f32 = FPC->getValueAPF().convertToFloat();
             return ctx.newImmediate(f32);
-          } else {
+          } else if (FPC->getType() == Type::getDoubleTy(CPV->getContext())) {
             const double f64 = FPC->getValueAPF().convertToDouble();
             return ctx.newImmediate(f64);
+          } else {
+            llvm::APFloat apf = FPC->getValueAPF();
+            llvm::APInt api = apf.bitcastToAPInt();
+            uint64_t v64 = api.getZExtValue();
+            uint16_t v16 = static_cast<uint16_t>(v64);
+            const ir::half f16(v16);
+            return ctx.newImmediate(f16);
           }
         }
         break;
@@ -1670,6 +1691,7 @@ namespace gbe
     switch (typeID) {
       case Type::IntegerTyID:
       case Type::FloatTyID:
+      case Type::HalfTyID:
       case Type::DoubleTyID:
       case Type::PointerTyID:
         regTranslator.newScalar(value, key, 0, uniform);
