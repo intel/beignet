@@ -126,6 +126,7 @@ namespace gbe
       case TYPE_U64: return GEN_TYPE_UL;
       case TYPE_FLOAT: return GEN_TYPE_F;
       case TYPE_DOUBLE: return GEN_TYPE_DF;
+      case TYPE_HALF: return GEN_TYPE_HF;
       default: NOT_SUPPORTED; return GEN_TYPE_F;
     }
   }
@@ -360,7 +361,9 @@ namespace gbe
     bool has32X32Mul() const { return bHas32X32Mul; }
     void setHas32X32Mul(bool b) { bHas32X32Mul = b; }
     bool hasLongType() const { return bHasLongType; }
+    bool hasHalfType() const { return bHasHalfType; }
     void setHasLongType(bool b) { bHasLongType = b; }
+    void setHasHalfType(bool b) { bHasHalfType = b; }
     bool hasLongRegRestrict() { return bLongRegRestrict; }
     void setLongRegRestrict(bool b) { bLongRegRestrict = b; }
     void setLdMsgOrder(uint32_t type)  { ldMsgOrder = type; }
@@ -740,6 +743,7 @@ namespace gbe
     uint32_t currAuxLabel;
     bool bHas32X32Mul;
     bool bHasLongType;
+    bool bHasHalfType;
     bool bLongRegRestrict;
     uint32_t ldMsgOrder;
     bool slowByteGather;
@@ -782,8 +786,8 @@ namespace gbe
     curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
     maxInsnNum(ctx.getFunction().getLargestBlockSize()), dagPool(maxInsnNum),
     stateNum(0), vectorNum(0), bwdCodeGeneration(false), currAuxLabel(ctx.getFunction().labelNum()),
-    bHas32X32Mul(false), bHasLongType(false), bLongRegRestrict(false), ldMsgOrder(LD_MSG_ORDER_IVB),
-    slowByteGather(false)
+    bHas32X32Mul(false), bHasLongType(false), bHasHalfType(false), bLongRegRestrict(false),
+    ldMsgOrder(LD_MSG_ORDER_IVB), slowByteGather(false)
   {
     const ir::Function &fn = ctx.getFunction();
     this->regNum = fn.regNum();
@@ -2040,6 +2044,7 @@ namespace gbe
     this->opaque->setHas32X32Mul(true);
     this->opaque->setHasLongType(true);
     this->opaque->setSlowByteGather(true);
+    this->opaque->setHasHalfType(true);
   }
 
   SelectionChv::SelectionChv(GenContext &ctx) : Selection(ctx) {
@@ -2153,6 +2158,13 @@ namespace gbe
       case TYPE_S8:  return GenRegister::immw((int8_t)imm.getIntegerValue() * sign);
       case TYPE_DOUBLE: return GenRegister::immdf(imm.getDoubleValue() * sign);
       case TYPE_BOOL: return GenRegister::immw((imm.getIntegerValue() == 0) ? 0 : -1);  //return 0xffff when true
+      case TYPE_HALF: {
+        ir::half hf = imm.getHalfValue();
+        int16_t _sign = negate ? -1 : 1;
+        ir::half hfSign = ir::half::convToHalf(_sign);
+        hf = hf * hfSign;
+        return GenRegister::immh(hf.getVal());
+      }
       default: NOT_SUPPORTED; return GenRegister::immuw(0);
     }
   }
@@ -3188,6 +3200,11 @@ namespace gbe
           sel.MOV(GenRegister::retype(dst, GEN_TYPE_F),
                   GenRegister::immf(imm.asFloatValue()));
         break;
+        case TYPE_HALF: {
+          ir::half hf = imm.getHalfValue();
+          sel.MOV(GenRegister::retype(dst, GEN_TYPE_HF), GenRegister::immh(hf.getVal()));
+          break;
+	}
         case TYPE_U16: sel.MOV(dst, GenRegister::immuw(imm.getIntegerValue())); break;
         case TYPE_S16: sel.MOV(dst, GenRegister::immw(imm.getIntegerValue())); break;
         case TYPE_U8:  sel.MOV(dst, GenRegister::immuw(imm.getIntegerValue())); break;
@@ -3221,7 +3238,7 @@ namespace gbe
     DECL_CTOR(SyncInstruction, 1,1);
   };
 
-  INLINE uint32_t getByteScatterGatherSize(ir::Type type) {
+  INLINE uint32_t getByteScatterGatherSize(Selection::Opaque &sel, ir::Type type) {
     using namespace ir;
     switch (type) {
       case TYPE_DOUBLE:
@@ -3239,6 +3256,9 @@ namespace gbe
       case TYPE_U8:
       case TYPE_S8:
         return GEN_BYTE_SCATTER_BYTE;
+      case TYPE_HALF:
+        if (sel.hasHalfType())
+          return GEN_BYTE_SCATTER_WORD;
       default: NOT_SUPPORTED;
         return GEN_BYTE_SCATTER_BYTE;
     }
@@ -3595,7 +3615,7 @@ namespace gbe
       BTI bti = getBTI(dag, insn);
 
       const Type type = insn.getValueType();
-      const uint32_t elemSize = getByteScatterGatherSize(type);
+      const uint32_t elemSize = getByteScatterGatherSize(sel, type);
       bool allConstant = isAllConstant(bti);
 
       if (allConstant) {
@@ -3755,7 +3775,7 @@ namespace gbe
       const ir::StoreInstruction &insn = cast<ir::StoreInstruction>(dag.insn);
       GenRegister address = sel.selReg(insn.getAddress(), ir::TYPE_U32);
       const Type type = insn.getValueType();
-      const uint32_t elemSize = getByteScatterGatherSize(type);
+      const uint32_t elemSize = getByteScatterGatherSize(sel, type);
 
       const bool isUniform = sel.isScalarReg(insn.getAddress()) && sel.isScalarReg(insn.getValue(0));
       BTI bti = getBTI(dag, insn);

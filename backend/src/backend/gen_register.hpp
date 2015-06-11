@@ -80,6 +80,7 @@ namespace gbe
       case GEN_TYPE_UW:
       case GEN_TYPE_W:
       case GEN_TYPE_HF:
+      case GEN_TYPE_HF_IMM:
         return 2;
       case GEN_TYPE_UB:
       case GEN_TYPE_B:
@@ -639,6 +640,12 @@ namespace gbe
     static INLINE GenRegister immw(int16_t w) {
       GenRegister immediate = imm(GEN_TYPE_W);
       immediate.value.d = w;
+      return immediate;
+    }
+
+    static INLINE GenRegister immh(uint16_t uw) {
+      GenRegister immediate = imm(GEN_TYPE_HF_IMM);
+      immediate.value.ud = uw;
       return immediate;
     }
 

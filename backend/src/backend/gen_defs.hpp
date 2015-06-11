@@ -252,6 +252,8 @@ enum GenMessageTarget {
 #define GEN_TYPE_UL  8
 #define GEN_TYPE_L   9
 #define GEN_TYPE_HF  10
+#define GEN_TYPE_DF_IMM  10 /* For the double float in imm. */
+#define GEN_TYPE_HF_IMM  11 /* For the half float in imm. */
 
 #define GEN_ARF_NULL                  0x00
 #define GEN_ARF_ADDRESS               0x10
