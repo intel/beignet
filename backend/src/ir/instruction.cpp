@@ -871,7 +871,7 @@ namespace ir {
                                       TYPE_S16, TYPE_U16,
                                       TYPE_S32, TYPE_U32,
                                       TYPE_S64, TYPE_U64,
-                                      TYPE_FLOAT, TYPE_DOUBLE};
+                                      TYPE_HALF, TYPE_FLOAT, TYPE_DOUBLE};
     static const uint32_t allButBoolNum = ARRAY_ELEM_NUM(allButBool);
 
     // TODO add support for 64 bits values
