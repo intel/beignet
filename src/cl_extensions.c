@@ -11,6 +11,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 static struct cl_extensions intel_extensions =
 {
@@ -90,12 +91,31 @@ process_extension_str(cl_extensions_t *extensions)
   }
 }
 
+static int ext_initialized = 0;
+
+LOCAL void
+cl_intel_platform_enable_fp16_extension(cl_platform_id intel_platform)
+{
+  cl_extensions_t *extensions = &intel_extensions;
+  int id;
+  assert(ext_initialized);
+
+  for(id = OPT1_EXT_START_ID; id <= OPT1_EXT_END_ID; id++)
+  {
+    if (id == EXT_ID(khr_fp16))
+      extensions->extensions[id].base.ext_enabled = 1;
+  }
+
+  process_extension_str(extensions);
+  intel_platform->internal_extensions = &intel_extensions;
+  intel_platform->extensions = intel_extensions.ext_str;
+  intel_platform->extensions_sz = strlen(intel_platform->extensions) + 1;
+}
+
 LOCAL void
 cl_intel_platform_extension_init(cl_platform_id intel_platform)
 {
-  static int initialized = 0;
-
-  if (initialized) {
+  if (ext_initialized) {
     intel_platform->internal_extensions = &intel_extensions;
     intel_platform->extensions = intel_extensions.ext_str;
     return;
@@ -108,7 +128,8 @@ cl_intel_platform_extension_init(cl_platform_id intel_platform)
 
   intel_platform->internal_extensions = &intel_extensions;
   intel_platform->extensions = intel_extensions.ext_str;
+  intel_platform->extensions_sz = strlen(intel_platform->extensions) + 1;
 
-  initialized = 1;
+  ext_initialized = 1;
   return;
 }

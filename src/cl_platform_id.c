@@ -56,7 +56,7 @@ cl_get_platform_ids(cl_uint          num_entries,
   /* Easy right now, only one platform is supported */
   if(platforms)
     *platforms = intel_platform;
-  intel_platform->extensions_sz = strlen(intel_platform->extensions) + 1;
+
   return CL_SUCCESS;
 }
 

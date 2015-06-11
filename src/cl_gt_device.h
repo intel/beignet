@@ -75,6 +75,7 @@
 .platform = NULL, /* == intel_platform (set when requested) */
 /* IEEE 754, XXX does IVB support CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT? */
 .single_fp_config = CL_FP_INF_NAN | CL_FP_ROUND_TO_NEAREST , /* IEEE 754. */
+.half_fp_config = CL_FP_INF_NAN | CL_FP_ROUND_TO_NEAREST ,
 .printf_buffer_size = 1 * 1024 * 1024,
 .interop_user_sync = CL_TRUE,
 

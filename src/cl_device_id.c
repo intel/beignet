@@ -26,6 +26,7 @@
 #include "cl_khr_icd.h"
 #include "cl_thread.h"
 #include "CL/cl.h"
+#include "CL/cl_ext.h"
 #include "cl_gbe_loader.h"
 #include "cl_alloc.h"
 
@@ -397,6 +398,8 @@ baytrail_t_device_break:
     case PCI_CHIP_BROADWLL_U_GT1:
       DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics BroadWell ULX GT1");
 brw_gt1_break:
+      /* For Gen8 and later, half float is suppported and we will enable cl_khr_fp16. */
+      cl_intel_platform_enable_fp16_extension(intel_platform);
       intel_brw_gt1_device.vendor_id = device_id;
       intel_brw_gt1_device.platform = intel_platform;
       ret = &intel_brw_gt1_device;
@@ -413,6 +416,7 @@ brw_gt1_break:
     case PCI_CHIP_BROADWLL_U_GT2:
       DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics BroadWell ULX GT2");
 brw_gt2_break:
+      cl_intel_platform_enable_fp16_extension(intel_platform);
       intel_brw_gt2_device.vendor_id = device_id;
       intel_brw_gt2_device.platform = intel_platform;
       ret = &intel_brw_gt2_device;
@@ -429,6 +433,7 @@ brw_gt2_break:
     case PCI_CHIP_BROADWLL_U_GT3:
       DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics BroadWell ULX GT2");
 brw_gt3_break:
+      cl_intel_platform_enable_fp16_extension(intel_platform);
       intel_brw_gt3_device.vendor_id = device_id;
       intel_brw_gt3_device.platform = intel_platform;
       ret = &intel_brw_gt3_device;
@@ -446,61 +451,65 @@ chv_break:
       break;
 
 
-	  case PCI_CHIP_SKYLAKE_ULT_GT1:
-		DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake ULT GT1");
-	  case PCI_CHIP_SKYLAKE_ULX_GT1:
-		DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake ULX GT1");
-	  case PCI_CHIP_SKYLAKE_DT_GT1:
-		DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake Desktop GT1");
-	  case PCI_CHIP_SKYLAKE_HALO_GT1:
-		DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake Halo GT1");
-	  case PCI_CHIP_SKYLAKE_SRV_GT1:
-		DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake Server GT1");
+    case PCI_CHIP_SKYLAKE_ULT_GT1:
+      DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake ULT GT1");
+    case PCI_CHIP_SKYLAKE_ULX_GT1:
+      DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake ULX GT1");
+    case PCI_CHIP_SKYLAKE_DT_GT1:
+      DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake Desktop GT1");
+    case PCI_CHIP_SKYLAKE_HALO_GT1:
+      DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake Halo GT1");
+    case PCI_CHIP_SKYLAKE_SRV_GT1:
+      DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake Server GT1");
 skl_gt1_break:
-		intel_skl_gt1_device.vendor_id = device_id;
-		intel_skl_gt1_device.platform = intel_platform;
-		ret = &intel_skl_gt1_device;
-		break;
+      cl_intel_platform_enable_fp16_extension(intel_platform);
+      intel_skl_gt1_device.vendor_id = device_id;
+      intel_skl_gt1_device.platform = intel_platform;
+      ret = &intel_skl_gt1_device;
+      break;
 
-	  case PCI_CHIP_SKYLAKE_ULT_GT2:
-		DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake ULT GT2");
-	  case PCI_CHIP_SKYLAKE_ULT_GT2F:
-		DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake ULT GT2F");
-	  case PCI_CHIP_SKYLAKE_ULX_GT2:
-		DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake ULX GT2");
-	  case PCI_CHIP_SKYLAKE_DT_GT2:
-		DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake Desktop GT2");
-	  case PCI_CHIP_SKYLAKE_HALO_GT2:
-		DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake Halo GT2");
-	  case PCI_CHIP_SKYLAKE_SRV_GT2:
-		DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake Server GT2");
+    case PCI_CHIP_SKYLAKE_ULT_GT2:
+      DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake ULT GT2");
+    case PCI_CHIP_SKYLAKE_ULT_GT2F:
+      DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake ULT GT2F");
+    case PCI_CHIP_SKYLAKE_ULX_GT2:
+      DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake ULX GT2");
+    case PCI_CHIP_SKYLAKE_DT_GT2:
+      DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake Desktop GT2");
+    case PCI_CHIP_SKYLAKE_HALO_GT2:
+      DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake Halo GT2");
+    case PCI_CHIP_SKYLAKE_SRV_GT2:
+      DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake Server GT2");
 skl_gt2_break:
-		intel_skl_gt2_device.vendor_id = device_id;
-		intel_skl_gt2_device.platform = intel_platform;
-		ret = &intel_skl_gt2_device;
-		break;
+      cl_intel_platform_enable_fp16_extension(intel_platform);
+      intel_skl_gt2_device.vendor_id = device_id;
+      intel_skl_gt2_device.platform = intel_platform;
+      ret = &intel_skl_gt2_device;
+      break;
 
-	  case PCI_CHIP_SKYLAKE_ULT_GT3:
-		DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake ULT GT3");
-      case PCI_CHIP_SKYLAKE_HALO_GT3:
-		DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake Halo GT3");
-	  case PCI_CHIP_SKYLAKE_SRV_GT3:
-		DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake Server GT3");
+    case PCI_CHIP_SKYLAKE_ULT_GT3:
+      DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake ULT GT3");
+    case PCI_CHIP_SKYLAKE_HALO_GT3:
+      DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake Halo GT3");
+    case PCI_CHIP_SKYLAKE_SRV_GT3:
+      DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake Server GT3");
 skl_gt3_break:
-		intel_skl_gt3_device.vendor_id = device_id;
-		intel_skl_gt3_device.platform = intel_platform;
-		ret = &intel_skl_gt3_device;
-		break;
+      cl_intel_platform_enable_fp16_extension(intel_platform);
+      intel_skl_gt3_device.vendor_id = device_id;
+      intel_skl_gt3_device.platform = intel_platform;
+      ret = &intel_skl_gt3_device;
+      break;
 
-      case PCI_CHIP_SKYLAKE_HALO_GT4:
-		DECL_INFO_STRING(skl_gt4_break, intel_skl_gt4_device, name, "Intel(R) HD Graphics Skylake Halo GT4");
-	  case PCI_CHIP_SKYLAKE_SRV_GT4:
-		DECL_INFO_STRING(skl_gt4_break, intel_skl_gt4_device, name, "Intel(R) HD Graphics Skylake Server GT4");
+    case PCI_CHIP_SKYLAKE_HALO_GT4:
+      DECL_INFO_STRING(skl_gt4_break, intel_skl_gt4_device, name, "Intel(R) HD Graphics Skylake Halo GT4");
+    case PCI_CHIP_SKYLAKE_SRV_GT4:
+      DECL_INFO_STRING(skl_gt4_break, intel_skl_gt4_device, name, "Intel(R) HD Graphics Skylake Server GT4");
 skl_gt4_break:
-		intel_skl_gt4_device.vendor_id = device_id;
-		intel_skl_gt4_device.platform = intel_platform;
-		ret = &intel_skl_gt4_device;
-		break;
+      cl_intel_platform_enable_fp16_extension(intel_platform);
+      intel_skl_gt4_device.vendor_id = device_id;
+      intel_skl_gt4_device.platform = intel_platform;
+      ret = &intel_skl_gt4_device;
+      break;
 
     case PCI_CHIP_SANDYBRIDGE_BRIDGE:
     case PCI_CHIP_SANDYBRIDGE_GT1:
@@ -625,6 +634,17 @@ cl_get_device_ids(cl_platform_id    platform,
                   cl_uint *         num_devices)
 {
   cl_device_id device;
+
+  /* Spec allow platform to be NULL, and If platform
+     is NULL, the behavior is implementation-defined.
+     We can not init the device before platform init. */
+  if (!platform) {
+    if (num_devices)
+      *num_devices = 0;
+    if (devices)
+      *devices = 0;
+    return CL_DEVICE_NOT_FOUND;
+  }
 
   /* Do we have a usable device? */
   device = cl_get_gt_device();
@@ -751,6 +771,7 @@ cl_get_device_info(cl_device_id     device,
     DECL_FIELD(MEM_BASE_ADDR_ALIGN, mem_base_addr_align)
     DECL_FIELD(MIN_DATA_TYPE_ALIGN_SIZE, min_data_type_align_size)
     DECL_FIELD(SINGLE_FP_CONFIG, single_fp_config)
+    DECL_FIELD(HALF_FP_CONFIG, half_fp_config)
     DECL_FIELD(DOUBLE_FP_CONFIG, double_fp_config)
     DECL_FIELD(GLOBAL_MEM_CACHE_TYPE, global_mem_cache_type)
     DECL_FIELD(GLOBAL_MEM_CACHELINE_SIZE, global_mem_cache_line_size)
