@@ -4128,10 +4128,17 @@ namespace gbe
           sel.F32TO16(unpacked, src);
         sel.pop();
         sel.MOV(dst, unpacked);
-      } else if (dstFamily != FAMILY_DWORD && dstFamily != FAMILY_QWORD && srcFamily == FAMILY_DWORD) {//convert i32 to small int
+      } else if (dstFamily != FAMILY_DWORD && dstFamily != FAMILY_QWORD && srcFamily == FAMILY_DWORD) {//convert i32 to small int and half
         GenRegister unpacked;
         if (dstFamily == FAMILY_WORD) {
-          const uint32_t type = dstType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
+          uint32_t type = dstType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
+
+	  /* The special case, when dst is half, float->word->half will lose accuracy. */
+	  if (dstType == TYPE_HALF) {
+            GBE_ASSERT(sel.hasHalfType());
+            type = GEN_TYPE_HF;
+          }
+
           if (!sel.isScalarReg(dst.reg())) {
             unpacked = sel.unpacked_uw(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))));
             unpacked = GenRegister::retype(unpacked, type);
@@ -4157,38 +4164,63 @@ namespace gbe
 
         if (unpacked.reg() != dst.reg())
           sel.MOV(dst, unpacked);
-      } else if (dstFamily == FAMILY_WORD && srcFamily == FAMILY_QWORD) { //convert i64 to i16
-        const uint32_t type = dstType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
-        GenRegister unpacked;
-        if (!sel.isScalarReg(dst.reg())) {
-          if (sel.hasLongType()) {
-            unpacked = sel.unpacked_uw(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
-          } else {
-            unpacked = sel.unpacked_uw(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))));
-          }
-          unpacked = GenRegister::retype(unpacked, type);
-        } else {
-          unpacked = GenRegister::retype(sel.unpacked_uw(dst.reg()), type);
-        }
-
-        if(!sel.hasLongType()) {
-          GenRegister tmp = sel.selReg(sel.reg(FAMILY_DWORD));
-          tmp.type = GEN_TYPE_D;
-          sel.CONVI64_TO_I(tmp, src);
-          sel.MOV(unpacked, tmp);
-        } else {
+      } else if (dstFamily == FAMILY_WORD && srcFamily == FAMILY_QWORD) { //convert i64 to i16 and half.
+        if (dstType == TYPE_HALF) {
+          /* There is no MOV for Long <---> Half. So Long-->Float-->half. */
+          GBE_ASSERT(sel.hasLongType());
+          GBE_ASSERT(sel.hasHalfType());
           sel.push();
-            if (sel.isScalarReg(insn.getSrc(0))) {
-              sel.curr.execWidth = 1;
-              sel.curr.predicate = GEN_PREDICATE_NONE;
-              sel.curr.noMask = 1;
-            }
-            sel.MOV(unpacked, src);
-          sel.pop();
-        }
+          if (sel.isScalarReg(insn.getSrc(0))) {
+            sel.curr.execWidth = 1;
+            sel.curr.predicate = GEN_PREDICATE_NONE;
+            sel.curr.noMask = 1;
+          }
 
-        if (unpacked.reg() != dst.reg()) {
+          GenRegister funpacked = sel.unpacked_ud(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+          funpacked = GenRegister::retype(funpacked, GEN_TYPE_F);
+          sel.MOV(funpacked, src);
+          GenRegister ftmp = sel.selReg(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))));
+          ftmp = GenRegister::retype(ftmp, GEN_TYPE_F);
+          sel.MOV(ftmp, funpacked);
+          GenRegister unpacked = sel.unpacked_uw(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))));
+          unpacked = GenRegister::retype(unpacked, GEN_TYPE_HF);
+          sel.MOV(unpacked, ftmp);
+          sel.pop();
           sel.MOV(dst, unpacked);
+        } else {
+          uint32_t type = dstType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
+
+          GenRegister unpacked;
+          if (!sel.isScalarReg(dst.reg())) {
+            if (sel.hasLongType()) {
+              unpacked = sel.unpacked_uw(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+            } else {
+              unpacked = sel.unpacked_uw(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))));
+            }
+            unpacked = GenRegister::retype(unpacked, type);
+          } else {
+            unpacked = GenRegister::retype(sel.unpacked_uw(dst.reg()), type);
+          }
+
+          if(!sel.hasLongType()) {
+           GenRegister tmp = sel.selReg(sel.reg(FAMILY_DWORD));
+            tmp.type = GEN_TYPE_D;
+            sel.CONVI64_TO_I(tmp, src);
+            sel.MOV(unpacked, tmp);
+          } else {
+            sel.push();
+              if (sel.isScalarReg(insn.getSrc(0))) {
+                sel.curr.execWidth = 1;
+                sel.curr.predicate = GEN_PREDICATE_NONE;
+                sel.curr.noMask = 1;
+              }
+              sel.MOV(unpacked, src);
+            sel.pop();
+          }
+
+          if (unpacked.reg() != dst.reg()) {
+            sel.MOV(dst, unpacked);
+          }
         }
       } else if (dstFamily == FAMILY_BYTE && srcFamily == FAMILY_QWORD) { //convert i64 to i8
         GenRegister unpacked;
@@ -4336,7 +4368,7 @@ namespace gbe
             sel.curr.noMask = 1;
           }
 
-          if(srcType == ir::TYPE_FLOAT) {
+          if (srcType == ir::TYPE_FLOAT) {
             unpacked = sel.unpacked_ud(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
             unpacked = GenRegister::retype(unpacked, GEN_TYPE_F);
           } else if(srcFamily == FAMILY_DWORD) {
@@ -4380,6 +4412,23 @@ namespace gbe
               }
               break;
             }
+          case GEN_TYPE_HF:
+            {
+              GBE_ASSERT(sel.hasLongType());
+              GBE_ASSERT(sel.hasHalfType());
+              uint32_t type = dstType == TYPE_U64 ? GEN_TYPE_UD : GEN_TYPE_D;
+              GenRegister tmp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))), TYPE_U32), type);
+              sel.push();
+              if (sel.isScalarReg(insn.getSrc(0))) {
+                sel.curr.execWidth = 1;
+                sel.curr.predicate = GEN_PREDICATE_NONE;
+                sel.curr.noMask = 1;
+              }
+              sel.MOV(tmp, src);
+              sel.pop();
+              sel.MOV(dst, tmp);
+              break;
+            }
           case GEN_TYPE_DF:
             NOT_IMPLEMENTED;
           default:
@@ -4389,6 +4438,44 @@ namespace gbe
               sel.CONVI_TO_I64(dst, src, sel.selReg(sel.reg(FAMILY_DWORD)));
             }
         }
+      } else if (srcType == ir::TYPE_HALF && (dstFamily == FAMILY_BYTE || dstFamily == FAMILY_WORD)) {
+      // Special case, half -> char/short.
+      /* [DevBDW+]:  Format conversion to or from HF (Half Float) must be DWord-aligned and
+         strided by a DWord on the destination. */
+        GBE_ASSERT(sel.hasHalfType());
+        GenRegister tmp;
+        sel.push();
+        if (sel.isScalarReg(insn.getSrc(0))) {
+          sel.curr.execWidth = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+        }
+        if (dstFamily == FAMILY_BYTE) {
+          const uint32_t type = dstType == TYPE_U8 ? GEN_TYPE_UB : GEN_TYPE_B;
+          tmp = GenRegister::retype(sel.unpacked_ub(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0)))), type);
+          sel.MOV(tmp, src);
+        } else {
+          const uint32_t type = dstType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W;
+          tmp = GenRegister::retype(sel.unpacked_uw(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0)))), type);
+          sel.MOV(tmp, src);
+        }
+        sel.pop();
+        sel.MOV(dst, tmp);
+      } else if (dstType == ir::TYPE_HALF && (srcFamily == FAMILY_BYTE || srcFamily == FAMILY_WORD)) {
+        // Special case, char/uchar -> half
+        /* [DevBDW+]:  Format conversion to or from HF (Half Float) must be DWord-aligned and
+           strided by a DWord on the destination. */
+        GBE_ASSERT(sel.hasHalfType());
+        GenRegister tmp = GenRegister::retype(sel.unpacked_uw(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0)))), GEN_TYPE_HF);
+        sel.push();
+        if (sel.isScalarReg(insn.getSrc(0))) {
+          sel.curr.execWidth = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+        }
+        sel.MOV(tmp, src);
+        sel.pop();
+        sel.MOV(dst, tmp);
       } else
         sel.MOV(dst, src);
 
