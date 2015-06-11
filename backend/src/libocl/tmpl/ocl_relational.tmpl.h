@@ -34,10 +34,28 @@ OVERLOADABLE int isinf(float x);
 OVERLOADABLE int isnan(float x);
 OVERLOADABLE int isnormal(float x);
 
-
 OVERLOADABLE int isordered(float x, float y);
 OVERLOADABLE int isunordered(float x, float y);
 OVERLOADABLE int signbit(float x);
+
+// Half half version.
+OVERLOADABLE int isequal(half x, half y);
+OVERLOADABLE int isnotequal(half x, half y);
+OVERLOADABLE int isgreater(half x, half y);
+OVERLOADABLE int isgreaterequal(half x, half y);
+OVERLOADABLE int isless(half x, half y);
+OVERLOADABLE int islessequal(half x, half y);
+OVERLOADABLE int islessgreater(half x, half y);
+
+OVERLOADABLE int isfinite(half x);
+OVERLOADABLE int isinf(half x);
+OVERLOADABLE int isnan(half x);
+OVERLOADABLE int isnormal(half x);
+
+OVERLOADABLE int isordered(half x, half y);
+OVERLOADABLE int isunordered(half x, half y);
+OVERLOADABLE int signbit(half x);
+
 
 // any
 #define DEC1(type) OVERLOADABLE int any(type a);
@@ -94,6 +112,7 @@ DEF(char) DEF(uchar) DEF(short) DEF(ushort) DEF(int) DEF(uint)
 DEF(long) DEF(ulong)
 #undef DEF
 OVERLOADABLE float bitselect(float a, float b, float c);
+OVERLOADABLE half bitselect(half a, half b, half c);
 
 
 #define DEF(TYPE1, TYPE2) \
@@ -116,4 +135,6 @@ DEF(ulong, long)
 DEF(ulong, ulong)
 DEF(float, int)
 DEF(float, uint)
+DEF(half, short)
+DEF(half, ushort)
 #undef DEF

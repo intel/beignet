@@ -68,7 +68,6 @@ OVERLOADABLE int isnormal(float x) {
   return (u.u < 0x7F800000) && (u.u >= 0x800000);
 }
 
-
 OVERLOADABLE int isordered(float x, float y) {
   return isequal(x, x) && isequal(y, y);
 }
@@ -79,6 +78,71 @@ OVERLOADABLE int signbit(float x) {
   union { uint u; float f; } u;
   u.f = x;
   return u.u >> 31;
+}
+
+
+// Half float version.
+OVERLOADABLE int isequal(half x, half y) {
+  return x == y;
+}
+
+OVERLOADABLE int isnotequal(half x, half y) {
+  return x != y;
+}
+
+OVERLOADABLE int isgreater(half x, half y) {
+  return x > y;
+}
+
+OVERLOADABLE int isgreaterequal(half x, half y) {
+  return x >= y;
+}
+
+OVERLOADABLE int isless(half x, half y) {
+  return x < y;
+}
+
+OVERLOADABLE int islessequal(half x, half y) {
+  return x <= y;
+}
+
+OVERLOADABLE int islessgreater(half x, half y) {
+  return (x < y) || (x > y);
+}
+
+OVERLOADABLE int isfinite(half x) {
+  union { ushort u; half h; } u;
+  u.h = x;
+  return (u.u & 0x7FFF) < 0x7C00;
+}
+
+OVERLOADABLE int isinf(half x) {
+  union { ushort u; half h; } u;
+  u.h = x;
+  return (u.u & 0x7FFF) == 0x7C00;
+}
+
+OVERLOADABLE int isnan(half x) {
+  return x != x;
+}
+
+OVERLOADABLE int isnormal(half x) {
+  union { ushort u; half h; } u;
+  u.h = x;
+  u.u &= 0x7FFF;
+  return (u.u < 0x7C00) && (u.u >= 0x400);
+}
+
+OVERLOADABLE int isordered(half x, half y) {
+  return isequal(x, x) && isequal(y, y);
+}
+OVERLOADABLE int isunordered(half x, half y) {
+  return isnan(x) || isnan(y);
+}
+OVERLOADABLE int signbit(half x) {
+  union { ushort u; half h; } u;
+  u.h = x;
+  return u.u >> 15;
 }
 
 
