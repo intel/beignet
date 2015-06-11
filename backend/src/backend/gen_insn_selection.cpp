@@ -2472,7 +2472,7 @@ namespace gbe
                           GEN_MATH_FUNCTION_INT_DIV_REMAINDER;
 
       //bytes and shorts must be converted to int for DIV and REM per GEN restriction
-      if((family == FAMILY_WORD || family == FAMILY_BYTE)) {
+      if((family == FAMILY_WORD || family == FAMILY_BYTE) && (type != TYPE_HALF)) {
         GenRegister tmp0, tmp1;
         ir::Register reg = sel.reg(FAMILY_DWORD, isUniform);
         tmp0 = sel.selReg(reg, ir::TYPE_S32);
@@ -2487,6 +2487,17 @@ namespace gbe
           unpacked = sel.unpacked_ub(reg);
         }
         unpacked = GenRegister::retype(unpacked, getGenType(type));
+        sel.MOV(dst, unpacked);
+      } else if (type == TYPE_HALF) {
+        ir::Register reg = sel.reg(FAMILY_DWORD, isUniform);
+        GenRegister tmp0 = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_FLOAT);
+        GenRegister tmp1 = sel.selReg(reg, ir::TYPE_FLOAT);
+        sel.MOV(tmp0, src0);
+        sel.MOV(tmp1, src1);
+        GBE_ASSERT(op != OP_REM);
+        sel.MATH(tmp0, GEN_MATH_FUNCTION_FDIV, tmp0, tmp1);
+        GenRegister unpacked = GenRegister::retype(sel.unpacked_uw(reg), GEN_TYPE_HF);
+        sel.MOV(unpacked, tmp0);
         sel.MOV(dst, unpacked);
       } else if (type == TYPE_S32 || type == TYPE_U32 ) {
         sel.MATH(dst, function, src0, src1);
