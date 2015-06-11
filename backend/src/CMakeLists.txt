@@ -53,6 +53,8 @@ set (GBE_SRC
     ir/sampler.hpp
     ir/image.cpp
     ir/image.hpp
+    ir/half.cpp
+    ir/half.hpp
     ir/instruction.cpp
     ir/instruction.hpp
     ir/liveness.cpp
