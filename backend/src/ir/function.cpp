@@ -156,7 +156,7 @@ namespace ir {
       case TYPE_U32:
       case TYPE_S64: out << imm.getIntegerValue(); break;
       case TYPE_U64: out << (uint64_t)imm.getIntegerValue(); break;
-      case TYPE_HALF: out << "half(" << imm.getIntegerValue() << ")"; break;
+      case TYPE_HALF: out << "half(" << (float)imm.getHalfValue() << ")"; break;
       case TYPE_FLOAT: out << imm.getFloatValue(); break;
       case TYPE_DOUBLE: out << imm.getDoubleValue(); break;
       default:

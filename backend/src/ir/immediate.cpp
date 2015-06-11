@@ -41,6 +41,7 @@ using namespace ir;
         case TYPE_S64:    return Immediate(*this->data.s64 OP *right.data.s64); \
         case TYPE_U64:    return Immediate(*this->data.u64 OP *right.data.u64); \
         case TYPE_FLOAT:  return Immediate(*this->data.f32 OP *right.data.f32); \
+        case TYPE_HALF:   return Immediate(*this->data.f16 OP *right.data.f16); \
         case TYPE_DOUBLE: return Immediate(*this->data.f64 OP *right.data.f64); \
       }\
       return *this;\
@@ -145,6 +146,7 @@ using namespace ir;
         case TYPE_S64:    return Immediate(*left.data.s64 < *right.data.s64);
         case TYPE_U64:    return Immediate(*left.data.u64 < *right.data.u64);
         case TYPE_FLOAT:  return Immediate(*left.data.f32 < *right.data.f32);
+        case TYPE_HALF:   return Immediate(*left.data.f16 < *right.data.f16);
         case TYPE_DOUBLE: return Immediate(*left.data.f64 < *right.data.f64);
       }
     }
@@ -168,6 +170,7 @@ using namespace ir;
           case TYPE_S64:    return Immediate(left.data.s64[index]);
           case TYPE_U64:    return Immediate(left.data.u64[index]);
           case TYPE_FLOAT:  return Immediate(left.data.f32[index]);
+          case TYPE_HALF:   return Immediate(left.data.f16[index]);
           case TYPE_DOUBLE: return Immediate(left.data.f64[index]);
         }
       } else
@@ -187,7 +190,7 @@ using namespace ir;
         case IMM_XOR: *this = left ^ right; break;
         case IMM_REM:
         {
-          if (left.getType() > TYPE_BOOL && left.getType() <= TYPE_U64)
+          if (left.getType() > TYPE_BOOL && left.getType() <= TYPE_HALF)
             *this = left % right;
           else if (left.getType() == TYPE_FLOAT && right.getType() == TYPE_FLOAT) {
             *this = Immediate(left);

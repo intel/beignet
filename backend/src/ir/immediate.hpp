@@ -27,6 +27,7 @@
 
 #include <string.h>
 #include "ir/type.hpp"
+#include "ir/half.hpp"
 #include "sys/platform.hpp"
 
 namespace gbe {
@@ -57,6 +58,10 @@ namespace ir {
     IMM_FPTOSI,
     IMM_SITOFP,
     IMM_UITOFP,
+    IMM_HFTOUS,
+    IMM_HFTOSS,
+    IMM_SSTOHF,
+    IMM_USTOHF,
     IMM_EXTRACT,
     IMM_SEXT,
     IMM_ZEXT,
@@ -74,6 +79,7 @@ namespace ir {
     IMM_TYPE_S64 = TYPE_S64,
     IMM_TYPE_U64 = TYPE_U64,
     IMM_TYPE_FLOAT = TYPE_FLOAT,
+    IMM_TYPE_HALF = TYPE_HALF,
     IMM_TYPE_DOUBLE = TYPE_DOUBLE,
     IMM_TYPE_COMP             // compond immediate which consist many immediates.
   } ImmType;
@@ -106,6 +112,7 @@ namespace ir {
         case TYPE_S8:
         case TYPE_U8:   return 1;
         case TYPE_S16:
+        case TYPE_HALF:
         case TYPE_U16:  return 2;
         case TYPE_FLOAT:
         case TYPE_S32:
@@ -136,6 +143,7 @@ namespace ir {
     DECL_CONSTRUCTOR(int64_t, s64, TYPE_S64)
     DECL_CONSTRUCTOR(uint64_t, u64, TYPE_U64)
     DECL_CONSTRUCTOR(float, f32, TYPE_FLOAT)
+    DECL_CONSTRUCTOR(half, f16, TYPE_HALF)
     DECL_CONSTRUCTOR(double, f64, TYPE_DOUBLE)
 #undef DECL_CONSTRUCTOR
 
@@ -161,6 +169,7 @@ namespace ir {
     DECL_CONSTRUCTOR(int64_t, s64, TYPE_S64, elemNum)
     DECL_CONSTRUCTOR(uint64_t, u64, TYPE_U64, elemNum)
     DECL_CONSTRUCTOR(float, f32, TYPE_FLOAT, elemNum)
+    DECL_CONSTRUCTOR(half, f16, TYPE_HALF, elemNum)
     DECL_CONSTRUCTOR(double, f64, TYPE_DOUBLE, elemNum)
 #undef DECL_CONSTRUCTOR
 
@@ -200,13 +209,24 @@ namespace ir {
 
     INLINE float getFloatValue(void) const {
       // we allow bitcast from u32/s32 immediate to float
-      GBE_ASSERT(type == IMM_TYPE_FLOAT || type == IMM_TYPE_U32 || type == IMM_TYPE_S32);
+      GBE_ASSERT(type == IMM_TYPE_FLOAT);
       return *data.f32;
     }
 
     INLINE float asFloatValue(void) const {
       GBE_ASSERT(type == IMM_TYPE_FLOAT || type == IMM_TYPE_U32 || type == IMM_TYPE_S32);
       return *data.f32;
+    }
+
+    INLINE half getHalfValue(void) const {
+      GBE_ASSERT(type == IMM_TYPE_HALF);
+      return *data.f16;
+    }
+
+    INLINE half asHalfValue(void) const {
+      // we allow bitcast from u32/s32 immediate to float
+      GBE_ASSERT(type == IMM_TYPE_HALF || type == IMM_TYPE_U16 || type == IMM_TYPE_S16);
+      return *data.f16;
     }
 
     INLINE int64_t asIntegerValue(void) const {
@@ -245,6 +265,10 @@ namespace ir {
         case IMM_FPTOSI: *this = Immediate((int32_t)*other.data.f32); break;
         case IMM_UITOFP: *this = Immediate((float)*other.data.u32); break;
         case IMM_SITOFP: *this = Immediate((float)*other.data.s32); break;
+        case IMM_HFTOUS: *this = Immediate((uint16_t)*other.data.f16); break;
+        case IMM_HFTOSS: *this = Immediate((int16_t)*other.data.f16); break;
+        case IMM_USTOHF: *this = Immediate(half::convToHalf(*other.data.u16)); break;
+        case IMM_SSTOHF: *this = Immediate(half::convToHalf(*other.data.s16)); break;
         case IMM_SEXT:
         {
           int64_t value = other.getIntegerValue();
@@ -274,9 +298,20 @@ namespace ir {
         }
         case IMM_FPEXT:
         {
-          GBE_ASSERT(other.getType() == TYPE_FLOAT && dstType == TYPE_DOUBLE);
-          double value = other.getFloatValue();
-          *this = Immediate(value);
+          if (other.getType() == TYPE_FLOAT) {
+            GBE_ASSERT(dstType == TYPE_DOUBLE);
+            double value = other.getFloatValue();
+            *this = Immediate(value);
+          } else if (other.getType() == TYPE_HALF) {
+            GBE_ASSERT(dstType == TYPE_DOUBLE || dstType == TYPE_FLOAT);
+            if (dstType == TYPE_FLOAT) {
+              float value = other.getHalfValue();
+              *this = Immediate(value);
+            } else {
+              double value = other.getHalfValue();
+              *this = Immediate(value);
+            }
+          }
           break;
         }
       }
@@ -307,6 +342,7 @@ namespace ir {
       uint64_t *u64;
       float *f32;
       double *f64;
+      half *f16;
       const Immediate *immVec[];
       void *p;
     } data;     //!< Value to store
@@ -338,10 +374,12 @@ namespace ir {
   INLINE bool operator< (const Immediate &imm0, const Immediate &imm1) {
     if (imm0.getType() != imm1.getType())
       return uint32_t(imm0.getType()) < uint32_t(imm1.getType());
-    else if (imm0.getType() == TYPE_FLOAT || imm0.getType() == TYPE_DOUBLE)
+    else if (imm0.getType() == TYPE_FLOAT || imm0.getType() == TYPE_DOUBLE || imm0.getType() == TYPE_HALF)
       return imm0.asIntegerValue() < imm1.asIntegerValue();
     else
       return imm0.getIntegerValue() < imm1.getIntegerValue();
+
+    GBE_ASSERT(0);
   }
 
   /*! A value is stored in a per-function vector. This is the index to it */
