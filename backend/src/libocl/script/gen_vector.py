@@ -57,7 +57,7 @@ all_itype = "char","short","int","long"
 all_utype = "uchar","ushort","uint","ulong"
 all_int_type = all_itype + all_utype
 
-all_float_type = "float","double"
+all_float_type = "float","double","half"
 all_type = all_int_type + all_float_type
 
 # all vector/scalar types
@@ -68,6 +68,7 @@ for t in all_type:
 # Predefined type sets according to the Open CL spec.
 math_gentype = ["math_gentype", gen_vector_type(all_float_type)]
 math_gentypef = ["math_gentypef", gen_vector_type(["float"])]
+math_gentypeh = ["math_gentypeh", gen_vector_type(["half"])]
 math_gentyped = ["math_gentyped", gen_vector_type(["double"])]
 
 half_native_math_gentype = ["half_native_math_gentype", gen_vector_type(["float"])]
@@ -80,6 +81,7 @@ fast_integer_gentype = ["fast_integer_gentype", gen_vector_type(["uint", "int"])
 
 common_gentype = ["common_gentype", gen_vector_type(all_float_type)]
 common_gentypef = ["common_gentypef", gen_vector_type(["float"])]
+common_gentypeh = ["common_gentypeh", gen_vector_type(["half"])]
 common_gentyped = ["common_gentyped", gen_vector_type(["double"])]
 
 relational_gentype = ["relational_gentype", gen_vector_type(all_type)]
@@ -91,14 +93,14 @@ misc_gentypen = ["misc_gentypen", gen_vector_type(all_type, [2, 4, 8, 16])]
 misc_ugentypem = ["misc_ugentypem", gen_vector_type(all_utype, [2, 4, 8, 16])]
 misc_ugentypen = ["misc_ugentypen", gen_vector_type(all_utype, [2, 4, 8, 16])]
 
-all_predefined_type = math_gentype, math_gentypef, math_gentyped,                \
+all_predefined_type = math_gentype, math_gentypef, math_gentyped, math_gentypeh, \
                       half_native_math_gentype, integer_gentype,integer_sgentype,\
                       integer_ugentype, charn, ucharn, shortn, ushortn, intn,    \
-                      uintn, longn, ulongn, floatn, doublen,                     \
+                      uintn, longn, ulongn, floatn, doublen, halfn, common_gentypeh, \
                       fast_integer_gentype, common_gentype, common_gentypef,     \
                       common_gentyped, relational_gentype, relational_igentype,  \
-                      relational_ugentype, schar, suchar, sshort, sint, suint,   \
-                      slong, sulong, sfloat, sdouble, misc_gentypem,              \
+                      relational_ugentype, schar, suchar, sshort, sushort, sint, \
+                      suint, slong, sulong, sfloat, shalf, sdouble, misc_gentypem,  \
                       misc_ugentypem, misc_gentypen, misc_ugentypen
 
 # type dictionary contains all the predefined type sets.
@@ -129,6 +131,8 @@ def check_type(types):
             raise TypeError("found invalid type.")
 
 def match_unsigned(dtype):
+    if dtype[0] == 'half':
+        return ["ushort", dtype[1]]
     if dtype[0] == 'float':
         return ["uint", dtype[1]]
     if dtype[0] == 'double':
@@ -138,6 +142,8 @@ def match_unsigned(dtype):
     return ['u' + dtype[0], dtype[1]]
 
 def match_signed(dtype):
+    if dtype[0] == 'half':
+        return ["short", dtype[1]]
     if dtype[0] == 'float':
         return ["int", dtype[1]]
     if dtype[0] == 'double':
