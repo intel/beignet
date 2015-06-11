@@ -31,7 +31,7 @@ else
 fi
 
 # Supported base types and their lengths
-TYPES="long:8 ulong:8 int:4 uint:4 short:2 ushort:2 char:1 uchar:1 double:8 float:4"
+TYPES="long:8 ulong:8 int:4 uint:4 short:2 ushort:2 char:1 uchar:1 double:8 float:4 half:2"
 # Supported vector lengths
 VECTOR_LENGTHS="1 2 3 4 8 16"
 ROUNDING_MODES="rte rtz rtp rtn"
@@ -119,6 +119,7 @@ for vector_length in $VECTOR_LENGTHS; do
 done
 
 echo '
+/* The sat cvt supported by HW. */
 #define DEF(DSTTYPE, SRCTYPE) \
 OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x);
 DEF(char, uchar);
@@ -145,6 +146,12 @@ DEF(int, uint);
 DEF(int, float);
 DEF(uint, int);
 DEF(uint, float);
+DEF(char, half);
+DEF(uchar, half);
+DEF(short, half);
+DEF(ushort, half);
+DEF(int, half);
+DEF(uint, half);
 #undef DEF
 '
 
@@ -266,6 +273,42 @@ DEF(ulong, ulong);
 #undef DEF
 '
 
+# for half to long
+if [ $1"a" = "-pa" ]; then
+    echo '
+       OVERLOADABLE long convert_long_sat(half x);
+       OVERLOADABLE ulong convert_ulong_sat(half x);
+       '
+else
+    echo '
+union _type_half_and_ushort {
+  half hf;
+  ushort us;
+};
+OVERLOADABLE long convert_long_sat(half x) {
+  union _type_half_and_ushort u;
+  u.hf = x;
+  if (u.us == 0x7C00) // +inf
+    return 0x7FFFFFFFFFFFFFFF;
+  if (u.us == 0xFC00) // -inf
+    return 0x8000000000000000;
+
+  return (long)x;
+}
+OVERLOADABLE ulong convert_ulong_sat(half x) {
+  union _type_half_and_ushort u;
+  u.hf = x;
+  if (u.us == 0x7C00) // +inf
+    return 0xFFFFFFFFFFFFFFFF;
+
+  if (x < (half)0.0) {
+    return 0;
+  }
+  return (ulong)x;
+}'
+fi
+
+
 # vector convert_DSTTYPE_sat function
 for vector_length in $VECTOR_LENGTHS; do
     if test $vector_length -eq 1; then continue; fi
@@ -276,7 +319,7 @@ for vector_length in $VECTOR_LENGTHS; do
 
 	for ttype in $TYPES; do
 	    tbasetype=`IFS=:; set -- dummy $ttype; echo $2`
-	    if test $tbasetype = "double" -o $tbasetype = "float"; then continue; fi
+	    if test $tbasetype = "double" -o $tbasetype = "float" -o $tbasetype = "half" ; then continue; fi
 
 	    fvectortype=$fbasetype$vector_length
 	    tvectortype=$tbasetype$vector_length
@@ -586,7 +629,7 @@ for vector_length in $VECTOR_LENGTHS; do
 
 	for ttype in $TYPES; do
 	    tbasetype=`IFS=:; set -- dummy $ttype; echo $2`
-	    if test $tbasetype = "double" -o $tbasetype = "float"; then continue; fi
+	    if test $tbasetype = "double" -o $tbasetype = "float" -o $tbasetype = "half" ; then continue; fi
 
 	    if test $vector_length -eq 1; then
 		if [ $1"a" = "-pa" ]; then
