@@ -117,7 +117,107 @@ OVERLOADABLE float native_sin(float x);
 OVERLOADABLE float native_sqrt(float x);
 OVERLOADABLE float native_tan(float x);
 
-// half
+
+// Half float version.
+OVERLOADABLE half cospi(half x);
+OVERLOADABLE half cosh(half x);
+OVERLOADABLE half acos(half x);
+OVERLOADABLE half acospi(half x);
+OVERLOADABLE half acosh(half x);
+OVERLOADABLE half sinpi(half x);
+OVERLOADABLE half sinh(half x);
+OVERLOADABLE half asin(half x);
+OVERLOADABLE half asinpi(half x);
+OVERLOADABLE half asinh(half x);
+OVERLOADABLE half tanpi(half x);
+OVERLOADABLE half tanh(half x);
+OVERLOADABLE half atan(half x);
+OVERLOADABLE half atan2(half y, half x);
+OVERLOADABLE half atan2pi(half y, half x);
+OVERLOADABLE half atanpi(half x);
+OVERLOADABLE half atanh(half x);
+OVERLOADABLE half cbrt(half x);
+OVERLOADABLE half rint(half x);
+OVERLOADABLE half copysign(half x, half y);
+OVERLOADABLE half erf(half x);
+OVERLOADABLE half erfc(half x);
+OVERLOADABLE half fmod (half x, half y);
+OVERLOADABLE half remainder(half x, half p);
+OVERLOADABLE half ldexp(half x, int n);
+OVERLOADABLE half powr(half x, half y);
+OVERLOADABLE half pow(half x, half y);
+//no pow, we use powr instead
+OVERLOADABLE half fabs(half x);
+OVERLOADABLE half trunc(half x);
+OVERLOADABLE half round(half x);
+OVERLOADABLE half floor(half x);
+OVERLOADABLE half ceil(half x);
+OVERLOADABLE half log(half x);
+OVERLOADABLE half log2(half x);
+OVERLOADABLE half log10(half x);
+OVERLOADABLE half exp(half x);
+OVERLOADABLE half exp10(half x);
+OVERLOADABLE half expm1(half x);
+OVERLOADABLE half fmin(half a, half b);
+OVERLOADABLE half fmax(half a, half b);
+OVERLOADABLE half fma(half a, half b, half c);
+OVERLOADABLE half fdim(half x, half y);
+OVERLOADABLE half maxmag(half x, half y);
+OVERLOADABLE half minmag(half x, half y);
+OVERLOADABLE half exp2(half x);
+OVERLOADABLE half mad(half a, half b, half c);
+OVERLOADABLE half sin(half x);
+OVERLOADABLE half cos(half x);
+OVERLOADABLE half tan(half x);
+OVERLOADABLE half tgamma(half x);
+OVERLOADABLE half lgamma(half x);
+OVERLOADABLE half lgamma_r(half x, global int *signgamp);
+OVERLOADABLE half lgamma_r(half x, local int *signgamp);
+OVERLOADABLE half lgamma_r(half x, private int *signgamp);
+OVERLOADABLE half log1p(half x);
+OVERLOADABLE half logb(half x);
+OVERLOADABLE int ilogb(half x);
+OVERLOADABLE half nan(ushort code);
+OVERLOADABLE half sincos(half x, global half *cosval);
+OVERLOADABLE half sincos(half x, local half *cosval);
+OVERLOADABLE half sincos(half x, private half *cosval);
+OVERLOADABLE half sqrt(half x);
+OVERLOADABLE half rsqrt(half x);
+OVERLOADABLE half frexp(half x, global int *exp);
+OVERLOADABLE half frexp(half x, local int *exp);
+OVERLOADABLE half frexp(half x, private int *exp);
+OVERLOADABLE half nextafter(half x, half y);
+OVERLOADABLE half modf(half x, global half *i);
+OVERLOADABLE half modf(half x, local half *i);
+OVERLOADABLE half modf(half x, private half *i);
+OVERLOADABLE half hypot(half x, half y);
+OVERLOADABLE half fract(half x, global half *p);
+OVERLOADABLE half fract(half x, local half *p);
+OVERLOADABLE half fract(half x, private half *p);
+OVERLOADABLE half remquo(half x, half y, global int *quo);
+OVERLOADABLE half remquo(half x, half y, local int *quo);
+OVERLOADABLE half remquo(half x, half y, private int *quo);
+OVERLOADABLE half pown(half x, int n);
+OVERLOADABLE half rootn(half x, int n);
+
+// native half
+OVERLOADABLE half native_cos(half x);
+OVERLOADABLE half native_divide(half x, half y);
+OVERLOADABLE half native_exp(half x);
+OVERLOADABLE half native_exp2(half x);
+OVERLOADABLE half native_exp10(half x);
+OVERLOADABLE half native_log(half x);
+OVERLOADABLE half native_log2(half x);
+OVERLOADABLE half native_log10(half x);
+OVERLOADABLE half native_powr(half x, half y);
+OVERLOADABLE half native_recip(half x);
+OVERLOADABLE half native_rsqrt(half x);
+OVERLOADABLE half native_sin(half x);
+OVERLOADABLE half native_sqrt(half x);
+OVERLOADABLE half native_tan(half x);
+
+
+// half accuracy
 #define half_cos cos
 #define half_divide native_divide
 #define half_exp native_exp

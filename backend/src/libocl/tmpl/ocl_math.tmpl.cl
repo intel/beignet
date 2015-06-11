@@ -2697,6 +2697,8 @@ OVERLOADABLE float modf(float x, private float *i) { BODY; }
 
 OVERLOADABLE float __gen_ocl_internal_fmax(float a, float b) { return max(a,b); }
 OVERLOADABLE float __gen_ocl_internal_fmin(float a, float b) { return min(a,b); }
+OVERLOADABLE float __gen_ocl_internal_fmax(half a, half b) { return max(a,b); }
+OVERLOADABLE float __gen_ocl_internal_fmin(half a, half b) { return min(a,b); }
 OVERLOADABLE float __gen_ocl_internal_maxmag(float x, float y) {
   float a = __gen_ocl_fabs(x), b = __gen_ocl_fabs(y);
   return a > b ? x : b > a ? y : max(x, y);
@@ -3589,4 +3591,375 @@ OVERLOADABLE float maxmag(float x, float y) {
 
 OVERLOADABLE float minmag(float x, float y) {
   return __gen_ocl_internal_minmag(x, y);
+}
+
+
+/* So far, the HW do not support half float math function.
+   We just do the conversion and call the float version here. */
+OVERLOADABLE half cospi(half x) {
+  float _x = (float)x;
+  return (half)cospi(_x);
+}
+OVERLOADABLE half cosh(half x) {
+  float _x = (float)x;
+  return (half)cosh(_x);
+}
+OVERLOADABLE half acos(half x) {
+  float _x = (float)x;
+  return (half)acos(_x);
+}
+OVERLOADABLE half acospi(half x) {
+  float _x = (float)x;
+  return (half)acospi(_x);
+}
+OVERLOADABLE half acosh(half x) {
+  float _x = (float)x;
+  return (half)acosh(_x);
+}
+OVERLOADABLE half sinpi(half x) {
+  float _x = (float)x;
+  return (half)sinpi(_x);
+}
+OVERLOADABLE half sinh(half x) {
+  float _x = (float)x;
+  return (half)sinh(_x);
+}
+OVERLOADABLE half asin(half x) {
+  float _x = (float)x;
+  return (half)asin(_x);
+}
+OVERLOADABLE half asinpi(half x) {
+  float _x = (float)x;
+  return (half)asinpi(_x);
+}
+OVERLOADABLE half asinh(half x) {
+  float _x = (float)x;
+  return (half)asinh(_x);
+}
+OVERLOADABLE half tanpi(half x) {
+  float _x = (float)x;
+  return (half)tanpi(_x);
+}
+OVERLOADABLE half tanh(half x) {
+  float _x = (float)x;
+  return (half)tanh(_x);
+}
+OVERLOADABLE half atan(half x) {
+  float _x = (float)x;
+  return (half)atan(_x);
+}
+OVERLOADABLE half atan2(half y, half x) {
+  float _x = (float)x;
+  float _y = (float)y;
+  return (half)atan2(_x, _y);
+}
+OVERLOADABLE half atan2pi(half y, half x) {
+  float _x = (float)x;
+  float _y = (float)y;
+  return (half)atan2pi(_x, _y);
+}
+OVERLOADABLE half atanpi(half x) {
+  float _x = (float)x;
+  return (half)atanpi(_x);
+}
+OVERLOADABLE half atanh(half x) {
+  float _x = (float)x;
+  return (half)atanh(_x);
+}
+OVERLOADABLE half cbrt(half x) {
+  float _x = (float)x;
+  return (half)cbrt(_x);
+}
+OVERLOADABLE half rint(half x) {
+  float _x = (float)x;
+  return (half)rint(_x);
+}
+OVERLOADABLE half copysign(half x, half y) {
+  float _x = (float)x;
+  float _y = (float)y;
+  return (half)copysign(_x, _y);
+}
+OVERLOADABLE half erf(half x) {
+  float _x = (float)x;
+  return (half)erf(_x);
+}
+OVERLOADABLE half erfc(half x) {
+  float _x = (float)x;
+  return (half)erfc(_x);
+}
+OVERLOADABLE half fmod(half x, half y) {
+  float _x = (float)x;
+  float _y = (float)y;
+  return (half)fmod(_x, _y);
+}
+OVERLOADABLE half remainder(half x, half p) {
+  float _x = (float)x;
+  float _p = (float)p;
+  return (half)remainder(_x, _p);
+}
+OVERLOADABLE half ldexp(half x, int n) {
+  float _x = (float)x;
+  return (half)ldexp(_x, n);
+}
+OVERLOADABLE half powr(half x, half y) {
+  float _x = (float)x;
+  float _y = (float)y;
+  return (half)powr(_x, _y);
+}
+OVERLOADABLE half pow(half x, half y) {
+  float _x = (float)x;
+  float _y = (float)y;
+  return (half)pow(_x, _y);
+}
+//no pow, we use powr instead
+OVERLOADABLE half fabs(half x) {
+  float _x = (float)x;
+  return (half)fabs(_x);
+}
+OVERLOADABLE half trunc(half x) {
+  float _x = (float)x;
+  return (half)trunc(_x);
+}
+OVERLOADABLE half round(half x) {
+  float _x = (float)x;
+  return (half)round(_x);
+}
+OVERLOADABLE half floor(half x) {
+  float _x = (float)x;
+  return (half)floor(_x);
+}
+OVERLOADABLE half ceil(half x) {
+  float _x = (float)x;
+  return (half)ceil(_x);
+}
+OVERLOADABLE half log(half x) {
+  float _x = (float)x;
+  return (half)log(_x);
+}
+OVERLOADABLE half log2(half x) {
+  float _x = (float)x;
+  return (half)log2(_x);
+}
+OVERLOADABLE half log10(half x) {
+  float _x = (float)x;
+  return (half)log10(_x);
+}
+OVERLOADABLE half exp(half x) {
+  float _x = (float)x;
+  return (half)exp(_x);
+}
+OVERLOADABLE half exp10(half x) {
+  float _x = (float)x;
+  return (half)exp10(_x);
+}
+OVERLOADABLE half expm1(half x) {
+  float _x = (float)x;
+  return (half)expm1(_x);
+}
+OVERLOADABLE half fmin(half a, half b) {
+  return __gen_ocl_internal_fmin(a, b);
+}
+OVERLOADABLE half fmax(half a, half b) {
+  return __gen_ocl_internal_fmax(a, b);
+}
+OVERLOADABLE half fma(half a, half b, half c) {
+  float _a = (float)a;
+  float _b = (float)b;
+  float _c = (float)c;
+  return (half)fma(_a, _b, _c);
+}
+OVERLOADABLE half fdim(half x, half y) {
+  float _x = (float)x;
+  float _y = (float)y;
+  return (half)fdim(_x, _y);
+}
+OVERLOADABLE half maxmag(half x, half y) {
+  float _x = (float)x;
+  float _y = (float)y;
+  return (half)maxmag(_x, _y);
+}
+OVERLOADABLE half minmag(half x, half y) {
+  float _x = (float)x;
+  float _y = (float)y;
+  return (half)minmag(_x, _y);
+}
+OVERLOADABLE half exp2(half x) {
+  float _x = (float)x;
+  return (half)exp2(_x);
+}
+OVERLOADABLE half mad(half a, half b, half c) {
+  float _a = (float)a;
+  float _b = (float)b;
+  float _c = (float)c;
+  return (half)mad(_a, _b, _c);
+}
+OVERLOADABLE half sin(half x) {
+  float _x = (float)x;
+  return (half)sin(_x);
+}
+OVERLOADABLE half cos(half x) {
+  float _x = (float)x;
+  return (half)cos(_x);
+}
+OVERLOADABLE half tan(half x) {
+  float _x = (float)x;
+  return (half)tan(_x);
+}
+OVERLOADABLE half tgamma(half x) {
+  float _x = (float)x;
+  return (half)tgamma(_x);
+}
+OVERLOADABLE half lgamma(half x) {
+  float _x = (float)x;
+  return (half)lgamma(_x);
+}
+OVERLOADABLE half lgamma_r(half x, global int *signgamp) {
+  float _x = (float)x;
+  return (half)lgamma_r(_x, signgamp);
+}
+OVERLOADABLE half lgamma_r(half x, local int *signgamp) {
+  float _x = (float)x;
+  return (half)lgamma_r(_x, signgamp);
+}
+OVERLOADABLE half lgamma_r(half x, private int *signgamp) {
+  float _x = (float)x;
+  return (half)lgamma_r(_x, signgamp);
+}
+OVERLOADABLE half log1p(half x) {
+  float _x = (float)x;
+  return (half)log1p(_x);
+}
+OVERLOADABLE half logb(half x) {
+  float _x = (float)x;
+  return (half)logb(_x);
+}
+OVERLOADABLE int ilogb(half x) {
+  float _x = (float)x;
+  return ilogb(_x);
+}
+OVERLOADABLE half nan(ushort code) {
+  return (half)NAN;
+}
+
+OVERLOADABLE half sincos(half x, global half *cosval) {
+  float _x = (float)x;
+  float _cosval;
+  half ret = (half)sincos(_x, &_cosval);
+  *cosval = (half)_cosval;
+  return ret;
+}
+OVERLOADABLE half sincos(half x, local half *cosval) {
+  float _x = (float)x;
+  float _cosval;
+  half ret = (half)sincos(_x, &_cosval);
+  *cosval = (half)_cosval;
+  return ret;
+}
+OVERLOADABLE half sincos(half x, private half *cosval) {
+  float _x = (float)x;
+  float _cosval;
+  half ret = (half)sincos(_x, &_cosval);
+  *cosval = (half)_cosval;
+  return ret;
+}
+
+OVERLOADABLE half sqrt(half x) {
+  float _x = (float)x;
+  return (half)sqrt(_x);
+}
+OVERLOADABLE half rsqrt(half x) {
+  float _x = (float)x;
+  return (half)rsqrt(_x);
+}
+OVERLOADABLE half frexp(half x, global int *exp) {
+  float _x = (float)x;
+  return (half)frexp(_x, exp);
+}
+OVERLOADABLE half frexp(half x, local int *exp) {
+  float _x = (float)x;
+  return (half)frexp(_x, exp);
+}
+OVERLOADABLE half frexp(half x, private int *exp) {
+  float _x = (float)x;
+  return (half)frexp(_x, exp);
+}
+OVERLOADABLE half nextafter(half x, half y) {
+  float _x = (float)x;
+  float _y = (float)y;
+  return (half)nextafter(_x, _y);
+}
+
+OVERLOADABLE half modf(half x, global half *i) {
+  float _x = (float)x;
+  float _i;
+  half ret = (half)modf(_x, &_i);
+  *i = (half)_i;
+  return ret;
+}
+OVERLOADABLE half modf(half x, local half *i) {
+  float _x = (float)x;
+  float _i;
+  half ret = (half)modf(_x, &_i);
+  *i = (half)_i;
+  return ret;
+}
+OVERLOADABLE half modf(half x, private half *i) {
+  float _x = (float)x;
+  float _i;
+  half ret = (half)modf(_x, &_i);
+  *i = (half)_i;
+  return ret;
+}
+
+OVERLOADABLE half hypot(half x, half y) {
+  float _x = (float)x;
+  float _y = (float)y;
+  return (half)hypot(_x, _y);
+}
+
+OVERLOADABLE half fract(half x, global half *p) {
+  float _x = (float)x;
+  float _p;
+  half ret = (half)fract(_x, &_p);
+  *p = (half)_p;
+  return ret;
+}
+OVERLOADABLE half fract(half x, local half *p) {
+  float _x = (float)x;
+  float _p;
+  half ret = (half)fract(_x, &_p);
+  *p = (half)_p;
+  return ret;
+}
+OVERLOADABLE half fract(half x, private half *p) {
+  float _x = (float)x;
+  float _p;
+  half ret = (half)fract(_x, &_p);
+  *p = (half)_p;
+  return ret;
+}
+
+OVERLOADABLE half remquo(half x, half y, global int *quo) {
+  float _x = (float)x;
+  float _y = (float)y;
+  return (half)remquo(_x, _y, quo);
+}
+OVERLOADABLE half remquo(half x, half y, local int *quo) {
+  float _x = (float)x;
+  float _y = (float)y;
+  return (half)remquo(_x, _y, quo);
+}
+OVERLOADABLE half remquo(half x, half y, private int *quo) {
+  float _x = (float)x;
+  float _y = (float)y;
+  return (half)remquo(_x, _y, quo);
+}
+
+OVERLOADABLE half pown(half x, int n) {
+  float _x = (float)x;
+  return (half)pown(_x, n);
+}
+OVERLOADABLE half rootn(half x, int n) {
+  float _x = (float)x;
+  return (half)rootn(_x, n);
 }
