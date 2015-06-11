@@ -257,7 +257,7 @@ static const char *access_mode[2] = {
   [1] = "align16",
 };
 
-static const char *reg_encoding[10] = {
+static const char *reg_encoding[11] = {
   [0] = ":UD",
   [1] = ":D",
   [2] = ":UW",
@@ -267,10 +267,11 @@ static const char *reg_encoding[10] = {
   [6] = ":DF",
   [7] = ":F",
   [8] = ":UQ",
-  [9] = ":Q"
+  [9] = ":Q",
+  [10] = ":HF"
 };
 
-int reg_type_size[10] = {
+int reg_type_size[11] = {
   [0] = 4,
   [1] = 4,
   [2] = 2,
@@ -280,7 +281,8 @@ int reg_type_size[10] = {
   [6] = 8,
   [7] = 4,
   [8] = 8,
-  [9] = 8
+  [9] = 8,
+  [10] = 2,
 };
 
 static const char *reg_file[4] = {
@@ -462,6 +464,17 @@ static int gen_version;
       bits = ((const union Gen8NativeInstruction *)inst)->gen;  \
     bits;                                                       \
   })
+
+#define GEN_BITS_FIELD_WITH_TYPE(inst, gen, TYPE)               \
+  ({                                                            \
+    TYPE bits;                                                  \
+    if (gen_version < 80)                                       \
+      bits = ((const union Gen7NativeInstruction *)inst)->gen;	\
+    else                                                        \
+      bits = ((const union Gen8NativeInstruction *)inst)->gen;	\
+    bits;                                                       \
+  })
+
 
 #define GEN_BITS_FIELD2(inst, gen7, gen8)                       \
   ({                                                            \
@@ -954,6 +967,57 @@ static int src2_3src(FILE *file, const void* inst)
   return err;
 }
 
+static uint32_t __conv_half_to_float(uint16_t h)
+{
+  struct __FP32 {
+    uint32_t mantissa:23;
+    uint32_t exponent:8;
+    uint32_t sign:1;
+  };
+  struct __FP16 {
+    uint32_t mantissa:10;
+    uint32_t exponent:5;
+    uint32_t sign:1;
+  };
+  uint32_t f;
+  struct __FP32 o;
+  memset(&o, 0, sizeof(o));
+  struct __FP16 i;
+  memcpy(&i, &h, sizeof(uint16_t));
+
+  if (i.exponent == 0 && i.mantissa == 0) // (Signed) zero
+    o.sign = i.sign;
+  else {
+    if (i.exponent == 0) { // Denormal (converts to normalized)
+      // Adjust mantissa so it's normalized (and keep
+      // track of exponent adjustment)
+      int e = -1;
+      uint m = i.mantissa;
+      do {
+        e++;
+        m <<= 1;
+      } while ((m & 0x400) == 0);
+
+      o.mantissa = (m & 0x3ff) << 13;
+      o.exponent = 127 - 15 - e;
+      o.sign = i.sign;
+    } else if (i.exponent == 0x1f) { // Inf/NaN
+      // NOTE: Both can be handled with same code path
+      // since we just pass through mantissa bits.
+      o.mantissa = i.mantissa << 13;
+      o.exponent = 255;
+      o.sign = i.sign;
+    } else { // Normalized number
+      o.mantissa = i.mantissa << 13;
+      o.exponent = 127 - 15 + i.exponent;
+      o.sign = i.sign;
+    }
+  }
+
+  memcpy(&f, &o, sizeof(uint32_t));
+  return f;
+}
+
 static int imm(FILE *file, uint32_t type, const void* inst)
 {
   switch (type) {
@@ -979,7 +1043,7 @@ static int imm(FILE *file, uint32_t type, const void* inst)
       format(file, "0x%xV", GEN_BITS_FIELD(inst, bits3.ud));
       break;
     case GEN_TYPE_F:
-      format(file, "%-gF", GEN_BITS_FIELD(inst, bits3.f));
+      format(file, "%-gF", GEN_BITS_FIELD_WITH_TYPE(inst, bits3.f, float));
       break;
     case GEN_TYPE_UL:
       assert(!(gen_version < 80));
@@ -992,6 +1056,15 @@ static int imm(FILE *file, uint32_t type, const void* inst)
       uint64_t val = (((const union Gen8NativeInstruction *)inst)->bits3).ud;
       val = (val << 32) + ((((const union Gen8NativeInstruction *)inst)->bits2).ud);
       format(file, "0x%lldQ", val);
+    }
+    case GEN_TYPE_HF_IMM:
+    {
+      uint16_t h = GEN_BITS_FIELD_WITH_TYPE(inst, bits3.d, uint16_t);
+      uint32_t uf = __conv_half_to_float(h);
+      float f;
+      memcpy(&f, &uf, sizeof(float));
+      format(file, "%-gHF", f);
+      break;
     }
   }
   return 0;
