@@ -19,6 +19,7 @@
 #define __OCL_TYPES_H__
 
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
 #include "ocl_defines.h"
 
 #define NULL 0
@@ -79,6 +80,7 @@ DEF(long);
 DEF(ulong);
 DEF(float);
 DEF(double);
+DEF(half);
 #undef DEF
 
 /////////////////////////////////////////////////////////////////////////////

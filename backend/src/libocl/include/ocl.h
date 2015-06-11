@@ -38,5 +38,5 @@
 #include "ocl_workitem.h"
 #include "ocl_simd.h"
 #pragma OPENCL EXTENSION cl_khr_fp64 : disable
-
+#pragma OPENCL EXTENSION cl_khr_fp16 : disable
 #endif
