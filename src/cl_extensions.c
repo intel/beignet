@@ -69,7 +69,7 @@ process_extension_str(cl_extensions_t *extensions)
   int str_offset = 0;
   int id;
 
-  extensions->ext_str[str_max] = '\0';
+  extensions->ext_str[str_max-1] = '\0';
 
   for(id = 0; id < cl_khr_extension_id_max; id++)
   {
