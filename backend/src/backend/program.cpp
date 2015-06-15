@@ -113,7 +113,7 @@ namespace gbe {
 
 #ifdef GBE_COMPILER_AVAILABLE
   BVAR(OCL_OUTPUT_GEN_IR, false);
-  BVAR(OCL_STRICT_CONFORMANCE, false);
+  BVAR(OCL_STRICT_CONFORMANCE, true);
 
   bool Program::buildFromLLVMFile(const char *fileName, const void* module, std::string &error, int optLevel) {
     ir::Unit *unit = new ir::Unit();

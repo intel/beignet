@@ -195,11 +195,11 @@ Known Issues
 * Precision issue.
   Currently Gen does not provide native support of high precision math functions
   required by OpenCL. We provide a software version to achieve high precision,
-  which you can turn on through
+  which you can turn off through
 
-  `# export OCL_STRICT_CONFORMANCE=1`.
+  `# export OCL_STRICT_CONFORMANCE=0`.
 
-  But be careful, this would make your CL kernel run a little longer.
+  This would lost some precision but gain performance.
 
 * cl\_khr\_gl\_sharing.
   This extension highly depends on mesa support. It seems that mesa would not provide
