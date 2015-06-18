@@ -1,0 +1,64 @@
+V4l2 Buffer Sharing HowTo
+=========================
+
+Beignet has extension clGetMemObjectFdIntel to share gpu buffer object with v4l2. So users
+can utilize OpenCL to do processing on input/ouput buffers of v4l2 device without buffer copy.
+
+Prerequisite
+------------
+
+Linux kernel supports DMABUF buffer sharing for v4l2 from version 3.8. DMABUF buffer
+sharing runs well for V4L2_PIX_FMT_MJPEG format on this version, but there is a bug
+for V4L2_PIX_FMT_YUYV format. Linux kernel 3.19.0-rc1 fix this bug, so please use kernel
+version 3.19.0-rc1 at least if you want to utilize this feature for V4L2_PIX_FMT_YUYV
+format.
+
+Steps
+-----
+
+The below official v4l2 document describes the details of sharing DMA buffers between
+v4l devices and other devices using v4l2 as a DMABUF importer:
+[http://linuxtv.org/downloads/v4l-dvb-apis/dmabuf.html](http://linuxtv.org/downloads/v4l-dvb-apis/dmabuf.html)
+Beignet has added extension clGetMemObjectFdIntel to support this mechanism. Please follow
+the steps as below to utilize DMABUF buffer sharing between v4l devices and Beignet:
+
+- Get the address of this extension by the function:
+  clGetExtensionFunctionAddress("clGetMemObjectFdIntel")
+
+- Create a number of cl buffer objects, invoke clGetMemObjectFdIntel to get these buffer
+  objects' file descriptors.
+
+- Initiating streaming I/O with DMABUF buffer sharing by calling the VIDIOC_REQBUFS v4l2 ioctl.
+
+- Enqueue these buffers by calling the VIDIOC_QBUF, dequeue a buffer by calling VIDIOC_DQBUF,
+  use OpenCL to do processing on this buffer and re-enqueue...
+
+- Close file descriptors of these buffers by close if your program doesn't need DMABUF buffer
+  sharing anymore.
+
+Sample code
+-----------
+
+We have developed an example showing how to share DMA buffers between webcam and Beignet in
+examples/v4l2_buffer_sharing directory. The webcam directly captures V4L2_PIX_FMT_YUYV frames
+into cl buffer objects by the way of DMABUF buffer sharing, then frames are got mirror effect
+by OpenCL kernel, and finally show on screen by libva.
+
+Steps to build and run this example:
+
+- Update your linux kernel to at least 3.19.0-rc1.
+
+- Make sure there is a webcam connected to your pc.
+
+- Add option -DBUILD_EXAMPLES=ON to enable building examples when running cmake, such as:
+  `> mkdir build`
+  `> cd build`
+  `> cmake -DBUILD_EXAMPLES=ON ../`
+
+- Build source code:
+  `> make`
+
+- Run:
+  `> cd examples`
+  `> . ../utests/setenv.sh`
+  `> ./example-v4l2_buffer_sharing`
