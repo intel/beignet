@@ -365,6 +365,8 @@ namespace gbe
     void setLongRegRestrict(bool b) { bLongRegRestrict = b; }
     void setLdMsgOrder(uint32_t type)  { ldMsgOrder = type; }
     uint32_t getLdMsgOrder()  const { return ldMsgOrder; }
+    void setSlowByteGather(bool b) { slowByteGather = b; }
+    bool getSlowByteGather() { return slowByteGather; }
     /*! indicate whether a register is a scalar/uniform register. */
     INLINE bool isPartialWrite(const ir::Register &reg) const {
       return partialWriteRegs.find(reg.value()) != partialWriteRegs.end();
@@ -740,6 +742,7 @@ namespace gbe
     bool bHasLongType;
     bool bLongRegRestrict;
     uint32_t ldMsgOrder;
+    bool slowByteGather;
     INLINE ir::LabelIndex newAuxLabel()
     {
       currAuxLabel++;
@@ -779,7 +782,8 @@ namespace gbe
     curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
     maxInsnNum(ctx.getFunction().getLargestBlockSize()), dagPool(maxInsnNum),
     stateNum(0), vectorNum(0), bwdCodeGeneration(false), currAuxLabel(ctx.getFunction().labelNum()),
-    bHas32X32Mul(false), bHasLongType(false), bLongRegRestrict(false), ldMsgOrder(LD_MSG_ORDER_IVB)
+    bHas32X32Mul(false), bHasLongType(false), bLongRegRestrict(false), ldMsgOrder(LD_MSG_ORDER_IVB),
+    slowByteGather(false)
   {
     const ir::Function &fn = ctx.getFunction();
     this->regNum = fn.regNum();
@@ -2025,26 +2029,31 @@ namespace gbe
   Selection::Selection(GenContext &ctx) {
     this->blockList = NULL;
     this->opaque = GBE_NEW(Selection::Opaque, ctx);
+    this->opaque->setSlowByteGather(true);
   }
 
   Selection75::Selection75(GenContext &ctx) : Selection(ctx) {
+    this->opaque->setSlowByteGather(false);
   }
 
   Selection8::Selection8(GenContext &ctx) : Selection(ctx) {
     this->opaque->setHas32X32Mul(true);
     this->opaque->setHasLongType(true);
+    this->opaque->setSlowByteGather(true);
   }
 
   SelectionChv::SelectionChv(GenContext &ctx) : Selection(ctx) {
     this->opaque->setHas32X32Mul(true);
     this->opaque->setHasLongType(true);
     this->opaque->setLongRegRestrict(true);
+    this->opaque->setSlowByteGather(true);
   }
 
   Selection9::Selection9(GenContext &ctx) : Selection(ctx) {
     this->opaque->setHas32X32Mul(true);
     this->opaque->setHasLongType(true);
     this->opaque->setLdMsgOrder(LD_MSG_ORDER_SKL);
+    this->opaque->setSlowByteGather(true);
   }
 
   void Selection::Opaque::TYPED_WRITE(GenRegister *msgs, uint32_t msgNum,
@@ -3519,8 +3528,31 @@ namespace gbe
         GBE_ASSERT(insn.getValueNum() == 1);
         const GenRegister value = sel.selReg(insn.getValue(0), insn.getValueType());
         GBE_ASSERT(elemSize == GEN_BYTE_SCATTER_WORD || elemSize == GEN_BYTE_SCATTER_BYTE);
+        if(sel.getSlowByteGather())
+          readByteAsDWord(sel, elemSize, address, value, isUniform, bti);
+        else {
+          GenRegister b = bti.isConst ? GenRegister::immud(bti.imm) : sel.selReg(bti.reg, ir::TYPE_U32);
+          GenRegister tmpFlag = sel.selReg(sel.reg(ir::FAMILY_WORD, true), ir::TYPE_U16);
 
-        readByteAsDWord(sel, elemSize, address, value, isUniform, bti);
+          // We need a temporary register if we read bytes or words
+          Register dst = sel.reg(FAMILY_DWORD, isUniform);
+          sel.push();
+            if (isUniform)
+              sel.curr.noMask = 1;
+            sel.BYTE_GATHER(sel.selReg(dst, ir::TYPE_U32), address, elemSize, b, bti.isConst ? NULL : & tmpFlag);
+          sel.pop();
+
+          sel.push();
+            if (isUniform) {
+              sel.curr.noMask = 1;
+              sel.curr.execWidth = 1;
+            }
+            if (elemSize == GEN_BYTE_SCATTER_WORD)
+              sel.MOV(GenRegister::retype(value, GEN_TYPE_UW), GenRegister::unpacked_uw(dst));
+            else if (elemSize == GEN_BYTE_SCATTER_BYTE)
+              sel.MOV(GenRegister::retype(value, GEN_TYPE_UB), GenRegister::unpacked_ub(dst));
+          sel.pop();
+        }
       }
     }
 
