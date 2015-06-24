@@ -182,12 +182,7 @@ namespace gbe
     const uint32_t perLaneSize = kernel->getStackSize();
     const uint32_t perThreadSize = perLaneSize * this->simdWidth;
     GBE_ASSERT(perLaneSize > 0);
-    GBE_ASSERT(isPowerOf<2>(perLaneSize) == true);
-    GBE_ASSERT(isPowerOf<2>(perThreadSize) == true);
 
-    // Use shifts rather than muls which are limited to 32x16 bit sources
-    const uint32_t perLaneShift = logi2(perLaneSize);
-    const uint32_t perThreadShift = logi2(perThreadSize);
     const GenRegister selStatckPtr = this->simdWidth == 8 ?
       GenRegister::ud8grf(ir::ocl::stackptr) :
       GenRegister::ud16grf(ir::ocl::stackptr);
@@ -201,9 +196,13 @@ namespace gbe
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->AND(GenRegister::ud1grf(126,0), GenRegister::ud1grf(0,5), GenRegister::immud(0x1ff));
       p->curr.execWidth = this->simdWidth;
-      p->SHL(stackptr, stackptr, GenRegister::immud(perLaneShift));
+      p->MUL(stackptr, stackptr, GenRegister::immuw(perLaneSize));  //perLaneSize < 64K
       p->curr.execWidth = 1;
-      p->SHL(GenRegister::ud1grf(126,0), GenRegister::ud1grf(126,0), GenRegister::immud(perThreadShift));
+      if(perThreadSize > 0xffff) {
+        p->MUL(GenRegister::ud1grf(126,0), GenRegister::ud1grf(126,0), GenRegister::immuw(perLaneSize));
+        p->MUL(GenRegister::ud1grf(126,0), GenRegister::ud1grf(126,0), GenRegister::immuw(this->simdWidth));  //Only support W * D, perLaneSize < 64K
+      } else
+        p->MUL(GenRegister::ud1grf(126,0), GenRegister::ud1grf(126,0), GenRegister::immuw(perThreadSize));
       p->curr.execWidth = this->simdWidth;
       p->ADD(stackptr, stackptr, GenRegister::ud1grf(126,0));
     p->pop();
