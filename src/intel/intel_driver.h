@@ -89,6 +89,7 @@ typedef struct intel_driver
   Display *x11_display;
   struct dri_state *dri_ctx;
   struct intel_gpgpu_node *gpgpu_list;
+  int atomic_test_result;
 } intel_driver_t;
 
 #define SET_BLOCKED_SIGSET(DRIVER)   do {                     \

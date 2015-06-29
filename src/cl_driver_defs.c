@@ -25,6 +25,7 @@ LOCAL cl_driver_new_cb *cl_driver_new = NULL;
 LOCAL cl_driver_delete_cb *cl_driver_delete = NULL;
 LOCAL cl_driver_get_bufmgr_cb *cl_driver_get_bufmgr = NULL;
 LOCAL cl_driver_get_ver_cb *cl_driver_get_ver = NULL;
+LOCAL cl_driver_set_atomic_flag_cb *cl_driver_set_atomic_flag = NULL;
 LOCAL cl_driver_get_device_id_cb *cl_driver_get_device_id = NULL;
 LOCAL cl_driver_update_device_info_cb *cl_driver_update_device_info = NULL;
 

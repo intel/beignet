@@ -448,6 +448,12 @@ intel_driver_get_ver(struct intel_driver *drv)
   return drv->gen_ver;
 }
 
+static void
+intel_driver_set_atomic_flag(intel_driver_t *drv, int atomic_flag)
+{
+  drv->atomic_test_result = atomic_flag;
+}
+
 static size_t drm_intel_bo_get_size(drm_intel_bo *bo) { return bo->size; }
 static void* drm_intel_bo_get_virtual(drm_intel_bo *bo) { return bo->virtual; }
 
@@ -834,6 +840,7 @@ intel_setup_callbacks(void)
   cl_driver_new = (cl_driver_new_cb *) cl_intel_driver_new;
   cl_driver_delete = (cl_driver_delete_cb *) cl_intel_driver_delete;
   cl_driver_get_ver = (cl_driver_get_ver_cb *) intel_driver_get_ver;
+  cl_driver_set_atomic_flag = (cl_driver_set_atomic_flag_cb *) intel_driver_set_atomic_flag;
   cl_driver_get_bufmgr = (cl_driver_get_bufmgr_cb *) intel_driver_get_bufmgr;
   cl_driver_get_device_id = (cl_driver_get_device_id_cb *) intel_get_device_id;
   cl_driver_update_device_info = (cl_driver_update_device_info_cb *) intel_update_device_info;

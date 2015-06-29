@@ -113,6 +113,7 @@ struct _cl_device_id {
   cl_device_affinity_domain    affinity_domain;
   cl_device_partition_property partition_type[3];
   cl_uint      device_reference_count;
+  uint32_t atomic_test_result;
 };
 
 /* Get a device from the given platform */

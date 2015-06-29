@@ -197,7 +197,6 @@ static struct _cl_device_id intel_skl_gt4_device = {
 #include "cl_gen75_device.h"
 };
 
-
 LOCAL cl_device_id
 cl_get_gt_device(void)
 {
@@ -546,8 +545,11 @@ skl_gt4_break:
 }
 
 /* Runs a small kernel to check that the device works; returns
- * 0 for success, 1 for silently wrong result, 2 for error */
-LOCAL cl_int
+ * SELF_TEST_PASS: for success.
+ * SELF_TEST_SLM_FAIL: for SLM results mismatch;
+ * SELF_TEST_ATOMIC_FAIL: for hsw enqueue  kernel failure to not enable atomics in L3.
+ * SELF_TEST_OTHER_FAIL: other fail like runtime API fail.*/
+LOCAL cl_self_test_res
 cl_self_test(cl_device_id device)
 {
   cl_int status;
@@ -566,7 +568,7 @@ cl_self_test(cl_device_id device)
   "  buf[get_global_id(0)] = tmp[2 - get_local_id(0)] + buf[get_global_id(0)];"
   "}"; // using __local to catch the "no SLM on Haswell" problem
   static int tested = 0;
-  static cl_int ret = 2;
+  static cl_self_test_res ret = SELF_TEST_OTHER_FAIL;
   if (tested != 0)
     return ret;
   tested = 1;
@@ -589,14 +591,16 @@ cl_self_test(cl_device_id device)
                   status = clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, n*4, test_data, 1, &kernel_finished, NULL);
                   if (status == CL_SUCCESS) {
                     if (test_data[0] == 8 && test_data[1] == 14 && test_data[2] == 8){
-                      ret = 0;
+                      ret = SELF_TEST_PASS;
                     } else {
-                      ret = 1;
+                      ret = SELF_TEST_SLM_FAIL;
                       printf("Beignet: self-test failed: (3, 7, 5) + (5, 7, 3) returned (%i, %i, %i)\n"
                              "See README.md or http://www.freedesktop.org/wiki/Software/Beignet/\n",
                              test_data[0], test_data[1], test_data[2]);
                     }
                   }
+                } else{
+                  ret = SELF_TEST_ATOMIC_FAIL;
                 }
               }
             }
@@ -610,10 +614,6 @@ cl_self_test(cl_device_id device)
     clReleaseCommandQueue(queue);
   }
   clReleaseContext(ctx);
-  if (ret == 2) {
-    printf("Beignet: self-test failed: error %i\n"
-           "See README.md or http://www.freedesktop.org/wiki/Software/Beignet/\n", status);
-  }
   return ret;
 }
 
@@ -628,18 +628,22 @@ cl_get_device_ids(cl_platform_id    platform,
 
   /* Do we have a usable device? */
   device = cl_get_gt_device();
-  if (device && cl_self_test(device)) {
-    int disable_self_test = 0;
-    // can't use BVAR (backend/src/sys/cvar.hpp) here as it's C++
-    const char *env = getenv("OCL_IGNORE_SELF_TEST");
-    if (env != NULL) {
-      sscanf(env, "%i", &disable_self_test);
-    }
-    if (disable_self_test) {
-      printf("Beignet: Warning - overriding self-test failure\n");
-    } else {
-      printf("Beignet: disabling non-working device\n");
-      device = 0;
+  if (device) {
+    cl_self_test_res ret = cl_self_test(device);
+    device->atomic_test_result = ret;
+    if(ret == SELF_TEST_SLM_FAIL) {
+      int disable_self_test = 0;
+      // can't use BVAR (backend/src/sys/cvar.hpp) here as it's C++
+      const char *env = getenv("OCL_IGNORE_SELF_TEST");
+      if (env != NULL) {
+        sscanf(env, "%i", &disable_self_test);
+      }
+      if (disable_self_test) {
+        printf("Beignet: Warning - overriding self-test failure\n");
+      } else {
+        printf("Beignet: disabling non-working device\n");
+        device = 0;
+      }
     }
   }
   if (!device) {

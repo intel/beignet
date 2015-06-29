@@ -149,6 +149,7 @@ cl_create_context(const cl_context_properties *  properties,
   /* Save the user callback and user data*/
   ctx->pfn_notify = pfn_notify;
   ctx->user_data = user_data;
+  cl_driver_set_atomic_flag(ctx->drv, ctx->device->atomic_test_result);
 
 exit:
   if (errcode_ret != NULL)

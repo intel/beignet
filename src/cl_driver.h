@@ -49,6 +49,15 @@ extern cl_driver_get_bufmgr_cb *cl_driver_get_bufmgr;
 typedef uint32_t (cl_driver_get_ver_cb)(cl_driver);
 extern cl_driver_get_ver_cb *cl_driver_get_ver;
 
+typedef enum cl_self_test_res{
+  SELF_TEST_PASS = 0,
+  SELF_TEST_SLM_FAIL  = 1,
+  SELF_TEST_ATOMIC_FAIL = 2,
+  SELF_TEST_OTHER_FAIL = 3,
+} cl_self_test_res;
+/* Set the atomic enable/disable flag in the driver */
+typedef void (cl_driver_set_atomic_flag_cb)(cl_driver, int);
+extern cl_driver_set_atomic_flag_cb *cl_driver_set_atomic_flag;
 /**************************************************************************
  * GPGPU command streamer
  **************************************************************************/
