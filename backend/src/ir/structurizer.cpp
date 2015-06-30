@@ -738,7 +738,9 @@ namespace ir {
       return 0;
 
     Block *childBlk = *block->succ_begin();
-    if (childBlk->pred_size() != 1 )
+    //FIXME, As our barrier implementation doen't support structured barrier
+    //operation, exclude all the barrier blocks from serialPatternMatch.
+    if (childBlk->pred_size() != 1 || childBlk->hasBarrier() )
       return 0;
 
     BlockList serialBBs;//childBBs
