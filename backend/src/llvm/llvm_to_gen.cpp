@@ -160,7 +160,7 @@ namespace gbe
     MPM.add(createIndVarSimplifyPass());        // Canonicalize indvars
     MPM.add(createLoopIdiomPass());             // Recognize idioms like memset.
     MPM.add(createLoopDeletionPass());          // Delete dead loops
-    MPM.add(createLoopUnrollPass()); //1024, 32, 1024, 512)); //Unroll loops
+    MPM.add(createLoopUnrollPass(1024)); //1024, 32, 1024, 512)); //Unroll loops
     if(optLevel > 0) {
       MPM.add(createSROAPass(/*RequiresDomTree*/ false));
       MPM.add(createGVNPass());                 // Remove redundancies
