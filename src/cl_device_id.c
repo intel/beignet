@@ -399,10 +399,10 @@ baytrail_t_device_break:
       DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics BroadWell ULX GT1");
 brw_gt1_break:
       /* For Gen8 and later, half float is suppported and we will enable cl_khr_fp16. */
-      cl_intel_platform_enable_fp16_extension(cl_get_platform_default());
       intel_brw_gt1_device.vendor_id = device_id;
       intel_brw_gt1_device.platform = cl_get_platform_default();
       ret = &intel_brw_gt1_device;
+      cl_intel_platform_enable_fp16_extension(ret);
       break;
 
     case PCI_CHIP_BROADWLL_M_GT2:
@@ -416,10 +416,10 @@ brw_gt1_break:
     case PCI_CHIP_BROADWLL_U_GT2:
       DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics BroadWell ULX GT2");
 brw_gt2_break:
-      cl_intel_platform_enable_fp16_extension(cl_get_platform_default());
       intel_brw_gt2_device.vendor_id = device_id;
       intel_brw_gt2_device.platform = cl_get_platform_default();
       ret = &intel_brw_gt2_device;
+      cl_intel_platform_enable_fp16_extension(ret);
       break;
 
     case PCI_CHIP_BROADWLL_M_GT3:
@@ -433,10 +433,10 @@ brw_gt2_break:
     case PCI_CHIP_BROADWLL_U_GT3:
       DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics BroadWell ULX GT2");
 brw_gt3_break:
-      cl_intel_platform_enable_fp16_extension(cl_get_platform_default());
       intel_brw_gt3_device.vendor_id = device_id;
       intel_brw_gt3_device.platform = cl_get_platform_default();
       ret = &intel_brw_gt3_device;
+      cl_intel_platform_enable_fp16_extension(ret);
       break;
 
     case PCI_CHIP_CHV_0:
@@ -445,10 +445,10 @@ brw_gt3_break:
     case PCI_CHIP_CHV_3:
       DECL_INFO_STRING(chv_break, intel_chv_device, name, "Intel(R) HD Graphics Cherryview");
 chv_break:
-      cl_intel_platform_enable_fp16_extension(cl_get_platform_default());
       intel_chv_device.vendor_id = device_id;
       intel_chv_device.platform = cl_get_platform_default();
       ret = &intel_chv_device;
+      cl_intel_platform_enable_fp16_extension(ret);
       break;
 
 
@@ -463,10 +463,10 @@ chv_break:
     case PCI_CHIP_SKYLAKE_SRV_GT1:
       DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake Server GT1");
 skl_gt1_break:
-      cl_intel_platform_enable_fp16_extension(cl_get_platform_default());
       intel_skl_gt1_device.vendor_id = device_id;
       intel_skl_gt1_device.platform = cl_get_platform_default();
       ret = &intel_skl_gt1_device;
+      cl_intel_platform_enable_fp16_extension(ret);
       break;
 
     case PCI_CHIP_SKYLAKE_ULT_GT2:
@@ -482,10 +482,10 @@ skl_gt1_break:
     case PCI_CHIP_SKYLAKE_SRV_GT2:
       DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake Server GT2");
 skl_gt2_break:
-      cl_intel_platform_enable_fp16_extension(cl_get_platform_default());
       intel_skl_gt2_device.vendor_id = device_id;
       intel_skl_gt2_device.platform = cl_get_platform_default();
       ret = &intel_skl_gt2_device;
+      cl_intel_platform_enable_fp16_extension(ret);
       break;
 
     case PCI_CHIP_SKYLAKE_ULT_GT3:
@@ -495,10 +495,10 @@ skl_gt2_break:
     case PCI_CHIP_SKYLAKE_SRV_GT3:
       DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake Server GT3");
 skl_gt3_break:
-      cl_intel_platform_enable_fp16_extension(cl_get_platform_default());
       intel_skl_gt3_device.vendor_id = device_id;
       intel_skl_gt3_device.platform = cl_get_platform_default();
       ret = &intel_skl_gt3_device;
+      cl_intel_platform_enable_fp16_extension(ret);
       break;
 
     case PCI_CHIP_SKYLAKE_HALO_GT4:
@@ -506,10 +506,10 @@ skl_gt3_break:
     case PCI_CHIP_SKYLAKE_SRV_GT4:
       DECL_INFO_STRING(skl_gt4_break, intel_skl_gt4_device, name, "Intel(R) HD Graphics Skylake Server GT4");
 skl_gt4_break:
-      cl_intel_platform_enable_fp16_extension(cl_get_platform_default());
       intel_skl_gt4_device.vendor_id = device_id;
       intel_skl_gt4_device.platform = cl_get_platform_default();
       ret = &intel_skl_gt4_device;
+      cl_intel_platform_enable_fp16_extension(ret);
       break;
 
     case PCI_CHIP_SANDYBRIDGE_BRIDGE:
@@ -667,8 +667,6 @@ cl_get_device_ids(cl_platform_id    platform,
       *num_devices = 1;
     if (devices) {
       *devices = device;
-      (*devices)->extensions = cl_get_platform_default()->extensions;
-      (*devices)->extensions_sz = cl_get_platform_default()->extensions_sz;
     }
     return CL_SUCCESS;
   }

@@ -94,7 +94,7 @@ struct _cl_device_id {
   const char *version;
   const char *profile;
   const char *opencl_c_version;
-  const char *extensions;
+  const char extensions[256];
   const char *driver_version;
   const char *built_in_kernels;
   size_t name_sz;

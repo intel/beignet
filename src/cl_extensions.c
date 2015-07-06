@@ -5,6 +5,7 @@
 #endif
 
 #include "cl_platform_id.h"
+#include "cl_device_id.h"
 #include "cl_internals.h"
 #include "CL/cl.h"
 #include "cl_utils.h"
@@ -72,7 +73,7 @@ process_extension_str(cl_extensions_t *extensions)
   int str_offset = 0;
   int id;
 
-  extensions->ext_str[str_max-1] = '\0';
+  memset(extensions->ext_str, 0, sizeof(extensions->ext_str));
 
   for(id = 0; id < cl_khr_extension_id_max; id++)
   {
@@ -95,21 +96,24 @@ process_extension_str(cl_extensions_t *extensions)
 
 
 LOCAL void
-cl_intel_platform_enable_fp16_extension(cl_platform_id intel_platform)
+cl_intel_platform_enable_fp16_extension(cl_device_id device)
 {
-  cl_extensions_t *extensions = &intel_platform_extensions;
+  cl_extensions_t new_ext;
+  cl_platform_id pf = device->platform;
   int id;
+  assert(pf);
 
-  for(id = OPT1_EXT_START_ID; id <= OPT1_EXT_END_ID; id++)
-  {
+  memcpy(&new_ext, pf->internal_extensions, sizeof(new_ext));
+
+  for(id = OPT1_EXT_START_ID; id <= OPT1_EXT_END_ID; id++) {
     if (id == EXT_ID(khr_fp16))
-      extensions->extensions[id].base.ext_enabled = 1;
+      new_ext.extensions[id].base.ext_enabled = 1;
   }
 
-  process_extension_str(extensions);
-  intel_platform->internal_extensions = &intel_platform_extensions;
-  intel_platform->extensions = intel_platform_extensions.ext_str;
-  intel_platform->extensions_sz = strlen(intel_platform->extensions) + 1;
+  process_extension_str(&new_ext);
+
+  memcpy((char*)device->extensions, new_ext.ext_str, sizeof(device->extensions));
+  device->extensions_sz = strlen(new_ext.ext_str) + 1;
 }
 
 LOCAL void
