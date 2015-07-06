@@ -2052,6 +2052,7 @@ namespace gbe
     this->opaque->setHasLongType(true);
     this->opaque->setLongRegRestrict(true);
     this->opaque->setSlowByteGather(true);
+    this->opaque->setHasHalfType(true);
   }
 
   Selection9::Selection9(GenContext &ctx) : Selection(ctx) {
@@ -2059,6 +2060,7 @@ namespace gbe
     this->opaque->setHasLongType(true);
     this->opaque->setLdMsgOrder(LD_MSG_ORDER_SKL);
     this->opaque->setSlowByteGather(true);
+    this->opaque->setHasHalfType(true);
   }
 
   void Selection::Opaque::TYPED_WRITE(GenRegister *msgs, uint32_t msgNum,
