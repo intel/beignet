@@ -2156,6 +2156,9 @@ namespace gbe
     // between phi and phiCopy live range. If there is no point that
     // phi & phiCopy are both alive, then we can optimize off the move
     // from phiCopy to phi, and use phiCopy directly instead of phi.
+    // right now, the algorithm is still very conservative, we need to do
+    // aggressive coaleasing for the moves added during phi elimination.
+
     using namespace ir;
     ir::FunctionDAG *dag = new ir::FunctionDAG(liveness);
 
@@ -2167,6 +2170,13 @@ namespace gbe
       const ir::UseSet *phiUse = dag->getRegUse(phi);
       const DefSet *phiDef = dag->getRegDef(phi);
       bool isOpt = true;
+
+      // FIXME, I find under some situation, the phiDef maybe null, seems a bug when building FunctionDAg.
+      // need fix it there.
+      if (phiDef->empty()) continue;
+
+      const ir::BasicBlock *phiDefBB = (*phiDef->begin())->getInstruction()->getParent();
+
       for (auto &x : *phiCopyDef) {
         const ir::Instruction * phiCopyDefInsn = x->getInstruction();
         const ir::BasicBlock *bb = phiCopyDefInsn->getParent();
@@ -2177,6 +2187,63 @@ namespace gbe
           isOpt = false;
           break;
         }
+
+        const ir::Register phiCopySrc = phiCopyDefInsn->getSrc(0);
+        const ir::UseSet *phiCopySrcUse = dag->getRegUse(phiCopySrc);
+        const ir::DefSet *phiCopySrcDef = dag->getRegDef(phiCopySrc);
+        // non-ssa value. skip opt on such kind of value
+        if (phiCopySrcDef->size() > 1) break;
+        // we can only coalesce instruction dest
+        if ((*(phiCopySrcDef->begin()))->getType() != ValueDef::DEF_INSN_DST) break;
+
+        const ir::Instruction *phiCopySrcDefInsn = (*(phiCopySrcDef->begin()))->getInstruction();
+        if(bb == phiDefBB && bb == phiCopySrcDefInsn->getParent()) {
+          // phiCopy, phiCopySrc defined in same basicblock as phi
+          // try to coalease phiCopy and phiCopySrc first.
+          // consider below situation:
+          // bb1:
+          //    ...
+          // bb2:
+          //    x = phi [x1, bb1], [x2, bb2]
+          //    x2 = x+1;
+          // after de-ssa:
+          // bb2:
+          //    mov x, x-copy
+          //    add x2, x, 1
+          //    mov x-copy, x2
+          //  obviously x2, x-copy and x2 can be mapped to same virtual register
+
+          ir::BasicBlock::const_iterator iter = ir::BasicBlock::const_iterator(phiCopySrcDefInsn);
+          ir::BasicBlock::const_iterator iterE = bb->end();
+          // check no use of phi in this basicblock between [phiCopySrc def, bb end]
+          bool phiPhiCopySrcInterfere = false;
+          while (iter != iterE) {
+            const ir::Instruction *insn = iter.node();
+            // check phiUse
+            for (unsigned i = 0; i < insn->getSrcNum(); i++) {
+              ir::Register src = insn->getSrc(i);
+              if (src == phi) {
+                phiPhiCopySrcInterfere = true; break;
+              }
+            }
+            ++iter;
+          }
+          if (!phiPhiCopySrcInterfere) {
+            // phiCopy source can be coaleased with phiCopy
+            const_cast<Instruction *>(phiCopyDefInsn)->remove();
+
+            for (auto &s : *phiCopySrcDef) {
+              const Instruction *phiSrcDefInsn = s->getInstruction();
+              replaceDst(const_cast<Instruction *>(phiSrcDefInsn), phiCopySrc, phiCopy);
+            }
+
+            for (auto &s : *phiCopySrcUse) {
+              const Instruction *phiSrcUseInsn = s->getInstruction();
+              replaceSrc(const_cast<Instruction *>(phiSrcUseInsn), phiCopySrc, phiCopy);
+            }
+          }
+        }
+
         // If phi is used in the same BB that define the phiCopy,
         // we need carefully check the liveness of phi & phiCopy.
         // Make sure their live ranges do not interfere.
@@ -2206,8 +2273,7 @@ namespace gbe
         }
       }
 
-      // [MOV phi, phiCopy;] can be removed. So we remove it
-      // and replace phi uses with phiCopy
+      // coalease phi and phiCopy 
       if (isOpt) {
         for (auto &x : *phiDef) {
           const_cast<Instruction *>(x->getInstruction())->remove();
