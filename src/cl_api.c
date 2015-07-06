@@ -195,7 +195,7 @@ clGetPlatformInfo(cl_platform_id    platform,
                   size_t *          param_value_size_ret)
 {
   /* Only one platform. This is easy */
-  if (UNLIKELY(platform != NULL && platform != intel_platform))
+  if (UNLIKELY(platform != NULL && platform != cl_get_platform_default()))
     return CL_INVALID_PLATFORM;
 
   return cl_get_platform_info(platform,
@@ -217,7 +217,7 @@ clGetDeviceIDs(cl_platform_id platform,
   /* Check parameter consistency */
   if (UNLIKELY(devices == NULL && num_devices == NULL))
     return CL_INVALID_VALUE;
-  if (UNLIKELY(platform && platform != intel_platform))
+  if (UNLIKELY(platform && platform != cl_get_platform_default()))
     return CL_INVALID_PLATFORM;
   if (UNLIKELY(devices && num_entries == 0))
     return CL_INVALID_VALUE;
@@ -3193,7 +3193,7 @@ void*
 clGetExtensionFunctionAddressForPlatform(cl_platform_id platform,
                               const char *func_name)
 {
-  if (UNLIKELY(platform != NULL && platform != intel_platform))
+  if (UNLIKELY(platform != NULL && platform != cl_get_platform_default()))
     return NULL;
   return internal_clGetExtensionFunctionAddress(func_name);
 }

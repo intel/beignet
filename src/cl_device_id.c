@@ -351,7 +351,7 @@ cl_get_gt_device(void)
       DECL_INFO_STRING(has_break, intel_hsw_gt3_device, name, "Intel(R) HD Graphics Haswell CRW GT3 reserved");
 has_break:
       device->vendor_id = device_id;
-      device->platform = intel_platform;
+      device->platform = cl_get_platform_default();
       ret = device;
       break;
 
@@ -363,7 +363,7 @@ has_break:
       DECL_INFO_STRING(ivb_gt1_break, intel_ivb_gt1_device, name, "Intel(R) HD Graphics IvyBridge S GT1");
 ivb_gt1_break:
       intel_ivb_gt1_device.vendor_id = device_id;
-      intel_ivb_gt1_device.platform = intel_platform;
+      intel_ivb_gt1_device.platform = cl_get_platform_default();
       ret = &intel_ivb_gt1_device;
       break;
 
@@ -375,7 +375,7 @@ ivb_gt1_break:
       DECL_INFO_STRING(ivb_gt2_break, intel_ivb_gt2_device, name, "Intel(R) HD Graphics IvyBridge S GT2");
 ivb_gt2_break:
       intel_ivb_gt2_device.vendor_id = device_id;
-      intel_ivb_gt2_device.platform = intel_platform;
+      intel_ivb_gt2_device.platform = cl_get_platform_default();
       ret = &intel_ivb_gt2_device;
       break;
 
@@ -383,7 +383,7 @@ ivb_gt2_break:
       DECL_INFO_STRING(baytrail_t_device_break, intel_baytrail_t_device, name, "Intel(R) HD Graphics Bay Trail-T");
 baytrail_t_device_break:
       intel_baytrail_t_device.vendor_id = device_id;
-      intel_baytrail_t_device.platform = intel_platform;
+      intel_baytrail_t_device.platform = cl_get_platform_default();
       ret = &intel_baytrail_t_device;
       break;
 
@@ -399,9 +399,9 @@ baytrail_t_device_break:
       DECL_INFO_STRING(brw_gt1_break, intel_brw_gt1_device, name, "Intel(R) HD Graphics BroadWell ULX GT1");
 brw_gt1_break:
       /* For Gen8 and later, half float is suppported and we will enable cl_khr_fp16. */
-      cl_intel_platform_enable_fp16_extension(intel_platform);
+      cl_intel_platform_enable_fp16_extension(cl_get_platform_default());
       intel_brw_gt1_device.vendor_id = device_id;
-      intel_brw_gt1_device.platform = intel_platform;
+      intel_brw_gt1_device.platform = cl_get_platform_default();
       ret = &intel_brw_gt1_device;
       break;
 
@@ -416,9 +416,9 @@ brw_gt1_break:
     case PCI_CHIP_BROADWLL_U_GT2:
       DECL_INFO_STRING(brw_gt2_break, intel_brw_gt2_device, name, "Intel(R) HD Graphics BroadWell ULX GT2");
 brw_gt2_break:
-      cl_intel_platform_enable_fp16_extension(intel_platform);
+      cl_intel_platform_enable_fp16_extension(cl_get_platform_default());
       intel_brw_gt2_device.vendor_id = device_id;
-      intel_brw_gt2_device.platform = intel_platform;
+      intel_brw_gt2_device.platform = cl_get_platform_default();
       ret = &intel_brw_gt2_device;
       break;
 
@@ -433,9 +433,9 @@ brw_gt2_break:
     case PCI_CHIP_BROADWLL_U_GT3:
       DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics BroadWell ULX GT2");
 brw_gt3_break:
-      cl_intel_platform_enable_fp16_extension(intel_platform);
+      cl_intel_platform_enable_fp16_extension(cl_get_platform_default());
       intel_brw_gt3_device.vendor_id = device_id;
-      intel_brw_gt3_device.platform = intel_platform;
+      intel_brw_gt3_device.platform = cl_get_platform_default();
       ret = &intel_brw_gt3_device;
       break;
 
@@ -445,8 +445,9 @@ brw_gt3_break:
     case PCI_CHIP_CHV_3:
       DECL_INFO_STRING(chv_break, intel_chv_device, name, "Intel(R) HD Graphics Cherryview");
 chv_break:
+      cl_intel_platform_enable_fp16_extension(cl_get_platform_default());
       intel_chv_device.vendor_id = device_id;
-      intel_chv_device.platform = intel_platform;
+      intel_chv_device.platform = cl_get_platform_default();
       ret = &intel_chv_device;
       break;
 
@@ -462,9 +463,9 @@ chv_break:
     case PCI_CHIP_SKYLAKE_SRV_GT1:
       DECL_INFO_STRING(skl_gt1_break, intel_skl_gt1_device, name, "Intel(R) HD Graphics Skylake Server GT1");
 skl_gt1_break:
-      cl_intel_platform_enable_fp16_extension(intel_platform);
+      cl_intel_platform_enable_fp16_extension(cl_get_platform_default());
       intel_skl_gt1_device.vendor_id = device_id;
-      intel_skl_gt1_device.platform = intel_platform;
+      intel_skl_gt1_device.platform = cl_get_platform_default();
       ret = &intel_skl_gt1_device;
       break;
 
@@ -481,9 +482,9 @@ skl_gt1_break:
     case PCI_CHIP_SKYLAKE_SRV_GT2:
       DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake Server GT2");
 skl_gt2_break:
-      cl_intel_platform_enable_fp16_extension(intel_platform);
+      cl_intel_platform_enable_fp16_extension(cl_get_platform_default());
       intel_skl_gt2_device.vendor_id = device_id;
-      intel_skl_gt2_device.platform = intel_platform;
+      intel_skl_gt2_device.platform = cl_get_platform_default();
       ret = &intel_skl_gt2_device;
       break;
 
@@ -494,9 +495,9 @@ skl_gt2_break:
     case PCI_CHIP_SKYLAKE_SRV_GT3:
       DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake Server GT3");
 skl_gt3_break:
-      cl_intel_platform_enable_fp16_extension(intel_platform);
+      cl_intel_platform_enable_fp16_extension(cl_get_platform_default());
       intel_skl_gt3_device.vendor_id = device_id;
-      intel_skl_gt3_device.platform = intel_platform;
+      intel_skl_gt3_device.platform = cl_get_platform_default();
       ret = &intel_skl_gt3_device;
       break;
 
@@ -505,9 +506,9 @@ skl_gt3_break:
     case PCI_CHIP_SKYLAKE_SRV_GT4:
       DECL_INFO_STRING(skl_gt4_break, intel_skl_gt4_device, name, "Intel(R) HD Graphics Skylake Server GT4");
 skl_gt4_break:
-      cl_intel_platform_enable_fp16_extension(intel_platform);
+      cl_intel_platform_enable_fp16_extension(cl_get_platform_default());
       intel_skl_gt4_device.vendor_id = device_id;
-      intel_skl_gt4_device.platform = intel_platform;
+      intel_skl_gt4_device.platform = cl_get_platform_default();
       ret = &intel_skl_gt4_device;
       break;
 
@@ -635,17 +636,6 @@ cl_get_device_ids(cl_platform_id    platform,
 {
   cl_device_id device;
 
-  /* Spec allow platform to be NULL, and If platform
-     is NULL, the behavior is implementation-defined.
-     We can not init the device before platform init. */
-  if (!platform) {
-    if (num_devices)
-      *num_devices = 0;
-    if (devices)
-      *devices = 0;
-    return CL_DEVICE_NOT_FOUND;
-  }
-
   /* Do we have a usable device? */
   device = cl_get_gt_device();
   if (device) {
@@ -677,8 +667,8 @@ cl_get_device_ids(cl_platform_id    platform,
       *num_devices = 1;
     if (devices) {
       *devices = device;
-      (*devices)->extensions = intel_platform->extensions;
-      (*devices)->extensions_sz = intel_platform->extensions_sz;
+      (*devices)->extensions = cl_get_platform_default()->extensions;
+      (*devices)->extensions_sz = cl_get_platform_default()->extensions_sz;
     }
     return CL_SUCCESS;
   }

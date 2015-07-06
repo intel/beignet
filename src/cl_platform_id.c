@@ -41,8 +41,19 @@ static struct _cl_platform_id intel_platform_data = {
 
 #undef DECL_INFO_STRING
 
-/* Intel platform (only GPU now) */
-cl_platform_id const intel_platform = &intel_platform_data;
+/* Intel platform (only GPU now).
+   It is used as default when the API's platform ptr is NULL */
+static cl_platform_id intel_platform = NULL;
+LOCAL cl_platform_id
+cl_get_platform_default(void)
+{
+  if (intel_platform)
+    return intel_platform;
+
+  intel_platform = &intel_platform_data;
+  cl_intel_platform_extension_init(intel_platform);
+  return intel_platform;
+}
 
 LOCAL cl_int
 cl_get_platform_ids(cl_uint          num_entries,
@@ -52,29 +63,28 @@ cl_get_platform_ids(cl_uint          num_entries,
   if (num_platforms != NULL)
     *num_platforms = 1;
 
-  cl_intel_platform_extension_init(intel_platform);
   /* Easy right now, only one platform is supported */
   if(platforms)
-    *platforms = intel_platform;
+    *platforms = cl_get_platform_default();
 
   return CL_SUCCESS;
 }
 
 #define DECL_FIELD(CASE,FIELD)                                  \
   case JOIN(CL_,CASE):                                          \
-    if (param_value_size < intel_platform->JOIN(FIELD,_sz))     \
+    if (param_value_size < cl_get_platform_default()->JOIN(FIELD,_sz))     \
       return CL_INVALID_VALUE;                                  \
     if (param_value_size_ret != NULL)                           \
-      *param_value_size_ret = intel_platform->JOIN(FIELD,_sz);  \
+      *param_value_size_ret = cl_get_platform_default()->JOIN(FIELD,_sz);  \
     memcpy(param_value,                                         \
-           intel_platform->FIELD,                               \
-           intel_platform->JOIN(FIELD,_sz));                    \
+           cl_get_platform_default()->FIELD,                               \
+           cl_get_platform_default()->JOIN(FIELD,_sz));                    \
       return CL_SUCCESS;
 
 #define GET_FIELD_SZ(CASE,FIELD)                                \
   case JOIN(CL_,CASE):                                          \
     if (param_value_size_ret != NULL)                           \
-      *param_value_size_ret = intel_platform->JOIN(FIELD,_sz);  \
+      *param_value_size_ret = cl_get_platform_default()->JOIN(FIELD,_sz);  \
     return CL_SUCCESS;
 
 LOCAL cl_int

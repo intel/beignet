@@ -44,8 +44,8 @@ struct _cl_platform_id {
   struct cl_extensions *internal_extensions;
 };
 
-/* Platform implemented by this run-time */
-extern cl_platform_id const intel_platform;
+/* Return the default platform */
+extern cl_platform_id cl_get_platform_default(void);
 
 /* Return the valid platform */
 extern cl_int cl_get_platform_ids(cl_uint          num_entries,

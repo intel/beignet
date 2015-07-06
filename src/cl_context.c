@@ -68,7 +68,7 @@ cl_context_properties_process(const cl_context_properties *prop,
     case CL_CONTEXT_PLATFORM:
       CHECK (set_cl_context_platform);
       cl_props->platform_id = *(prop + 1);
-      if (UNLIKELY((cl_platform_id) cl_props->platform_id != intel_platform)) {
+      if (UNLIKELY((cl_platform_id) cl_props->platform_id != cl_get_platform_default())) {
         err = CL_INVALID_PLATFORM;
         goto error;
       }

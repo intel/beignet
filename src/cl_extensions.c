@@ -13,7 +13,9 @@
 #include <string.h>
 #include <assert.h>
 
-static struct cl_extensions intel_extensions =
+/* This extension should be common for all the intel GPU platform.
+   Every device may have its own additional externsions. */
+static struct cl_extensions intel_platform_extensions =
 {
   {
 #define DECL_EXT(name) \
@@ -91,14 +93,12 @@ process_extension_str(cl_extensions_t *extensions)
   }
 }
 
-static int ext_initialized = 0;
 
 LOCAL void
 cl_intel_platform_enable_fp16_extension(cl_platform_id intel_platform)
 {
-  cl_extensions_t *extensions = &intel_extensions;
+  cl_extensions_t *extensions = &intel_platform_extensions;
   int id;
-  assert(ext_initialized);
 
   for(id = OPT1_EXT_START_ID; id <= OPT1_EXT_END_ID; id++)
   {
@@ -107,29 +107,27 @@ cl_intel_platform_enable_fp16_extension(cl_platform_id intel_platform)
   }
 
   process_extension_str(extensions);
-  intel_platform->internal_extensions = &intel_extensions;
-  intel_platform->extensions = intel_extensions.ext_str;
+  intel_platform->internal_extensions = &intel_platform_extensions;
+  intel_platform->extensions = intel_platform_extensions.ext_str;
   intel_platform->extensions_sz = strlen(intel_platform->extensions) + 1;
 }
 
 LOCAL void
 cl_intel_platform_extension_init(cl_platform_id intel_platform)
 {
-  if (ext_initialized) {
-    intel_platform->internal_extensions = &intel_extensions;
-    intel_platform->extensions = intel_extensions.ext_str;
-    return;
-  }
-  check_basic_extension(&intel_extensions);
-  check_opt1_extension(&intel_extensions);
-  check_gl_extension(&intel_extensions);
-  check_intel_extension(&intel_extensions);
-  process_extension_str(&intel_extensions);
+  static int ext_initialized = 0;
 
-  intel_platform->internal_extensions = &intel_extensions;
-  intel_platform->extensions = intel_extensions.ext_str;
-  intel_platform->extensions_sz = strlen(intel_platform->extensions) + 1;
-
+  /* The EXT should be only inited once. */
+  assert(!ext_initialized);
+  check_basic_extension(&intel_platform_extensions);
+  check_opt1_extension(&intel_platform_extensions);
+  check_gl_extension(&intel_platform_extensions);
+  check_intel_extension(&intel_platform_extensions);
+  process_extension_str(&intel_platform_extensions);
   ext_initialized = 1;
+
+  intel_platform->internal_extensions = &intel_platform_extensions;
+  intel_platform->extensions = intel_platform_extensions.ext_str;
+  intel_platform->extensions_sz = strlen(intel_platform->extensions) + 1;
   return;
 }
