@@ -812,6 +812,13 @@ namespace ir {
     if(loopBBs.empty())
       return 0;
 
+    if(loopSets.size() == 1) {
+    //self loop header should have a successor to itself, check this before merged.
+      Block* lblock = *loopSets.begin();
+      if(lblock->successors().find(lblock) == lblock->successors().end())
+        return 0;
+    }
+
     Block* mergedBB = mergeLoopBlock(loopBBs);
     if(mergedBB == NULL)
       return 0;
