@@ -115,7 +115,7 @@ static int check_half_device(void)
   if (!param_value.empty())
     extStr = std::string(&param_value.front(), param_value_size-1);
 
-  if (std::strstr(extStr.c_str(), "cl_khr_fp16") == false) {
+  if (std::strstr(extStr.c_str(), "cl_khr_fp16") == NULL) {
     printf("No cl_khr_fp16, Skip!");
     return 0;
   }
