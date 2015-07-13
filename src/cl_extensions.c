@@ -94,6 +94,14 @@ process_extension_str(cl_extensions_t *extensions)
   }
 }
 
+LOCAL void
+cl_intel_platform_get_default_extension(cl_device_id device)
+{
+  cl_platform_id pf = device->platform;
+  memcpy((char*)device->extensions,
+       pf->internal_extensions->ext_str, sizeof(device->extensions));
+  device->extensions_sz = strlen(pf->internal_extensions->ext_str) + 1;
+}
 
 LOCAL void
 cl_intel_platform_enable_fp16_extension(cl_device_id device)

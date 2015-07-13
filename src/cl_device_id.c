@@ -353,6 +353,7 @@ has_break:
       device->vendor_id = device_id;
       device->platform = cl_get_platform_default();
       ret = device;
+      cl_intel_platform_get_default_extension(ret);
       break;
 
     case PCI_CHIP_IVYBRIDGE_GT1:
@@ -365,6 +366,7 @@ ivb_gt1_break:
       intel_ivb_gt1_device.vendor_id = device_id;
       intel_ivb_gt1_device.platform = cl_get_platform_default();
       ret = &intel_ivb_gt1_device;
+      cl_intel_platform_get_default_extension(ret);
       break;
 
     case PCI_CHIP_IVYBRIDGE_GT2:
@@ -377,6 +379,7 @@ ivb_gt2_break:
       intel_ivb_gt2_device.vendor_id = device_id;
       intel_ivb_gt2_device.platform = cl_get_platform_default();
       ret = &intel_ivb_gt2_device;
+      cl_intel_platform_get_default_extension(ret);
       break;
 
     case PCI_CHIP_BAYTRAIL_T:
@@ -385,6 +388,7 @@ baytrail_t_device_break:
       intel_baytrail_t_device.vendor_id = device_id;
       intel_baytrail_t_device.platform = cl_get_platform_default();
       ret = &intel_baytrail_t_device;
+      cl_intel_platform_get_default_extension(ret);
       break;
 
     case PCI_CHIP_BROADWLL_M_GT1:
