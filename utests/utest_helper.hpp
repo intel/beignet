@@ -165,6 +165,7 @@ extern cl_mem buf[MAX_BUFFER_N];
 extern void* buf_data[MAX_BUFFER_N];
 extern size_t globals[3];
 extern size_t locals[3];
+extern float ULPSIZE_FAST_MATH;
 
 enum {
   SOURCE = 0,
@@ -232,6 +233,9 @@ extern int cl_INT_ULP(int int_number);
 
 /* subtract the time */
 double time_subtract(struct timeval *y, struct timeval *x, struct timeval *result);
+
+/* check ulpsize */
+float select_ulpsize(float ULPSIZE_FAST_MATH, float ULPSIZE_NO_FAST_MATH);
 
 #endif /* __UTEST_HELPER_HPP__ */
 

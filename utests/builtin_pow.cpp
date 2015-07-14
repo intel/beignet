@@ -28,6 +28,7 @@ static void builtin_pow(void)
 {
   // Setup kernel and buffers
   int k, i, index_cur;
+  float ULPSIZE_NO_FAST_MATH = 16.0;
   float gpu_data[max_function * count_input] = {0}, cpu_data[max_function * count_input] = {0};
 
   for(i=0; i<count_input_ori;i++)
@@ -40,10 +41,7 @@ static void builtin_pow(void)
   cl_device_fp_config fp_config;
   clGetDeviceInfo(device, CL_DEVICE_SINGLE_FP_CONFIG, sizeof(cl_device_fp_config), &fp_config, 0);
   bool denormals_supported = fp_config & CL_FP_DENORM;
-  const char* env_strict = getenv("OCL_STRICT_CONFORMANCE");
-  float ULPSIZE_FACTOR = 16.0;
-  if (env_strict == NULL || strcmp(env_strict, "0") == 0)
-    ULPSIZE_FACTOR = 10000.;
+  float ULPSIZE_FACTOR = select_ulpsize(ULPSIZE_FAST_MATH,ULPSIZE_NO_FAST_MATH);
 
   OCL_CREATE_KERNEL("builtin_pow");
 

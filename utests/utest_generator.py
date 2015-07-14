@@ -108,12 +108,8 @@ def udebug(ulpSize,returnType,function):
     static const char* INFORNAN;
     static %s ULPSIZE, ULPSIZE_FACTOR;
 
-    const char* env_strict = getenv("OCL_STRICT_CONFORMANCE");
-
-    if (env_strict == NULL || strcmp(env_strict, "0") == 0)
-      ULPSIZE_FACTOR = 1000;
-    else
-      ULPSIZE_FACTOR = %s;
+    float ULPSIZE_NO_FAST_MATH = %s;
+    ULPSIZE_FACTOR = select_ulpsize(ULPSIZE_FAST_MATH,ULPSIZE_NO_FAST_MATH);
     
     if (isinf(cpu_data[index])){
       INFORNAN="INF";
@@ -147,11 +143,11 @@ def udebug(ulpSize,returnType,function):
 #else
     if (isinf(cpu_data[index])){
       sprintf(log, "%s expect:%s\\n", log, INFORNAN);
-      OCL_ASSERTM(isinf(gpu_data[index]) || !env_strict,log);
+      OCL_ASSERTM(isinf(gpu_data[index]),log);
       }
     else if (isnan(cpu_data[index])){
       sprintf(log, "%s expect:%s\\n", log, INFORNAN);
-      OCL_ASSERTM(isnan(gpu_data[index]) || !env_strict,log);
+      OCL_ASSERTM(isnan(gpu_data[index]),log);
       }
     else{
       sprintf(log, "%s expect:%s\\n", log, ULPSIZE);

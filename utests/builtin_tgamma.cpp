@@ -6,6 +6,7 @@ void builtin_tgamma(void)
 {
   const int n = 1024;
   float src[n];
+  float ULPSIZE_NO_FAST_MATH = 16.0;
 
   // Setup kernel and buffers
   OCL_CREATE_KERNEL("builtin_tgamma");
@@ -15,10 +16,7 @@ void builtin_tgamma(void)
   OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
   globals[0] = n;
   locals[0] = 16;
-  const char* env_strict = getenv("OCL_STRICT_CONFORMANCE");
-  float ULPSIZE_FACTOR = 16.0;
-  if (env_strict == NULL || strcmp(env_strict, "0") == 0)
-    ULPSIZE_FACTOR = 10000.;
+  float ULPSIZE_FACTOR = select_ulpsize(ULPSIZE_FAST_MATH,ULPSIZE_NO_FAST_MATH);
 
   cl_device_fp_config fp_config;
   clGetDeviceInfo(device, CL_DEVICE_SINGLE_FP_CONFIG, sizeof(cl_device_fp_config), &fp_config, 0);
