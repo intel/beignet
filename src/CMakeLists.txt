@@ -16,13 +16,13 @@ foreach (KF ${KERNEL_FILES})
     add_custom_command(
       OUTPUT ${output_file}
       COMMAND rm -rf ${output_file}
-      COMMAND ${GBE_BIN_GENERATER} -s ${input_file} -o${output_file} -t${GEN_PCI_ID}
+      COMMAND ${GBE_BIN_GENERATER} -s -o${output_file} -t${GEN_PCI_ID} ${input_file}
       DEPENDS ${input_file} ${GBE_BIN_FILE})
   else(GEN_PCI_ID)
     add_custom_command(
       OUTPUT ${output_file}
       COMMAND rm -rf ${output_file}
-      COMMAND ${GBE_BIN_GENERATER} -s ${input_file} -o${output_file}
+      COMMAND ${GBE_BIN_GENERATER} -s -o${output_file} ${input_file}
       DEPENDS ${input_file} ${GBE_BIN_FILE})
   endif(GEN_PCI_ID)
 endforeach (KF)
