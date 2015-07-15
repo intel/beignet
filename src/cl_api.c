@@ -2981,6 +2981,7 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
   data->type = EnqueueNDRangeKernel;
   data->queue = command_queue;
 
+  TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, command_queue->ctx);
   if(handle_events(command_queue, num_events_in_wait_list, event_wait_list,
                    event, data, CL_COMMAND_NDRANGE_KERNEL) == CL_ENQUEUE_EXECUTE_IMM) {
     if (event && (*event)->type != CL_COMMAND_USER
