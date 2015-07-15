@@ -51,6 +51,24 @@ namespace gbe
     this->sel = GBE_NEW(Selection8, *this);
   }
 
+  bool Gen8Context::patchBranches(void) {
+    using namespace ir;
+    for (auto pair : branchPos2) {
+      const LabelIndex label = pair.first;
+      const int32_t insnID = pair.second;
+      const int32_t targetID = labelPos.find(label)->second;
+      p->patchJMPI(insnID, (targetID - insnID), 0);
+    }
+    for (auto pair : branchPos3) {
+      const LabelPair labelPair = pair.first;
+      const int32_t insnID = pair.second;
+      const int32_t jip = labelPos.find(labelPair.l0)->second;
+      const int32_t uip = labelPos.find(labelPair.l1)->second;
+      p->patchJMPI(insnID, jip - insnID, uip - insnID);
+    }
+    return true;
+  }
+
   void Gen8Context::emitUnaryInstruction(const SelectionInstruction &insn)
   {
     switch (insn.opcode) {

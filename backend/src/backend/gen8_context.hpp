@@ -47,6 +47,8 @@ namespace gbe
     }
     /*! Get the pointer argument size for curbe alloc */
     virtual uint32_t getPointerSize(void) { return 8; }
+    /*! Set the correct target values for the branches */
+    virtual bool patchBranches(void);
 
     virtual void emitUnaryInstruction(const SelectionInstruction &insn);
     virtual void emitUnaryWithTempInstruction(const SelectionInstruction &insn);

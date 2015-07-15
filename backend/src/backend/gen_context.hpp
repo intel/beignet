@@ -90,7 +90,7 @@ namespace gbe
     /*! Emit the instructions */
     void emitInstructionStream(void);
     /*! Set the correct target values for the branches */
-    bool patchBranches(void);
+    virtual bool patchBranches(void);
     /*! Forward ir::Function isSpecialReg method */
     INLINE bool isSpecialReg(ir::Register reg) const {
       return fn.isSpecialReg(reg);
