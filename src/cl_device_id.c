@@ -564,7 +564,7 @@ skl_gt4_break:
  * SELF_TEST_ATOMIC_FAIL: for hsw enqueue  kernel failure to not enable atomics in L3.
  * SELF_TEST_OTHER_FAIL: other fail like runtime API fail.*/
 LOCAL cl_self_test_res
-cl_self_test(cl_device_id device)
+cl_self_test(cl_device_id device, cl_self_test_res atomic_in_l3_flag)
 {
   cl_int status;
   cl_context ctx;
@@ -587,6 +587,7 @@ cl_self_test(cl_device_id device)
     return ret;
   tested = 1;
   ctx = clCreateContext(NULL, 1, &device, NULL, NULL, &status);
+  cl_driver_set_atomic_flag(ctx->drv, atomic_in_l3_flag);
   if (status == CL_SUCCESS) {
     queue = clCreateCommandQueue(ctx, device, 0, &status);
     if (status == CL_SUCCESS) {
@@ -611,10 +612,13 @@ cl_self_test(cl_device_id device)
                       printf("Beignet: self-test failed: (3, 7, 5) + (5, 7, 3) returned (%i, %i, %i)\n"
                              "See README.md or http://www.freedesktop.org/wiki/Software/Beignet/\n",
                              test_data[0], test_data[1], test_data[2]);
+
                     }
                   }
                 } else{
                   ret = SELF_TEST_ATOMIC_FAIL;
+                  // Atomic fail need to test SLM again with atomic in L3 feature disabled.
+                  tested = 0;
                 }
               }
             }
@@ -643,8 +647,13 @@ cl_get_device_ids(cl_platform_id    platform,
   /* Do we have a usable device? */
   device = cl_get_gt_device();
   if (device) {
-    cl_self_test_res ret = cl_self_test(device);
-    device->atomic_test_result = ret;
+    cl_self_test_res ret = cl_self_test(device, SELF_TEST_PASS);
+    if (ret == SELF_TEST_ATOMIC_FAIL) {
+      device->atomic_test_result = ret;
+      ret = cl_self_test(device, ret);
+      printf("Beignet: warning - disable atomic in L3 feature.\n");
+    }
+
     if(ret == SELF_TEST_SLM_FAIL) {
       int disable_self_test = 0;
       // can't use BVAR (backend/src/sys/cvar.hpp) here as it's C++
