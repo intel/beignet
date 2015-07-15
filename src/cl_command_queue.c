@@ -78,8 +78,9 @@ cl_command_queue_delete(cl_command_queue queue)
 
   // If there is a valid last event, we need to give it a chance to
   // call the call-back function.
-  if (queue->last_event && queue->last_event->user_cb)
-    cl_event_update_status(queue->last_event, 1);
+  cl_event last_event = get_last_event(queue);
+  if (last_event && last_event->user_cb)
+    cl_event_update_status(last_event, 1);
   /* Remove it from the list */
   assert(queue->ctx);
   pthread_mutex_lock(&queue->ctx->queue_lock);
@@ -259,10 +260,14 @@ cl_command_queue_flush(cl_command_queue queue)
   // be released at the call back function, no other function will access
   // the event any more. If we don't do this here, we will leak that event
   // and all the corresponding buffers which is really bad.
-  if (queue->last_event && queue->last_event->user_cb)
-    cl_event_update_status(queue->last_event, 1);
-  if (queue->current_event && err == CL_SUCCESS)
-    err = cl_event_flush(queue->current_event);
+  cl_event last_event = get_last_event(queue);
+  if (last_event && last_event->user_cb)
+    cl_event_update_status(last_event, 1);
+  cl_event current_event = get_current_event(queue);
+  if (current_event && err == CL_SUCCESS) {
+    err = cl_event_flush(current_event);
+    set_current_event(queue, NULL);
+  }
   cl_invalid_thread_gpgpu(queue);
   return err;
 }

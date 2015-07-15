@@ -40,8 +40,6 @@ struct _cl_command_queue {
   cl_event* wait_events;               /* Point to array of non-complete user events that block this command queue */
   cl_int    wait_events_num;           /* Number of Non-complete user events */
   cl_int    wait_events_size;          /* The size of array that wait_events point to */
-  cl_event  last_event;                /* The last event in the queue, for enqueue mark used */
-  cl_event  current_event;             /* Current event. */
   cl_command_queue_properties  props;  /* Queue properties */
   cl_command_queue prev, next;         /* We chain the command queues together */
   void *thread_data;                   /* Used to store thread context data */

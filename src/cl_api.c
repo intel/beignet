@@ -85,7 +85,7 @@ handle_events(cl_command_queue queue, cl_int num, const cl_event *wait_list,
       cl_event_new_enqueue_callback(e, data, num, wait_list);
     }
   }
-  queue->current_event = e;
+  set_current_event(queue, e);
   return status;
 }
 

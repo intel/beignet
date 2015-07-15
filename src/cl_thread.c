@@ -45,6 +45,8 @@ typedef struct _thread_spec_data {
   cl_gpgpu gpgpu ;
   int valid;
   void* thread_batch_buf;
+  cl_event last_event;
+  cl_event current_event;
   int thread_magic;
 } thread_spec_data;
 
@@ -104,6 +106,34 @@ static thread_spec_data * __create_thread_spec_data(cl_command_queue queue, int 
   pthread_mutex_unlock(&thread_private->thread_data_lock);
 
   return spec;
+}
+
+cl_event get_current_event(cl_command_queue queue)
+{
+  thread_spec_data* spec = __create_thread_spec_data(queue, 1);
+  assert(spec && spec->thread_magic == thread_magic);
+  return spec->current_event;
+}
+
+cl_event get_last_event(cl_command_queue queue)
+{
+  thread_spec_data* spec = __create_thread_spec_data(queue, 1);
+  assert(spec && spec->thread_magic == thread_magic);
+  return spec->last_event;
+}
+
+void set_current_event(cl_command_queue queue, cl_event e)
+{
+  thread_spec_data* spec = __create_thread_spec_data(queue, 1);
+  assert(spec && spec->thread_magic == thread_magic);
+  spec->current_event = e;
+}
+
+void set_last_event(cl_command_queue queue, cl_event e)
+{
+  thread_spec_data* spec = __create_thread_spec_data(queue, 1);
+  assert(spec && spec->thread_magic == thread_magic);
+  spec->last_event = e;
 }
 
 void* cl_thread_data_create(void)

@@ -44,4 +44,9 @@ void* cl_get_thread_batch_buf(cl_command_queue queue);
 /* take current gpgpu from the thread gpgpu pool. */
 cl_gpgpu cl_thread_gpgpu_take(cl_command_queue queue);
 
+cl_event get_current_event(cl_command_queue queue);
+cl_event get_last_event(cl_command_queue queue);
+void set_current_event(cl_command_queue queue, cl_event e);
+void set_last_event(cl_command_queue queue, cl_event e);
+
 #endif /* __CL_THREAD_H__ */
