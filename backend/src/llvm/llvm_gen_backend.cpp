@@ -2191,55 +2191,54 @@ namespace gbe
         const ir::Register phiCopySrc = phiCopyDefInsn->getSrc(0);
         const ir::UseSet *phiCopySrcUse = dag->getRegUse(phiCopySrc);
         const ir::DefSet *phiCopySrcDef = dag->getRegDef(phiCopySrc);
-        // non-ssa value. skip opt on such kind of value
-        if (phiCopySrcDef->size() > 1) break;
-        // we can only coalesce instruction dest
-        if ((*(phiCopySrcDef->begin()))->getType() != ValueDef::DEF_INSN_DST) break;
 
-        const ir::Instruction *phiCopySrcDefInsn = (*(phiCopySrcDef->begin()))->getInstruction();
-        if(bb == phiDefBB && bb == phiCopySrcDefInsn->getParent()) {
-          // phiCopy, phiCopySrc defined in same basicblock as phi
-          // try to coalease phiCopy and phiCopySrc first.
-          // consider below situation:
-          // bb1:
-          //    ...
-          // bb2:
-          //    x = phi [x1, bb1], [x2, bb2]
-          //    x2 = x+1;
-          // after de-ssa:
-          // bb2:
-          //    mov x, x-copy
-          //    add x2, x, 1
-          //    mov x-copy, x2
-          //  obviously x2, x-copy and x2 can be mapped to same virtual register
+        // we should only do coaleasing on instruction-def and ssa-value
+        if (phiCopySrcDef->size() == 1 && (*(phiCopySrcDef->begin()))->getType() == ValueDef::DEF_INSN_DST) {
+          const ir::Instruction *phiCopySrcDefInsn = (*(phiCopySrcDef->begin()))->getInstruction();
+          if(bb == phiDefBB && bb == phiCopySrcDefInsn->getParent()) {
+            // phiCopy, phiCopySrc defined in same basicblock as phi
+            // try to coalease phiCopy and phiCopySrc first.
+            // consider below situation:
+            // bb1:
+            //    ...
+            // bb2:
+            //    x = phi [x1, bb1], [x2, bb2]
+            //    x2 = x+1;
+            // after de-ssa:
+            // bb2:
+            //    mov x, x-copy
+            //    add x2, x, 1
+            //    mov x-copy, x2
+            //  obviously x2, x-copy and x2 can be mapped to same virtual register
 
-          ir::BasicBlock::const_iterator iter = ir::BasicBlock::const_iterator(phiCopySrcDefInsn);
-          ir::BasicBlock::const_iterator iterE = bb->end();
-          // check no use of phi in this basicblock between [phiCopySrc def, bb end]
-          bool phiPhiCopySrcInterfere = false;
-          while (iter != iterE) {
-            const ir::Instruction *insn = iter.node();
-            // check phiUse
-            for (unsigned i = 0; i < insn->getSrcNum(); i++) {
-              ir::Register src = insn->getSrc(i);
-              if (src == phi) {
-                phiPhiCopySrcInterfere = true; break;
+            ir::BasicBlock::const_iterator iter = ir::BasicBlock::const_iterator(phiCopySrcDefInsn);
+            ir::BasicBlock::const_iterator iterE = bb->end();
+            // check no use of phi in this basicblock between [phiCopySrc def, bb end]
+            bool phiPhiCopySrcInterfere = false;
+            while (iter != iterE) {
+              const ir::Instruction *insn = iter.node();
+              // check phiUse
+              for (unsigned i = 0; i < insn->getSrcNum(); i++) {
+                ir::Register src = insn->getSrc(i);
+                if (src == phi) {
+                  phiPhiCopySrcInterfere = true; break;
+                }
               }
+              ++iter;
             }
-            ++iter;
-          }
-          if (!phiPhiCopySrcInterfere) {
-            // phiCopy source can be coaleased with phiCopy
-            const_cast<Instruction *>(phiCopyDefInsn)->remove();
+            if (!phiPhiCopySrcInterfere) {
+              // phiCopy source can be coaleased with phiCopy
+              const_cast<Instruction *>(phiCopyDefInsn)->remove();
 
-            for (auto &s : *phiCopySrcDef) {
-              const Instruction *phiSrcDefInsn = s->getInstruction();
-              replaceDst(const_cast<Instruction *>(phiSrcDefInsn), phiCopySrc, phiCopy);
-            }
+              for (auto &s : *phiCopySrcDef) {
+                const Instruction *phiSrcDefInsn = s->getInstruction();
+                replaceDst(const_cast<Instruction *>(phiSrcDefInsn), phiCopySrc, phiCopy);
+              }
 
-            for (auto &s : *phiCopySrcUse) {
-              const Instruction *phiSrcUseInsn = s->getInstruction();
-              replaceSrc(const_cast<Instruction *>(phiSrcUseInsn), phiCopySrc, phiCopy);
+              for (auto &s : *phiCopySrcUse) {
+                const Instruction *phiSrcUseInsn = s->getInstruction();
+                replaceSrc(const_cast<Instruction *>(phiSrcUseInsn), phiCopySrc, phiCopy);
+              }
             }
           }
         }
