@@ -325,16 +325,21 @@ cl_context_get_static_kernel_from_bin(cl_context ctx, cl_int index,
 {
   cl_int ret;
   cl_int binary_status = CL_SUCCESS;
-  if (!ctx->internal_prgs[index]) {
+  cl_kernel ker;
+  pthread_mutex_lock(&ctx->program_lock);
+  if (ctx->internal_prgs[index] == NULL) {
     ctx->internal_prgs[index] = cl_program_create_from_binary(ctx, 1, &ctx->device,
       &size, (const unsigned char **)&str_kernel, &binary_status, &ret);
 
-    if (!ctx->internal_prgs[index])
-      return NULL;
-
+    if (!ctx->internal_prgs[index]) {
+      ker = NULL;
+      goto unlock;
+    }
     ret = cl_program_build(ctx->internal_prgs[index], str_option);
-    if (ret != CL_SUCCESS)
-      return NULL;
+    if (ret != CL_SUCCESS) {
+      ker = NULL;
+      goto unlock;
+    }
 
     ctx->internal_prgs[index]->is_built = 1;
 
@@ -368,6 +373,9 @@ cl_context_get_static_kernel_from_bin(cl_context ctx, cl_int index,
       ctx->internel_kernels[index] = cl_kernel_dup(ctx->internal_prgs[index]->ker[0]);
     }
   }
+  ker = ctx->internel_kernels[index];
 
-  return ctx->internel_kernels[index];
+unlock:
+  pthread_mutex_unlock(&ctx->program_lock);
+  return cl_kernel_dup(ker);
 }
