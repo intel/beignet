@@ -522,6 +522,14 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
+  /*! simd shuffle */
+  class SimdShuffleInstruction : public Instruction {
+  public:
+    Type getType(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
   /*! return a region of a register, make sure the offset does not exceed the register size */
   class RegionInstruction : public Instruction {
   public:

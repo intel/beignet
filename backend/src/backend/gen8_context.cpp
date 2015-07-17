@@ -254,6 +254,27 @@ namespace gbe
     }
   }
 
+  void Gen8Context::emitSimdShuffleInstruction(const SelectionInstruction &insn) {
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    const GenRegister src0 = ra->genReg(insn.src(0));
+    const GenRegister src1 = ra->genReg(insn.src(1));
+    assert(insn.opcode == SEL_OP_SIMD_SHUFFLE);
+
+    uint32_t simd = p->curr.execWidth;
+    if (src1.file == GEN_IMMEDIATE_VALUE) {
+      uint32_t offset = src1.value.ud % simd;
+      GenRegister reg = GenRegister::suboffset(src0, offset);
+      p->MOV(dst, GenRegister::retype(GenRegister::ud1grf(reg.nr, reg.subnr / typeSize(reg.type)), reg.type));
+    } else {
+      uint32_t base = src0.nr * 32 + src0.subnr * 4;
+      GenRegister baseReg = GenRegister::immuw(base);
+      const GenRegister a0 = GenRegister::addr8(0);
+      p->ADD(a0, GenRegister::unpacked_uw(src1.nr, src1.subnr / typeSize(GEN_TYPE_UW)), baseReg);
+      GenRegister indirect = GenRegister::to_indirect1xN(src0, 0, 0);
+      p->MOV(dst, indirect);
+    }
+  }
+
   void Gen8Context::emitBinaryInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src0 = ra->genReg(insn.src(0));
@@ -271,23 +292,6 @@ namespace gbe
         p->MOV(dst, src0);
         p->SHL(dst, dst, GenRegister::immud(32));
         p->ADD(dst, dst, src1);
-        break;
-      }
-      case SEL_OP_SIMD_SHUFFLE:
-      {
-        uint32_t simd = p->curr.execWidth;
-        if (src1.file == GEN_IMMEDIATE_VALUE) {
-          uint32_t offset = src1.value.ud % simd;
-          GenRegister reg = GenRegister::suboffset(src0, offset);
-          p->MOV(dst, GenRegister::retype(GenRegister::ud1grf(reg.nr, reg.subnr / typeSize(reg.type)), reg.type));
-        } else {
-          uint32_t base = src0.nr * 32 + src0.subnr * 4;
-          GenRegister baseReg = GenRegister::immuw(base);
-          const GenRegister a0 = GenRegister::addr8(0);
-          p->ADD(a0, GenRegister::unpacked_uw(src1.nr, src1.subnr / typeSize(GEN_TYPE_UW)), baseReg);
-          GenRegister indirect = GenRegister::to_indirect1xN(src0, 0, 0);
-          p->MOV(dst, indirect);
-        }
         break;
       }
       default:

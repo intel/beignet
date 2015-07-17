@@ -741,6 +741,22 @@ namespace ir {
       Register src[0];
     };
 
+    class ALIGNED_INSTRUCTION SimdShuffleInstruction : public NaryInstruction<2>
+    {
+    public:
+      SimdShuffleInstruction(Type type,
+                        Register dst,
+                        Register src0,
+                        Register src1) {
+        this->opcode = OP_SIMD_SHUFFLE;
+        this->type = type;
+        this->dst[0] = dst;
+        this->src[0] = src0;
+        this->src[1] = src1;
+      }
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
+    };
+
     class ALIGNED_INSTRUCTION RegionInstruction :
       public BasePolicy,
       public NSrcPolicy<RegionInstruction, 1>,
@@ -1154,6 +1170,19 @@ namespace ir {
       return true;
     }
 
+    INLINE bool SimdShuffleInstruction::wellFormed(const Function &fn, std::string &whyNot) const
+    {
+      if (UNLIKELY( this->type != TYPE_U32 && this->type != TYPE_S32 && this->type != TYPE_FLOAT)) {
+        whyNot = "Only support S32/U32/FLOAT type";
+        return false;
+      }
+
+      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, src[1], fn, whyNot) == false))
+        return false;
+
+      return true;
+    }
+
     INLINE bool RegionInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
       if (UNLIKELY(checkRegisterData(FAMILY_DWORD, src[0], fn, whyNot) == false))
@@ -1461,6 +1490,10 @@ START_INTROSPECTION(RegionInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(RegionInstruction)
 
+START_INTROSPECTION(SimdShuffleInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(SimdShuffleInstruction)
+
 START_INTROSPECTION(IndirectMovInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(IndirectMovInstruction)
@@ -1652,6 +1685,7 @@ DECL_MEM_FN(BranchInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 DECL_MEM_FN(SyncInstruction, uint32_t, getParameters(void), getParameters())
 DECL_MEM_FN(ReadARFInstruction, Type, getType(void), getType())
 DECL_MEM_FN(ReadARFInstruction, ARFRegister, getARFRegister(void), getARFRegister())
+DECL_MEM_FN(SimdShuffleInstruction, Type, getType(void), getType())
 DECL_MEM_FN(RegionInstruction, uint32_t, getOffset(void), getOffset())
 DECL_MEM_FN(IndirectMovInstruction, uint32_t, getOffset(void), getOffset())
 DECL_MEM_FN(IndirectMovInstruction, Type, getType(void), getType())
@@ -1751,7 +1785,6 @@ DECL_MEM_FN(GetImageInfoInstruction, uint8_t, getImageIndex(void), getImageIndex
   DECL_EMIT_FUNCTION(RHADD)
   DECL_EMIT_FUNCTION(I64HADD)
   DECL_EMIT_FUNCTION(I64RHADD)
-  DECL_EMIT_FUNCTION(SIMD_SHUFFLE)
 
 #undef DECL_EMIT_FUNCTION
 
@@ -1880,6 +1913,9 @@ DECL_MEM_FN(GetImageInfoInstruction, uint8_t, getImageIndex(void), getImageIndex
   }
   Instruction REGION(Register dst, Register src, uint32_t offset) {
     return internal::RegionInstruction(dst, src, offset).convert();
+  }
+  Instruction SIMD_SHUFFLE(Type type, Register dst, Register src0, Register src1) {
+    return internal::SimdShuffleInstruction(type, dst, src0, src1).convert();
   }
 
   Instruction INDIRECT_MOV(Type type, Register dst, Register src0, Register src1, uint32_t offset) {

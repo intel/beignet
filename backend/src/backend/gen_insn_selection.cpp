@@ -543,7 +543,6 @@ namespace gbe
     ALU1(RNDD)
     ALU1(RNDU)
     ALU2(MACH)
-    ALU2(SIMD_SHUFFLE)
     ALU1(LZD)
     ALU3(MAD)
     ALU2WithTemp(MUL_HI)
@@ -565,6 +564,8 @@ namespace gbe
 #undef ALU2WithTemp
 #undef ALU3
 #undef I64Shift
+    /*! simd shuffle */
+    void SIMD_SHUFFLE(Reg dst, Reg src0, Reg src1);
     /*! Convert 64-bit integer to 32-bit float */
     void CONVI64_TO_F(Reg dst, Reg src, GenRegister tmp[6]);
     /*! Convert 64-bit integer to 32-bit float */
@@ -1650,6 +1651,14 @@ namespace gbe
     insn->src(0) = src0;
     insn->src(1) = src1;
     insn->src(2) = src2;
+  }
+
+  void Selection::Opaque::SIMD_SHUFFLE(Reg dst, Reg src0, Reg src1)
+  {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_SIMD_SHUFFLE, 1, 2);
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
   }
 
   void Selection::Opaque::I64CMP(uint32_t conditional, Reg src0, Reg src1, GenRegister tmp[3]) {
@@ -2814,17 +2823,6 @@ namespace gbe
         }
         case OP_UPSAMPLE_LONG:
           sel.UPSAMPLE_LONG(dst, src0, src1);
-          break;
-        case OP_SIMD_SHUFFLE:
-          {
-            if (src1.file == GEN_IMMEDIATE_VALUE)
-              sel.SIMD_SHUFFLE(dst, src0, src1);
-            else {
-              GenRegister shiftL = GenRegister::udxgrf(sel.curr.execWidth, sel.reg(FAMILY_DWORD));
-              sel.SHL(shiftL, src1, GenRegister::immud(0x2));
-              sel.SIMD_SHUFFLE(dst, src0, shiftL);
-            }
-          }
           break;
         default: NOT_IMPLEMENTED;
       }
@@ -4973,6 +4971,46 @@ namespace gbe
     }
   };
 
+  class SimdShuffleInstructionPattern : public SelectionPattern
+  {
+  public:
+    SimdShuffleInstructionPattern(void) : SelectionPattern(1,1) {
+      this->opcodes.push_back(ir::OP_SIMD_SHUFFLE);
+    }
+    INLINE bool emit(Selection::Opaque &sel, SelectionDAG &dag) const {
+      using namespace ir;
+      const ir::SimdShuffleInstruction &insn = cast<SimdShuffleInstruction>(dag.insn);
+      assert(insn.getOpcode() == OP_SIMD_SHUFFLE);
+      const Type type = insn.getType();
+      GenRegister dst  = sel.selReg(insn.getDst(0), type);
+      GenRegister src0  = sel.selReg(insn.getSrc(0), type);
+      GenRegister src1;
+
+      SelectionDAG *dag0 = dag.child[0];
+      SelectionDAG *dag1 = dag.child[1];
+      if (dag1 != NULL && dag1->insn.getOpcode() == OP_LOADI && canGetRegisterFromImmediate(dag1->insn)) {
+        const auto &childInsn = cast<LoadImmInstruction>(dag1->insn);
+        src1 = getRegisterFromImmediate(childInsn.getImmediate(), TYPE_U32);
+        if (dag0) dag0->isRoot = 1;
+      } else {
+        markAllChildren(dag);
+        src1 = sel.selReg(insn.getSrc(1), TYPE_U32);
+      }
+
+      sel.push();
+      if (src1.file == GEN_IMMEDIATE_VALUE)
+        sel.SIMD_SHUFFLE(dst, src0, src1);
+      else {
+        GenRegister shiftL = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+        sel.SHL(shiftL, src1, GenRegister::immud(0x2));
+        sel.SIMD_SHUFFLE(dst, src0, shiftL);
+      }
+      sel.pop();
+      return true;
+    }
+
+  };
+
   /*! Get a region of a register */
   class RegionInstructionPattern : public SelectionPattern
   {
@@ -5247,6 +5285,7 @@ namespace gbe
     this->insert<GetImageInfoInstructionPattern>();
     this->insert<ReadARFInstructionPattern>();
     this->insert<RegionInstructionPattern>();
+    this->insert<SimdShuffleInstructionPattern>();
     this->insert<IndirectMovInstructionPattern>();
     this->insert<NullaryInstructionPattern>();
 

@@ -127,6 +127,7 @@ namespace gbe
     virtual void emitUnaryInstruction(const SelectionInstruction &insn);
     virtual void emitUnaryWithTempInstruction(const SelectionInstruction &insn);
     virtual void emitBinaryInstruction(const SelectionInstruction &insn);
+    virtual void emitSimdShuffleInstruction(const SelectionInstruction &insn);
     virtual void emitBinaryWithTempInstruction(const SelectionInstruction &insn);
     void emitTernaryInstruction(const SelectionInstruction &insn);
     virtual void emitI64MULHIInstruction(const SelectionInstruction &insn);
