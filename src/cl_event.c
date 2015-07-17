@@ -221,7 +221,7 @@ cl_int cl_event_check_waitlist(cl_uint num_events_in_wait_list,
       err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
       goto exit;
     }
-    if(event && *event == event_wait_list[i])
+    if(event && event == &event_wait_list[i])
       goto error;
     if(event_wait_list[i]->ctx != ctx)
       goto error;
