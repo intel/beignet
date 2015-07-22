@@ -583,7 +583,7 @@ namespace gbe
     /*! For all possible pointers, GlobalVariable, function pointer argument,
         alloca instruction, find their pointer escape points */
     void analyzePointerOrigin(Function &F);
-    unsigned getNewBti(Value *origin);
+    unsigned getNewBti(Value *origin, bool isImage);
     void assignBti(Function &F);
     bool isSingleBti(Value *Val);
     Value *getBtiRegister(Value *v);
@@ -1098,8 +1098,14 @@ namespace gbe
     }
   }
 
-  unsigned GenWriter::getNewBti(Value *origin) {
+  unsigned GenWriter::getNewBti(Value *origin, bool isImage) {
     unsigned new_bti = 0;
+    if (isImage) {
+      new_bti = btiBase;
+      incBtiBase();
+      return new_bti;
+    }
+
     if(origin->getName().equals(StringRef("__gen_ocl_printf_buf"))) {
       new_bti = btiBase;
       incBtiBase();
@@ -1161,7 +1167,7 @@ namespace gbe
       GlobalVariable &v = *i;
       if(!v.isConstantUsed()) continue;
 
-      BtiMap.insert(std::make_pair(&v, getNewBti(&v)));
+      BtiMap.insert(std::make_pair(&v, getNewBti(&v, false)));
     }
     MDNode *typeNameNode = NULL;
     MDNode *node = getKernelFunctionMetadata(&F);
@@ -1179,8 +1185,9 @@ namespace gbe
     ir::FunctionArgument::InfoFromLLVM llvmInfo;
     for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I, argID++) {
       llvmInfo.typeName= (cast<MDString>(typeNameNode->getOperand(1 + argID)))->getString();
-      if (I->getType()->isPointerTy() || llvmInfo.isImageType()) {
-        BtiMap.insert(std::make_pair(I, getNewBti(I)));
+      bool isImage = llvmInfo.isImageType();
+      if (I->getType()->isPointerTy() || isImage) {
+        BtiMap.insert(std::make_pair(I, getNewBti(I, isImage)));
       }
     }
 
