@@ -430,6 +430,8 @@ brw_gt2_break:
       DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics BroadWell Mobile GT3");
     case PCI_CHIP_BROADWLL_D_GT3:
       DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics BroadWell U-Processor GT3");
+    case PCI_CHIP_BROADWLL_UI_GT3:
+      DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) Iris Graphics 6100 BroadWell U-Processor GT3");
     case PCI_CHIP_BROADWLL_S_GT3:
       DECL_INFO_STRING(brw_gt3_break, intel_brw_gt3_device, name, "Intel(R) HD Graphics BroadWell Server GT3");
     case PCI_CHIP_BROADWLL_W_GT3:
