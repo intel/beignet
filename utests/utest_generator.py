@@ -110,7 +110,8 @@ def udebug(ulpSize,returnType,function):
 
     float ULPSIZE_NO_FAST_MATH = %s;
     ULPSIZE_FACTOR = select_ulpsize(ULPSIZE_FAST_MATH,ULPSIZE_NO_FAST_MATH);
-    
+    bool fast_math = ULPSIZE_FACTOR == ULPSIZE_FAST_MATH;
+
     if (isinf(cpu_data[index])){
       INFORNAN="INF";
     }
@@ -137,25 +138,25 @@ def udebug(ulpSize,returnType,function):
       }
     else if ((ULPSIZE >= 0 && diff <= ULPSIZE) || (ULPSIZE < 0 && diff == 0)){
       printf("%s expect:%s\\n", log, ULPSIZE);
-      }
+    }
     else
       printf_c("%s expect:%s\\n", log, ULPSIZE);
 #else
     if (isinf(cpu_data[index])){
       sprintf(log, "%s expect:%s\\n", log, INFORNAN);
-      OCL_ASSERTM(isinf(gpu_data[index]),log);
-      }
+      OCL_ASSERTM(isinf(gpu_data[index]) || fast_math,log);
+    }
     else if (isnan(cpu_data[index])){
       sprintf(log, "%s expect:%s\\n", log, INFORNAN);
-      OCL_ASSERTM(isnan(gpu_data[index]),log);
-      }
+      OCL_ASSERTM(isnan(gpu_data[index]) || fast_math,log);
+    }
     else{
       sprintf(log, "%s expect:%s\\n", log, ULPSIZE);
       if (ULPSIZE < 0)
             OCL_ASSERTM(gpu_data[index] == cpu_data[index], log);
       else
             OCL_ASSERTM(fabs(gpu_data[index]-cpu_data[index]) <= ULPSIZE, log);
-      }
+    }
 #endif
   }
 }\n'''%(returnType,Min_ulp(function),\
