@@ -640,6 +640,7 @@ namespace gbe {
                                      const char *options,
                                      const char *temp_header_path,
                                      std::vector<std::string>& clOpt,
+                                     std::string& dumpLLVMFileName,
                                      std::string& clName,
                                      int& optLevel,
                                      size_t stringSize,
@@ -719,6 +720,11 @@ namespace gbe {
           clOpt.push_back("__FAST_RELAXED_MATH__=1");
         }
 
+        if(str.find("-dump-opt-llvm=") != std::string::npos) {
+          dumpLLVMFileName = str.substr(str.find("=") + 1);
+          continue; // Don't push this str back; ignore it.
+        }
+
         clOpt.push_back(str);
       }
       free(str);
@@ -781,8 +787,10 @@ namespace gbe {
     int optLevel = 1;
     std::vector<std::string> clOpt;
     std::string clName;
-    if (!processSourceAndOption(source, options, NULL, clOpt, clName,
-                                optLevel, stringSize, err, errSize))
+    std::string dumpLLVMFileName;
+    if (!processSourceAndOption(source, options, NULL, clOpt,
+                                dumpLLVMFileName, clName, optLevel,
+                                stringSize, err, errSize))
       return NULL;
 
     gbe_program p;
@@ -803,6 +811,27 @@ namespace gbe {
         err += *errSize;
         clangErrSize = *errSize;
       }
+
+      // Dump the LLVM if requested.
+      #if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 6)
+      if (!dumpLLVMFileName.empty()) {
+        std::string err;
+        llvm::raw_fd_ostream ostream (dumpLLVMFileName.c_str(),
+                                      err, llvm::sys::fs::F_RW);
+        if (err.empty()) {
+          out_module->print(ostream, 0);
+        } //Otherwise, you'll have to make do without the dump.
+      }
+      #else
+      if (!dumpLLVMFileName.empty()) {
+        std::error_code err;
+        llvm::raw_fd_ostream ostream (dumpLLVMFileName.c_str(),
+                                      err, llvm::sys::fs::F_RW);
+        if (!err.bool()) {
+          out_module->print(ostream, 0);
+        } //Otherwise, you'll have to make do without the dump.
+      }
+      #endif
 
       p = gbe_program_new_from_llvm(deviceID, NULL, out_module, llvm_ctx, stringSize,
                                     err, errSize, optLevel);
@@ -834,7 +863,9 @@ namespace gbe {
     int optLevel = 1;
     std::vector<std::string> clOpt;
     std::string clName;
-    if (!processSourceAndOption(source, options, temp_header_path, clOpt, clName,
+    std::string dumpLLVMFileName;
+    if (!processSourceAndOption(source, options, temp_header_path, clOpt,
+                                dumpLLVMFileName, clName,
                                 optLevel, stringSize, err, errSize))
       return NULL;
 
