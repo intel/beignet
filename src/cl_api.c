@@ -1468,6 +1468,7 @@ clGetEventProfilingInfo(cl_event             event,
   cl_ulong ret_val;
 
   CHECK_EVENT(event);
+  cl_event_update_status(event, 0);
 
   if (event->type == CL_COMMAND_USER ||
       !(event->queue->props & CL_QUEUE_PROFILING_ENABLE) ||
