@@ -276,6 +276,9 @@ LOCAL cl_int
 cl_command_queue_finish(cl_command_queue queue)
 {
   cl_gpgpu_sync(cl_get_thread_batch_buf(queue));
+  cl_event last_event = get_last_event(queue);
+  if (last_event)
+    cl_event_update_status(last_event, 1);
   return CL_SUCCESS;
 }
 
