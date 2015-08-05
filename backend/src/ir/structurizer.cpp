@@ -458,6 +458,17 @@ namespace ir {
     return p_block;
   }
 
+  void CFGStructurizer::collectInsnNum(Block* block, const BasicBlock* bb)
+  {
+    BasicBlock::const_iterator iter = bb->begin();
+    BasicBlock::const_iterator iter_end = bb->end();
+    while(iter != iter_end)
+    {
+      block->insnNum++;
+      iter++;
+    }
+  }
+
   bool CFGStructurizer::checkForBarrier(const BasicBlock* bb)
   {
     BasicBlock::const_iterator iter = bb->begin();
@@ -600,6 +611,7 @@ namespace ir {
     loops = fn->getLoops();
     fn->foreachBlock([&](ir::BasicBlock &bb){
         orderedBlks.push_back(bbmap[&bb]);
+        collectInsnNum(bbmap[&bb], &bb);
         });
   }
 
@@ -721,6 +733,7 @@ namespace ir {
           p->canBeHandled = false;
           break;
         }
+        p->insnNum += (*iter)->insnNum;
         iter++;
       }
       return insertBlock(p);
@@ -770,6 +783,7 @@ namespace ir {
     if(loopSets.size() == 1)
     {
       Block* p = new SelfLoopBlock(*loopSets.begin());
+      p->insnNum = (*loopSets.begin())->insnNum;
       p->canBeHandled = true;
       (*loopSets.begin())->getExit()->isLoopExit = true;
       return insertBlock(p);
@@ -881,7 +895,8 @@ namespace ir {
     if (TrueBB->succ_size() == 1 && FalseBB->succ_size() == 1
         && TrueBB->pred_size() == 1 && FalseBB->pred_size() == 1
         && *TrueBB->succ_begin() == *FalseBB->succ_begin()
-        && !TrueBB->hasBarrier() && !FalseBB->hasBarrier() ) {
+        && !TrueBB->hasBarrier() && !FalseBB->hasBarrier()
+        && TrueBB->insnNum < 1000 && FalseBB->insnNum < 1000) {
       // if-else pattern
       ifSets.insert(block);
       if(block->fallthrough() == TrueBB) {
@@ -895,17 +910,19 @@ namespace ir {
       }else{
         GBE_ASSERT(0);
       }
+      mergedBB->insnNum = block->insnNum + TrueBB->insnNum + FalseBB->insnNum;
 
       if(block->canBeHandled == false || TrueBB->canBeHandled == false || FalseBB->canBeHandled == false)
         block->canBeHandled = false;
 
       insertBlock(mergedBB);
     } else if (TrueBB->succ_size() == 1 && TrueBB->pred_size() == 1 &&
-        *TrueBB->succ_begin() == FalseBB && !TrueBB->hasBarrier() ) {
+        *TrueBB->succ_begin() == FalseBB && !TrueBB->hasBarrier() && TrueBB->insnNum < 1000 ) {
       // if-then pattern, false is empty
       ifSets.insert(block);
       ifSets.insert(TrueBB);
       mergedBB = new IfThenBlock(block, TrueBB);
+      mergedBB->insnNum = block->insnNum + TrueBB->insnNum;
       if(block->fallthrough() == FalseBB)
         block->inversePredicate = false;
 
@@ -914,11 +931,12 @@ namespace ir {
 
       insertBlock(mergedBB);
     } else if (FalseBB->succ_size() == 1 && FalseBB->pred_size() == 1 &&
-        *FalseBB->succ_begin() == TrueBB && !FalseBB->hasBarrier() ) {
+        *FalseBB->succ_begin() == TrueBB && !FalseBB->hasBarrier() && FalseBB->insnNum < 1000 ) {
       // if-then pattern, true is empty
       ifSets.insert(block);
       ifSets.insert(FalseBB);
       mergedBB = new IfThenBlock(block, FalseBB);
+      mergedBB->insnNum = block->insnNum + FalseBB->insnNum;
       if(block->fallthrough() == TrueBB)
         block->inversePredicate = false;
 
