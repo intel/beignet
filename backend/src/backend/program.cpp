@@ -827,7 +827,7 @@ namespace gbe {
         std::error_code err;
         llvm::raw_fd_ostream ostream (dumpLLVMFileName.c_str(),
                                       err, llvm::sys::fs::F_RW);
-        if (!err.bool()) {
+        if (!err) {
           out_module->print(ostream, 0);
         } //Otherwise, you'll have to make do without the dump.
       }
