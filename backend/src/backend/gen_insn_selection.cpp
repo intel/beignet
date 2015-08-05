@@ -3205,8 +3205,8 @@ namespace gbe
           }
           sel.MOV(dst, imm.getIntegerValue() ? GenRegister::immuw(0xffff) : GenRegister::immuw(0));
         break;
-        case TYPE_U32:
-        case TYPE_S32:
+        case TYPE_U32: sel.MOV(dst, GenRegister::immud(imm.getIntegerValue())); break;
+        case TYPE_S32: sel.MOV(dst, GenRegister::immd(imm.getIntegerValue())); break;
         case TYPE_FLOAT:
           sel.MOV(GenRegister::retype(dst, GEN_TYPE_F),
                   GenRegister::immf(imm.asFloatValue()));
