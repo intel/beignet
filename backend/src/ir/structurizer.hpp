@@ -53,7 +53,7 @@ namespace ir {
   class Block
   {
   public:
-    Block(BlockType type, const BlockList& children): has_barrier(false), mark(false), canBeHandled(true), inversePredicate(true)
+    Block(BlockType type, const BlockList& children): has_barrier(false), mark(false), canBeHandled(true), inversePredicate(true), insnNum(0)
     {
       this->btype = type;
       this->children = children;
@@ -105,6 +105,7 @@ namespace ir {
      * m-->n
      * */
     bool inversePredicate;
+    int insnNum;
   };
 
   /* represents basic block */
@@ -211,6 +212,7 @@ namespace ir {
       Block* mergeLoopBlock(BlockList& loopSets);
       int  ifPatternMatch(Block *block);
       int  patternMatch(Block *block);
+      void collectInsnNum(Block* block, const BasicBlock* bb);
 
     private:
       void handleSelfLoopBlock(Block *loopblock, LabelIndex& whileLabel);
