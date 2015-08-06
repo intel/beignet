@@ -44,7 +44,7 @@ OVERLOADABLE float clamp(float v, float l, float u) {
 
 
 OVERLOADABLE float degrees(float radians) {
-  return (180 / M_PI_F) * radians;
+  return M_180_PI_F * radians;
 }
 OVERLOADABLE float radians(float degrees) {
   return (M_PI_F / 180) * degrees;
@@ -96,7 +96,7 @@ OVERLOADABLE half clamp(half v, half l, half u) {
   return max(min(v, u), l);
 }
 OVERLOADABLE half degrees(half radians) {
-  return ((half)(180 / M_PI_F)) * radians;
+  return ((half)(M_180_PI_F)) * radians;
 }
 OVERLOADABLE half radians(half degrees) {
   return ((half)(M_PI_F / 180)) * degrees;
