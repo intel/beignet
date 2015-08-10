@@ -401,6 +401,7 @@ namespace gbe
       return GenRegister::offset(reg, nr, subnr);
     }
 
+    GenRegister getLaneIDReg();
     /*! Implement public class */
     INLINE uint32_t getRegNum(void) const { return file.regNum(); }
     /*! Implements public interface */
@@ -1661,6 +1662,29 @@ namespace gbe
     insn->src(1) = src1;
   }
 
+  GenRegister Selection::Opaque::getLaneIDReg()
+  {
+    const GenRegister laneID = GenRegister::immv(0x76543210);
+    ir::Register r = reg(ir::RegisterFamily::FAMILY_WORD);
+    const GenRegister dst = selReg(r, ir::TYPE_U16);
+
+    uint32_t execWidth = curr.execWidth;
+    if (execWidth == 8)
+      MOV(dst, laneID);
+    else {
+      push();
+      curr.execWidth = 8;
+      curr.noMask = 1;
+      MOV(dst, laneID);
+      //Packed Unsigned Half-Byte Integer Vector does not work
+      //have to mock by adding 8 to the singed vector
+      const GenRegister eight = GenRegister::immuw(8);
+      ADD(GenRegister::offset(dst, 0, 16), dst, eight);
+      pop();
+    }
+    return dst;
+  }
+
   void Selection::Opaque::I64CMP(uint32_t conditional, Reg src0, Reg src1, GenRegister tmp[3]) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_I64CMP, 3, 2);
     insn->src(0) = src0;
@@ -2299,8 +2323,8 @@ namespace gbe
           break;
         case ir::OP_SIMD_ID:
           {
-            const GenRegister selLaneID = sel.selReg(ir::ocl::laneid, ir::TYPE_U32);
-            sel.MOV(dst, selLaneID);
+            GenRegister laneID = sel.getLaneIDReg();
+            sel.MOV(dst, laneID);
           }
           break;
         default: NOT_SUPPORTED;

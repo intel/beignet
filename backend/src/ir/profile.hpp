@@ -72,10 +72,9 @@ namespace ir {
     static const Register printfbptr = Register(28); // printf buffer address .
     static const Register printfiptr = Register(29); // printf index buffer address.
     static const Register dwblockip = Register(30);  // blockip
-    static const Register laneid = Register(31);  // lane id.
-    static const Register invalid = Register(32);  // used for valid comparation.
-    static const Register btiUtil = Register(33);  // used for mixed pointer as bti utility.
-    static const uint32_t regNum = 34;             // number of special registers
+    static const Register invalid = Register(31);  // used for valid comparation.
+    static const Register btiUtil = Register(32);  // used for mixed pointer as bti utility.
+    static const uint32_t regNum = 33;             // number of special registers
     extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 
