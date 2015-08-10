@@ -21,6 +21,7 @@
 #define __CL_DEVICE_DATA_H__
 
 #define INVALID_CHIP_ID -1 //returned by intel_get_device_id if no device found
+#define INTEL_VENDOR_ID                 0x8086   // Vendor ID for Intel
 
 #define PCI_CHIP_GM45_GM                0x2A42
 #define PCI_CHIP_IGD_E_G                0x2E02

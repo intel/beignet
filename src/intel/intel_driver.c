@@ -808,10 +808,10 @@ intel_update_device_info(cl_device_id device)
   /* Prefer driver-queried max compute units if supported */
   if (!drm_intel_get_eu_total(driver->fd, &eu_total))
     device->max_compute_unit = eu_total;
-  else if (IS_CHERRYVIEW(device->vendor_id))
+  else if (IS_CHERRYVIEW(device->device_id))
     printf(CHV_CONFIG_WARNING);
 #else
-  if (IS_CHERRYVIEW(device->vendor_id))
+  if (IS_CHERRYVIEW(device->device_id))
     printf(CHV_CONFIG_WARNING);
 #endif
 
@@ -821,10 +821,10 @@ intel_update_device_info(cl_device_id device)
   /* Prefer driver-queried subslice count if supported */
   if (!drm_intel_get_subslice_total(driver->fd, &subslice_total))
     device->sub_slice_count = subslice_total;
-  else if (IS_CHERRYVIEW(device->vendor_id))
+  else if (IS_CHERRYVIEW(device->device_id))
     printf(CHV_CONFIG_WARNING);
 #else
-  if (IS_CHERRYVIEW(device->vendor_id))
+  if (IS_CHERRYVIEW(device->device_id))
     printf(CHV_CONFIG_WARNING);
 #endif
 
