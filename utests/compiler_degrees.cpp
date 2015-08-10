@@ -1,5 +1,7 @@
 #include "utest_helper.hpp"
 
+#define M_180_PI_F   57.295779513082321F
+
 void compiler_degrees(void)
 {
   const int n = 32;
@@ -24,7 +26,7 @@ void compiler_degrees(void)
 
   OCL_MAP_BUFFER(1);
   for (int i = 0; i < n; ++i) {
-    OCL_ASSERT(((float *)buf_data[1])[i] == src[i] * (180 / 3.141592653589793F));
+    OCL_ASSERT(((float *)buf_data[1])[i] == src[i] * M_180_PI_F);
   }
   OCL_UNMAP_BUFFER(1);
 }
