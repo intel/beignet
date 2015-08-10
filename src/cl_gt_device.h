@@ -19,7 +19,8 @@
 
 /* Common fields for both all GT devices (IVB / SNB) */
 .device_type = CL_DEVICE_TYPE_GPU,
-.vendor_id = 0, /* == device_id (set when requested) */
+.device_id=0,/* == device_id (set when requested) */
+.vendor_id = INTEL_VENDOR_ID,
 .max_work_item_dimensions = 3,
 .max_1d_global_work_sizes = {1024 * 1024 * 256, 1, 1},
 .max_2d_global_work_sizes = {8192, 8192, 1},

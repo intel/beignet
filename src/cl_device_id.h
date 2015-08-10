@@ -24,6 +24,7 @@
 struct _cl_device_id {
   DEFINE_ICD(dispatch)
   cl_device_type device_type;
+  cl_uint  device_id;
   cl_uint  vendor_id;
   cl_uint  max_compute_unit;               // maximum EU number
   cl_uint  max_thread_per_unit;            // maximum EU threads per EU.
