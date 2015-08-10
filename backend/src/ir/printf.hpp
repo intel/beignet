@@ -159,10 +159,7 @@ namespace gbe
         ptr = p;
       }
 
-      ~PrintfSlot(void) {
-        if (ptr)
-          free(ptr);
-      }
+      ~PrintfSlot(void);
     };
 
     class Context;
@@ -177,7 +174,7 @@ namespace gbe
         }
 
         for (size_t i = 0; i < other.slots.size(); ++i) {
-          PrintfSlot* s = other.slots[i];
+          PrintfSlot s = other.slots[i];
           slots.push_back(s);
         }
 
@@ -215,15 +212,15 @@ namespace gbe
       uint8_t getIndexBufBTI() const { return btiIndexBuf; }
 
       uint32_t getPrintfBufferElementSize(uint32_t i) {
-        PrintfSlot* slot = slots[i];
+        PrintfSlot& slot = slots[i];
         int vec_num = 1;
-        if (slot->state->vector_n > 0) {
-          vec_num = slot->state->vector_n;
+        if (slot.state->vector_n > 0) {
+          vec_num = slot.state->vector_n;
         }
 
         assert(vec_num > 0 && vec_num <= 16);
 
-        switch (slot->state->conversion_specifier) {
+        switch (slot.state->conversion_specifier) {
           case PRINTF_CONVERSION_I:
           case PRINTF_CONVERSION_D:
           case PRINTF_CONVERSION_O:
@@ -257,7 +254,7 @@ namespace gbe
 
     private:
       vector<PrintfFmt> fmts;
-      vector<PrintfSlot*> slots;
+      vector<PrintfSlot> slots;
       uint32_t sizeOfSize; // Total sizeof size.
       friend struct LockOutput;
       uint8_t btiBuf;

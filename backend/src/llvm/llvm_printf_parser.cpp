@@ -291,7 +291,7 @@ again:
 #if 0
     {
       int j = 0;
-      for (auto &s : *printf_fmt) {
+      for (auto &s : printf_fmt->first) {
         j++;
         if (s.type == PRINTF_SLOT_TYPE_STATE) {
           fprintf(stderr, "---- %d ---: state : \n", j);

@@ -31,6 +31,23 @@ namespace gbe
 
     pthread_mutex_t PrintfSet::lock = PTHREAD_MUTEX_INITIALIZER;
 
+    PrintfSlot::~PrintfSlot(void)
+    {
+        if (ptr)
+        {
+          if (type == PRINTF_SLOT_TYPE_STRING) {
+            free(ptr);
+            ptr = NULL;
+          } else if (type == PRINTF_SLOT_TYPE_STATE) {
+            delete state;
+            state = NULL;
+          } else {
+            type = PRINTF_SLOT_TYPE_NONE;
+            ptr = NULL;
+          }
+        }
+    }
+
     uint32_t PrintfSet::append(PrintfFmt* fmt, Unit& unit)
     {
       fmts.push_back(*fmt);
@@ -40,12 +57,12 @@ namespace gbe
         if (f->type == PRINTF_SLOT_TYPE_STRING)
           continue;
 
-        slots.push_back(&(*f));
+        slots.push_back(*f);
       }
 
       /* Update the total size of size. */
       if (slots.size() > 0)
-        sizeOfSize = slots.back()->state->out_buf_sizeof_offset
+        sizeOfSize = slots.back().state->out_buf_sizeof_offset
                      + getPrintfBufferElementSize(slots.size() - 1);
 
       return (uint32_t)fmts.size();
