@@ -43,6 +43,7 @@ namespace gbe
   class SelectionInstruction; // Pre-RA Gen instruction
   class SelectionReg;         // Pre-RA Gen register
   class GenRegister;
+  class GenKernel;
   typedef enum {
     NO_ERROR,
     REGISTER_ALLOCATION_FAIL,
@@ -219,6 +220,8 @@ namespace gbe
     uint32_t regSpillTick;
     /*! Build the curbe patch list for the given kernel */
     void buildPatchList(void);
+    /* Helper for printing the assembly */
+    void outputAssembly(std::ostream& out, GenKernel* genKernel);
     /*! Calc the group's slm offset from R0.0, to work around HSW SLM bug*/
     virtual void emitSLMOffset(void) { };
     /*! new selection of device */
