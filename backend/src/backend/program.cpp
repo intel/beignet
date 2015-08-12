@@ -824,7 +824,13 @@ namespace gbe {
       if (!dumpLLVMFileName.empty()) {
         std::string err;
         llvm::raw_fd_ostream ostream (dumpLLVMFileName.c_str(),
-                                      err, llvm::sys::fs::F_RW);
+                                      err,
+        #if LLVM_VERSION_MINOR == 3
+                                      0
+        #else
+                                      llvm::sys::fs::F_RW
+        #endif
+                                      );
         if (err.empty()) {
           out_module->print(ostream, 0);
         } //Otherwise, you'll have to make do without the dump.
