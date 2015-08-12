@@ -352,6 +352,7 @@ namespace gbe {
                                            const char *fileName,
                                            const void* module,
                                            const void* llvm_ctx,
+                                           const char* asm_file_name,
                                            size_t stringSize,
                                            char *err,
                                            size_t *errSize,
