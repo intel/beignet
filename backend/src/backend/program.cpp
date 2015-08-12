@@ -840,6 +840,9 @@ namespace gbe {
       }
       #endif
 
+      FILE *asmDumpStream = fopen(dumpASMFileName.c_str(), "w");  
+      if (asmDumpStream)
+        fclose(asmDumpStream);
       p = gbe_program_new_from_llvm(deviceID, NULL, out_module, llvm_ctx, dumpASMFileName.c_str(), stringSize,
                                     err, errSize, optLevel);
       if (err != NULL)
