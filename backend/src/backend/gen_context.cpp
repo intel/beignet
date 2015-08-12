@@ -2291,6 +2291,14 @@ namespace gbe
     if (OCL_OUTPUT_ASM)
       outputAssembly(stdout, genKernel);
 
+    if (this->asmFileName) {
+      FILE *asmDumpStream = fopen(this->asmFileName, "a");
+      if (asmDumpStream) {
+        outputAssembly(asmDumpStream, genKernel);
+        fclose(asmDumpStream);
+      }
+    }
+
     return true;
   }
 
