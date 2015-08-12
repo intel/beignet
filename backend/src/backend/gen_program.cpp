@@ -172,6 +172,7 @@ namespace gbe {
       ctx = GBE_NEW(Gen9Context, unit, name, deviceID, relaxMath);
     }
     GBE_ASSERTM(ctx != NULL, "Fail to create the gen context\n");
+    ctx->setASMFileName(this->asm_file_name);
 
     for (; codeGen < codeGenNum; ++codeGen) {
       const uint32_t simdWidth = codeGenStrategy[codeGen].simdWidth;
