@@ -641,6 +641,7 @@ namespace gbe {
                                      const char *temp_header_path,
                                      std::vector<std::string>& clOpt,
                                      std::string& dumpLLVMFileName,
+                                     std::string& dumpASMFileName,
                                      std::string& clName,
                                      int& optLevel,
                                      size_t stringSize,
@@ -725,6 +726,11 @@ namespace gbe {
           continue; // Don't push this str back; ignore it.
         }
 
+        if(str.find("-dump-opt-asm=") != std::string::npos) {
+          dumpASMFileName = str.substr(str.find("=") + 1);
+          continue; // Don't push this str back; ignore it.
+        }
+
         clOpt.push_back(str);
       }
       free(str);
@@ -787,9 +793,10 @@ namespace gbe {
     int optLevel = 1;
     std::vector<std::string> clOpt;
     std::string clName;
-    std::string dumpLLVMFileName;
+    std::string dumpLLVMFileName, dumpASMFileName;
     if (!processSourceAndOption(source, options, NULL, clOpt,
-                                dumpLLVMFileName, clName, optLevel,
+                                dumpLLVMFileName, dumpASMFileName,
+                                clName, optLevel,
                                 stringSize, err, errSize))
       return NULL;
 
@@ -863,9 +870,9 @@ namespace gbe {
     int optLevel = 1;
     std::vector<std::string> clOpt;
     std::string clName;
-    std::string dumpLLVMFileName;
+    std::string dumpLLVMFileName, dumpASMFileName;
     if (!processSourceAndOption(source, options, temp_header_path, clOpt,
-                                dumpLLVMFileName, clName,
+                                dumpLLVMFileName, dumpASMFileName, clName,
                                 optLevel, stringSize, err, errSize))
       return NULL;
 
