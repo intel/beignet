@@ -49,6 +49,7 @@ namespace gbe
     this->p = NULL;
     this->sel = NULL;
     this->ra = NULL;
+    this->asmFileName = NULL;
     this->ifEndifFix = false;
     this->regSpillTick = 0;
   }
@@ -74,6 +75,10 @@ namespace gbe
     this->labelPos.clear();
     this->errCode = NO_ERROR;
     this->regSpillTick = 0;
+  }
+
+  void GenContext::setASMFileName(const char* asmFname) {
+    this->asmFileName = asmFname;
   }
 
   void GenContext::newSelection(void) {
