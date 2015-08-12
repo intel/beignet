@@ -221,7 +221,7 @@ namespace gbe
     /*! Build the curbe patch list for the given kernel */
     void buildPatchList(void);
     /* Helper for printing the assembly */
-    void outputAssembly(std::ostream& out, GenKernel* genKernel);
+    void outputAssembly(FILE *file, GenKernel* genKernel);
     /*! Calc the group's slm offset from R0.0, to work around HSW SLM bug*/
     virtual void emitSLMOffset(void) { };
     /*! new selection of device */
