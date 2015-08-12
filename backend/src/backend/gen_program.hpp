@@ -60,7 +60,8 @@ namespace gbe
   {
   public:
     /*! Create an empty program */
-    GenProgram(uint32_t deviceID, const void* mod = NULL, const void* ctx = NULL) : deviceID(deviceID),module((void*)mod), llvm_ctx((void*)ctx) {}
+    GenProgram(uint32_t deviceID, const void* mod = NULL, const void* ctx = NULL, const char* asm_fname = NULL) :
+      deviceID(deviceID),module((void*)mod), llvm_ctx((void*)ctx), asm_file_name(asm_fname) {}
     /*! Current device ID*/
     uint32_t deviceID;
     /*! Destroy the program */
@@ -75,6 +76,7 @@ namespace gbe
     }
     void* module;
     void* llvm_ctx;
+    const char* asm_file_name;
     /*! Use custom allocators */
     GBE_CLASS(GenProgram);
   };

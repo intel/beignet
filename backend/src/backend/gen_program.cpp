@@ -359,7 +359,7 @@ namespace gbe {
                                            int optLevel)
   {
     using namespace gbe;
-    GenProgram *program = GBE_NEW(GenProgram, deviceID, module, llvm_ctx);
+    GenProgram *program = GBE_NEW(GenProgram, deviceID, module, llvm_ctx, asm_file_name);
 #ifdef GBE_COMPILER_AVAILABLE
     std::string error;
     // Try to compile the program
