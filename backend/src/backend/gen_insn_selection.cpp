@@ -2290,10 +2290,16 @@ namespace gbe
       GenRegister dst = sel.selReg(insn.getDst(0), type);
 
       sel.push();
+      if (sel.isScalarReg(insn.getDst(0))) {
+        sel.curr.execWidth = 1;
+        sel.curr.predicate = GEN_PREDICATE_NONE;
+        sel.curr.noMask = 1;
+      }
+
       switch (opcode) {
         case ir::OP_SIMD_SIZE:
           {
-            const GenRegister src = GenRegister::immud(sel.curr.execWidth);
+            const GenRegister src = GenRegister::immud(sel.ctx.getSimdWidth());
             sel.MOV(dst, src);
           }
           break;
