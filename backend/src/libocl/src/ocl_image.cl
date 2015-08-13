@@ -387,10 +387,22 @@ DECL_IMAGE_TYPE(image2d_array_t, 3)
              cl_image, defaultSampler, convert_float2(effectCoord), 0);       \
   }
 
+#define DECL_WRITE_IMAGE1D_BUFFER(image_type, image_data_type, suffix, coord_type)     \
+  OVERLOADABLE void write_image ##suffix(image_type cl_image,                 \
+                                         coord_type coord,                    \
+                                         image_data_type color)               \
+  {                                                                           \
+    int2 effectCoord;                                                         \
+    effectCoord.s0 = coord %8192;                                             \
+    effectCoord.s1 = coord / 8192;                                            \
+    __gen_ocl_write_image ##suffix(cl_image, effectCoord, color);              \
+  }
+
+
 #define DECL_IMAGE_1DBuffer(int_clamping_fix, image_data_type, suffix)        \
   DECL_READ_IMAGE1D_BUFFER_NOSAMPLER(image1d_buffer_t, image_data_type,       \
                                      suffix, int)                             \
-  DECL_WRITE_IMAGE(image1d_buffer_t, image_data_type, suffix, int)
+  DECL_WRITE_IMAGE1D_BUFFER(image1d_buffer_t, image_data_type, suffix, int)
 
 DECL_IMAGE_1DBuffer(GEN_FIX_INT_CLAMPING, int4, i)
 DECL_IMAGE_1DBuffer(GEN_FIX_INT_CLAMPING, uint4, ui)
