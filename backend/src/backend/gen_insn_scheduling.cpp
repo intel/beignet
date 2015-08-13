@@ -583,7 +583,11 @@ namespace gbe
     for (int32_t insnID = 0; insnID < insnNum; ++insnID) {
       ScheduleDAGNode *node = tracker.insnNodes[insnID];
       if (node->insn.isBranch() || node->insn.isLabel()
-          || node->insn.opcode == SEL_OP_EOT || node->insn.opcode == SEL_OP_IF || node->insn.opcode == SEL_OP_WHILE
+          || node->insn.opcode == SEL_OP_EOT
+          || node->insn.opcode == SEL_OP_IF
+          || node->insn.opcode == SEL_OP_ELSE
+          || node->insn.opcode == SEL_OP_ENDIF
+          || node->insn.opcode == SEL_OP_WHILE
           || node->insn.opcode == SEL_OP_READ_ARF
           || node->insn.opcode == SEL_OP_BARRIER)
         tracker.makeBarrier(insnID, insnNum);
