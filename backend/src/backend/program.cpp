@@ -519,7 +519,7 @@ namespace gbe {
   BVAR(OCL_OUTPUT_BUILD_LOG, false);
 
   static bool buildModuleFromSource(const char* input, llvm::Module** out_module, llvm::LLVMContext* llvm_ctx,
-                                    std::vector<std::string>& options, size_t stringSize, char *err,
+                                    std::string dumpLLVMFileName, std::vector<std::string>& options, size_t stringSize, char *err,
                                     size_t *errSize) {
     // Arguments to pass to the clang frontend
     vector<const char *> args;
@@ -628,6 +628,34 @@ namespace gbe {
 #endif
 
     *out_module = module;
+
+// Dump the LLVM if requested.
+#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 6)
+    if (!dumpLLVMFileName.empty()) {
+      std::string err;
+      llvm::raw_fd_ostream ostream (dumpLLVMFileName.c_str(),
+                                    err,
+      #if LLVM_VERSION_MINOR == 3
+                                    0
+      #else
+                                    llvm::sys::fs::F_None
+      #endif
+                                    );
+
+      if (err.empty()) {
+        (*out_module)->print(ostream, 0);
+      } //Otherwise, you'll have to make do without the dump.
+    }
+#else
+    if (!dumpLLVMFileName.empty()) {
+      std::error_code err;
+      llvm::raw_fd_ostream ostream (dumpLLVMFileName.c_str(),
+                                    err, llvm::sys::fs::F_None);
+      if (!err) {
+        (*out_module)->print(ostream, 0);
+      } //Otherwise, you'll have to make do without the dump.
+    }
+#endif
     return true;
   }
 
@@ -808,7 +836,7 @@ namespace gbe {
     if (!llvm::llvm_is_multithreaded())
       llvm_mutex.lock();
 
-    if (buildModuleFromSource(clName.c_str(), &out_module, llvm_ctx, clOpt,
+    if (buildModuleFromSource(clName.c_str(), &out_module, llvm_ctx, dumpLLVMFileName, clOpt,
                               stringSize, err, errSize)) {
     // Now build the program from llvm
       size_t clangErrSize = 0;
@@ -818,33 +846,6 @@ namespace gbe {
         err += *errSize;
         clangErrSize = *errSize;
       }
-
-      // Dump the LLVM if requested.
-      #if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 6)
-      if (!dumpLLVMFileName.empty()) {
-        std::string err;
-        llvm::raw_fd_ostream ostream (dumpLLVMFileName.c_str(),
-                                      err,
-        #if LLVM_VERSION_MINOR == 3
-                                      0
-        #else
-                                      llvm::sys::fs::F_RW
-        #endif
-                                      );
-        if (err.empty()) {
-          out_module->print(ostream, 0);
-        } //Otherwise, you'll have to make do without the dump.
-      }
-      #else
-      if (!dumpLLVMFileName.empty()) {
-        std::error_code err;
-        llvm::raw_fd_ostream ostream (dumpLLVMFileName.c_str(),
-                                      err, llvm::sys::fs::F_RW);
-        if (!err) {
-          out_module->print(ostream, 0);
-        } //Otherwise, you'll have to make do without the dump.
-      }
-      #endif
 
       FILE *asmDumpStream = fopen(dumpASMFileName.c_str(), "w");  
       if (asmDumpStream)
@@ -891,7 +892,7 @@ namespace gbe {
     //for some functions, so we use global context now, need switch to new context later.
     llvm::Module * out_module;
     llvm::LLVMContext* llvm_ctx = &llvm::getGlobalContext();
-    if (buildModuleFromSource(clName.c_str(), &out_module, llvm_ctx, clOpt,
+    if (buildModuleFromSource(clName.c_str(), &out_module, llvm_ctx, dumpLLVMFileName, clOpt,
                               stringSize, err, errSize)) {
     // Now build the program from llvm
       if (err != NULL) {
