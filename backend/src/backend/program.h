@@ -30,6 +30,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -179,13 +180,18 @@ typedef gbe_program (gbe_program_compile_from_source_cb)(uint32_t deviceID,
                                                          char *err,
                                                          size_t *err_size);
 extern gbe_program_compile_from_source_cb *gbe_program_compile_from_source;
+
 /*! link the programs. */
-typedef void (gbe_program_link_program_cb)(gbe_program           dst_program,
+typedef bool (gbe_program_link_program_cb)(gbe_program           dst_program,
                                            gbe_program           src_program,
                                            size_t                stringSize,
                                            char *                err,
                                            size_t *              errSize);
 extern gbe_program_link_program_cb *gbe_program_link_program;
+
+/*! check link option. */
+typedef bool (gbe_program_check_opt_cb)(const char *option);
+extern gbe_program_check_opt_cb *gbe_program_check_opt;
 
 /*! create s new genprogram for link. */
 typedef gbe_program (gbe_program_new_gen_program_cb)(uint32_t deviceID,
@@ -218,7 +224,7 @@ typedef gbe_program (gbe_program_new_from_llvm_cb)(uint32_t deviceID,
 extern gbe_program_new_from_llvm_cb *gbe_program_new_from_llvm;
 
 /*! link the programs from llvm level. */
-typedef void (gbe_program_link_from_llvm_cb)(gbe_program dst_program,
+typedef bool (gbe_program_link_from_llvm_cb)(gbe_program dst_program,
                                              gbe_program src_program,
                                              size_t      stringSize,
                                              char *      err,

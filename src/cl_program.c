@@ -605,20 +605,34 @@ cl_program_link(cl_context            context,
   cl_int i = 0;
   int copyed = 0;
   p = cl_program_new(context);
+  cl_bool ret = 0;
 
   if (!check_cl_version_option(p, options)) {
     err = CL_BUILD_PROGRAM_FAILURE;
     goto error;
   }
 
+  //Although we don't use options, but still need check options
+  if(!compiler_program_check_opt(options)) {
+    err = CL_INVALID_LINKER_OPTIONS;
+    goto error;
+  }
+
   p->opaque = compiler_program_new_gen_program(context->device->device_id, NULL, NULL);
 
+  for(i = 1; i < num_input_programs; i++) {
+    //num_input_programs >0 and input_programs MUST not NULL, so compare with input_programs[0] directly.
+    if(input_programs[i]->binary_type != input_programs[0]->binary_type) {
+      err = CL_INVALID_OPERATION;
+      goto error;
+    }
+  }
   for(i = 0; i < num_input_programs; i++) {
     // if program create with llvm binary, need deserilize first to get module.
     if(input_programs[i])
-      compiler_program_link_program(p->opaque, input_programs[i]->opaque,
-        p->build_log_max_sz, p->build_log, &p->build_log_sz);
-    if (UNLIKELY(p->opaque == NULL)) {
+      ret = compiler_program_link_program(p->opaque, input_programs[i]->opaque,
+                                          p->build_log_max_sz, p->build_log, &p->build_log_sz);
+    if (UNLIKELY(ret)) {
       err = CL_LINK_PROGRAM_FAILURE;
       goto error;
     }

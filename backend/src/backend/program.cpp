@@ -902,22 +902,63 @@ namespace gbe {
 #endif
 
 #ifdef GBE_COMPILER_AVAILABLE
-  static void programLinkProgram(gbe_program           dst_program,
+  static bool programLinkProgram(gbe_program           dst_program,
                                  gbe_program           src_program,
                                  size_t                stringSize,
                                  char *                err,
                                  size_t *              errSize)
   {
+    bool ret = 0;
     acquireLLVMContextLock();
 
-    gbe_program_link_from_llvm(dst_program, src_program, stringSize, err, errSize);
+    ret = gbe_program_link_from_llvm(dst_program, src_program, stringSize, err, errSize);
 
     releaseLLVMContextLock();
 
     if (OCL_OUTPUT_BUILD_LOG && err)
       llvm::errs() << err;
+    return ret;
   }
 #endif
+
+#ifdef GBE_COMPILER_AVAILABLE
+    static bool programCheckOption(const char * option)
+    {
+      vector<const char *> args;
+      if (option == NULL) return 1;   //if NULL, return ok
+      std::string s(option);
+      size_t pos = s.find("-create-library");
+      //clang don't accept -create-library and -enable-link-options, erase them
+      if(pos != std::string::npos) {
+        s.erase(pos, strlen("-create-library"));
+      }
+      pos = s.find("-enable-link-options");
+      if(pos != std::string::npos) {
+        s.erase(pos, strlen("-enable-link-options"));
+      }
+      args.push_back(s.c_str());
+
+      // The compiler invocation needs a DiagnosticsEngine so it can report problems
+      std::string ErrorString;
+      llvm::raw_string_ostream ErrorInfo(ErrorString);
+      llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts = new clang::DiagnosticOptions();
+      DiagOpts->ShowCarets = false;
+      DiagOpts->ShowPresumedLoc = true;
+
+      clang::TextDiagnosticPrinter *DiagClient =
+                               new clang::TextDiagnosticPrinter(ErrorInfo, &*DiagOpts);
+      llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagID(new clang::DiagnosticIDs());
+      clang::DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
+
+      // Create the compiler invocation
+      std::unique_ptr<clang::CompilerInvocation> CI(new clang::CompilerInvocation);
+      return clang::CompilerInvocation::CreateFromArgs(*CI,
+                                                       &args[0],
+                                                       &args[0] + args.size(),
+                                                       Diags);
+    }
+#endif
+
 
   static size_t programGetGlobalConstantSize(gbe_program gbeProgram) {
     if (gbeProgram == NULL) return 0;
@@ -1163,6 +1204,7 @@ void releaseLLVMContextLock()
 GBE_EXPORT_SYMBOL gbe_program_new_from_source_cb *gbe_program_new_from_source = NULL;
 GBE_EXPORT_SYMBOL gbe_program_compile_from_source_cb *gbe_program_compile_from_source = NULL;
 GBE_EXPORT_SYMBOL gbe_program_link_program_cb *gbe_program_link_program = NULL;
+GBE_EXPORT_SYMBOL gbe_program_check_opt_cb *gbe_program_check_opt = NULL;
 GBE_EXPORT_SYMBOL gbe_program_new_from_binary_cb *gbe_program_new_from_binary = NULL;
 GBE_EXPORT_SYMBOL gbe_program_new_from_llvm_binary_cb *gbe_program_new_from_llvm_binary = NULL;
 GBE_EXPORT_SYMBOL gbe_program_serialize_to_binary_cb *gbe_program_serialize_to_binary = NULL;
@@ -1218,6 +1260,7 @@ namespace gbe
       gbe_program_new_from_source = gbe::programNewFromSource;
       gbe_program_compile_from_source = gbe::programCompileFromSource;
       gbe_program_link_program = gbe::programLinkProgram;
+      gbe_program_check_opt = gbe::programCheckOption;
       gbe_program_get_global_constant_size = gbe::programGetGlobalConstantSize;
       gbe_program_get_global_constant_data = gbe::programGetGlobalConstantData;
       gbe_program_clean_llvm_resource = gbe::programCleanLlvmResource;

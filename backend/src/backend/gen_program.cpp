@@ -386,7 +386,7 @@ namespace gbe {
     return (gbe_program) program;
   }
 
-  static void genProgramLinkFromLLVM(gbe_program           dst_program,
+  static bool genProgramLinkFromLLVM(gbe_program           dst_program,
                                      gbe_program           src_program,
                                      size_t                stringSize,
                                      char *                err,
@@ -408,10 +408,12 @@ namespace gbe {
           err[stringSize-1] = '\0';
           *errSize = strlen(err);
         }
+        return true;
       }
     }
     // Everything run fine
 #endif
+    return false;
   }
 
   static void genProgramBuildFromLLVM(gbe_program program,
@@ -444,7 +446,6 @@ namespace gbe {
         std::memcpy(err, error.c_str(), msgSize);
         *errSize = error.size();
       }
-      GBE_DELETE(p);
     }
     releaseLLVMContextLock();
 #endif

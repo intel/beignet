@@ -1015,6 +1015,7 @@ clLinkProgram(cl_context            context,
   INVALID_VALUE_IF (pfn_notify  == 0 && user_data   != NULL);
   INVALID_VALUE_IF (num_input_programs == 0 && input_programs != NULL);
   INVALID_VALUE_IF (num_input_programs != 0 && input_programs == NULL);
+  INVALID_VALUE_IF (num_input_programs == 0 && input_programs == NULL);
 
   program = cl_program_link(context, num_input_programs, input_programs, options, &err);
 
