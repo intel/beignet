@@ -107,6 +107,8 @@ namespace gbe
       return this->liveness->getLiveIn(bb);
     }
 
+    void loadLaneID(GenRegister dst);
+
     void collectShifter(GenRegister dest, GenRegister src);
     void loadTopHalf(GenRegister dest, GenRegister src);
     void storeTopHalf(GenRegister dest, GenRegister src);

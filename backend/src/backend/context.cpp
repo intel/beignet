@@ -373,8 +373,8 @@ namespace gbe
     return this->kernel;
   }
 
-  int16_t Context::allocate(int16_t size, int16_t alignment) {
-    return registerAllocator->allocate(size, alignment);
+  int16_t Context::allocate(int16_t size, int16_t alignment, bool bFwd) {
+    return registerAllocator->allocate(size, alignment, bFwd);
   }
 
   void Context::deallocate(int16_t offset) { registerAllocator->deallocate(offset); }
@@ -396,10 +396,10 @@ namespace gbe
 
   void Context::buildStack(void) {
     const auto &stackUse = dag->getUse(ir::ocl::stackptr);
-    if (stackUse.size() == 0)  // no stack is used if stackptr is unused
+    if (stackUse.size() == 0) {  // no stack is used if stackptr is unused
+      this->kernel->stackSize = 0;
       return;
-    // Be sure that the stack pointer is set
-    // GBE_ASSERT(this->kernel->getCurbeOffset(GBE_CURBE_STACK_POINTER, 0) >= 0);
+    }
     uint32_t stackSize = 128;
     while (stackSize < fn.getStackSize()) {
       stackSize *= 3;

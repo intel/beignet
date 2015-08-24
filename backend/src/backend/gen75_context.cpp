@@ -67,7 +67,7 @@ namespace gbe
     using namespace ir;
 
     // Only emit stack pointer computation if we use a stack
-    if (kernel->getCurbeOffset(GBE_CURBE_STACK_POINTER, 0) <= 0)
+    if (kernel->getStackSize() == 0)
       return;
 
     // Check that everything is consistent in the kernel code
@@ -79,6 +79,8 @@ namespace gbe
       GenRegister::ud8grf(ir::ocl::stackptr) :
       GenRegister::ud16grf(ir::ocl::stackptr);
     const GenRegister stackptr = ra->genReg(selStatckPtr);
+
+    loadLaneID(stackptr);
 
     // We compute the per-lane stack pointer here
     // private address start from zero

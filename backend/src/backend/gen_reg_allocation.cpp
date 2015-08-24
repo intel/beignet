@@ -133,8 +133,8 @@ namespace gbe
     void validateFlag(Selection &selection, SelectionInstruction &insn);
     /*! Allocate the GRF registers */
     bool allocateGRFs(Selection &selection);
-    /*! Create gen registers for all preallocated curbe registers. */
-    void allocatePayloadRegs(void);
+    /*! Create gen registers for all preallocated special registers. */
+    void allocateSpecialRegs(void);
     /*! Create a Gen register from a register set in the payload */
     void allocatePayloadReg(ir::Register, uint32_t offset, uint32_t subOffset = 0);
     /*! Create the intervals for each register */
@@ -228,7 +228,7 @@ namespace gbe
     this->intervals[reg].maxID = 0;
   }
 
-  INLINE void GenRegAllocator::Opaque::allocatePayloadRegs(void) {
+  INLINE void GenRegAllocator::Opaque::allocateSpecialRegs(void) {
     using namespace ir;
     for(auto &it : this->ctx.curbeRegs)
       allocatePayloadReg(it.first, it.second);
@@ -248,6 +248,19 @@ namespace gbe
       allocatePayloadReg(reg, it->second, subOffset);
       ctx.splitBlock(it->second, subOffset);
     }
+
+    if (RA.contains(ocl::stackbuffer)) {
+      uint32_t regSize = 0;
+      this->getRegAttrib(ocl::stackptr, regSize);
+      uint32_t offset = this->ctx.allocate(regSize, regSize, 1);
+      RA.insert(std::make_pair(ocl::stackptr, offset));
+    }
+
+    // Group and barrier IDs are always allocated by the hardware in r0
+    RA.insert(std::make_pair(ocl::groupid0,  1*sizeof(float))); // r0.1
+    RA.insert(std::make_pair(ocl::groupid1,  6*sizeof(float))); // r0.6
+    RA.insert(std::make_pair(ocl::groupid2,  7*sizeof(float))); // r0.7
+    RA.insert(std::make_pair(ocl::barrierid, 2*sizeof(float))); // r0.2
   }
 
   bool GenRegAllocator::Opaque::createGenReg(const Selection &selection, const GenRegInterval &interval) {
@@ -1001,13 +1014,7 @@ namespace gbe
       this->intervals.push_back(ir::Register(regID));
 
     // Allocate the special registers (only those which are actually used)
-    this->allocatePayloadRegs();
-
-    // Group and barrier IDs are always allocated by the hardware in r0
-    RA.insert(std::make_pair(ocl::groupid0,  1*sizeof(float))); // r0.1
-    RA.insert(std::make_pair(ocl::groupid1,  6*sizeof(float))); // r0.6
-    RA.insert(std::make_pair(ocl::groupid2,  7*sizeof(float))); // r0.7
-    RA.insert(std::make_pair(ocl::barrierid, 2*sizeof(float))); // r0.2
+    this->allocateSpecialRegs();
 
     // block IP used to handle the mask in SW is always allocated
 

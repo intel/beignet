@@ -210,15 +210,6 @@ cl_curbe_fill(cl_kernel ker,
   UPLOAD(GBE_CURBE_WORK_DIM, work_dim);
 #undef UPLOAD
 
-  /* Write identity for the stack pointer. This is required by the stack pointer
-   * computation in the kernel
-   */
-  if ((offset = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_STACK_POINTER, 0)) >= 0) {
-    const uint32_t simd_sz = interp_kernel_get_simd_width(ker->opaque);
-    uint32_t *stackptr = (uint32_t *) (ker->curbe + offset);
-    int32_t i;
-    for (i = 0; i < (int32_t) simd_sz; ++i) stackptr[i] = i;
-  }
   /* Handle the various offsets to SLM */
   const int32_t arg_n = interp_kernel_get_arg_num(ker->opaque);
   int32_t arg, slm_offset = interp_kernel_get_slm_size(ker->opaque);

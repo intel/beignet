@@ -176,11 +176,39 @@ namespace gbe
     p->pop();
   }
 
+  void GenContext::loadLaneID(GenRegister dst) {
+    const GenRegister laneID = GenRegister::immv(0x76543210);
+    GenRegister dst_;
+    if (dst.type == GEN_TYPE_UW)
+      dst_ = dst;
+    else
+      dst_ = GenRegister::uw16grf(126,0);
+
+    p->push();
+      uint32_t execWidth = p->curr.execWidth;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      if (execWidth == 8)
+        p->MOV(dst_, laneID);
+      else {
+        p->curr.execWidth = 8;
+        p->MOV(dst_, laneID);
+        //Packed Unsigned Half-Byte Integer Vector does not work
+        //have to mock by adding 8 to the singed vector
+        const GenRegister eight = GenRegister::immuw(8);
+        p->ADD(GenRegister::offset(dst_, 0, 16), dst_, eight);
+        p->curr.execWidth = 16;
+      }
+      if (dst.type != GEN_TYPE_UW)
+        p->MOV(dst, dst_);
+    p->pop();
+  }
+
   void GenContext::emitStackPointer(void) {
     using namespace ir;
 
     // Only emit stack pointer computation if we use a stack
-    if (kernel->getCurbeOffset(GBE_CURBE_STACK_POINTER, 0) <= 0)
+    if (kernel->getStackSize() == 0)
       return;
 
     // Check that everything is consistent in the kernel code
@@ -192,6 +220,8 @@ namespace gbe
       GenRegister::ud8grf(ir::ocl::stackptr) :
       GenRegister::ud16grf(ir::ocl::stackptr);
     const GenRegister stackptr = ra->genReg(selStatckPtr);
+
+    loadLaneID(stackptr);
 
     // We compute the per-lane stack pointer here
     // threadId * perThreadSize + laneId*perLaneSize
@@ -2254,7 +2284,6 @@ namespace gbe
         INSERT_REG(numgroup0, GROUP_NUM_X)
         INSERT_REG(numgroup1, GROUP_NUM_Y)
         INSERT_REG(numgroup2, GROUP_NUM_Z)
-        INSERT_REG(stackptr, STACK_POINTER)
         INSERT_REG(printfbptr, PRINTF_BUF_POINTER)
         INSERT_REG(printfiptr, PRINTF_INDEX_POINTER)
         do {} while(0);

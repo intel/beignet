@@ -223,7 +223,7 @@ namespace gbe {
     uint32_t argNum;           //!< Number of function arguments
     uint32_t curbeSize;        //!< Size of the data to push
     uint32_t simdWidth;        //!< SIMD size for the kernel (lane number)
-    uint32_t stackSize;        //!< Stack size (may be 0 if unused)
+    uint32_t stackSize;        //!< Stack size (0 if unused)
     uint32_t scratchSize;      //!< Scratch memory size (may be 0 if unused)
     bool useSLM;               //!< SLM requires a special HW config
     uint32_t slmSize;          //!< slm size for kernel variable
