@@ -27,6 +27,7 @@ gbe_program_new_from_source_cb *compiler_program_new_from_source = NULL;
 gbe_program_compile_from_source_cb *compiler_program_compile_from_source = NULL;
 gbe_program_new_gen_program_cb *compiler_program_new_gen_program = NULL;
 gbe_program_link_program_cb *compiler_program_link_program = NULL;
+gbe_program_check_opt_cb *compiler_program_check_opt = NULL;
 gbe_program_build_from_llvm_cb *compiler_program_build_from_llvm = NULL;
 gbe_program_new_from_llvm_binary_cb *compiler_program_new_from_llvm_binary = NULL;
 gbe_program_serialize_to_binary_cb *compiler_program_serialize_to_binary = NULL;
@@ -277,6 +278,10 @@ struct GbeLoaderInitializer
 
       compiler_program_link_program = *(gbe_program_link_program_cb **)dlsym(dlhCompiler, "gbe_program_link_program");
       if (compiler_program_link_program == NULL)
+        return;
+
+      compiler_program_check_opt = *(gbe_program_check_opt_cb **)dlsym(dlhCompiler, "gbe_program_check_opt");
+      if (compiler_program_check_opt == NULL)
         return;
 
       compiler_program_build_from_llvm = *(gbe_program_build_from_llvm_cb **)dlsym(dlhCompiler, "gbe_program_build_from_llvm");
