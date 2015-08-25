@@ -5022,6 +5022,11 @@ namespace gbe
       }
 
       sel.push();
+      if (sel.isScalarReg(insn.getDst(0))) {
+        sel.curr.execWidth = 1;
+        sel.curr.predicate = GEN_PREDICATE_NONE;
+        sel.curr.noMask = 1;
+      }
       if (src1.file == GEN_IMMEDIATE_VALUE)
         sel.SIMD_SHUFFLE(dst, src0, src1);
       else {
