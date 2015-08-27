@@ -946,6 +946,14 @@ namespace gbe
       return reg;
     }
 
+    static INLINE GenRegister subphysicaloffset(GenRegister reg, uint32_t delta) {
+      if (reg.hstride != GEN_HORIZONTAL_STRIDE_0) {
+        reg.subnr += delta * typeSize(reg.type) * hstride_size(reg);
+        reg.subphysical = 1;
+      }
+      return reg;
+    }
+
     static INLINE GenRegister df16(uint32_t file, uint32_t nr, uint32_t subnr) {
       return retype(vec16(file, nr, subnr), GEN_TYPE_DF);
     }

@@ -5059,8 +5059,14 @@ namespace gbe
         sel.curr.predicate = GEN_PREDICATE_NONE;
         sel.curr.noMask = 1;
       }
-      if (src1.file == GEN_IMMEDIATE_VALUE)
-        sel.SIMD_SHUFFLE(dst, src0, src1);
+      if (src1.file == GEN_IMMEDIATE_VALUE) {
+        uint32_t offset = src1.value.ud % sel.curr.execWidth;
+        GenRegister reg = GenRegister::subphysicaloffset(src0, offset);
+        reg.vstride = GEN_VERTICAL_STRIDE_0;
+        reg.hstride = GEN_HORIZONTAL_STRIDE_0;
+        reg.width = GEN_WIDTH_1;
+        sel.MOV(dst, reg);
+      }
       else {
         GenRegister shiftL = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
         sel.SHL(shiftL, src1, GenRegister::immud(0x2));

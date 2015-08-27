@@ -699,35 +699,29 @@ namespace gbe
     const GenRegister src0 = ra->genReg(insn.src(0));
     const GenRegister src1 = ra->genReg(insn.src(1));
     assert(insn.opcode == SEL_OP_SIMD_SHUFFLE);
+    assert (src1.file != GEN_IMMEDIATE_VALUE);
 
+    uint32_t base = src0.nr * 32 + src0.subnr * 4;
+    GenRegister baseReg = GenRegister::immuw(base);
+    const GenRegister a0 = GenRegister::addr8(0);
     uint32_t simd = p->curr.execWidth;
-    if (src1.file == GEN_IMMEDIATE_VALUE) {
-      uint32_t offset = src1.value.ud % simd;
-      GenRegister reg = GenRegister::suboffset(src0, offset);
-      p->MOV(dst, GenRegister::retype(GenRegister::ud1grf(reg.nr, reg.subnr / typeSize(reg.type)), reg.type));
-    } else {
-      uint32_t base = src0.nr * 32 + src0.subnr * 4;
-      GenRegister baseReg = GenRegister::immuw(base);
-      const GenRegister a0 = GenRegister::addr8(0);
+    p->push();
+      if (simd == 8) {
+        p->ADD(a0, GenRegister::unpacked_uw(src1.nr, src1.subnr / typeSize(GEN_TYPE_UW)), baseReg);
+        GenRegister indirect = GenRegister::to_indirect1xN(src0, 0, 0);
+        p->MOV(dst, indirect);
+      } else if (simd == 16) {
+        p->curr.execWidth = 8;
+        p->ADD(a0, GenRegister::unpacked_uw(src1.nr, src1.subnr / typeSize(GEN_TYPE_UW)), baseReg);
+        GenRegister indirect = GenRegister::to_indirect1xN(src0, 0, 0);
+        p->MOV(dst, indirect);
 
-      p->push();
-        if (simd == 8) {
-          p->ADD(a0, GenRegister::unpacked_uw(src1.nr, src1.subnr / typeSize(GEN_TYPE_UW)), baseReg);
-          GenRegister indirect = GenRegister::to_indirect1xN(src0, 0, 0);
-          p->MOV(dst, indirect);
-        } else if (simd == 16) {
-          p->curr.execWidth = 8;
-          p->ADD(a0, GenRegister::unpacked_uw(src1.nr, src1.subnr / typeSize(GEN_TYPE_UW)), baseReg);
-          GenRegister indirect = GenRegister::to_indirect1xN(src0, 0, 0);
-          p->MOV(dst, indirect);
-
-          p->curr.quarterControl = 1;
-          p->ADD(a0, GenRegister::unpacked_uw(src1.nr+1, src1.subnr / typeSize(GEN_TYPE_UW)), baseReg);
-          p->MOV(GenRegister::offset(dst, 1, 0), indirect);
-        } else
-          NOT_IMPLEMENTED;
-      p->pop();
-    }
+        p->curr.quarterControl = 1;
+        p->ADD(a0, GenRegister::unpacked_uw(src1.nr+1, src1.subnr / typeSize(GEN_TYPE_UW)), baseReg);
+        p->MOV(GenRegister::offset(dst, 1, 0), indirect);
+      } else
+        NOT_IMPLEMENTED;
+    p->pop();
   }
 
   void GenContext::emitBinaryInstruction(const SelectionInstruction &insn) {
