@@ -518,7 +518,7 @@ namespace gbe {
 #ifdef GBE_COMPILER_AVAILABLE
   BVAR(OCL_OUTPUT_BUILD_LOG, false);
 
-  static bool buildModuleFromSource(const char* input, llvm::Module** out_module, llvm::LLVMContext* llvm_ctx,
+  static bool buildModuleFromSource(const char *source, llvm::Module** out_module, llvm::LLVMContext* llvm_ctx,
                                     std::string dumpLLVMFileName, std::vector<std::string>& options, size_t stringSize, char *err,
                                     size_t *errSize) {
     // Arguments to pass to the clang frontend
@@ -551,8 +551,7 @@ namespace gbe {
     args.push_back("-triple");
     args.push_back("spir");
 #endif /* LLVM_VERSION_MINOR <= 2 */
-    args.push_back(input);
-
+    args.push_back("stringInput.cl");
     args.push_back("-ffp-contract=off");
 
     // The compiler invocation needs a DiagnosticsEngine so it can report problems
@@ -574,6 +573,9 @@ namespace gbe {
                                               &args[0],
                                               &args[0] + args.size(),
                                               Diags);
+    llvm::StringRef srcString(source);
+    (*CI).getPreprocessorOpts().addRemappedFile("stringInput.cl",
+                llvm::MemoryBuffer::getMemBuffer(srcString).release());
 
     // Create the compiler instance
     clang::CompilerInstance Clang;
@@ -670,7 +672,6 @@ namespace gbe {
                                      std::vector<std::string>& clOpt,
                                      std::string& dumpLLVMFileName,
                                      std::string& dumpASMFileName,
-                                     std::string& clName,
                                      int& optLevel,
                                      size_t stringSize,
                                      char *err,
@@ -781,21 +782,6 @@ namespace gbe {
       }
     }
 
-    char clStr[] = "/tmp/XXXXXX.cl";
-    int clFd = mkstemps(clStr, 3);
-    clName = std::string(clStr);
-
-    FILE *clFile = fdopen(clFd, "w");
-    FATAL_IF(clFile == NULL, "Failed to open temporary file");
-    // XXX enable cl_khr_fp64 may cause some potential bugs.
-    // we may need to revisit here latter when we want to support fp64 completely.
-    // For now, as we don't support fp64 actually, just disable it by default.
-#if 0
-    #define ENABLE_CL_KHR_FP64_STR "#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
-    if (options && !strstr(const_cast<char *>(options), "-cl-std=CL1.1"))
-      fwrite(ENABLE_CL_KHR_FP64_STR, strlen(ENABLE_CL_KHR_FP64_STR), 1, clFile);
-#endif
-
     if (!findPCH || invalidPCH) {
       clOpt.push_back("-include");
       clOpt.push_back("ocl.h");
@@ -805,9 +791,6 @@ namespace gbe {
       clOpt.push_back(pchFileName);
     }
 
-    // Write the source to the cl file
-    fwrite(source, strlen(source), 1, clFile);
-    fclose(clFile);
     return true;
   }
 
@@ -820,11 +803,10 @@ namespace gbe {
   {
     int optLevel = 1;
     std::vector<std::string> clOpt;
-    std::string clName;
     std::string dumpLLVMFileName, dumpASMFileName;
     if (!processSourceAndOption(source, options, NULL, clOpt,
                                 dumpLLVMFileName, dumpASMFileName,
-                                clName, optLevel,
+                                optLevel,
                                 stringSize, err, errSize))
       return NULL;
 
@@ -836,7 +818,7 @@ namespace gbe {
     if (!llvm::llvm_is_multithreaded())
       llvm_mutex.lock();
 
-    if (buildModuleFromSource(clName.c_str(), &out_module, llvm_ctx, dumpLLVMFileName, clOpt,
+    if (buildModuleFromSource(source, &out_module, llvm_ctx, dumpLLVMFileName, clOpt,
                               stringSize, err, errSize)) {
     // Now build the program from llvm
       size_t clangErrSize = 0;
@@ -862,7 +844,6 @@ namespace gbe {
     if (!llvm::llvm_is_multithreaded())
       llvm_mutex.unlock();
 
-    remove(clName.c_str());
     return p;
   }
 #endif
@@ -879,10 +860,9 @@ namespace gbe {
   {
     int optLevel = 1;
     std::vector<std::string> clOpt;
-    std::string clName;
     std::string dumpLLVMFileName, dumpASMFileName;
     if (!processSourceAndOption(source, options, temp_header_path, clOpt,
-                                dumpLLVMFileName, dumpASMFileName, clName,
+                                dumpLLVMFileName, dumpASMFileName,
                                 optLevel, stringSize, err, errSize))
       return NULL;
 
@@ -892,7 +872,8 @@ namespace gbe {
     //for some functions, so we use global context now, need switch to new context later.
     llvm::Module * out_module;
     llvm::LLVMContext* llvm_ctx = &llvm::getGlobalContext();
-    if (buildModuleFromSource(clName.c_str(), &out_module, llvm_ctx, dumpLLVMFileName, clOpt,
+
+    if (buildModuleFromSource(source, &out_module, llvm_ctx, dumpLLVMFileName, clOpt,
                               stringSize, err, errSize)) {
     // Now build the program from llvm
       if (err != NULL) {
@@ -907,7 +888,6 @@ namespace gbe {
         llvm::errs() << options;
     } else
       p = NULL;
-    remove(clName.c_str());
     releaseLLVMContextLock();
     return p;
   }
