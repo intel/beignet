@@ -1251,6 +1251,10 @@ cl_int clGetKernelArgInfo(cl_kernel kernel, cl_uint arg_index, cl_kernel_arg_inf
   cl_int err = CL_SUCCESS;
   CHECK_KERNEL(kernel);
 
+  if(strstr(kernel->program->build_opts,"-cl-kernel-arg-info") == NULL ) {
+    err = CL_KERNEL_ARG_INFO_NOT_AVAILABLE;
+    goto error;
+  }
   if (param_name != CL_KERNEL_ARG_ADDRESS_QUALIFIER
           && param_name != CL_KERNEL_ARG_ACCESS_QUALIFIER
           && param_name != CL_KERNEL_ARG_TYPE_NAME

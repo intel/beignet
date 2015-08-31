@@ -227,11 +227,11 @@ cl_get_kernel_arg_info(cl_kernel k, cl_uint arg_index, cl_kernel_arg_info param_
 
   switch (param_name) {
   case CL_KERNEL_ARG_ADDRESS_QUALIFIER:
-    if (param_value_size < sizeof(cl_kernel_arg_address_qualifier))
-      return CL_INVALID_VALUE;
     if (param_value_size_ret)
       *param_value_size_ret = sizeof(cl_kernel_arg_address_qualifier);
     if (!param_value) return CL_SUCCESS;
+    if (param_value_size < sizeof(cl_kernel_arg_address_qualifier))
+      return CL_INVALID_VALUE;
     if ((cl_ulong)ret_info == 0) {
       *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ADDRESS_PRIVATE;
     } else if ((cl_ulong)ret_info == 1 || (cl_ulong)ret_info == 4) {
@@ -243,16 +243,16 @@ cl_get_kernel_arg_info(cl_kernel k, cl_uint arg_index, cl_kernel_arg_info param_
     } else {
       /* If no address qualifier is specified, the default address qualifier
          which is CL_KERNEL_ARG_ADDRESS_PRIVATE is returned. */
-      *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ADDRESS_LOCAL;
+      *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ADDRESS_PRIVATE;
     }
     return CL_SUCCESS;
 
   case CL_KERNEL_ARG_ACCESS_QUALIFIER:
-    if (param_value_size < sizeof(cl_kernel_arg_access_qualifier))
-      return CL_INVALID_VALUE;
     if (param_value_size_ret)
       *param_value_size_ret = sizeof(cl_kernel_arg_access_qualifier);
     if (!param_value) return CL_SUCCESS;
+    if (param_value_size < sizeof(cl_kernel_arg_access_qualifier))
+      return CL_INVALID_VALUE;
     if (!strcmp((char*)ret_info, "write_only")) {
       *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ACCESS_WRITE_ONLY;
     } else if (!strcmp((char*)ret_info, "read_only")) {
@@ -267,21 +267,21 @@ cl_get_kernel_arg_info(cl_kernel k, cl_uint arg_index, cl_kernel_arg_info param_
   case CL_KERNEL_ARG_TYPE_NAME:
   case CL_KERNEL_ARG_NAME:
     str_len = strlen(ret_info);
-    if (param_value_size < str_len + 1)
-      return CL_INVALID_VALUE;
     if (param_value_size_ret)
       *param_value_size_ret = str_len + 1;
     if (!param_value) return CL_SUCCESS;
+    if (param_value_size < str_len + 1)
+      return CL_INVALID_VALUE;
     memcpy(param_value, ret_info, str_len);
     ((char *)param_value)[str_len] = 0;
     return CL_SUCCESS;
 
   case CL_KERNEL_ARG_TYPE_QUALIFIER:
-    if (param_value_size < sizeof(cl_kernel_arg_type_qualifier))
-      return CL_INVALID_VALUE;
     if (param_value_size_ret)
       *param_value_size_ret = sizeof(cl_kernel_arg_type_qualifier);
     if (!param_value) return CL_SUCCESS;
+    if (param_value_size < sizeof(cl_kernel_arg_type_qualifier))
+      return CL_INVALID_VALUE;
     if (strstr((char*)ret_info, "const") &&
          (arg_type == GBE_ARG_GLOBAL_PTR   ||
           arg_type == GBE_ARG_CONSTANT_PTR ||
