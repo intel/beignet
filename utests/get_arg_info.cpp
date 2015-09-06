@@ -10,7 +10,7 @@ void test_get_arg_info(void)
   char name[64];
 
   // Setup kernel and buffers
-  OCL_CREATE_KERNEL("test_get_arg_info");
+  OCL_CALL (cl_kernel_init, "test_get_arg_info.cl", "test_get_arg_info", SOURCE, "-cl-kernel-arg-info");
 
   //Arg 0
   ret = clGetKernelArgInfo(kernel, 0, CL_KERNEL_ARG_ADDRESS_QUALIFIER,
