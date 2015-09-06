@@ -28,6 +28,7 @@
 #include "backend/gen_encoder.hpp"
 #include "backend/gen_insn_selection.hpp"
 #include "backend/gen_insn_scheduling.hpp"
+#include "backend/gen_insn_selection_output.hpp"
 #include "backend/gen_reg_allocation.hpp"
 #include "backend/gen/gen_mesa_disasm.h"
 #include "ir/function.hpp"
@@ -2341,9 +2342,12 @@ namespace gbe
     kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
   }
 
+  BVAR(OCL_OUTPUT_SEL_IR, false);
   bool GenContext::emitCode(void) {
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);
     sel->select();
+    if (OCL_OUTPUT_SEL_IR)
+      outputSelectionIR(*this, this->sel);
     schedulePreRegAllocation(*this, *this->sel);
     if (UNLIKELY(ra->allocate(*this->sel) == false))
       return false;

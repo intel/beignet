@@ -101,6 +101,8 @@ set (GBE_SRC
     backend/gen_insn_selection.hpp
     backend/gen_insn_scheduling.cpp
     backend/gen_insn_scheduling.hpp
+    backend/gen_insn_selection_output.cpp
+    backend/gen_insn_selection_output.hpp
     backend/gen_reg_allocation.cpp
     backend/gen_reg_allocation.hpp
     backend/gen_context.cpp

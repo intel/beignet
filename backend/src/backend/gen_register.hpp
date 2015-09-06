@@ -937,6 +937,34 @@ namespace gbe
       }
     }
 
+    static INLINE int vstride_size(GenRegister reg) {
+      switch (reg.vstride) {
+        case GEN_VERTICAL_STRIDE_0: return 0;
+        case GEN_VERTICAL_STRIDE_1: return 1;
+        case GEN_VERTICAL_STRIDE_2: return 2;
+        case GEN_VERTICAL_STRIDE_4: return 4;
+        case GEN_VERTICAL_STRIDE_8: return 8;
+        case GEN_VERTICAL_STRIDE_16: return 16;
+        case GEN_VERTICAL_STRIDE_32: return 32;
+        case GEN_VERTICAL_STRIDE_64: return 64;
+        case GEN_VERTICAL_STRIDE_128: return 128;
+        case GEN_VERTICAL_STRIDE_256: return 256;
+        default: NOT_IMPLEMENTED; return 0;
+      }
+    }
+
+    static INLINE int width_size(GenRegister reg) {
+      switch (reg.width) {
+        case GEN_WIDTH_1: return 1;
+        case GEN_WIDTH_2: return 2;
+        case GEN_WIDTH_4: return 4;
+        case GEN_WIDTH_8: return 8;
+        case GEN_WIDTH_16: return 16;
+        case GEN_WIDTH_32: return 32;
+        default: NOT_IMPLEMENTED; return 0;
+      }
+    }
+
     static INLINE GenRegister suboffset(GenRegister reg, uint32_t delta) {
       if (reg.hstride != GEN_HORIZONTAL_STRIDE_0) {
         reg.subnr += delta * typeSize(reg.type) * hstride_size(reg);
