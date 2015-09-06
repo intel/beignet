@@ -99,6 +99,7 @@ set (GBE_SRC
     backend/gen/gen_mesa_disasm.c
     backend/gen_insn_selection.cpp
     backend/gen_insn_selection.hpp
+    backend/gen_insn_selection_optimize.cpp
     backend/gen_insn_scheduling.cpp
     backend/gen_insn_scheduling.hpp
     backend/gen_insn_selection_output.cpp

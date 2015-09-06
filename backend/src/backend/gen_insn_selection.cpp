@@ -2102,6 +2102,7 @@ namespace gbe
     this->blockList = NULL;
     this->opaque = GBE_NEW(Selection::Opaque, ctx);
     this->opaque->setSlowByteGather(true);
+    opt_features = 0;
   }
 
   Selection75::Selection75(GenContext &ctx) : Selection(ctx) {

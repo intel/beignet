@@ -2343,9 +2343,12 @@ namespace gbe
   }
 
   BVAR(OCL_OUTPUT_SEL_IR, false);
+  BVAR(OCL_OPTIMIZE_SEL_IR, true);
   bool GenContext::emitCode(void) {
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);
     sel->select();
+    if (OCL_OPTIMIZE_SEL_IR)
+      sel->optimize();
     if (OCL_OUTPUT_SEL_IR)
       outputSelectionIR(*this, this->sel);
     schedulePreRegAllocation(*this, *this->sel);

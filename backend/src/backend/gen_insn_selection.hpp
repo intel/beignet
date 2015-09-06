@@ -266,6 +266,11 @@ namespace gbe
     class Opaque;
     /*! Created and destroyed in cpp */
     Opaque *opaque;
+
+    /* optimize at selection IR level */
+    void optimize(void);
+    uint32_t opt_features;
+
     /*! Use custom allocators */
     GBE_CLASS(Selection);
   };
