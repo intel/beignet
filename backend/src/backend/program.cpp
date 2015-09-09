@@ -575,7 +575,12 @@ namespace gbe {
                                               Diags);
     llvm::StringRef srcString(source);
     (*CI).getPreprocessorOpts().addRemappedFile("stringInput.cl",
-                llvm::MemoryBuffer::getMemBuffer(srcString).release());
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+                llvm::MemoryBuffer::getMemBuffer(srcString)
+#else
+                llvm::MemoryBuffer::getMemBuffer(srcString).release()
+#endif
+                );
 
     // Create the compiler instance
     clang::CompilerInstance Clang;
