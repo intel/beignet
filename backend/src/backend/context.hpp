@@ -85,7 +85,7 @@ namespace gbe
       return JIPs.find(insn) != JIPs.end();
     }
     /*! Allocate some memory in the register file */
-    int16_t allocate(int16_t size, int16_t alignment, bool bFwd=0);
+    int16_t allocate(int16_t size, int16_t alignment, bool bFwd = true);
     /*! Deallocate previously allocated memory */
     void deallocate(int16_t offset);
     /*! Spilt a block into 2 blocks, for some registers allocate together but  deallocate seperate */

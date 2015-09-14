@@ -1020,7 +1020,7 @@ namespace gbe
     using namespace ir;
 
     if (ctx.reservedSpillRegs != 0) {
-      reservedReg = ctx.allocate(ctx.reservedSpillRegs * GEN_REG_SIZE, GEN_REG_SIZE);
+      reservedReg = ctx.allocate(ctx.reservedSpillRegs * GEN_REG_SIZE, GEN_REG_SIZE, false);
       reservedReg /= GEN_REG_SIZE;
     } else {
       reservedReg = 0;
