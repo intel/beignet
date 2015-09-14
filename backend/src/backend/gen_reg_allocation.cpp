@@ -1039,8 +1039,6 @@ namespace gbe
         // FIXME stack buffer is not used, we may need to remove it in the furture.
         if (curbeType == GBE_CURBE_EXTRA_ARGUMENT && subType == GBE_STACK_BUFFER)
           intervals[regID].maxID = 1;
-        if (curbeType == GBE_CURBE_BTI_UTIL)
-          intervals[regID].maxID = INT_MAX;
       }
     }
 

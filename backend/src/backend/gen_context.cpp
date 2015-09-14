@@ -1882,16 +1882,17 @@ namespace gbe
       p->ATOMIC(dst, function, src, bti, srcNum);
     } else {
       GenRegister flagTemp = ra->genReg(insn.dst(1));
+      GenRegister btiTmp = ra->genReg(insn.dst(2));
 
       unsigned desc = p->generateAtomicMessageDesc(function, 0, srcNum);
 
-      unsigned jip0 = beforeMessage(insn, bti, flagTemp, desc);
+      unsigned jip0 = beforeMessage(insn, bti, flagTemp, btiTmp, desc);
       p->push();
         p->curr.predicate = GEN_PREDICATE_NORMAL;
         p->curr.useFlag(insn.state.flag, insn.state.subFlag);
         p->ATOMIC(dst, function, src, GenRegister::addr1(0), srcNum);
       p->pop();
-      afterMessage(insn, bti, flagTemp, jip0);
+      afterMessage(insn, bti, flagTemp, btiTmp, jip0);
     }
   }
 
@@ -2033,9 +2034,10 @@ namespace gbe
       p->UNTYPED_READ(dst, src, bti, elemNum);
     } else {
       const GenRegister tmp = ra->genReg(insn.dst(elemNum));
+      const GenRegister btiTmp = ra->genReg(insn.dst(elemNum + 1));
       unsigned desc = p->generateUntypedReadMessageDesc(0, elemNum);
 
-      unsigned jip0 = beforeMessage(insn, bti, tmp, desc);
+      unsigned jip0 = beforeMessage(insn, bti, tmp, btiTmp, desc);
 
       //predicated load
       p->push();
@@ -2043,17 +2045,17 @@ namespace gbe
         p->curr.useFlag(insn.state.flag, insn.state.subFlag);
         p->UNTYPED_READ(dst, src, GenRegister::retype(GenRegister::addr1(0), GEN_TYPE_UD), elemNum);
       p->pop();
-      afterMessage(insn, bti, tmp, jip0);
+      afterMessage(insn, bti, tmp, btiTmp, jip0);
     }
   }
-  unsigned GenContext::beforeMessage(const SelectionInstruction &insn, GenRegister bti, GenRegister tmp, unsigned desc) {
+  unsigned GenContext::beforeMessage(const SelectionInstruction &insn, GenRegister bti, GenRegister tmp, GenRegister btiTmp, unsigned desc) {
       const GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
       setFlag(flagReg, GenRegister::immuw(0));
       p->CMP(GEN_CONDITIONAL_NZ, flagReg, GenRegister::immuw(1));
 
-      GenRegister btiUD = ra->genReg(GenRegister::ud1grf(ir::ocl::btiUtil));
-      GenRegister btiUW = ra->genReg(GenRegister::uw1grf(ir::ocl::btiUtil));
-      GenRegister btiUB = ra->genReg(GenRegister::ub1grf(ir::ocl::btiUtil));
+      GenRegister btiUD = GenRegister::retype(btiTmp, GEN_TYPE_UD);
+      GenRegister btiUW = GenRegister::retype(btiTmp, GEN_TYPE_UW);
+      GenRegister btiUB = GenRegister::retype(btiTmp, GEN_TYPE_UB);
       unsigned jip0 = p->n_instruction();
       p->push();
         p->curr.execWidth = 1;
@@ -2076,8 +2078,8 @@ namespace gbe
       p->pop();
       return jip0;
   }
-  void GenContext::afterMessage(const SelectionInstruction &insn, GenRegister bti, GenRegister tmp, unsigned jip0) {
-    const GenRegister btiUD = ra->genReg(GenRegister::ud1grf(ir::ocl::btiUtil));
+  void GenContext::afterMessage(const SelectionInstruction &insn, GenRegister bti, GenRegister tmp, GenRegister btiTmp, unsigned jip0) {
+    const GenRegister btiUD = GenRegister::retype(btiTmp, GEN_TYPE_UD);
       //restore flag
       setFlag(GenRegister::flag(insn.state.flag, insn.state.subFlag), tmp);
       // get active channel
@@ -2101,9 +2103,10 @@ namespace gbe
       p->UNTYPED_READ(dst, src, bti, elemNum);
     } else {
       const GenRegister tmp = ra->genReg(insn.dst(elemNum));
+      const GenRegister btiTmp = ra->genReg(insn.dst(elemNum + 1));
       unsigned desc = p->generateUntypedReadMessageDesc(0, elemNum);
 
-      unsigned jip0 = beforeMessage(insn, bti, tmp, desc);
+      unsigned jip0 = beforeMessage(insn, bti, tmp, btiTmp, desc);
 
       //predicated load
       p->push();
@@ -2111,7 +2114,7 @@ namespace gbe
         p->curr.useFlag(insn.state.flag, insn.state.subFlag);
         p->UNTYPED_READ(dst, src, GenRegister::retype(GenRegister::addr1(0), GEN_TYPE_UD), elemNum);
       p->pop();
-      afterMessage(insn, bti, tmp, jip0);
+      afterMessage(insn, bti, tmp, btiTmp, jip0);
     }
   }
 
@@ -2124,9 +2127,10 @@ namespace gbe
       p->UNTYPED_WRITE(src, bti, elemNum*2);
     } else {
       const GenRegister tmp = ra->genReg(insn.dst(0));
+      const GenRegister btiTmp = ra->genReg(insn.dst(1));
       unsigned desc = p->generateUntypedWriteMessageDesc(0, elemNum*2);
 
-      unsigned jip0 = beforeMessage(insn, bti, tmp, desc);
+      unsigned jip0 = beforeMessage(insn, bti, tmp, btiTmp, desc);
 
       //predicated load
       p->push();
@@ -2134,7 +2138,7 @@ namespace gbe
         p->curr.useFlag(insn.state.flag, insn.state.subFlag);
         p->UNTYPED_WRITE(src, GenRegister::addr1(0), elemNum*2);
       p->pop();
-      afterMessage(insn, bti, tmp, jip0);
+      afterMessage(insn, bti, tmp, btiTmp, jip0);
     }
   }
 
@@ -2146,9 +2150,10 @@ namespace gbe
       p->UNTYPED_WRITE(src, bti, elemNum);
     } else {
       const GenRegister tmp = ra->genReg(insn.dst(0));
+      const GenRegister btiTmp = ra->genReg(insn.dst(1));
       unsigned desc = p->generateUntypedWriteMessageDesc(0, elemNum);
 
-      unsigned jip0 = beforeMessage(insn, bti, tmp, desc);
+      unsigned jip0 = beforeMessage(insn, bti, tmp, btiTmp, desc);
 
       //predicated load
       p->push();
@@ -2156,7 +2161,7 @@ namespace gbe
         p->curr.useFlag(insn.state.flag, insn.state.subFlag);
         p->UNTYPED_WRITE(src, GenRegister::addr1(0), elemNum);
       p->pop();
-      afterMessage(insn, bti, tmp, jip0);
+      afterMessage(insn, bti, tmp, btiTmp, jip0);
     }
   }
 
@@ -2170,9 +2175,10 @@ namespace gbe
       p->BYTE_GATHER(dst, src, bti, elemSize);
     } else {
       const GenRegister tmp = ra->genReg(insn.dst(1));
+      const GenRegister btiTmp = ra->genReg(insn.dst(2));
       unsigned desc = p->generateByteGatherMessageDesc(0, elemSize);
 
-      unsigned jip0 = beforeMessage(insn, bti, tmp, desc);
+      unsigned jip0 = beforeMessage(insn, bti, tmp, btiTmp, desc);
 
       //predicated load
       p->push();
@@ -2180,7 +2186,7 @@ namespace gbe
         p->curr.useFlag(insn.state.flag, insn.state.subFlag);
         p->BYTE_GATHER(dst, src, GenRegister::addr1(0), elemSize);
       p->pop();
-      afterMessage(insn, bti, tmp, jip0);
+      afterMessage(insn, bti, tmp, btiTmp, jip0);
     }
   }
 
@@ -2193,9 +2199,10 @@ namespace gbe
       p->BYTE_SCATTER(src, bti, elemSize);
     } else {
       const GenRegister tmp = ra->genReg(insn.dst(0));
+      const GenRegister btiTmp = ra->genReg(insn.dst(1));
       unsigned desc = p->generateByteScatterMessageDesc(0, elemSize);
 
-      unsigned jip0 = beforeMessage(insn, bti, tmp, desc);
+      unsigned jip0 = beforeMessage(insn, bti, tmp, btiTmp, desc);
 
       //predicated load
       p->push();
@@ -2203,7 +2210,7 @@ namespace gbe
         p->curr.useFlag(insn.state.flag, insn.state.subFlag);
         p->BYTE_SCATTER(src, GenRegister::addr1(0), elemSize);
       p->pop();
-      afterMessage(insn, bti, tmp, jip0);
+      afterMessage(insn, bti, tmp, btiTmp, jip0);
     }
 
   }

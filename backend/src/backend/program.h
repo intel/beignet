@@ -101,7 +101,6 @@ enum gbe_curbe_type {
   GBE_CURBE_THREAD_NUM,
   GBE_CURBE_ZERO,
   GBE_CURBE_ONE,
-  GBE_CURBE_BTI_UTIL,
   GBE_GEN_REG,
 };
 

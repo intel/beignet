@@ -921,9 +921,10 @@ namespace gbe
       p->UNTYPED_READ(dst, src, bti, 2*elemNum);
     } else {
       const GenRegister tmp = ra->genReg(insn.dst(2*elemNum));
+      const GenRegister btiTmp = ra->genReg(insn.dst(2*elemNum + 1));
       unsigned desc = p->generateUntypedReadMessageDesc(0, 2*elemNum);
 
-      unsigned jip0 = beforeMessage(insn, bti, tmp, desc);
+      unsigned jip0 = beforeMessage(insn, bti, tmp, btiTmp, desc);
 
       //predicated load
       p->push();
@@ -931,7 +932,7 @@ namespace gbe
         p->curr.useFlag(insn.state.flag, insn.state.subFlag);
         p->UNTYPED_READ(dst, src, GenRegister::retype(GenRegister::addr1(0), GEN_TYPE_UD), 2*elemNum);
       p->pop();
-      afterMessage(insn, bti, tmp, jip0);
+      afterMessage(insn, bti, tmp, btiTmp, jip0);
     }
 
     for (uint32_t elemID = 0; elemID < elemNum; elemID++) {
@@ -960,9 +961,10 @@ namespace gbe
       p->UNTYPED_WRITE(addr, bti, elemNum*2);
     } else {
       const GenRegister tmp = ra->genReg(insn.dst(elemNum));
+      const GenRegister btiTmp = ra->genReg(insn.dst(elemNum + 1));
       unsigned desc = p->generateUntypedWriteMessageDesc(0, elemNum*2);
 
-      unsigned jip0 = beforeMessage(insn, bti, tmp, desc);
+      unsigned jip0 = beforeMessage(insn, bti, tmp, btiTmp, desc);
 
       //predicated load
       p->push();
@@ -970,7 +972,7 @@ namespace gbe
         p->curr.useFlag(insn.state.flag, insn.state.subFlag);
         p->UNTYPED_WRITE(addr, GenRegister::addr1(0), elemNum*2);
       p->pop();
-      afterMessage(insn, bti, tmp, jip0);
+      afterMessage(insn, bti, tmp, btiTmp, jip0);
     }
   }
   void Gen8Context::emitPackLongInstruction(const SelectionInstruction &insn) {

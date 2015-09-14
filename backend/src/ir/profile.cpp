@@ -43,8 +43,7 @@ namespace ir {
         "zero", "one",
         "retVal",
         "printf_buffer_pointer", "printf_index_buffer_pointer",
-        "dwblockip",
-        "bti_utility"
+        "dwblockip"
     };
 
 #if GBE_DEBUG
@@ -87,7 +86,6 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, printfbptr, 1, GBE_CURBE_PRINTF_BUF_POINTER);
       DECL_NEW_REG(FAMILY_DWORD, printfiptr, 1, GBE_CURBE_PRINTF_INDEX_POINTER);
       DECL_NEW_REG(FAMILY_DWORD, dwblockip, 0, GBE_CURBE_DW_BLOCK_IP);
-      DECL_NEW_REG(FAMILY_DWORD, btiUtil, 1, GBE_CURBE_BTI_UTIL);
     }
 #undef DECL_NEW_REG
 
