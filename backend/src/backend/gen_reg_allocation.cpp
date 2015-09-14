@@ -102,6 +102,9 @@ namespace gbe
     bool allocate(Selection &selection);
     /*! Return the Gen register from the selection register */
     GenRegister genReg(const GenRegister &reg);
+    INLINE bool isAllocated(const ir::Register &reg) {
+      return RA.contains(reg);
+    }
     /*! Output the register allocation */
     void outputAllocation(void);
     INLINE void getRegAttrib(ir::Register reg, uint32_t &regSize, ir::RegisterFamily *regFamily = NULL) const {
@@ -1033,13 +1036,12 @@ namespace gbe
       if (curbeType != GBE_GEN_REG) {
         intervals[regID].minID = 0;
 
-        // zero and one have implicitly usage in the initial block.
-        if (curbeType == GBE_CURBE_ONE || curbeType == GBE_CURBE_ZERO)
-          intervals[regID].maxID = 10;
         // FIXME stack buffer is not used, we may need to remove it in the furture.
         if (curbeType == GBE_CURBE_EXTRA_ARGUMENT && subType == GBE_STACK_BUFFER)
           intervals[regID].maxID = 1;
       }
+      if (regID == ir::ocl::zero.value() || regID ==  ir::ocl::one.value())
+        intervals[regID].minID = 0;
     }
 
     // Compute the intervals
@@ -1260,6 +1262,10 @@ namespace gbe
 
   GenRegister GenRegAllocator::genReg(const GenRegister &reg) {
     return this->opaque->genReg(reg);
+  }
+
+  bool GenRegAllocator::isAllocated(const ir::Register &reg) {
+    return this->opaque->isAllocated(reg);
   }
 
   void GenRegAllocator::outputAllocation(void) {

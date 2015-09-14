@@ -160,8 +160,6 @@ namespace gbe
     // when group size not aligned to simdWidth, flag register need clear to
     // make prediction(any8/16h) work correctly
     const GenRegister blockip = getBlockIP(*this);
-    const GenRegister zero = ra->genReg(GenRegister::uw1grf(ir::ocl::zero));
-    const GenRegister one = ra->genReg(GenRegister::uw1grf(ir::ocl::one));
     p->push();
       p->curr.noMask = 1;
       p->curr.predicate = GEN_PREDICATE_NONE;
@@ -169,10 +167,10 @@ namespace gbe
       p->curr.noMask = 0;
       setBlockIP(*this, blockip, 0);
       p->curr.execWidth = 1;
-      // FIXME, need to get the final use set of zero/one, if there is no user,
-      // no need to generate the following two instructions.
-      p->MOV(zero, GenRegister::immuw(0));
-      p->MOV(one, GenRegister::immw(-1));
+      if (ra->isAllocated(ir::ocl::zero))
+        p->MOV(ra->genReg(GenRegister::uw1grf(ir::ocl::zero)), GenRegister::immuw(0));
+      if (ra->isAllocated(ir::ocl::one))
+        p->MOV(ra->genReg(GenRegister::uw1grf(ir::ocl::one)), GenRegister::immw(-1));
     p->pop();
   }
 

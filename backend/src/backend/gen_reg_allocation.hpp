@@ -54,6 +54,8 @@ namespace gbe
     bool allocate(Selection &selection);
     /*! Virtual to physical translation */
     GenRegister genReg(const GenRegister &reg);
+    /*! Check whether a register is allocated. */
+    bool isAllocated(const ir::Register &reg);
     /*! Output the register allocation */
     void outputAllocation(void);
     /*! Get register actual size in byte. */
