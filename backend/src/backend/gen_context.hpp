@@ -214,7 +214,7 @@ namespace gbe
       return GBE_NEW(Gen7Encoder, this->simdWidth, 7, deviceID);
     }
     /*! allocate a new curbe register and insert to curbe pool. */
-    void allocCurbeReg(ir::Register reg, gbe_curbe_type value, uint32_t subValue = 0);
+    void allocCurbeReg(ir::Register reg);
 
     virtual void setA0Content(uint16_t new_a0[16], uint16_t max_offset = 0, int sz = 0);
 

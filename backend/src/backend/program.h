@@ -101,14 +101,13 @@ enum gbe_curbe_type {
   GBE_CURBE_THREAD_NUM,
   GBE_CURBE_ZERO,
   GBE_CURBE_ONE,
-  GBE_CURBE_SLM_OFFSET,
   GBE_CURBE_BTI_UTIL,
+  GBE_GEN_REG,
 };
 
 /*! Extra arguments use the negative range of sub-values */
 enum gbe_extra_argument {
   GBE_STACK_BUFFER = 0,   /* Give stack location in curbe */
-  GBE_CONSTANT_BUFFER = 1 /* constant buffer argument location in curbe */
 };
 
 typedef struct ImageInfo {

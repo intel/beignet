@@ -247,7 +247,7 @@ namespace ir {
     auto it = infoRegMap.find(key.data);
     if (it != infoRegMap.end())
       return it->second;
-    Register reg = ctx->reg(FAMILY_DWORD);
+    Register reg = ctx->reg(FAMILY_DWORD, false, GBE_CURBE_IMAGE_INFO, key.data);
     infoRegMap.insert(std::make_pair(key.data, reg));
     return reg;
   }

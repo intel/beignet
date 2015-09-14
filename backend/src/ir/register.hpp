@@ -26,6 +26,7 @@
 
 #include "sys/vector.hpp"
 #include "sys/platform.hpp"
+#include "../backend/program.h"
 
 namespace gbe {
 namespace ir {
@@ -78,21 +79,38 @@ namespace ir {
     ARF_TM
   };
 
+  /*! Register is the position of the index of the register data in the register
+   *  file. We enforce type safety with this class
+   */
+  TYPE_SAFE(Register, uint32_t)
+
   /*! A register can be either a byte, a word, a dword or a qword. We store this
    *  value into a register data (which makes the register file) 
    */
   class RegisterData
   {
   public:
+    struct PayloadRegisterData {
+      gbe_curbe_type  curbeType;
+      int subType;
+    };
+
     /*! Build a register. All fields will be immutable */
     INLINE RegisterData(RegisterFamily family,
-                        bool uniform = false) : family(family), uniform(uniform) {}
+                        bool uniform,
+                        gbe_curbe_type curbeType,
+                        int subType) : family(family), uniform(uniform) {
+      payloadData.curbeType = curbeType;
+      payloadData.subType = subType;
+    }
+
     /*! Copy constructor */
-    INLINE RegisterData(const RegisterData &other) : family(other.family), uniform(other.uniform) {}
+    INLINE RegisterData(const RegisterData &other) : family(other.family), uniform(other.uniform), payloadData(other.payloadData) {}
     /*! Copy operator */
     INLINE RegisterData &operator= (const RegisterData &other) {
       this->family = other.family;
       this->uniform = other.uniform;
+      this->payloadData = other.payloadData;
       return *this;
     }
     /*! Nothing really happens here */
@@ -100,18 +118,26 @@ namespace ir {
     RegisterFamily family;            //!< Register size or if it is a flag
     INLINE bool isUniform() const { return uniform; }
     INLINE void setUniform(bool uni) { uniform = uni; }
+    INLINE void setPayloadType(gbe_curbe_type curbeType, int subType) {
+      payloadData.curbeType = curbeType;
+      payloadData.subType = subType;
+    }
+    INLINE void getPayloadType(gbe_curbe_type &curbeType, int &subType) const {
+      curbeType = payloadData.curbeType;
+      subType = payloadData.subType;
+    }
+    INLINE bool isPayloadType(void) const {
+      return payloadData.curbeType != GBE_GEN_REG;
+    }
   private:
     bool uniform;
+    PayloadRegisterData payloadData;
     GBE_CLASS(RegisterData);
   };
 
   /*! Output the register file string in the given stream */
   std::ostream &operator<< (std::ostream &out, const RegisterData &regData);
 
-  /*! Register is the position of the index of the register data in the register
-   *  file. We enforce type safety with this class
-   */
-  TYPE_SAFE(Register, uint32_t)
   INLINE bool operator< (const Register &r0, const Register &r1) {
     return r0.value() < r1.value();
   }
@@ -128,14 +154,18 @@ namespace ir {
   {
   public:
     /*! Return the index of a newly allocated register */
-    INLINE Register append(RegisterFamily family, bool uniform = false) {
+    INLINE Register append(RegisterFamily family,
+                           bool uniform = false,
+                           gbe_curbe_type curbeType = GBE_GEN_REG,
+                           int subType = 0) {
       GBE_ASSERTM((uint64_t)regNum() < MAX_INDEX,
                   "Too many defined registers (only 4G are supported)");
       const uint32_t index = regNum();
-      const RegisterData reg(family, uniform);
+      const RegisterData reg(family, uniform, curbeType, subType);
       regs.push_back(reg);
       return Register(index);
     }
+
     /*! Make a tuple from an array of register */
     Tuple appendArrayTuple(const Register *reg, uint32_t regNum);
     /*! Make a tuple and return the index to the first element of the tuple */
@@ -155,6 +185,18 @@ namespace ir {
     INLINE bool isUniform(Register index) { return regs[index].isUniform(); }
     /*! Set a register to uniform or varying data type*/
     INLINE void setUniform(Register index, bool uniform) { regs[index].setUniform(uniform); }
+    /*! Set payload type of a register */
+    INLINE void setPayloadType(Register index, gbe_curbe_type curbeType, int subType) {
+      regs[index].setPayloadType(curbeType, subType);
+    }
+    /*! Get payload type of a register */
+    INLINE void getPayloadType(Register index, gbe_curbe_type &curbeType, int &subType) const {
+      regs[index].getPayloadType(curbeType, subType);
+    }
+    /*! Check whether the register is a payload register */
+    INLINE bool isPayloadReg(Register index) const {
+      return regs[index].isPayloadType();
+    }
     /*! Get the register index from the tuple */
     INLINE Register get(Tuple index, uint32_t which) const {
       return regTuples[index.value() + which];

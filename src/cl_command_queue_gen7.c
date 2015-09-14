@@ -58,14 +58,14 @@ cl_set_varying_payload(const cl_kernel ker,
   if (ip_offset < 0)
     dw_ip_offset = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_DW_BLOCK_IP, 0);
   assert(ip_offset < 0 || dw_ip_offset < 0);
-  assert(id_offset[0] >= 0 &&
-         id_offset[1] >= 0 &&
-         id_offset[2] >= 0 &&
-         (ip_offset >= 0 || dw_ip_offset >= 0));
+  assert(ip_offset >= 0 || dw_ip_offset >= 0);
 
-  TRY_ALLOC(ids[0], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
-  TRY_ALLOC(ids[1], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
-  TRY_ALLOC(ids[2], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
+  if (id_offset[0] >= 0)
+    TRY_ALLOC(ids[0], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
+  if (id_offset[1] >= 0)
+    TRY_ALLOC(ids[1], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
+  if (id_offset[2] >= 0)
+    TRY_ALLOC(ids[2], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
   TRY_ALLOC(block_ips, (uint16_t*) alloca(sizeof(uint16_t)*thread_n*simd_sz));
   /* 0xffff means that the lane is inactivated */
   memset(block_ips, 0xff, sizeof(int16_t)*thread_n*simd_sz);
@@ -75,9 +75,12 @@ cl_set_varying_payload(const cl_kernel ker,
   for (k = 0; k < local_wk_sz[2]; ++k)
   for (j = 0; j < local_wk_sz[1]; ++j)
   for (i = 0; i < local_wk_sz[0]; ++i, ++curr) {
-    ids[0][curr] = i;
-    ids[1][curr] = j;
-    ids[2][curr] = k;
+    if (id_offset[0] >= 0)
+      ids[0][curr] = i;
+    if (id_offset[1] >= 0)
+      ids[1][curr] = j;
+    if (id_offset[2] >= 0)
+      ids[2][curr] = k;
     block_ips[curr] = 0;
   }
 
@@ -90,9 +93,12 @@ cl_set_varying_payload(const cl_kernel ker,
     uint16_t *ips  = (uint16_t *) (data + ip_offset);
     uint32_t *dw_ips  = (uint32_t *) (data + dw_ip_offset);
     for (j = 0; j < simd_sz; ++j, ++curr) {
-      ids0[j] = ids[0][curr];
-      ids1[j] = ids[1][curr];
-      ids2[j] = ids[2][curr];
+      if (id_offset[0] >= 0)
+        ids0[j] = ids[0][curr];
+      if (id_offset[1] >= 0)
+        ids1[j] = ids[1][curr];
+      if (id_offset[2] >= 0)
+        ids2[j] = ids[2][curr];
       if (ip_offset >= 0)
         ips[j] = block_ips[curr];
       if (dw_ip_offset >= 0)

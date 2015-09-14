@@ -102,7 +102,7 @@ cl_kernel_add_ref(cl_kernel k)
 LOCAL cl_int
 cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
 {
-  uint32_t offset;            /* where to patch */
+  int32_t offset;            /* where to patch */
   enum gbe_arg_type arg_type; /* kind of argument */
   size_t arg_sz;              /* size of the argument */
   cl_mem mem = NULL;          /* for __global, __constant and image arguments */
@@ -154,7 +154,8 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
   if (arg_type == GBE_ARG_VALUE) {
     offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
     assert(offset + sz <= k->curbe_sz);
-    memcpy(k->curbe + offset, value, sz);
+    if (offset >= 0)
+      memcpy(k->curbe + offset, value, sz);
     k->args[index].local_sz = 0;
     k->args[index].is_set = 1;
     k->args[index].mem = NULL;
@@ -179,9 +180,10 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
     k->args[index].sampler = sampler;
     cl_set_sampler_arg_slot(k, index, sampler);
     offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
-    //assert(arg_sz == 4);
-    assert(offset + 4 <= k->curbe_sz);
-    memcpy(k->curbe + offset, &sampler->clkSamplerValue, 4);
+    if (offset >= 0) {
+      assert(offset + 4 <= k->curbe_sz);
+      memcpy(k->curbe + offset, &sampler->clkSamplerValue, 4);
+    }
     return CL_SUCCESS;
   }
 

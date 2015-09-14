@@ -188,6 +188,7 @@ namespace gbe
     INLINE bool spillReg(ir::Register reg, bool isAllocated = false);
     INLINE bool vectorCanSpill(SelectionVector *vector);
     INLINE void allocateScratchForSpilled();
+    void allocateCurbePayload(void);
 
     /*! replace specified source/dst register with temporary register and update interval */
     INLINE ir::Register replaceReg(Selection &sel, SelectionInstruction *insn,
@@ -208,6 +209,7 @@ namespace gbe
       return reg;
     }
     /*! Use custom allocator */
+    friend GenRegAllocator;
     GBE_CLASS(Opaque);
   };
 
@@ -223,9 +225,9 @@ namespace gbe
     assert(offset >= GEN_REG_SIZE);
     offset += subOffset;
     RA.insert(std::make_pair(reg, offset));
-    GBE_ASSERT(reg != ocl::blockip || (offset % GEN_REG_SIZE == 0));
-    this->intervals[reg].minID = 0;
-    this->intervals[reg].maxID = 0;
+    //GBE_ASSERT(reg != ocl::blockip || (offset % GEN_REG_SIZE == 0));
+    //this->intervals[reg].minID = 0;
+    //this->intervals[reg].maxID = 0;
   }
 
   INLINE void GenRegAllocator::Opaque::allocateSpecialRegs(void) {
@@ -240,20 +242,15 @@ namespace gbe
     for (auto rit = pushMap.rbegin(); rit != pushMap.rend(); ++rit) {
       const uint32_t argID = rit->second.argID;
       const FunctionArgument arg = fn.getArg(argID);
-
       const uint32_t subOffset = rit->second.offset;
       const Register reg = rit->second.getRegister();
+
+      if (intervals[reg].maxID == - INT_MAX)
+        continue;
       auto it = this->ctx.curbeRegs.find(arg.reg);
       assert(it != ctx.curbeRegs.end());
       allocatePayloadReg(reg, it->second, subOffset);
       ctx.splitBlock(it->second, subOffset);
-    }
-
-    if (RA.contains(ocl::stackbuffer)) {
-      uint32_t regSize = 0;
-      this->getRegAttrib(ocl::stackptr, regSize);
-      uint32_t offset = this->ctx.allocate(regSize, regSize, 1);
-      RA.insert(std::make_pair(ocl::stackptr, offset));
     }
 
     // Group and barrier IDs are always allocated by the hardware in r0
@@ -261,6 +258,36 @@ namespace gbe
     RA.insert(std::make_pair(ocl::groupid1,  6*sizeof(float))); // r0.6
     RA.insert(std::make_pair(ocl::groupid2,  7*sizeof(float))); // r0.7
     RA.insert(std::make_pair(ocl::barrierid, 2*sizeof(float))); // r0.2
+  }
+
+  template <bool sortStartingPoint>
+  inline bool cmp(const GenRegInterval *i0, const GenRegInterval *i1) {
+    if (sortStartingPoint) {
+      if (i0->minID == i1->minID)
+        return (i0->maxID < i1->maxID);
+      return i0->minID < i1->minID;
+    } else {
+      if (i0->maxID == i1->maxID)
+        return (i0->minID < i1->minID);
+      return i0->maxID < i1->maxID;
+    }
+  }
+
+  void GenRegAllocator::Opaque::allocateCurbePayload(void) {
+    vector <GenRegInterval *> payloadInterval;
+    for (auto interval : starting) {
+      if (!ctx.isPayloadReg(interval->reg))
+        continue;
+      if (interval->minID > 0)
+        break;
+      payloadInterval.push_back(interval);
+    }
+    std::sort(payloadInterval.begin(), payloadInterval.end(), cmp<false>);
+    for(auto interval : payloadInterval) {
+      if (interval->maxID < 0)
+        continue;
+      ctx.allocCurbeReg(interval->reg);
+    }
   }
 
   bool GenRegAllocator::Opaque::createGenReg(const Selection &selection, const GenRegInterval &interval) {
@@ -340,7 +367,7 @@ namespace gbe
   }
 
   /*! Will sort vector in decreasing order */
-  inline bool cmp(const SelectionVector *v0, const SelectionVector *v1) {
+  inline bool cmpVec(const SelectionVector *v0, const SelectionVector *v1) {
     return v0->regNum > v1->regNum;
   }
 
@@ -357,7 +384,7 @@ namespace gbe
 
     // Heuristic (really simple...): sort them by the number of registers they
     // contain
-    std::sort(this->vectors.begin(), this->vectors.end(), cmp);
+    std::sort(this->vectors.begin(), this->vectors.end(), cmpVec);
 
     // Insert MOVs when this is required
     for (vectorID = 0; vectorID < vectorNum; ++vectorID) {
@@ -365,19 +392,6 @@ namespace gbe
       if (this->isAllocated(vector))
         continue;
       this->coalesce(selection, vector);
-    }
-  }
-
-  template <bool sortStartingPoint>
-  inline bool cmp(const GenRegInterval *i0, const GenRegInterval *i1) {
-    if (sortStartingPoint) {
-      if (i0->minID == i1->minID)
-        return (i0->maxID < i1->maxID);
-      return i0->minID < i1->minID;
-    } else {
-      if (i0->maxID == i1->maxID)
-        return (i0->minID < i1->minID);
-      return i0->maxID < i1->maxID;
     }
   }
 
@@ -685,11 +699,11 @@ namespace gbe
     for (uint32_t startID = 0; startID < regNum; ++startID) {
       const GenRegInterval &interval = *this->starting[startID];
       const ir::Register reg = interval.reg;
+
       if (interval.maxID == -INT_MAX)
         continue; // Unused register
       if (RA.contains(reg))
         continue; // already allocated
-
       if (flagBooleans.contains(reg))
         continue;
 
@@ -1001,22 +1015,34 @@ namespace gbe
 
   INLINE bool GenRegAllocator::Opaque::allocate(Selection &selection) {
     using namespace ir;
+
     if (ctx.reservedSpillRegs != 0) {
       reservedReg = ctx.allocate(ctx.reservedSpillRegs * GEN_REG_SIZE, GEN_REG_SIZE);
       reservedReg /= GEN_REG_SIZE;
     } else {
       reservedReg = 0;
     }
-    // schedulePreRegAllocation(ctx, selection);
 
     // Now start the linear scan allocation
-    for (uint32_t regID = 0; regID < ctx.sel->getRegNum(); ++regID)
+    for (uint32_t regID = 0; regID < ctx.sel->getRegNum(); ++regID) {
       this->intervals.push_back(ir::Register(regID));
+      // Set all payload register's liveness minID to 0.
+      gbe_curbe_type curbeType;
+      int subType;
+      ctx.getRegPayloadType(ir::Register(regID), curbeType, subType);
+      if (curbeType != GBE_GEN_REG) {
+        intervals[regID].minID = 0;
 
-    // Allocate the special registers (only those which are actually used)
-    this->allocateSpecialRegs();
-
-    // block IP used to handle the mask in SW is always allocated
+        // zero and one have implicitly usage in the initial block.
+        if (curbeType == GBE_CURBE_ONE || curbeType == GBE_CURBE_ZERO)
+          intervals[regID].maxID = 10;
+        // FIXME stack buffer is not used, we may need to remove it in the furture.
+        if (curbeType == GBE_CURBE_EXTRA_ARGUMENT && subType == GBE_STACK_BUFFER)
+          intervals[regID].maxID = 1;
+        if (curbeType == GBE_CURBE_BTI_UTIL)
+          intervals[regID].maxID = INT_MAX;
+      }
+    }
 
     // Compute the intervals
     int32_t insnID = 0;
@@ -1143,6 +1169,12 @@ namespace gbe
         break;
     }
 
+    this->allocateCurbePayload();
+    ctx.buildPatchList();
+
+    // Allocate the special registers (only those which are actually used)
+    this->allocateSpecialRegs();
+
     // Allocate all the GRFs now (regular register and boolean that are not in
     // flag registers)
     return this->allocateGRFs(selection);
@@ -1237,9 +1269,24 @@ namespace gbe
   }
 
   uint32_t GenRegAllocator::getRegSize(ir::Register reg) {
-     uint32_t regSize; 
-     this->opaque->getRegAttrib(reg, regSize); 
-     return regSize;
+    uint32_t regSize;
+    gbe_curbe_type curbeType = GBE_GEN_REG;
+    int subType = 0;
+    this->opaque->ctx.getRegPayloadType(reg, curbeType, subType);
+    if (curbeType == GBE_CURBE_IMAGE_INFO)
+      regSize = 4;
+    else if (curbeType == GBE_CURBE_KERNEL_ARGUMENT) {
+      const ir::FunctionArgument &arg = this->opaque->ctx.getFunction().getArg(subType);
+      if (arg.type == ir::FunctionArgument::GLOBAL_POINTER ||
+          arg.type == ir::FunctionArgument::LOCAL_POINTER  ||
+          arg.type == ir::FunctionArgument::CONSTANT_POINTER)
+        regSize = this->opaque->ctx.getPointerSize();
+      else
+        regSize = arg.size;
+      GBE_ASSERT(arg.reg == reg);
+    } else
+      this->opaque->getRegAttrib(reg, regSize);
+    return regSize;
   }
 
 } /* namespace gbe */

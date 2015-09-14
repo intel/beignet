@@ -181,9 +181,8 @@ namespace gbe
     GenRegister dst_;
     if (dst.type == GEN_TYPE_UW)
       dst_ = dst;
-    else
-      dst_ = GenRegister::uw16grf(126,0);
-
+    else if (dst.type == GEN_TYPE_UD)
+      dst_ = GenRegister::retype(dst, GEN_TYPE_UW);
     p->push();
       uint32_t execWidth = p->curr.execWidth;
       p->curr.predicate = GEN_PREDICATE_NONE;
@@ -220,26 +219,30 @@ namespace gbe
       GenRegister::ud8grf(ir::ocl::stackptr) :
       GenRegister::ud16grf(ir::ocl::stackptr);
     const GenRegister stackptr = ra->genReg(selStatckPtr);
+    // borrow block ip as temporary register as we will
+    // initialize block ip latter.
+    const GenRegister tmpReg = GenRegister::retype(GenRegister::vec1(getBlockIP(*this)), GEN_TYPE_UD);
 
     loadLaneID(stackptr);
 
     // We compute the per-lane stack pointer here
     // threadId * perThreadSize + laneId*perLaneSize
     // let private address start from zero
+    //p->MOV(stackptr, GenRegister::immud(0));
     p->push();
       p->curr.execWidth = 1;
       p->curr.predicate = GEN_PREDICATE_NONE;
-      p->AND(GenRegister::ud1grf(126,0), GenRegister::ud1grf(0,5), GenRegister::immud(0x1ff));
+      p->AND(tmpReg, GenRegister::ud1grf(0,5), GenRegister::immud(0x1ff));
       p->curr.execWidth = this->simdWidth;
       p->MUL(stackptr, stackptr, GenRegister::immuw(perLaneSize));  //perLaneSize < 64K
       p->curr.execWidth = 1;
       if(perThreadSize > 0xffff) {
-        p->MUL(GenRegister::ud1grf(126,0), GenRegister::ud1grf(126,0), GenRegister::immuw(perLaneSize));
-        p->MUL(GenRegister::ud1grf(126,0), GenRegister::ud1grf(126,0), GenRegister::immuw(this->simdWidth));  //Only support W * D, perLaneSize < 64K
+        p->MUL(tmpReg, tmpReg, GenRegister::immuw(perLaneSize));
+        p->MUL(tmpReg, tmpReg, GenRegister::immuw(this->simdWidth));  //Only support W * D, perLaneSize < 64K
       } else
-        p->MUL(GenRegister::ud1grf(126,0), GenRegister::ud1grf(126,0), GenRegister::immuw(perThreadSize));
+        p->MUL(tmpReg, tmpReg, GenRegister::immuw(perThreadSize));
       p->curr.execWidth = this->simdWidth;
-      p->ADD(stackptr, stackptr, GenRegister::ud1grf(126,0));
+      p->ADD(stackptr, stackptr, tmpReg);
     p->pop();
   }
 
@@ -2316,104 +2319,31 @@ namespace gbe
   BVAR(OCL_OUTPUT_REG_ALLOC, false);
   BVAR(OCL_OUTPUT_ASM, false);
 
-  void GenContext::allocCurbeReg(ir::Register reg, gbe_curbe_type value, uint32_t subValue) {
+  void GenContext::allocCurbeReg(ir::Register reg) {
     uint32_t regSize;
+    gbe_curbe_type curbeType;
+    int subType;
+    this->getRegPayloadType(reg, curbeType, subType);
     regSize = this->ra->getRegSize(reg);
-    insertCurbeReg(reg, newCurbeEntry(value, subValue, regSize));
+    insertCurbeReg(reg, newCurbeEntry(curbeType, subType, regSize));
+    /* Need to patch the image information registers. */
+    if (curbeType == GBE_CURBE_IMAGE_INFO) {
+      std::sort(kernel->patches.begin(), kernel->patches.end());
+      uint32_t offset = kernel->getCurbeOffset(GBE_CURBE_IMAGE_INFO, subType);
+      fn.getImageSet()->appendInfo(static_cast<ir::ImageInfoKey>(subType), offset);
+    }
   }
 
-  void GenContext::buildPatchList(void) {
-    const uint32_t ptrSize = this->getPointerSize();
-    kernel->curbeSize = 0u;
-    auto &stackUse = dag->getUse(ir::ocl::stackptr);
-
-    // We insert the block IP mask first
-    using namespace ir::ocl;
-    if (!isDWLabel())
-      allocCurbeReg(blockip, GBE_CURBE_BLOCK_IP);
-    else
-      allocCurbeReg(dwblockip, GBE_CURBE_DW_BLOCK_IP);
-    allocCurbeReg(lid0, GBE_CURBE_LOCAL_ID_X);
-    allocCurbeReg(lid1, GBE_CURBE_LOCAL_ID_Y);
-    allocCurbeReg(lid2, GBE_CURBE_LOCAL_ID_Z);
-    allocCurbeReg(zero, GBE_CURBE_ZERO);
-    allocCurbeReg(one, GBE_CURBE_ONE);
-    allocCurbeReg(btiUtil, GBE_CURBE_BTI_UTIL);
-    if (stackUse.size() != 0)
-      allocCurbeReg(stackbuffer, GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER);
-    // Go over the arguments and find the related patch locations
-    const uint32_t argNum = fn.argNum();
-    for (uint32_t argID = 0u; argID < argNum; ++argID) {
-      const ir::FunctionArgument &arg = fn.getArg(argID);
-      // For pointers and values, we have nothing to do. We just push the values
-      if (arg.type == ir::FunctionArgument::GLOBAL_POINTER ||
-          arg.type == ir::FunctionArgument::LOCAL_POINTER ||
-          arg.type == ir::FunctionArgument::CONSTANT_POINTER)
-        this->insertCurbeReg(arg.reg, this->newCurbeEntry(GBE_CURBE_KERNEL_ARGUMENT, argID, ptrSize, ptrSize));
-      if (arg.type == ir::FunctionArgument::VALUE ||
-          arg.type == ir::FunctionArgument::STRUCTURE ||
-          arg.type == ir::FunctionArgument::IMAGE ||
-          arg.type == ir::FunctionArgument::SAMPLER)
-        this->insertCurbeReg(arg.reg, this->newCurbeEntry(GBE_CURBE_KERNEL_ARGUMENT, argID, arg.size, arg.size));
-    }
-
-    // Go over all the instructions and find the special register we need
-    // to push
-    #define INSERT_REG(SPECIAL_REG, PATCH) \
-    if (reg == ir::ocl::SPECIAL_REG) { \
-      if (curbeRegs.find(reg) != curbeRegs.end()) continue; \
-      allocCurbeReg(reg, GBE_CURBE_##PATCH); \
-    } else
-
-    fn.foreachInstruction([&](ir::Instruction &insn) {
-      const uint32_t srcNum = insn.getSrcNum();
-      for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
-        const ir::Register reg = insn.getSrc(srcID);
-        if (insn.getOpcode() == ir::OP_GET_IMAGE_INFO) {
-          if (srcID != 0) continue;
-          const unsigned char bti = ir::cast<ir::GetImageInfoInstruction>(insn).getImageIndex();
-          const unsigned char type =  ir::cast<ir::GetImageInfoInstruction>(insn).getInfoType();;
-          ir::ImageInfoKey key(bti, type);
-          const ir::Register imageInfo = insn.getSrc(0);
-          if (curbeRegs.find(imageInfo) == curbeRegs.end()) {
-            uint32_t offset = this->getImageInfoCurbeOffset(key, 4);
-            insertCurbeReg(imageInfo, offset);
-          }
-          continue;
-        }
-        if (fn.isSpecialReg(reg) == false) continue;
-        if (curbeRegs.find(reg) != curbeRegs.end()) continue;
-        if (reg == ir::ocl::stackptr) GBE_ASSERT(stackUse.size() > 0);
-        INSERT_REG(lsize0, LOCAL_SIZE_X)
-        INSERT_REG(lsize1, LOCAL_SIZE_Y)
-        INSERT_REG(lsize2, LOCAL_SIZE_Z)
-        INSERT_REG(gsize0, GLOBAL_SIZE_X)
-        INSERT_REG(gsize1, GLOBAL_SIZE_Y)
-        INSERT_REG(gsize2, GLOBAL_SIZE_Z)
-        INSERT_REG(goffset0, GLOBAL_OFFSET_X)
-        INSERT_REG(goffset1, GLOBAL_OFFSET_Y)
-        INSERT_REG(goffset2, GLOBAL_OFFSET_Z)
-        INSERT_REG(workdim, WORK_DIM)
-        INSERT_REG(numgroup0, GROUP_NUM_X)
-        INSERT_REG(numgroup1, GROUP_NUM_Y)
-        INSERT_REG(numgroup2, GROUP_NUM_Z)
-        INSERT_REG(printfbptr, PRINTF_BUF_POINTER)
-        INSERT_REG(printfiptr, PRINTF_INDEX_POINTER)
-        do {} while(0);
-      }
-    });
-#undef INSERT_REG
+  void GenContext::buildPatchList() {
 
     // After this point the vector is immutable. Sorting it will make
     // research faster
     std::sort(kernel->patches.begin(), kernel->patches.end());
-
     kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
   }
 
   bool GenContext::emitCode(void) {
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);
-    buildPatchList();
     sel->select();
     schedulePreRegAllocation(*this, *this->sel);
     if (UNLIKELY(ra->allocate(*this->sel) == false))
@@ -2421,8 +2351,8 @@ namespace gbe
     schedulePostRegAllocation(*this, *this->sel);
     if (OCL_OUTPUT_REG_ALLOC)
       ra->outputAllocation();
-    this->clearFlagRegister();
     this->emitStackPointer();
+    this->clearFlagRegister();
     this->emitSLMOffset();
     this->emitInstructionStream();
     if (this->patchBranches() == false)

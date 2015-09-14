@@ -273,8 +273,11 @@ namespace ir {
     /*! Get the function profile */
     INLINE Profile getProfile(void) const { return profile; }
     /*! Get a new valid register */
-    INLINE Register newRegister(RegisterFamily family, bool uniform = false) {
-      return this->file.append(family, uniform);
+    INLINE Register newRegister(RegisterFamily family,
+                                bool uniform = false,
+                                gbe_curbe_type curbeType = GBE_GEN_REG,
+                                int subType = 0) {
+      return this->file.append(family, uniform, curbeType, subType);
     }
     /*! Get the function name */
     const std::string &getName(void) const { return name; }
@@ -288,6 +291,18 @@ namespace ir {
     INLINE void setRegisterUniform(Register reg, bool uniform) { file.setUniform(reg, uniform); }
     /*! return true if the specified regsiter is uniform type */
     INLINE bool isUniformRegister(Register reg) { return file.isUniform(reg); }
+    /*! set register as specified payload type */
+    INLINE void setRegPayloadType(Register reg, gbe_curbe_type curbeType, int subType) {
+      file.setPayloadType(reg, curbeType, subType);
+    }
+    /*! get register's payload type. */
+    INLINE void getRegPayloadType(Register reg, gbe_curbe_type &curbeType, int &subType) const {
+      file.getPayloadType(reg, curbeType, subType);
+    }
+    /*! check whether a register is a payload register */
+    INLINE bool isPayloadReg(Register reg) const{
+      return file.isPayloadReg(reg);
+    }
     /*! Get the register family from the register itself */
     INLINE RegisterFamily getRegisterFamily(Register reg) const {
       return this->getRegisterData(reg).family;

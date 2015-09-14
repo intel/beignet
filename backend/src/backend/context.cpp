@@ -421,20 +421,6 @@ namespace gbe
     return offset;
   }
 
-  uint32_t Context::getImageInfoCurbeOffset(ir::ImageInfoKey key, size_t size)
-  {
-    int32_t offset = fn.getImageSet()->getInfoOffset(key);
-    if (offset >= 0)
-      return offset + GEN_REG_SIZE;
-    newCurbeEntry(GBE_CURBE_IMAGE_INFO, key.data, size, 4);
-    std::sort(kernel->patches.begin(), kernel->patches.end());
-
-    offset = kernel->getCurbeOffset(GBE_CURBE_IMAGE_INFO, key.data);
-    GBE_ASSERT(offset >= 0); // XXX do we need to spill it out to bo?
-    fn.getImageSet()->appendInfo(key, offset);
-    return offset + GEN_REG_SIZE;
-  }
-
   void Context::insertCurbeReg(ir::Register reg, uint32_t offset) {
     curbeRegs.insert(std::make_pair(reg, offset));
   }

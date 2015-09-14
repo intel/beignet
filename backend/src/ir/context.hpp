@@ -63,7 +63,8 @@ namespace ir {
     /*! Append a new pushed constant */
     void appendPushedConstant(Register reg, const PushLocation &pushed);
     /*! Create a new register with the given family for the current function */
-    Register reg(RegisterFamily family, bool uniform = false);
+    Register reg(RegisterFamily family, bool uniform = false,
+                 gbe_curbe_type curbeType = GBE_GEN_REG, int subType = 0);
     /*! Create a new immediate value */
     template <typename T> INLINE ImmediateIndex newImmediate(T value) {
       const Immediate imm(value);

@@ -90,9 +90,6 @@ namespace gbe
     void deallocate(int16_t offset);
     /*! Spilt a block into 2 blocks, for some registers allocate together but  deallocate seperate */
     void splitBlock(int16_t offset, int16_t subOffset);
-    /* allocate a new entry for a specific image's information */
-    /*! Get (search or allocate if fail to find one) image info curbeOffset.*/
-    uint32_t getImageInfoCurbeOffset(ir::ImageInfoKey key, size_t size);
     /*! allocate size scratch memory and return start address */
     int32_t allocateScratchMem(uint32_t size);
     /*! deallocate scratch memory at offset */
@@ -106,6 +103,21 @@ namespace gbe
     }
     uint32_t getMaxLabel(void) const {
       return this->isDWLabel() ? 0xffffffff : 0xffff;
+    }
+    /*! get register's payload type. */
+    INLINE void getRegPayloadType(ir::Register reg, gbe_curbe_type &curbeType, int &subType) const {
+      if (reg.value() >= fn.getRegisterFile().regNum()) {
+        curbeType = GBE_GEN_REG;
+        subType = 0;
+        return;
+      }
+      fn.getRegPayloadType(reg, curbeType, subType);
+    }
+    /*! check whether a register is a payload register */
+    INLINE bool isPayloadReg(ir::Register reg) const{
+      if (reg.value() >= fn.getRegisterFile().regNum())
+        return false;
+      return fn.isPayloadReg(reg);
     }
   protected:
     /*! Build the instruction stream. Return false if failed */

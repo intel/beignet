@@ -401,6 +401,7 @@ namespace ir {
 
   typedef union _ImageInfoKey{
     _ImageInfoKey(uint8_t i, uint8_t t) : index(i), type(t) {};
+    _ImageInfoKey(int key) : data(key) {};
     struct {
      uint8_t index; /*! the allocated image index */
      uint8_t  type;  /*! the information type */
