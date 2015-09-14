@@ -179,6 +179,8 @@ namespace gbe
     SpilledRegs spilledRegs;
     /*! register which could be spilled.*/
     SpillCandidateSet spillCandidate;
+    /*! BBs last instruction ID map */
+    map<const ir::BasicBlock *, int32_t> bbLastInsnIDMap;
     /* reserved registers for register spill/reload */
     uint32_t reservedReg;
     /*! Current vector to expire */
@@ -503,6 +505,7 @@ namespace gbe
     // policy is to spill the allocate flag which live to the last time end point.
 
     // we have three flags we use for booleans f0.0 , f1.0 and f1.1
+    set<const ir::BasicBlock *> liveInSet01;
     for (auto &block : *selection.blockList) {
       // Store the registers allocated in the map
       map<ir::Register, uint32_t> allocatedFlags;
@@ -672,6 +675,7 @@ namespace gbe
             sel0->src(0) = GenRegister::uw1grf(ir::ocl::one);
             sel0->src(1) = GenRegister::uw1grf(ir::ocl::zero);
             sel0->dst(0) = GET_FLAG_REG(insn);
+            liveInSet01.insert(insn.parent->bb);
             insn.append(*sel0);
             // We use the zero one after the liveness analysis, we have to update
             // the liveness data manually here.
@@ -689,6 +693,30 @@ namespace gbe
             validTempFlagReg = 0;
         }
       }
+    }
+
+    // As we introduce two global variables zero and one, we have to
+    // recompute its liveness information here!
+    if (liveInSet01.size()) {
+      set<const ir::BasicBlock *> liveOutSet01;
+      set<const ir::BasicBlock *> workSet(liveInSet01.begin(), liveInSet01.end());
+      while(workSet.size()) {
+        for(auto bb : workSet) {
+          for(auto predBB : bb->getPredecessorSet()) {
+            liveOutSet01.insert(predBB);
+            if (liveInSet01.contains(predBB))
+              continue;
+            liveInSet01.insert(predBB);
+            workSet.insert(predBB);
+          }
+          workSet.erase(bb);
+        }
+      }
+      int32_t maxID = 0;
+      for(auto bb : liveOutSet01)
+        maxID = std::max(maxID, bbLastInsnIDMap.find(bb)->second);
+      intervals[ir::ocl::zero].maxID = std::max(intervals[ir::ocl::zero].maxID, maxID);
+      intervals[ir::ocl::one].maxID = std::max(intervals[ir::ocl::one].maxID, maxID);
     }
   }
 
@@ -1125,6 +1153,7 @@ namespace gbe
 
       // All registers alive at the begining of the block must update their intervals.
       const ir::BasicBlock *bb = block.bb;
+      bbLastInsnIDMap.insert(std::make_pair(bb, lastID));
       for (auto reg : ctx.getLiveIn(bb))
         this->intervals[reg].minID = std::min(this->intervals[reg].minID, firstID);
 
