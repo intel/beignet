@@ -36,7 +36,10 @@ cl_int cl_enqueue_read_buffer(enqueue_data* data)
   assert(mem->type == CL_MEM_BUFFER_TYPE ||
          mem->type == CL_MEM_SUBBUFFER_TYPE);
   struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
-  if (!mem->is_userptr) {
+  //cl_buffer_get_subdata sometime is very very very slow in linux kernel, in skl and chv,
+  //and it is randomly. So temporary disable it, use map/copy/unmap to read.
+  //Should re-enable it after find root cause.
+  if (0 && !mem->is_userptr) {
     if (cl_buffer_get_subdata(mem->bo, data->offset + buffer->sub_offset,
 			       data->size, data->ptr) != 0)
       err = CL_MAP_FAILURE;
