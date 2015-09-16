@@ -52,7 +52,8 @@ FOREACH(M ${OCL_COPY_HEADERS})
     COPY_THE_HEADER(${M})
 ENDFOREACH(M) 
 
-SET (OCL_COPY_MODULES ocl_workitem ocl_atom ocl_async ocl_sync ocl_misc ocl_vload ocl_geometric ocl_image)
+SET (OCL_COPY_MODULES ocl_workitem ocl_atom ocl_async ocl_sync ocl_memcpy
+                      ocl_memset ocl_misc ocl_vload ocl_geometric ocl_image)
 FOREACH(M ${OCL_COPY_MODULES})
     COPY_THE_HEADER(${M})
     COPY_THE_SOURCE(${M})
@@ -181,7 +182,7 @@ MACRO(ADD_LL_TO_BC_TARGET M)
 	)
 ENDMACRO(ADD_LL_TO_BC_TARGET)
 
-SET (OCL_LL_MODULES ocl_barrier ocl_memcpy ocl_memset ocl_clz)
+SET (OCL_LL_MODULES ocl_barrier ocl_clz)
 FOREACH(f ${OCL_LL_MODULES})
     COPY_THE_LL(${f})
     ADD_LL_TO_BC_TARGET(${f})

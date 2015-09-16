@@ -15,29 +15,30 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef __OCL_H__
-#define __OCL_H__
+#include "ocl_memset.h"
 
-#include "ocl_defines.h"
-#include "ocl_types.h"
-#include "ocl_as.h"
-#include "ocl_async.h"
-#include "ocl_atom.h"
-#include "ocl_common.h"
-#include "ocl_convert.h"
-#include "ocl_float.h"
-#include "ocl_geometric.h"
-#include "ocl_image.h"
-#include "ocl_integer.h"
-#include "ocl_math.h"
-#include "ocl_memcpy.h"
-#include "ocl_misc.h"
-#include "ocl_printf.h"
-#include "ocl_relational.h"
-#include "ocl_sync.h"
-#include "ocl_vload.h"
-#include "ocl_workitem.h"
-#include "ocl_simd.h"
-#pragma OPENCL EXTENSION cl_khr_fp64 : disable
-#pragma OPENCL EXTENSION cl_khr_fp16 : disable
-#endif
+#define DECL_MEMSET_FN(NAME, DST_SPACE) \
+void __gen_memset_ ##NAME## _align (DST_SPACE uchar* dst, uchar val, size_t size) { \
+  size_t index = 0; \
+  uint v = (val << 24) | (val << 16) | (val << 8) | val; \
+  while((index + 4) >= size) { \
+    *((DST_SPACE uint *)(dst + index)) = v; \
+    index += 4; \
+  } \
+  while(index < size) { \
+    dst[index] = val; \
+    index++; \
+ } \
+} \
+void __gen_memset_ ##NAME (DST_SPACE uchar* dst, uchar val, size_t size) { \
+  size_t index = 0; \
+  while(index < size) { \
+    dst[index] = val; \
+    index++; \
+ } \
+}
+
+DECL_MEMSET_FN(g, __global)
+DECL_MEMSET_FN(l, __local)
+DECL_MEMSET_FN(p, __private)
+

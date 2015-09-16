@@ -15,29 +15,19 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef __OCL_H__
-#define __OCL_H__
-
-#include "ocl_defines.h"
+#ifndef __OCL_MEMSET_H__
+#define __OCL_MEMSET_H__
 #include "ocl_types.h"
-#include "ocl_as.h"
-#include "ocl_async.h"
-#include "ocl_atom.h"
-#include "ocl_common.h"
-#include "ocl_convert.h"
-#include "ocl_float.h"
-#include "ocl_geometric.h"
-#include "ocl_image.h"
-#include "ocl_integer.h"
-#include "ocl_math.h"
-#include "ocl_memcpy.h"
-#include "ocl_misc.h"
-#include "ocl_printf.h"
-#include "ocl_relational.h"
-#include "ocl_sync.h"
-#include "ocl_vload.h"
-#include "ocl_workitem.h"
-#include "ocl_simd.h"
-#pragma OPENCL EXTENSION cl_khr_fp64 : disable
-#pragma OPENCL EXTENSION cl_khr_fp16 : disable
-#endif
+
+/////////////////////////////////////////////////////////////////////////////
+// memcopy functions
+/////////////////////////////////////////////////////////////////////////////
+void __gen_memset_g_align(__global uchar* dst, uchar val, size_t size);
+void __gen_memset_p_align(__private uchar* dst, uchar val, size_t size);
+void __gen_memset_l_align(__local uchar* dst, uchar val, size_t size);
+
+void __gen_memset_g(__global uchar* dst, uchar val, size_t size);
+void __gen_memset_p(__private uchar* dst, uchar val, size_t size);
+void __gen_memset_l(__local uchar* dst, uchar val, size_t size);
+
+#endif  /* __OCL_MEMSET_H__ */
