@@ -30,75 +30,7 @@
  * Segovia) the right to use another license for it (MIT here)
  */
 
-#include "llvm/Config/llvm-config.h"
-#if LLVM_VERSION_MINOR <= 2
-#include "llvm/CallingConv.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Module.h"
-#include "llvm/Instructions.h"
-#else
-#include "llvm/IR/CallingConv.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/Instructions.h"
-#endif  /* LLVM_VERSION_MINOR <= 2 */
-#include "llvm/Pass.h"
-#include "llvm/PassManager.h"
-#if LLVM_VERSION_MINOR <= 2
-#include "llvm/Intrinsics.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/InlineAsm.h"
-#else
-#include "llvm/IR/Intrinsics.h"
-#include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/InlineAsm.h"
-#endif  /* LLVM_VERSION_MINOR <= 2 */
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/Analysis/ConstantsScanner.h"
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/ValueTracking.h"
-#include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/IntrinsicLowering.h"
-
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=5
-#include "llvm/IR/Mangler.h"
-#else
-#include "llvm/Target/Mangler.h"
-#endif
-
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/MC/MCAsmInfo.h"
-#include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCInstrInfo.h"
-#include "llvm/MC/MCObjectFileInfo.h"
-#include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/MC/MCSymbol.h"
-#if !defined(LLVM_VERSION_MAJOR) || (LLVM_VERSION_MINOR == 1)
-#include "llvm/Target/TargetData.h"
-#elif LLVM_VERSION_MINOR == 2
-#include "llvm/DataLayout.h"
-#else
-#include "llvm/IR/DataLayout.h"
-#endif
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormattedStream.h"
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR <= 2)
-#include "llvm/Support/InstVisitor.h"
-#elif LLVM_VERSION_MINOR >= 5
-#include "llvm/IR/InstVisitor.h"
-#else
-#include "llvm/InstVisitor.h"
-#endif
-#include "llvm/Support/MathExtras.h"
-#include "llvm/Support/TargetRegistry.h"
-#include "llvm/Support/Host.h"
-#include "llvm/Support/ToolOutputFile.h"
-#include "llvm/Support/SourceMgr.h"
+#include "llvm_includes.hpp"
 
 #include "llvm/llvm_gen_backend.hpp"
 #include "ir/unit.hpp"

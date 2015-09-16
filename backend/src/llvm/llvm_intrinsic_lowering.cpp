@@ -20,29 +20,7 @@
  * \author Yang Rong <rong.r.yang@intel.com>
  */
 
-#include "llvm/Config/llvm-config.h"
-#if LLVM_VERSION_MINOR <= 2
-#include "llvm/Function.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/Instructions.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/Module.h"
-#else
-#include "llvm/IR/Function.h"
-#include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/Module.h"
-#endif  /* LLVM_VERSION_MINOR <= 2 */
-#include "llvm/Pass.h"
-#if LLVM_VERSION_MINOR <= 1
-#include "llvm/Support/IRBuilder.h"
-#elif LLVM_VERSION_MINOR == 2
-#include "llvm/IRBuilder.h"
-#else
-#include "llvm/IR/IRBuilder.h"
-#endif /* LLVM_VERSION_MINOR <= 1 */
-#include "llvm/Support/raw_ostream.h"
+#include "llvm_includes.hpp"
 
 #include "llvm/llvm_gen_backend.hpp"
 #include "sys/map.hpp"

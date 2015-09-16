@@ -30,11 +30,7 @@
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/LoopPass.h"
-#if LLVM_VERSION_MINOR <= 2
-#include "llvm/Instructions.h"
-#else
 #include "llvm/IR/Instructions.h"
-#endif
 #include "sys/platform.hpp"
 #include "sys/map.hpp"
 #include <algorithm>

@@ -22,40 +22,8 @@
  * \author Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-#include "llvm/Config/llvm-config.h"
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
-#include "llvm/DataLayout.h"
-#else
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/DataLayout.h"
-#endif  /* LLVM_VERSION_MINOR <= 2 */
-#include "llvm/PassManager.h"
-#include "llvm/Pass.h"
-#include "llvm/Analysis/Passes.h"
-#include "llvm/Transforms/IPO.h"
-#include "llvm/Target/TargetLibraryInfo.h"
-#include "llvm/ADT/Triple.h"
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
-#include "llvm/Support/IRReader.h"
-#else
-#include "llvm/IRReader/IRReader.h"
-#include "llvm/Support/SourceMgr.h"
-#endif  /* LLVM_VERSION_MINOR <= 2 */
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Scalar.h"
+#include "llvm_includes.hpp"
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=5
-#include "llvm/IR/IRPrintingPasses.h"
-#include "llvm/IR/Verifier.h"
-#else
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/Assembly/PrintModulePass.h"
-#endif
-
-#include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/llvm_gen_backend.hpp"
 #include "llvm/llvm_to_gen.hpp"
 #include "sys/cvar.hpp"
@@ -63,8 +31,6 @@
 #include "ir/unit.hpp"
 #include "ir/function.hpp"
 #include "ir/structurizer.hpp"
-
-#include <clang/CodeGen/CodeGenAction.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -78,11 +44,19 @@ namespace gbe
   BVAR(OCL_OUTPUT_CFG_GEN_IR, false);
   using namespace llvm;
 
-  void runFuntionPass(Module &mod, TargetLibraryInfo *libraryInfo, const DataLayout &DL)
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+  using namespace llvm::legacy;
+  #define TARGETLIBRARY  TargetLibraryInfoImpl
+#else
+  #define TARGETLIBRARY  TargetLibraryInfo
+#endif
+
+  void runFuntionPass(Module &mod, TARGETLIBRARY *libraryInfo, const DataLayout &DL)
   {
     FunctionPassManager FPM(&mod);
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
     FPM.add(new DataLayoutPass());
 #elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR == 5
     FPM.add(new DataLayoutPass(DL));
@@ -95,7 +69,11 @@ namespace gbe
 #else
     FPM.add(createVerifierPass());
 #endif
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+    FPM.add(new TargetLibraryInfoWrapperPass(*libraryInfo));
+#else
     FPM.add(new TargetLibraryInfo(*libraryInfo));
+#endif
     FPM.add(createTypeBasedAliasAnalysisPass());
     FPM.add(createBasicAliasAnalysisPass());
     FPM.add(createCFGSimplificationPass());
@@ -111,18 +89,24 @@ namespace gbe
     FPM.doFinalization();
   }
 
-  void runModulePass(Module &mod, TargetLibraryInfo *libraryInfo, const DataLayout &DL, int optLevel, bool strictMath)
+  void runModulePass(Module &mod, TARGETLIBRARY *libraryInfo, const DataLayout &DL, int optLevel, bool strictMath)
   {
-    llvm::PassManager MPM;
+    PassManager MPM;
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
     MPM.add(new DataLayoutPass());
 #elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR == 5
     MPM.add(new DataLayoutPass(DL));
 #else
     MPM.add(new DataLayout(DL));
 #endif
+
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+    MPM.add(new TargetLibraryInfoWrapperPass(*libraryInfo));
+#else
     MPM.add(new TargetLibraryInfo(*libraryInfo));
+#endif
     MPM.add(createTypeBasedAliasAnalysisPass());
     MPM.add(createBasicAliasAnalysisPass());
     MPM.add(createIntrinsicLoweringPass());
@@ -202,7 +186,7 @@ namespace gbe
 
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
 #define OUTPUT_BITCODE(STAGE, MOD)  do {         \
-   llvm::PassManager passes__;                   \
+   PassManager passes__;           \
    if (OCL_OUTPUT_LLVM_##STAGE) {                \
      passes__.add(createPrintModulePass(*o));    \
      passes__.run(MOD);                          \
@@ -210,7 +194,7 @@ namespace gbe
  }while(0)
 #else
 #define OUTPUT_BITCODE(STAGE, MOD)  do {         \
-   llvm::PassManager passes__;                   \
+   PassManager passes__;           \
    if (OCL_OUTPUT_LLVM_##STAGE) {                \
      passes__.add(createPrintModulePass(&*o));   \
      passes__.run(MOD);                          \
@@ -260,16 +244,20 @@ namespace gbe
     Module &mod = *M.get();
     DataLayout DL(&mod);
 
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+    mod.setDataLayout(DL);
+#endif
     Triple TargetTriple(mod.getTargetTriple());
-    TargetLibraryInfo *libraryInfo = new TargetLibraryInfo(TargetTriple);
+    TARGETLIBRARY *libraryInfo = new TARGETLIBRARY(TargetTriple);
     libraryInfo->disableAllFunctions();
 
     OUTPUT_BITCODE(AFTER_LINK, mod);
 
     runFuntionPass(mod, libraryInfo, DL);
     runModulePass(mod, libraryInfo, DL, optLevel, strictMath);
-    llvm::PassManager passes;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+    PassManager passes;
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
     passes.add(new DataLayoutPass());
 #elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR == 5
     passes.add(new DataLayoutPass(DL));
