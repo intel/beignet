@@ -20,27 +20,8 @@
  * make sure to get correct pixel value. But for some other
  * sampler, we don't need those work around code.
  */
-#include "llvm/IR/Instructions.h"
-#include "llvm/Pass.h"
-#include "llvm/PassManager.h"
 
-#include "llvm/Config/llvm-config.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/PostOrderIterator.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/Module.h"
-#include "llvm/Pass.h"
-#include "llvm/IR/IRBuilder.h"
-#if LLVM_VERSION_MINOR >= 5
-#include "llvm/IR/CFG.h"
-#else
-#include "llvm/Support/CFG.h"
-#endif
-
-#include "llvm/Analysis/ConstantsScanner.h"
+#include "llvm_includes.hpp"
 
 #include "llvm_gen_backend.hpp"
 #include "ocl_common_defines.h"

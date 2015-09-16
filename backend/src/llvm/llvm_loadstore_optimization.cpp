@@ -22,37 +22,7 @@
  * from Vectorize passes in llvm.
  */
 
-#include "llvm/IR/Instructions.h"
-#include "llvm/Pass.h"
-#include "llvm/PassManager.h"
-
-#include "llvm/Config/llvm-config.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/PostOrderIterator.h"
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
-#include "llvm/Function.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/Instructions.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/Module.h"
-#else
-#include "llvm/IR/Function.h"
-#include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/Module.h"
-#endif  /* LLVM_VERSION_MINOR <= 2 */
-#include "llvm/Pass.h"
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 1
-#include "llvm/Support/IRBuilder.h"
-#elif LLVM_VERSION_MINOR == 2
-#include "llvm/IRBuilder.h"
-#else
-#include "llvm/IR/IRBuilder.h"
-#endif /* LLVM_VERSION_MINOR <= 1 */
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm_includes.hpp"
 
 using namespace llvm;
 namespace gbe {
@@ -72,7 +42,9 @@ namespace gbe {
 
     virtual bool runOnBasicBlock(BasicBlock &BB) {
       SE = &getAnalysis<ScalarEvolution>();
-      #if LLVM_VERSION_MINOR >= 5
+      #if LLVM_VERSION_MINOR >= 7
+        TD = &BB.getModule()->getDataLayout();
+      #elif LLVM_VERSION_MINOR >= 5
         DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
         TD = DLP ? &DLP->getDataLayout() : nullptr;
       #else

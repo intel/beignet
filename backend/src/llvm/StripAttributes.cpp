@@ -69,14 +69,7 @@
 //  * Calling conventions from functions and function calls.
 //
 
-#include "llvm/IR/Function.h"
-#include "llvm/Pass.h"
-
-#if LLVM_VERSION_MINOR >= 5
-#include "llvm/IR/CallSite.h"
-#else
-#include "llvm/Support/CallSite.h"
-#endif
+#include "llvm_includes.hpp"
 
 #include "llvm_gen_backend.hpp"
 

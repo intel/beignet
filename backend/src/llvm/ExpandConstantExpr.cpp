@@ -77,12 +77,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <map>
-
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/Pass.h"
+#include "llvm_includes.hpp"
 #include "llvm_gen_backend.hpp"
 
 using namespace llvm;

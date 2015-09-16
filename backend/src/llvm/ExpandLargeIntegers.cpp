@@ -86,24 +86,9 @@
 //       2. OR x, 0 can be optimized as x. And x, 0 can be optimized as 0.
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/PostOrderIterator.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallVector.h"
-#if LLVM_VERSION_MINOR >= 5
-#include "llvm/IR/CFG.h"
-#else
-#include "llvm/Support/CFG.h"
-#endif
-#include "llvm/IR/DataLayout.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/MathExtras.h"
-#include "llvm/Support/raw_ostream.h"
+
+#include "llvm_includes.hpp"
+
 #include "llvm_gen_backend.hpp"
 
 using namespace llvm;

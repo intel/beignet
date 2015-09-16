@@ -21,24 +21,11 @@
 #include <iostream>
 #include <sstream>
 #include <set>
-#include "llvm/IR/Function.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IRReader/IRReader.h"
-#include "llvm/PassManager.h"
-#include "llvm/Pass.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/Support/FileSystem.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Support/SourceMgr.h"
 
 #include "sys/cvar.hpp"
 #include "src/GBEConfig.h"
+#include "llvm_includes.hpp"
 #include "llvm/llvm_gen_backend.hpp"
-#include "llvm-c/Linker.h"
 
 using namespace llvm;
 
@@ -248,8 +235,11 @@ namespace gbe
       printf("Fatal Error: link the bitcode error:\n%s\n", errorMsg);
       return NULL;
     }
-
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=7
+    llvm::legacy::PassManager passes;
+#else
     llvm::PassManager passes;
+#endif
 
     passes.add(createInternalizePass(kernels));
     passes.add(createGlobalDCEPass());
