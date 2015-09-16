@@ -1,3 +1,6 @@
+target datalayout = "e-p:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024"
+target triple = "spir"
+
 declare i8 @llvm.ctlz.i8(i8, i1)
 declare i16 @llvm.ctlz.i16(i16, i1)
 declare i32 @llvm.ctlz.i32(i32, i1)
