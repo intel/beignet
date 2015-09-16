@@ -4,6 +4,9 @@
 ;#define CLK_LOCAL_MEM_FENCE  (1 << 0)
 ;#define CLK_GLOBAL_MEM_FENCE (1 << 1)
 
+target datalayout = "e-p:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024"
+target triple = "spir"
+
 declare i32 @_get_local_mem_fence() nounwind alwaysinline
 declare i32 @_get_global_mem_fence() nounwind alwaysinline
 declare void @__gen_ocl_barrier_local() nounwind alwaysinline noduplicate
