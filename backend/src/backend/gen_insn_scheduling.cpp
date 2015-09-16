@@ -41,26 +41,29 @@
  * ==============================
  *
  * We try to limit the register pressure.
- * Well, this is a hard problem and we have a decent strategy now that we called
- * "zero cycled LIFO scheduling".
- * We use a local forward list scheduling and we schedule the instructions in a
- * LIFO order i.e. as a stack. Basically, we take the most recent instruction
- * and schedule it right away. Obviously we ignore completely the real latencies
- * and throuputs and just simulate instructions that are issued and completed in
- * zero cycle. For the complex kernels we already have (like menger sponge),
- * this provides a pretty good strategy enabling SIMD16 code generation where
- * when scheduling is deactivated, even SIMD8 fails
  *
- * One may argue that this strategy is bad, latency wise. This is not true since
- * the register allocator will anyway try to burn as many registers as possible.
- * So, there is still opportunities to schedule after register allocation.
+ * To find out an instruction scheduling policy to achieve the theoretical minimum
+ * registers required in a basic block is a NP problem. We have to use some heuristic
+ * factor to simplify the algorithm. There are many researchs which indicate a
+ * bottom-up list scheduling is much better than the top-down method in turns of
+ * register pressure.  I choose one of such research paper as our target. The paper
+ * is as below:
  *
- * Our idea seems to work decently. There is however a strong research article
- * that is able to near-optimally reschudle the instructions to minimize
- * register use. This is:
+ * "Register-Sensitive Selection, Duplication, and Sequencing of Instructions"
+ * It use the bottom-up list scheduling with a Sethi-Ullman label as an
+ * heuristic number. As we will do cycle awareness scheduling after the register
+ * allocation, we don't need to bother with cycle related heuristic number here.
+ * I just skipped the EST computing and usage part in the algorithm.
  *
- * "Minimum Register Instruction Sequence Problem: Revisiting Optimal Code
- *  Generation for DAGs"
+ * It turns out this algorithm works well. It could reduce the register spilling
+ * in clBlas's sgemmBlock kernel from 83+ to only 20.
+ *
+ * Although this scheduling method seems to be lowering the ILP(instruction level parallism).
+ * It's not a big issue, because we will allocate as much as possible different registers
+ * in the following register allocation stage, and we will do a after allocation
+ * instruction scheduling which will try to get as much ILP as possible.
+ *
+ * FIXME: we only need to do this scheduling when a BB is really under high register pressure.
  *
  * After the register allocation
  * ==============================
@@ -114,7 +117,7 @@ namespace gbe
   struct ScheduleDAGNode
   {
     INLINE ScheduleDAGNode(SelectionInstruction &insn) :
-      insn(insn), refNum(0), retiredCycle(0), preRetired(false), readDistance(0x7fffffff) {}
+      insn(insn), refNum(0), depNum(0), retiredCycle(0), preRetired(false), readDistance(0x7fffffff) {}
     bool dependsOn(ScheduleDAGNode *node) const {
       GBE_ASSERT(node != NULL);
       for (auto child : node->children)
@@ -128,6 +131,10 @@ namespace gbe
     SelectionInstruction &insn;
     /*! Number of nodes that point to us (i.e. nodes we depend on) */
     uint32_t refNum;
+    /*! Number of nodes that we depends on. */
+    uint32_t depNum;
+    /*! Register pressure. */
+    uint32_t regNum;
     /*! Cycle when the instruction is retired */
     uint32_t retiredCycle;
     bool preRetired;
@@ -218,6 +225,8 @@ namespace gbe
     /*! Schedule the DAG, pre register allocation and post register allocation. */
     void preScheduleDAG(SelectionBlock &bb, int32_t insnNum);
     void postScheduleDAG(SelectionBlock &bb, int32_t insnNum);
+
+    void computeRegPressure(ScheduleDAGNode *node, map<ScheduleDAGNode *, int32_t> &regPressureMap);
     /*! To limit register pressure or limit insn latency problems */
     SchedulePolicy policy;
     /*! Make ScheduleListNode allocation faster */
@@ -277,6 +286,7 @@ namespace gbe
       ScheduleListNode *dep = scheduler.newScheduleListNode(node0, depMode);
       node0->refNum++;
       node1->children.push_back(dep);
+      node1->depNum++;
       auto it = deps.find(node0);
       if (it != deps.end()) {
         it->second.push_back(node1);
@@ -608,8 +618,95 @@ namespace gbe
     return insnNum;
   }
 
+  /*! Will sort child in register pressure in increasing order */
+  inline bool cmp(const ScheduleDAGNode *v0, const ScheduleDAGNode *v1) {
+    return v0->regNum < v1->regNum;
+  }
+
+  /* Recursively compute heuristic Sethi-Ullman number for each node. */
+  void SelectionScheduler::computeRegPressure(ScheduleDAGNode *node,
+                                              map<ScheduleDAGNode *, int32_t> &regPressureMap) {
+    if (regPressureMap.find(node) != regPressureMap.end()) {
+      GBE_ASSERT(node->regNum == (uint32_t)regPressureMap.find(node)->second);
+      return;
+    }
+    if (node->refNum == 0) {
+      node->regNum = 0;
+      regPressureMap.insert(std::make_pair(node, 0));
+      return;
+    }
+    auto &children = tracker.deps.find(node)->second;
+    for (auto child : children) {
+      computeRegPressure(child, regPressureMap);
+    }
+    std::sort(children.begin(), children.end(), cmp);
+    uint32_t maxRegNum = 0;
+    int32_t i = 0;
+    for (auto &child : children) {
+      if (child->regNum + children.size() - i > maxRegNum)
+        maxRegNum = child->regNum + node->children.size() - i;
+      ++i;
+    }
+    node->regNum = maxRegNum;
+    regPressureMap.insert(std::make_pair(node, maxRegNum));
+    return;
+  }
+
   void SelectionScheduler::preScheduleDAG(SelectionBlock &bb, int32_t insnNum) {
-    printf("Not implemented yet. \n");
+    set<ScheduleDAGNode *> rootNodes;
+    for (int32_t i = 0; i < insnNum; i++) {
+      ScheduleDAGNode *node = tracker.insnNodes[i];
+      if (node->depNum == 0)
+        rootNodes.insert(node);
+    }
+    map<ScheduleDAGNode *, int32_t> regPressureMap;
+    map<ScheduleDAGNode *, int32_t> parentIndexMap;
+    for (auto node : rootNodes) {
+      computeRegPressure(node, regPressureMap);
+      parentIndexMap.insert(std::make_pair(node, INT_MAX));
+    }
+    set<ScheduleDAGNode *> readySet(rootNodes.begin(), rootNodes.end());
+    set<ScheduleDAGNode *> scheduledSet;
+    int32_t j = insnNum;
+
+    // Now, start the scheduling.
+    // Each time find the minimum smallest pair (parentIndex[node], regPressure[node])
+    // as the best node to schedule.
+    while(readySet.size()) {
+      ScheduleDAGNode * bestNode = NULL;
+      int32_t minRegNum = INT_MAX;
+      int32_t minParentIndex = INT_MAX;
+      for(auto node : readySet) {
+        GBE_ASSERT(scheduledSet.contains(node) == false);
+        if (parentIndexMap.find(node)->second < minParentIndex) {
+          bestNode = node;
+          minParentIndex = parentIndexMap.find(node)->second;
+          minRegNum = regPressureMap.find(node)->second;
+        }
+        else if (parentIndexMap.find(node)->second == minParentIndex) {
+          if (regPressureMap.find(node)->second < minRegNum) {
+            bestNode = node;
+            minRegNum = regPressureMap.find(node)->second;
+          }
+        }
+      }
+      for( auto node : tracker.deps.find(bestNode)->second ) {
+        if (node == NULL)
+          continue;
+        node->depNum--;
+        if (parentIndexMap.find(node) != parentIndexMap.end())
+          parentIndexMap.find(node)->second = j;
+        else
+          parentIndexMap.insert(std::make_pair(node, j));
+        if (node->depNum == 0 && scheduledSet.contains(node) == false)
+          readySet.insert(node);
+      }
+      bb.prepend(&bestNode->insn);
+      readySet.erase(bestNode);
+      scheduledSet.insert(bestNode);
+      --j;
+    }
+    GBE_ASSERT(insnNum == (int32_t)bb.insnList.size());
   }
 
   void SelectionScheduler::postScheduleDAG(SelectionBlock &bb, int32_t insnNum) {
@@ -717,8 +814,6 @@ namespace gbe
   void schedulePreRegAllocation(GenContext &ctx, Selection &selection) {
     if (OCL_PRE_ALLOC_INSN_SCHEDULE) {
       SelectionScheduler scheduler(ctx, selection, PRE_ALLOC);
-      // FIXME, need to implement proper pre reg allocation scheduling algorithm.
-      return;
       for (auto &bb : *selection.blockList) {
         const int32_t insnNum = scheduler.buildDAG(bb);
         bb.insnList.clear();
