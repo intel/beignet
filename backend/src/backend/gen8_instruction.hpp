@@ -135,6 +135,22 @@ union Gen8NativeInstruction
         uint32_t dest_address_mode:1;
       } ia16;
 
+      struct { // The sub reg field is reinterpreted as accumulator selector.
+        uint32_t flag_sub_reg_nr:1;
+        uint32_t flag_reg_nr:1;
+        uint32_t mask_control:1;
+        uint32_t dest_reg_file:2;
+        uint32_t dest_reg_type:4;
+        uint32_t src0_reg_file:2;
+        uint32_t src0_reg_type:4;
+        uint32_t pad:1;
+        uint32_t dst_special_acc:4;
+        uint32_t dest_subreg_nr:1;
+        uint32_t dest_reg_nr:8;
+        uint32_t reserved:2;
+        uint32_t dest_address_mode:1;
+      } da16acc;
+
       struct {
         uint32_t flag_sub_reg_nr:1;
         uint32_t flag_reg_nr:1;
@@ -153,6 +169,25 @@ union Gen8NativeInstruction
         uint32_t dest_subreg_nr:3;
         uint32_t dest_reg_nr:8;
       } da3src;
+
+      struct {
+        uint32_t flag_sub_reg_nr:1;
+        uint32_t flag_reg_nr:1;
+        uint32_t mask_control:1;
+        uint32_t src1_type:1;
+        uint32_t src2_type:1;
+        uint32_t src0_abs:1;
+        uint32_t src0_negate:1;
+        uint32_t src1_abs:1;
+        uint32_t src1_negate:1;
+        uint32_t src2_abs:1;
+        uint32_t src2_negate:1;
+        uint32_t src_type:3;
+        uint32_t dest_type:3;
+        uint32_t dst_special_acc:4;
+        uint32_t dest_subreg_nr:3;
+        uint32_t dest_reg_nr:8;
+      } da3srcacc;
     }bits1;
 
     union {
@@ -219,6 +254,21 @@ union Gen8NativeInstruction
       } ia16;
 
       struct {
+        uint32_t src0_special_acc_lo:4;
+        uint32_t src0_subreg_nr:1;
+        uint32_t src0_reg_nr:8;
+        uint32_t src0_abs:1;
+        uint32_t src0_negate:1;
+        uint32_t src0_address_mode:1;
+        uint32_t src0_special_acc_hi:4;
+        uint32_t pad0:1;
+        uint32_t src0_vert_stride:4;
+        uint32_t src1_reg_file:2;
+        uint32_t src1_reg_type:4;
+        uint32_t pad:1;
+      } da16acc;
+
+      struct {
         uint32_t src0_rep_ctrl:1;
         uint32_t src0_swizzle:8;
         uint32_t src0_subreg_nr:3;
@@ -228,6 +278,17 @@ union Gen8NativeInstruction
         uint32_t src1_swizzle:8;
         uint32_t src1_subreg_nr_low:2;
       } da3src;
+
+      struct {
+        uint32_t src0_rep_ctrl:1;
+        uint32_t src0_special_acc:8;
+        uint32_t src0_subreg_nr:3;
+        uint32_t src0_reg_nr:8;
+        uint32_t src0_subreg_nr_w:1;
+        uint32_t src1_rep_ctrl:1;
+        uint32_t src1_special_acc:8;
+        uint32_t src1_subreg_nr_low:2;
+      } da3srcacc;
 
       struct {
         uint32_t uip:32;
@@ -292,6 +353,19 @@ union Gen8NativeInstruction
         int  src1_indirect_offset_9:1;
         uint32_t pad2:6;
       } ia16;
+
+      struct {
+        uint32_t src1_special_acc_lo:4;
+        uint32_t src1_subreg_nr:1;
+        uint32_t src1_reg_nr:8;
+        uint32_t src1_abs:1;
+        uint32_t src1_negate:1;
+        uint32_t src1_address_mode:1;
+        uint32_t src1_special_acc_hi:4;
+        uint32_t pad1:1;
+        uint32_t src1_vert_stride:4;
+        uint32_t pad2:7;
+      } da16acc;
 
       struct {
         uint32_t function_control:19;
@@ -503,6 +577,18 @@ union Gen8NativeInstruction
         uint32_t src2_subreg_nr_w:1;
         uint32_t pad:1;
       } da3src;
+
+      struct {
+        uint32_t src1_subreg_nr_high:1;
+        uint32_t src1_reg_nr:8;
+        uint32_t src1_subreg_nr_w:1;
+        uint32_t src2_rep_ctrl:1;
+        uint32_t src2_special_acc:8;
+        uint32_t src2_subreg_nr:3;
+        uint32_t src2_reg_nr:8;
+        uint32_t src2_subreg_nr_w:1;
+        uint32_t pad:1;
+      } da3srcacc;
 
       /*! Message gateway */
       struct {
