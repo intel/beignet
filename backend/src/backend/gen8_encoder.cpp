@@ -372,7 +372,7 @@ namespace gbe
       gen8_insn->bits2.da1.src0_negate = reg.negation;
       gen8_insn->bits2.da1.src0_address_mode = reg.address_mode;
       if (reg.file == GEN_IMMEDIATE_VALUE) {
-        if (reg.type == GEN_TYPE_L || reg.type == GEN_TYPE_UL) {
+        if (reg.type == GEN_TYPE_L || reg.type == GEN_TYPE_UL || reg.type == GEN_TYPE_DF_IMM) {
           gen8_insn->bits3.ud = (uint32_t)(reg.value.i64 >> 32);
           gen8_insn->bits2.ud = (uint32_t)(reg.value.i64);
         } else {
