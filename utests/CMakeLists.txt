@@ -195,6 +195,7 @@ set (utests_sources
   compiler_time_stamp.cpp
   compiler_double_precision.cpp
   compiler_double.cpp
+  compiler_double_div.cpp
   load_program_from_gen_bin.cpp
   load_program_from_spir.cpp
   get_arg_info.cpp
