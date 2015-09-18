@@ -74,6 +74,8 @@ namespace gbe
     virtual void emitPackLongInstruction(const SelectionInstruction &insn);
     virtual void emitUnpackLongInstruction(const SelectionInstruction &insn);
 
+    virtual void emitF64DIVInstruction(const SelectionInstruction &insn);
+
   protected:
     virtual void setA0Content(uint16_t new_a0[16], uint16_t max_offset = 0, int sz = 0);
     virtual GenEncoder* generateEncoder(void) {

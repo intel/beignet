@@ -987,6 +987,151 @@ namespace gbe
     this->unpackLongVec(src, dst, p->curr.execWidth);
   }
 
+  void Gen8Context::emitF64DIVInstruction(const SelectionInstruction &insn) {
+    /* Macro for Double Precision IEEE Compliant fdiv
+
+       Set Rounding Mode in CR to RNE
+       GRF are initialized: r0 = 0, r6 = a, r7 = b, r1 = 1
+       The default data type for the macro is :df
+
+       math.eo.f0.0 (4) r8.acc2 r6.noacc r7.noacc 0xE
+       (-f0.0) if
+       madm (4) r9.acc3 r0.noacc r6.noacc r8.acc2       // Step(1), q0=a*y0
+       madm (4) r10.acc4 r1.noacc -r7.noacc r8.acc2     // Step(2), e0=(1-b*y0)
+       madm (4) r11.acc5 r6.noacc -r7.noacc r9.acc3     // Step(3), r0=a-b*q0
+       madm (4) r12.acc6 r8.acc2 r10.acc4 r8.acc2       // Step(4), y1=y0+e0*y0
+       madm (4) r13.acc7 r1.noacc -r7.noacc r12.acc6    // Step(5), e1=(1-b*y1)
+       madm (4) r8.acc8 r8.acc2 r10.acc4 r12.acc6       // Step(6), y2=y0+e0*y1
+       madm (4) r9.acc9 r9.acc3 r11.acc5 r12.acc6       // Step(7), q1=q0+r0*y1
+       madm (4) r12.acc2 r12.acc6 r8.acc8 r13.acc7      // Step(8), y3=y1+e1*y2
+       madm (4) r11.acc3 r6.noacc -r7.noacc r9.acc9     // Step(9), r1=a-b*q1
+
+       Change Rounding Mode in CR if required
+       Implicit Accumulator for destination is NULL
+
+       madm (4) r8.noacc r9.acc9 r11.acc3 r12.acc2      // Step(10), q=q1+r1*y3
+       endif */
+    GenRegister src0 = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_DF);
+    GenRegister src1 = GenRegister::retype(ra->genReg(insn.src(1)), GEN_TYPE_DF);
+    GenRegister dst = GenRegister::retype(ra->genReg(insn.dst(0)), GEN_TYPE_DF);
+    GenRegister r6 , r7, r8;
+    int src0Stride = 1;
+    int src1Stride = 1;
+    int tmpNum = 7;
+    int loopNum = 0;
+
+    if (dst.hstride == GEN_HORIZONTAL_STRIDE_0) {// dst is uniform
+      loopNum = 1;
+    } else if (p->curr.execWidth == 4) {
+      loopNum = 1;
+    } else if (p->curr.execWidth == 8) {
+      loopNum = 2;
+    } else if (p->curr.execWidth == 16) {
+      loopNum = 4;
+    } else
+      GBE_ASSERT(0);
+
+    r8 = GenRegister::retype(ra->genReg(insn.dst(tmpNum + 1)), GEN_TYPE_DF);
+    tmpNum++;
+
+    if (src0.vstride == GEN_HORIZONTAL_STRIDE_0) {
+      r6 = GenRegister::retype(ra->genReg(insn.dst(tmpNum + 1)), GEN_TYPE_DF);
+      tmpNum++;
+      src0Stride = 0;
+      p->push(); {
+        p->curr.execWidth = 4;
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        p->curr.noMask= 1;
+        p->MOV(r6, src0);
+      } p->pop();
+    } else {
+      r6 = src0;
+    }
+
+    if (src1.vstride == GEN_HORIZONTAL_STRIDE_0) {
+      r7 = GenRegister::retype(ra->genReg(insn.dst(tmpNum + 1)), GEN_TYPE_DF);
+      tmpNum++;
+      src1Stride = 0;
+      p->push(); {
+        p->curr.execWidth = 4;
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        p->curr.noMask = 1;
+        p->MOV(r7, src1);
+      } p->pop();
+    } else {
+      r7 = src1;
+    }
+
+    const GenRegister r0 = GenRegister::retype(ra->genReg(insn.dst(1)), GEN_TYPE_DF);
+    const GenRegister r1 = GenRegister::retype(ra->genReg(insn.dst(2)), GEN_TYPE_DF);
+    const GenRegister r9 = GenRegister::retype(ra->genReg(insn.dst(3)), GEN_TYPE_DF);
+    const GenRegister r10 = GenRegister::retype(ra->genReg(insn.dst(4)), GEN_TYPE_DF);
+    const GenRegister r11 = GenRegister::retype(ra->genReg(insn.dst(5)), GEN_TYPE_DF);
+    const GenRegister r12 = GenRegister::retype(ra->genReg(insn.dst(6)), GEN_TYPE_DF);
+    const GenRegister r13 = GenRegister::retype(ra->genReg(insn.dst(7)), GEN_TYPE_DF);
+    Gen8Encoder *p8 = reinterpret_cast<Gen8Encoder *>(p);
+    p->push(); {
+      p->curr.execWidth = 4;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask= 1;
+      p->MOV(r1, GenRegister::immdf(1.0d));
+      p->MOV(r0, GenRegister::immdf(0.0d));
+    } p->pop();
+
+    for (int i = 0; i < loopNum; i++) {
+      p->push(); {
+        p->curr.noMask= 1;
+        p->curr.execWidth = 4;
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        p8->MATH_WITH_ACC(r8, GEN8_MATH_FUNCTION_INVM, r6, r7, GEN8_INSN_ACC2, GEN8_INSN_NOACC, GEN8_INSN_NOACC);
+        p->curr.useFlag(insn.state.flag, insn.state.subFlag);
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+        p->curr.inversePredicate = 1;
+        p8->MADM(r9, r0, r6, r8, GEN8_INSN_ACC3, GEN8_INSN_NOACC, GEN8_INSN_NOACC, GEN8_INSN_ACC2);
+        p8->MADM(r10, r1, GenRegister::negate(r7), r8, GEN8_INSN_ACC4, GEN8_INSN_NOACC, GEN8_INSN_NOACC, GEN8_INSN_ACC2);
+        p8->MADM(r11, r6, GenRegister::negate(r7), r9, GEN8_INSN_ACC5, GEN8_INSN_NOACC, GEN8_INSN_NOACC, GEN8_INSN_ACC3);
+        p8->MADM(r12, r8, r10, r8, GEN8_INSN_ACC6, GEN8_INSN_ACC2, GEN8_INSN_ACC4, GEN8_INSN_ACC2);
+        p8->MADM(r13, r1, GenRegister::negate(r7), r12, GEN8_INSN_ACC7, GEN8_INSN_NOACC, GEN8_INSN_NOACC, GEN8_INSN_ACC6);
+        p8->MADM(r8, r8, r10, r12, GEN8_INSN_ACC8, GEN8_INSN_ACC2, GEN8_INSN_ACC4, GEN8_INSN_ACC6);
+        p8->MADM(r9, r9, r11, r12, GEN8_INSN_ACC9, GEN8_INSN_ACC3, GEN8_INSN_ACC5, GEN8_INSN_ACC6);
+        p8->MADM(r12, r12, r8, r13, GEN8_INSN_ACC2, GEN8_INSN_ACC6, GEN8_INSN_ACC8, GEN8_INSN_ACC7);
+        p8->MADM(r11, r6, GenRegister::negate(r7), r9, GEN8_INSN_ACC3, GEN8_INSN_NOACC, GEN8_INSN_NOACC, GEN8_INSN_ACC9);
+
+        p8->MADM(r8, r9, r11, r12, GEN8_INSN_NOACC, GEN8_INSN_ACC9, GEN8_INSN_ACC3, GEN8_INSN_ACC2);
+      } p->pop();
+
+      r6 = GenRegister::offset(r6, src0Stride);
+      r7 = GenRegister::offset(r7, src1Stride);
+
+      /* Move back the result. */
+      if (dst.hstride == GEN_HORIZONTAL_STRIDE_0) {// dst is uniform
+        p->push(); {
+          p->curr.execWidth = 1;
+          r8.hstride = GEN_HORIZONTAL_STRIDE_0;
+          r8.vstride = GEN_VERTICAL_STRIDE_0;
+          r8.width = GEN_WIDTH_1;
+          p->MOV(dst, r8);
+        } p->pop();
+        break;
+      } else {
+        p->push(); {
+          p->curr.execWidth = 4;
+          if (i % 2 == 0)
+            p->curr.nibControl = 0;
+          else
+            p->curr.nibControl = 1;
+
+          if (i < 2)
+            p->curr.quarterControl = GEN_COMPRESSION_Q1;
+          else
+            p->curr.quarterControl = GEN_COMPRESSION_Q2;
+
+          p->MOV(GenRegister::offset(dst, i), r8);
+        } p->pop();
+      }
+    }
+  }
+
   void Gen8Context::setA0Content(uint16_t new_a0[16], uint16_t max_offset, int sz) {
     if (sz == 0)
       sz = 16;
