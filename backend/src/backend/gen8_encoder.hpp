@@ -66,6 +66,11 @@ namespace gbe
     virtual unsigned setAtomicMessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum);
     virtual unsigned setUntypedReadMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
     virtual unsigned setUntypedWriteMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
+    void setSrc0WithAcc(GenNativeInstruction *insn, GenRegister reg, uint32_t accN);
+    void setSrc1WithAcc(GenNativeInstruction *insn, GenRegister reg, uint32_t accN);
+
+    void MATH_WITH_ACC(GenRegister dst, uint32_t function, GenRegister src0, GenRegister src1,
+                       uint32_t dstAcc, uint32_t src0Acc, uint32_t src1Acc);
   };
 }
 #endif /* __GBE_GEN8_ENCODER_HPP__ */

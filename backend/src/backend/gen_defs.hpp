@@ -174,6 +174,8 @@ enum opcode {
   GEN_OPCODE_LINE = 89,
   GEN_OPCODE_PLN = 90,
   GEN_OPCODE_MAD = 91,
+  GEN_OPCODE_LRP = 92,
+  GEN_OPCODE_MADM = 93,
   GEN_OPCODE_NOP = 126,
 };
 
@@ -462,6 +464,17 @@ enum GenMessageTarget {
 #define GEN_BARRIER_MSG           0b100
 #define GEN_UPDATE_GATEWAT_STATE  0b101
 #define GEN_MMIO_READ_WRITE       0b110
+
+/* Accumulator acc2~acc9 in instruction */
+#define GEN8_INSN_ACC2            0
+#define GEN8_INSN_ACC3            1
+#define GEN8_INSN_ACC4            2
+#define GEN8_INSN_ACC5            3
+#define GEN8_INSN_ACC6            4
+#define GEN8_INSN_ACC7            5
+#define GEN8_INSN_ACC8            6
+#define GEN8_INSN_ACC9            7
+#define GEN8_INSN_NOACC           8
 
 /////////////////////////////////////////////////////////////////////////////
 // Gen EU structures

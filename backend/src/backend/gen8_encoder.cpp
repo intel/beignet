@@ -360,6 +360,46 @@ namespace gbe
     gen8_insn->bits1.da1.dest_horiz_stride = dest.hstride;
   }
 
+  void Gen8Encoder::setSrc0WithAcc(GenNativeInstruction *insn, GenRegister reg, uint32_t accN) {
+    Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
+    assert(reg.file == GEN_GENERAL_REGISTER_FILE);
+    assert(reg.nr < 128);
+    assert(gen8_insn->header.access_mode == GEN_ALIGN_16);
+    assert(reg.subnr == 0);
+    assert(gen8_insn->header.execution_size >= GEN_WIDTH_4);
+
+    gen8_insn->bits1.da16acc.src0_reg_file = reg.file;
+    gen8_insn->bits1.da16acc.src0_reg_type = reg.type;
+    gen8_insn->bits2.da16acc.src0_abs = reg.absolute;
+    gen8_insn->bits2.da16acc.src0_negate = reg.negation;
+    gen8_insn->bits2.da16acc.src0_address_mode = reg.address_mode;
+    gen8_insn->bits2.da16acc.src0_subreg_nr = reg.subnr / 16;
+    gen8_insn->bits2.da16acc.src0_reg_nr = reg.nr;
+    gen8_insn->bits2.da16acc.src0_special_acc_lo = accN;
+    gen8_insn->bits2.da16acc.src0_special_acc_hi = 0;
+    gen8_insn->bits2.da16acc.src0_vert_stride = reg.vstride;
+  }
+
+  void Gen8Encoder::setSrc1WithAcc(GenNativeInstruction *insn, GenRegister reg, uint32_t accN) {
+    Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
+    assert(reg.file == GEN_GENERAL_REGISTER_FILE);
+    assert(reg.nr < 128);
+    assert(gen8_insn->header.access_mode == GEN_ALIGN_16);
+    assert(reg.subnr == 0);
+    assert(gen8_insn->header.execution_size >= GEN_WIDTH_4);
+
+    gen8_insn->bits2.da16acc.src1_reg_file = reg.file;
+    gen8_insn->bits2.da16acc.src1_reg_type = reg.type;
+    gen8_insn->bits3.da16acc.src1_abs = reg.absolute;
+    gen8_insn->bits3.da16acc.src1_negate = reg.negation;
+    gen8_insn->bits3.da16acc.src1_address_mode = reg.address_mode;
+    gen8_insn->bits3.da16acc.src1_subreg_nr = reg.subnr / 16;
+    gen8_insn->bits3.da16acc.src1_reg_nr = reg.nr;
+    gen8_insn->bits3.da16acc.src1_special_acc_lo = accN;
+    gen8_insn->bits3.da16acc.src1_special_acc_hi = 0;
+    gen8_insn->bits3.da16acc.src1_vert_stride = reg.vstride;
+  }
+
   void Gen8Encoder::setSrc0(GenNativeInstruction *insn, GenRegister reg) {
     Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
     if (reg.file != GEN_ARCHITECTURE_REGISTER_FILE)
@@ -578,5 +618,24 @@ namespace gbe
       if (gen8_insn->bits3.da3src.src2_rep_ctrl == 0)
         gen8_insn->bits3.da3src.src2_reg_nr++;
      }
+  }
+
+  void Gen8Encoder::MATH_WITH_ACC(GenRegister dst, uint32_t function, GenRegister src0, GenRegister src1,
+                             uint32_t dstAcc, uint32_t src0Acc, uint32_t src1Acc)
+  {
+     GenNativeInstruction *insn = this->next(GEN_OPCODE_MATH);
+     Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
+     assert(dst.file == GEN_GENERAL_REGISTER_FILE);
+     assert(src0.file == GEN_GENERAL_REGISTER_FILE);
+     assert(src1.file == GEN_GENERAL_REGISTER_FILE);
+     assert(dst.hstride == GEN_HORIZONTAL_STRIDE_1 || dst.hstride == GEN_HORIZONTAL_STRIDE_0);
+
+     gen8_insn->header.access_mode = GEN_ALIGN_16;
+     insn->header.destreg_or_condmod = function;
+     this->setHeader(insn);
+     this->setDst(insn, dst);
+     gen8_insn->bits1.da16acc.dst_special_acc = dstAcc;
+     this->setSrc0WithAcc(insn, src0, src0Acc);
+     this->setSrc1WithAcc(insn, src1, src1Acc);
   }
 } /* End of the name space. */
