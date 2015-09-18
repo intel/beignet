@@ -1120,7 +1120,7 @@ namespace gbe
       case FAMILY_DWORD: SEL_REG(f16grf, f8grf, f1grf); break;
       case FAMILY_QWORD:
         if (!this->hasLongType()) {
-          SEL_REG(df16grf, df8grf, df1grf);
+          SEL_REG(ud16grf, ud8grf, ud1grf);
         } else {
           SEL_REG(ul16grf, ul8grf, ul1grf);
         }

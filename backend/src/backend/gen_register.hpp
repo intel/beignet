@@ -458,11 +458,11 @@ namespace gbe
     }
 
     static INLINE GenRegister df16(uint32_t file, ir::Register reg) {
-      return retype(vec16(file, reg), GEN_TYPE_DF);
+      return retype(vec4(file, reg), GEN_TYPE_DF);
     }
 
     static INLINE GenRegister df8(uint32_t file, ir::Register reg) {
-      return retype(vec8(file, reg), GEN_TYPE_DF);
+      return retype(vec4(file, reg), GEN_TYPE_DF);
     }
 
     static INLINE GenRegister df1(uint32_t file, ir::Register reg) {
