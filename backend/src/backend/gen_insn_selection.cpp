@@ -361,8 +361,10 @@ namespace gbe
     bool has32X32Mul() const { return bHas32X32Mul; }
     void setHas32X32Mul(bool b) { bHas32X32Mul = b; }
     bool hasLongType() const { return bHasLongType; }
+    bool hasDoubleType() const { return bHasDoubleType; }
     bool hasHalfType() const { return bHasHalfType; }
     void setHasLongType(bool b) { bHasLongType = b; }
+    void setHasDoubleType(bool b) { bHasDoubleType = b; }
     void setHasHalfType(bool b) { bHasHalfType = b; }
     bool hasLongRegRestrict() { return bLongRegRestrict; }
     void setLongRegRestrict(bool b) { bLongRegRestrict = b; }
@@ -669,6 +671,8 @@ namespace gbe
     void I64DIV(Reg dst, Reg src0, Reg src1, GenRegister *tmp, int tmp_int);
     /*! 64-bit integer remainder of division */
     void I64REM(Reg dst, Reg src0, Reg src1, GenRegister *tmp, int tmp_int);
+    /*! double division */
+    void F64DIV(Reg dst, Reg src0, Reg src1, GenRegister* tmp, int tmpNum);
     /* common functions for both binary instruction and sel_cmp and compare instruction.
        It will handle the IMM or normal register assignment, and will try to avoid LOADI
        as much as possible. */
@@ -754,6 +758,7 @@ namespace gbe
     uint32_t currAuxLabel;
     bool bHas32X32Mul;
     bool bHasLongType;
+    bool bHasDoubleType;
     bool bHasHalfType;
     bool bLongRegRestrict;
     uint32_t ldMsgOrder;
@@ -797,7 +802,7 @@ namespace gbe
     curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
     maxInsnNum(ctx.getFunction().getLargestBlockSize()), dagPool(maxInsnNum),
     stateNum(0), vectorNum(0), bwdCodeGeneration(false), currAuxLabel(ctx.getFunction().labelNum()),
-    bHas32X32Mul(false), bHasLongType(false), bHasHalfType(false), bLongRegRestrict(false),
+    bHas32X32Mul(false), bHasLongType(false), bHasDoubleType(false), bHasHalfType(false), bLongRegRestrict(false),
     ldMsgOrder(LD_MSG_ORDER_IVB), slowByteGather(false)
   {
     const ir::Function &fn = ctx.getFunction();
@@ -1665,6 +1670,15 @@ namespace gbe
       insn->dst(i + 1) = tmp[i];
   }
 
+  void Selection::Opaque::F64DIV(Reg dst, Reg src0, Reg src1, GenRegister* tmp, int tmpNum) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_F64DIV, tmpNum + 1, 2);
+    insn->dst(0) = dst;
+    insn->src(0) = src0;
+    insn->src(1) = src1;
+    for(int i = 0; i < tmpNum; i++)
+      insn->dst(i + 1) = tmp[i];
+  }
+
   void Selection::Opaque::ALU1(SelectionOpcode opcode, Reg dst, Reg src) {
     SelectionInstruction *insn = this->appendInsn(opcode, 1, 1);
     insn->dst(0) = dst;
@@ -2129,6 +2143,7 @@ namespace gbe
   Selection8::Selection8(GenContext &ctx) : Selection(ctx) {
     this->opaque->setHas32X32Mul(true);
     this->opaque->setHasLongType(true);
+    this->opaque->setHasDoubleType(true);
     this->opaque->setSlowByteGather(true);
     this->opaque->setHasHalfType(true);
     opt_features = SIOF_OP_AND_LOGICAL_SRCMOD;
@@ -2137,6 +2152,7 @@ namespace gbe
   SelectionChv::SelectionChv(GenContext &ctx) : Selection(ctx) {
     this->opaque->setHas32X32Mul(true);
     this->opaque->setHasLongType(true);
+    this->opaque->setHasDoubleType(true);
     this->opaque->setLongRegRestrict(true);
     this->opaque->setSlowByteGather(true);
     this->opaque->setHasHalfType(true);
@@ -2146,6 +2162,7 @@ namespace gbe
   Selection9::Selection9(GenContext &ctx) : Selection(ctx) {
     this->opaque->setHas32X32Mul(true);
     this->opaque->setHasLongType(true);
+    this->opaque->setHasDoubleType(true);
     this->opaque->setLdMsgOrder(LD_MSG_ORDER_SKL);
     this->opaque->setSlowByteGather(true);
     this->opaque->setHasHalfType(true);
@@ -2636,6 +2653,39 @@ namespace gbe
           else
             sel.I64REM(dst, src0, src1, tmp, tmp_num);
         sel.pop();
+      } else if (type == TYPE_DOUBLE) {
+        if (!sel.hasDoubleType())
+          GBE_ASSERT(0);
+
+        GenRegister tmp[10];
+        int tmpNum = 7;
+        ir::RegisterFamily fm;
+        if (sel.ctx.getSimdWidth() == 16) {
+          fm = FAMILY_WORD;
+        } else {
+          fm = FAMILY_DWORD;
+        }
+
+        /* madm and invm need special accumutor support, which require us in align16
+           mode. If any src is uniform, we need another tmp register and MOV the
+           uniform one to it. Because the madm and invm will work in align16 mode,
+           the channel mask is different from the align1 mode. So we can not directly
+           write the result to the dst and need a tmp register to hold the result and
+           MOV it to dst later. */
+        tmpNum++; //For the dst.
+        if (src0.hstride == GEN_HORIZONTAL_STRIDE_0) tmpNum++;
+        if (src1.hstride == GEN_HORIZONTAL_STRIDE_0) tmpNum++;
+
+        for (int i = 0; i < tmpNum; i++)
+          tmp[i] = GenRegister::df8grf(sel.reg(fm));
+
+        sel.push();
+          sel.curr.flag = 0;
+          sel.curr.subFlag = 1;
+          sel.F64DIV(dst, src0, src1, tmp, tmpNum);
+        sel.pop();
+      } else {
+        GBE_ASSERT(0);
       }
       markAllChildren(dag);
       return true;

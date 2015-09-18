@@ -1788,6 +1788,10 @@ namespace gbe
     }
   }
 
+  void GenContext::emitF64DIVInstruction(const SelectionInstruction &insn) {
+    GBE_ASSERT(0); // No support for double on Gen7
+  }
+
   void GenContext::emitTernaryInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister src0 = ra->genReg(insn.src(0));
