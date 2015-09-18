@@ -608,7 +608,7 @@ namespace gbe
     }
 
     static INLINE GenRegister immdf(double df) {
-      GenRegister immediate = imm(GEN_TYPE_DF);
+      GenRegister immediate = imm(GEN_TYPE_DF_IMM);
       immediate.value.df = df;
       return immediate;
     }
