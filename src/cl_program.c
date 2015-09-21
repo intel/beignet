@@ -604,13 +604,8 @@ cl_program_link(cl_context            context,
   cl_int err = CL_SUCCESS;
   cl_int i = 0;
   int copyed = 0;
-  p = cl_program_new(context);
   cl_bool ret = 0;
-
-  if (!check_cl_version_option(p, options)) {
-    err = CL_BUILD_PROGRAM_FAILURE;
-    goto error;
-  }
+  int avialable_program = 0;
 
   //Although we don't use options, but still need check options
   if(!compiler_program_check_opt(options)) {
@@ -618,15 +613,33 @@ cl_program_link(cl_context            context,
     goto error;
   }
 
-  p->opaque = compiler_program_new_gen_program(context->device->device_id, NULL, NULL);
-
-  for(i = 1; i < num_input_programs; i++) {
+  for(i = 0; i < num_input_programs; i++) {
     //num_input_programs >0 and input_programs MUST not NULL, so compare with input_programs[0] directly.
-    if(input_programs[i]->binary_type != input_programs[0]->binary_type) {
-      err = CL_INVALID_OPERATION;
-      goto error;
+    if(input_programs[i]->binary_type == CL_PROGRAM_BINARY_TYPE_LIBRARY ||
+       input_programs[i]->binary_type == CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT) {
+      avialable_program++;
     }
   }
+
+  //None of program contain a compilerd binary or library.
+  if(avialable_program == 0) {
+    goto done;
+  }
+
+  //Must all of program contain a compilerd binary or library.
+  if(avialable_program < num_input_programs) {
+    err = CL_INVALID_OPERATION;
+    goto error;
+  }
+
+  p = cl_program_new(context);
+
+  if (!check_cl_version_option(p, options)) {
+    err = CL_BUILD_PROGRAM_FAILURE;
+    goto error;
+  }
+
+  p->opaque = compiler_program_new_gen_program(context->device->device_id, NULL, NULL);
   for(i = 0; i < num_input_programs; i++) {
     // if program create with llvm binary, need deserilize first to get module.
     if(input_programs[i])
@@ -664,14 +677,14 @@ cl_program_link(cl_context            context,
     copyed += sz;
   }
 done:
-  p->is_built = 1;
-  p->build_status = CL_BUILD_SUCCESS;
+  if(p) p->is_built = 1;
+  if(p) p->build_status = CL_BUILD_SUCCESS;
   if (errcode_ret)
     *errcode_ret = err;
   return p;
 
 error:
-  p->build_status = CL_BUILD_ERROR;
+  if(p) p->build_status = CL_BUILD_ERROR;
   if (errcode_ret)
     *errcode_ret = err;
   return p;

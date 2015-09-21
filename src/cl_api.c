@@ -1019,7 +1019,7 @@ clLinkProgram(cl_context            context,
 
   program = cl_program_link(context, num_input_programs, input_programs, options, &err);
 
-  program->is_built = CL_TRUE;
+  if(program) program->is_built = CL_TRUE;
 
   if (pfn_notify) pfn_notify(program, user_data);
 
