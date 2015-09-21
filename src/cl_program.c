@@ -224,6 +224,10 @@ cl_program_create_from_binary(cl_context             ctx,
   }
 
   program = cl_program_new(ctx);
+  if (UNLIKELY(program == NULL)) {
+      err = CL_OUT_OF_HOST_MEMORY;
+      goto error;
+  }
 
   // TODO:  Need to check the binary format here to return CL_INVALID_BINARY.
   TRY_ALLOC(program->binary, cl_calloc(lengths[0], sizeof(char)));
@@ -379,6 +383,11 @@ cl_program_create_from_llvm(cl_context ctx,
   INVALID_VALUE_IF (file_name == NULL);
 
   program = cl_program_new(ctx);
+  if (UNLIKELY(program == NULL)) {
+      err = CL_OUT_OF_HOST_MEMORY;
+      goto error;
+  }
+
   program->opaque = compiler_program_new_from_llvm(ctx->device->device_id, file_name, NULL, NULL, NULL, program->build_log_max_sz, program->build_log, &program->build_log_sz, 1);
   if (UNLIKELY(program->opaque == NULL)) {
     err = CL_INVALID_PROGRAM;
@@ -417,6 +426,11 @@ cl_program_create_from_source(cl_context ctx,
   // the real compilation step will be done at build time since we do not have
   // yet the compilation options
   program = cl_program_new(ctx);
+  if (UNLIKELY(program == NULL)) {
+      err = CL_OUT_OF_HOST_MEMORY;
+      goto error;
+  }
+
   TRY_ALLOC (lens, cl_calloc(count, sizeof(int32_t)));
   for (i = 0; i < (int) count; ++i) {
     size_t len;
@@ -633,6 +647,10 @@ cl_program_link(cl_context            context,
   }
 
   p = cl_program_new(context);
+  if (UNLIKELY(p == NULL)) {
+      err = CL_OUT_OF_HOST_MEMORY;
+      goto error;
+  }
 
   if (!check_cl_version_option(p, options)) {
     err = CL_BUILD_PROGRAM_FAILURE;
