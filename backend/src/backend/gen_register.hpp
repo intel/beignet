@@ -995,7 +995,13 @@ namespace gbe
     }
 
     static INLINE GenRegister uw1(uint32_t file, uint32_t nr, uint32_t subnr) {
-      return offset(retype(vec1(file, nr, 0), GEN_TYPE_UW), 0, typeSize(GEN_TYPE_UW)*subnr);
+      return GenRegister(file,
+                         nr,
+                         subnr,
+                         GEN_TYPE_UW,
+                         GEN_VERTICAL_STRIDE_0,
+                         GEN_WIDTH_1,
+                         GEN_HORIZONTAL_STRIDE_0);
     }
 
     static INLINE GenRegister ub16(uint32_t file, uint32_t nr, uint32_t subnr) {
