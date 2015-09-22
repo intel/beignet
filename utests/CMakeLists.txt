@@ -204,6 +204,7 @@ set (utests_sources
   enqueue_fill_buf.cpp
   builtin_kernel_max_global_size.cpp
   image_1D_buffer.cpp
+  image_from_buffer.cpp
   compare_image_2d_and_1d_array.cpp
   compiler_fill_image_1d_array.cpp
   compiler_fill_image_2d_array.cpp
