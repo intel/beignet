@@ -419,12 +419,14 @@ namespace gbe
             GenRegister ind_src = GenRegister::to_indirect1xN(GenRegister::retype(src, GEN_TYPE_UB), new_a0[0], 0);
             p->MOV(GenRegister::retype(tmp, GEN_TYPE_UB), ind_src);
             for (int i = 1; i < 4; i++) {
-              ind_src.addr_imm += 8;
+              if (!uniform_src)
+                ind_src.addr_imm += 8;
               p->MOV(GenRegister::offset(GenRegister::retype(tmp, GEN_TYPE_UB), 0, 8*i), ind_src);
             }
             if (simd == 16) {
               for (int i = 0; i < 4; i++) {
-                ind_src.addr_imm += 8;
+                if (!uniform_src)
+                  ind_src.addr_imm += 8;
                 p->MOV(GenRegister::offset(GenRegister::retype(tmp, GEN_TYPE_UB), 1, 8*i), ind_src);
               }
             }
@@ -463,7 +465,8 @@ namespace gbe
             GenRegister ind_src = GenRegister::to_indirect1xN(GenRegister::retype(src, GEN_TYPE_UB), new_a0[0], 0);
             p->MOV(GenRegister::retype(tmp, GEN_TYPE_UB), ind_src);
             for (int i = 1; i < (simd == 8 ? 2 : 4); i++) {
-              ind_src.addr_imm += 8;
+              if (!uniform_src)
+                ind_src.addr_imm += 8;
               p->MOV(GenRegister::offset(GenRegister::retype(tmp, GEN_TYPE_UB), 0, 8*i), ind_src);
             }
             p->pop();
