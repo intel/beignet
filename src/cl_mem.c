@@ -267,6 +267,9 @@ cl_mem_allocate(enum cl_mem_type type,
   mem->flags = flags;
   mem->is_userptr = 0;
   mem->offset = 0;
+  if (mem->type == CL_MEM_IMAGE_TYPE) {
+    cl_mem_image(mem)->is_image_from_buffer = 0;
+  }
 
   if (sz != 0) {
     /* Pinning will require stricter alignment rules */
@@ -308,10 +311,19 @@ cl_mem_allocate(enum cl_mem_type type,
       }
     }
 
-    if (!mem->is_userptr)
+    if(type == CL_MEM_IMAGE_TYPE && host_ptr && ((cl_mem)host_ptr)->magic == CL_MAGIC_MEM_HEADER) {
+      // if the image if created from buffer, should use the bo directly to share same bo.
+      mem->bo = ((cl_mem)host_ptr)->bo;
+      cl_mem_image(mem)->is_image_from_buffer = 1;
+    } else  if (!mem->is_userptr)
       mem->bo = cl_buffer_alloc(bufmgr, "CL memory object", sz, alignment);
 #else
-    mem->bo = cl_buffer_alloc(bufmgr, "CL memory object", sz, alignment);
+    if(type == CL_MEM_IMAGE_TYPE && host_ptr && ((cl_mem)host_ptr)->magic == CL_MAGIC_MEM_HEADER) {
+      // if the image if created from buffer, should use the bo directly to share same bo.
+      mem->bo = ((cl_mem)host_ptr)->bo;
+      cl_mem_image(mem)->is_image_from_buffer = 1;
+    } else
+      mem->bo = cl_buffer_alloc(bufmgr, "CL memory object", sz, alignment);
 #endif
 
     if (UNLIKELY(mem->bo == NULL)) {
@@ -756,6 +768,8 @@ _cl_mem_new_image(cl_context ctx,
       h = (w + ctx->device->image2d_max_width - 1) / ctx->device->image2d_max_width;
       w = w > ctx->device->image2d_max_width ? ctx->device->image2d_max_width : w;
       tiling = CL_NO_TILE;
+    } else if(image_type == CL_MEM_OBJECT_IMAGE2D && data && ((cl_mem)data)->magic == CL_MAGIC_MEM_HEADER) {
+      tiling = CL_NO_TILE;
     } else if (cl_driver_get_ver(ctx->drv) != 6) {
       /* Pick up tiling mode (we do only linear on SNB) */
       tiling = cl_get_default_tiling(ctx->drv);
@@ -804,7 +818,10 @@ _cl_mem_new_image(cl_context ctx,
   /* Tiling requires to align both pitch and height */
   if (tiling == CL_NO_TILE) {
     aligned_pitch = w * bpp;
-    aligned_h  = ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_NO_TILE, 1));
+    if(image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY || image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY)
+      aligned_h  = ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_NO_TILE, 1));
+    else
+      aligned_h = h;
   } else if (tiling == CL_TILE_X) {
     aligned_pitch = ALIGN(w * bpp, cl_buffer_get_tiling_align(ctx, CL_TILE_X, 0));
     aligned_h     = ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_TILE_X, 1));
@@ -814,6 +831,15 @@ _cl_mem_new_image(cl_context ctx,
   }
 
   sz = aligned_pitch * aligned_h * depth;
+  if(image_type == CL_MEM_OBJECT_IMAGE2D && data && ((cl_mem)data)->magic == CL_MAGIC_MEM_HEADER)  {
+    //image 2d created from buffer: per spec, the buffer sz maybe larger than the image 2d.
+    if( ((cl_mem)data)->size >= sz)
+      sz = ((cl_mem)data)->size;
+    else {
+      err = CL_INVALID_IMAGE_SIZE;
+      goto error;
+    }
+  }
 
   /* If sz is large than 128MB, map gtt may fail in some system.
      Because there is no obviours performance drop, disable tiling. */
@@ -825,7 +851,7 @@ _cl_mem_new_image(cl_context ctx,
   }
 
   if (image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER)
-    mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, NULL, &err);
+    mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, data, &err);
   else {
     mem = cl_mem_allocate(CL_MEM_BUFFER1D_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, NULL, &err);
     if (mem != NULL && err == CL_SUCCESS) {
@@ -837,7 +863,11 @@ _cl_mem_new_image(cl_context ctx,
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
 
-  cl_buffer_set_tiling(mem->bo, tiling, aligned_pitch);
+  if(!(image_type == CL_MEM_OBJECT_IMAGE2D && data && ((cl_mem)data)->magic == CL_MAGIC_MEM_HEADER))  {
+    //no need set tiling if image 2d created from buffer since share same bo.
+    cl_buffer_set_tiling(mem->bo, tiling, aligned_pitch);
+  }
+
   if (image_type == CL_MEM_OBJECT_IMAGE1D ||
       image_type == CL_MEM_OBJECT_IMAGE2D ||
       image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
@@ -971,33 +1001,51 @@ _cl_mem_new_image_from_buffer(cl_context ctx,
   if (UNLIKELY((err = cl_image_byte_per_pixel(image_format, &bpp)) != CL_SUCCESS))
     goto error;
 
-  // Per bspec, a image should has a at least 2 line vertical alignment,
-  // thus we can't simply attach a buffer to a 1d image surface which has the same size.
-  // We have to create a new image, and copy the buffer data to this new image.
-  // And replace all the buffer object's reference to this image.
-  image = _cl_mem_new_image(ctx, flags, image_format, image_desc->image_type,
+  if(image_desc->image_type == CL_MEM_OBJECT_IMAGE2D) {
+    image = _cl_mem_new_image(ctx, flags, image_format, image_desc->image_type,
+                             image_desc->image_width, image_desc->image_height, image_desc->image_depth,
+                             image_desc->image_row_pitch, image_desc->image_slice_pitch,
+                             image_desc->buffer, errcode_ret);
+  } else if (image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+    // Per bspec, a image should has a at least 2 line vertical alignment,
+    // thus we can't simply attach a buffer to a 1d image surface which has the same size.
+    // We have to create a new image, and copy the buffer data to this new image.
+    // And replace all the buffer object's reference to this image.
+    image = _cl_mem_new_image(ctx, flags, image_format, image_desc->image_type,
                     mem_buffer->base.size / bpp, 0, 0, 0, 0, NULL, errcode_ret);
+  }
+  else
+    assert(0);
+
   if (image == NULL)
     return NULL;
-  void *src = cl_mem_map(buffer, 0);
-  void *dst = cl_mem_map(image, 1);
-  //
-  // FIXME, we could use copy buffer to image to do this on GPU latter.
-  // currently the copy buffer to image function doesn't support 1D image.
-  // 
-  // There is a potential risk that this buffer was mapped and the caller
-  // still hold the pointer and want to access it again. This scenario is
-  // not explicitly forbidden in the spec, although it should not be permitted.
-  memcpy(dst, src, mem_buffer->base.size);
-  cl_mem_unmap(buffer);
-  cl_mem_unmap(image);
+
+  if(image_desc->image_type == CL_MEM_OBJECT_IMAGE2D)  {
+    //no need copy since the image 2d and buffer share same bo.
+  }
+  else if (image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)  {
+    // FIXME, we could use copy buffer to image to do this on GPU latter.
+    // currently the copy buffer to image function doesn't support 1D image.
+    //
+    // There is a potential risk that this buffer was mapped and the caller
+    // still hold the pointer and want to access it again. This scenario is
+    // not explicitly forbidden in the spec, although it should not be permitted.
+    void *src = cl_mem_map(buffer, 0);
+    void *dst = cl_mem_map(image, 1);
+    memcpy(dst, src, mem_buffer->base.size);
+    cl_mem_unmap(image);
+    cl_mem_unmap(buffer);
+  }
+  else
+    assert(0);
 
   if (err != 0)
     goto error;
  
   // Now replace buffer's bo to this new bo, need to take care of sub buffer
   // case. 
-  cl_mem_replace_buffer(buffer, image->bo);
+  if (image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
+    cl_mem_replace_buffer(buffer, image->bo);
   /* Now point to the right offset if buffer is a SUB_BUFFER. */
   if (buffer->flags & CL_MEM_USE_HOST_PTR)
     image->host_ptr = buffer->host_ptr + offset;
@@ -1025,9 +1073,17 @@ cl_mem_new_image(cl_context context,
 {
   switch (image_desc->image_type) {
   case CL_MEM_OBJECT_IMAGE1D:
-  case CL_MEM_OBJECT_IMAGE2D:
   case CL_MEM_OBJECT_IMAGE3D:
     return _cl_mem_new_image(context, flags, image_format, image_desc->image_type,
+                             image_desc->image_width, image_desc->image_height, image_desc->image_depth,
+                             image_desc->image_row_pitch, image_desc->image_slice_pitch,
+                             host_ptr, errcode_ret);
+  case CL_MEM_OBJECT_IMAGE2D:
+    if(image_desc->buffer)
+      return _cl_mem_new_image_from_buffer(context, flags, image_format,
+                             image_desc, errcode_ret);
+    else
+      return _cl_mem_new_image(context, flags, image_format, image_desc->image_type,
                              image_desc->image_width, image_desc->image_height, image_desc->image_depth,
                              image_desc->image_row_pitch, image_desc->image_slice_pitch,
                              host_ptr, errcode_ret);
@@ -1065,9 +1121,14 @@ cl_mem_delete(cl_mem mem)
   /* iff we are a image, delete the 1d buffer if has. */
   if (IS_IMAGE(mem)) {
     if (cl_mem_image(mem)->buffer_1d) {
-      assert(cl_mem_image(mem)->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER);
-      cl_mem_delete(cl_mem_image(mem)->buffer_1d);
-      cl_mem_image(mem)->buffer_1d = NULL;
+      assert(cl_mem_image(mem)->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER ||
+          cl_mem_image(mem)->image_type == CL_MEM_OBJECT_IMAGE2D);
+        cl_mem_delete(cl_mem_image(mem)->buffer_1d);
+        if(cl_mem_image(mem)->image_type == CL_MEM_OBJECT_IMAGE2D && cl_mem_image(mem)->is_image_from_buffer == 1)
+        {
+          cl_mem_image(mem)->buffer_1d = NULL;
+          mem->bo = NULL;
+        }
     }
   }
 

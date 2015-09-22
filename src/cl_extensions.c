@@ -46,6 +46,8 @@ void check_opt1_extension(cl_extensions_t *extensions)
     if (id == EXT_ID(khr_spir))
       extensions->extensions[id].base.ext_enabled = 1;
 #endif
+    if (id == EXT_ID(khr_image2d_from_buffer))
+      extensions->extensions[id].base.ext_enabled = 1;
   }
 }
 

@@ -126,4 +126,5 @@ DECL_INFO_STRING(driver_version, LIBCL_DRIVER_VERSION_STRING)
 .affinity_domain = 0,
 .partition_type = {0},
 .device_reference_count = 1,
-
+.image_pitch_alignment = 2,
+.image_base_address_alignment = 4096,

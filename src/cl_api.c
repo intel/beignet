@@ -549,8 +549,9 @@ clCreateImage(cl_context context,
     goto error;
   }
   /* buffer refers to a valid buffer memory object if image_type is
-     CL_MEM_OBJECT_IMAGE1D_BUFFER. Otherwise it must be NULL. */
+     CL_MEM_OBJECT_IMAGE1D_BUFFER or CL_MEM_OBJECT_IMAGE2D. Otherwise it must be NULL. */
   if (image_desc->image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER &&
+      image_desc->image_type != CL_MEM_OBJECT_IMAGE2D &&
          image_desc->buffer) {
     err = CL_INVALID_IMAGE_DESCRIPTOR;
     goto error;

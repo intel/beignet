@@ -110,6 +110,7 @@ struct _cl_mem_image {
   size_t tile_x, tile_y;          /* tile offset, used for mipmap images.  */
   size_t offset;                  /* offset for dri_bo, used when it's reloc. */
   cl_mem buffer_1d;               /* if the image is created from buffer, it point to the buffer.*/
+  uint8_t is_image_from_buffer;       /* IMAGE from Buffer*/
 };
 
 struct _cl_mem_gl_image {

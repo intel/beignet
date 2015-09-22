@@ -116,6 +116,8 @@ struct _cl_device_id {
   cl_device_partition_property partition_type[3];
   cl_uint      device_reference_count;
   uint32_t atomic_test_result;
+  uint32_t image_pitch_alignment;
+  uint32_t image_base_address_alignment;
 };
 
 /* Get a device from the given platform */
