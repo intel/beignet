@@ -77,6 +77,7 @@ handle_events(cl_command_queue queue, cl_int num, const cl_event *wait_list,
     if (e->type != CL_COMMAND_USER &&
 	    e->queue->props & CL_QUEUE_PROFILING_ENABLE) {
 	cl_event_get_timestamp(e, CL_PROFILING_COMMAND_QUEUED);
+	cl_event_get_queued_cpu_timestamp(e);
     }
 
     if(event != NULL)
@@ -1490,15 +1491,15 @@ clGetEventProfilingInfo(cl_event             event,
   }
 
   if (param_name == CL_PROFILING_COMMAND_QUEUED) {
-    ret_val = event->timestamp[0];
+    ret_val = event->queued_timestamp;
   } else if (param_name == CL_PROFILING_COMMAND_SUBMIT) {
-    ret_val = event->timestamp[1];
+    ret_val= event->queued_timestamp + cl_event_get_timestamp_delta(event->timestamp[0],event->timestamp[1]);
   } else if (param_name == CL_PROFILING_COMMAND_START) {
     err = cl_event_get_timestamp(event, CL_PROFILING_COMMAND_START);
-    ret_val = event->timestamp[2];
+    ret_val = event->queued_timestamp + cl_event_get_start_timestamp(event);
   } else if (param_name == CL_PROFILING_COMMAND_END) {
     err = cl_event_get_timestamp(event, CL_PROFILING_COMMAND_END);
-    ret_val = event->timestamp[3];
+    ret_val =  event->queued_timestamp + cl_event_get_end_timestamp(event);
   } else {
     err = CL_INVALID_VALUE;
     goto error;

@@ -70,6 +70,7 @@ struct _cl_event {
   enqueue_callback*  waits_head;  /* The head of enqueues list wait on this event */
   cl_bool            emplict;     /* Identify this event whether created by api emplict*/
   cl_ulong           timestamp[4];/* The time stamps for profiling. */
+  cl_ulong	     queued_timestamp;
 };
 
 /* Create a new event object */
@@ -96,6 +97,16 @@ void cl_event_update_status(cl_event, cl_int);
 cl_int cl_event_marker_with_wait_list(cl_command_queue, cl_uint, const cl_event *,  cl_event*);
 /* Create the barrier event */
 cl_int cl_event_barrier_with_wait_list(cl_command_queue, cl_uint, const cl_event *,  cl_event*);
+/* Get the cpu time */
+cl_ulong cl_event_get_cpu_timestamp(cl_ulong *cpu_time);
+/*Get the cpu time for queued*/
+cl_int cl_event_get_queued_cpu_timestamp(cl_event event);
+/*get timestamp delate between end and start*/
+cl_ulong cl_event_get_timestamp_delta(cl_ulong start_timestamp,cl_ulong end_timestamp);
+/*Get start time stamp*/
+cl_ulong cl_event_get_start_timestamp(cl_event event);
+/*Get end time stamp*/
+cl_ulong cl_event_get_end_timestamp(cl_event event);
 /* Do the event profiling */
 cl_int cl_event_get_timestamp(cl_event event, cl_profiling_info param_name);
 /* insert the user event */
