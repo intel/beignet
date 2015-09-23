@@ -613,6 +613,61 @@ cl_int cl_event_barrier_with_wait_list(cl_command_queue queue,
   return CL_SUCCESS;
 }
 
+cl_ulong cl_event_get_cpu_timestamp(cl_ulong *cpu_time)
+{
+  struct timespec ts;
+
+ if(clock_gettime(CLOCK_MONOTONIC_RAW,&ts) != 0){
+  printf("CPU Timmer error\n");
+  return CL_FALSE;
+  }
+  *cpu_time = (1000000000.0) * (cl_ulong) ts.tv_sec + (cl_ulong) ts.tv_nsec;
+
+  return CL_SUCCESS;
+}
+
+cl_int cl_event_get_queued_cpu_timestamp(cl_event event)
+{
+  cl_int ret_val;
+
+  ret_val = cl_event_get_cpu_timestamp(&event->queued_timestamp);
+
+  return ret_val;
+}
+
+cl_ulong cl_event_get_timestamp_delta(cl_ulong start_timestamp,cl_ulong end_timestamp)
+{
+  cl_ulong ret_val;
+
+  if(end_timestamp > start_timestamp){
+   ret_val = end_timestamp - start_timestamp;
+   }
+  else {
+   /*if start time stamp is greater than end timstamp then set ret value to max*/
+   ret_val = ((cl_ulong) 1 << 32);
+  }
+
+  return ret_val;
+}
+
+cl_ulong cl_event_get_start_timestamp(cl_event event)
+{
+  cl_ulong ret_val;
+
+   ret_val = cl_event_get_timestamp_delta(event->timestamp[0],event->timestamp[2]);
+
+  return ret_val;
+}
+
+cl_ulong cl_event_get_end_timestamp(cl_event event)
+{
+ cl_ulong ret_val;
+
+  ret_val = cl_event_get_timestamp_delta(event->timestamp[0],event->timestamp[3]);
+
+  return ret_val;
+}
+
 cl_int cl_event_get_timestamp(cl_event event, cl_profiling_info param_name)
 {
   cl_ulong ret_val = 0;
