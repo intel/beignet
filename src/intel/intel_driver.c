@@ -85,8 +85,6 @@ intel_driver_delete(intel_driver_t *driver)
   if (driver == NULL)
     return;
 
-  if (driver->bufmgr)
-    drm_intel_bufmgr_destroy(driver->bufmgr);
   cl_free(driver);
 }
 
@@ -257,6 +255,10 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
 static void
 intel_driver_close(intel_driver_t *intel)
 {
+  //Due to the drm change about the test usrptr, we need to destroy the bufmgr
+  //befor the driver was closed, otherwise the test usrptr will not be freed.
+  if (intel->bufmgr)
+    drm_intel_bufmgr_destroy(intel->bufmgr);
 #ifdef HAS_X11
   if(intel->dri_ctx) dri_state_release(intel->dri_ctx);
   if(intel->x11_display) XCloseDisplay(intel->x11_display);
