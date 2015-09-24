@@ -2220,6 +2220,8 @@ namespace gbe
 
             ir::BasicBlock::const_iterator iter = ir::BasicBlock::const_iterator(phiCopySrcDefInsn);
             ir::BasicBlock::const_iterator iterE = bb->end();
+
+            iter++;
             // check no use of phi in this basicblock between [phiCopySrc def, bb end]
             bool phiPhiCopySrcInterfere = false;
             while (iter != iterE) {
