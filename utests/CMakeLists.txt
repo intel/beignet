@@ -213,6 +213,7 @@ set (utests_sources
   vload_bench.cpp
   runtime_use_host_ptr_buffer.cpp
   runtime_alloc_host_ptr_buffer.cpp
+  runtime_use_host_ptr_image.cpp
   compiler_get_sub_group_size.cpp
   compiler_get_sub_group_id.cpp
   compiler_sub_group_shuffle.cpp)
