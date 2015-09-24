@@ -577,13 +577,102 @@ namespace ir {
     }
   }
 
+  static void getBlockDefInsns(const BasicBlock *bb, const DefSet *dSet, Register r, set <const Instruction *> &defInsns) {
+    for (auto def : *dSet) {
+      auto defInsn = def->getInstruction();
+      if (defInsn->getParent() == bb)
+        defInsns.insert(defInsn);
+    }
+  }
+
+  static bool liveinInterfere(const BasicBlock *bb, const Instruction *defInsn, Register r1) {
+    BasicBlock::const_iterator iter = BasicBlock::const_iterator(defInsn);
+    BasicBlock::const_iterator iterE = bb->end();
+
+    if (defInsn->getOpcode() == OP_MOV &&
+        defInsn->getSrc(0) == r1)
+      return false;
+    while (iter != iterE) {
+      const Instruction *insn = iter.node();
+      for (unsigned i = 0; i < insn->getDstNum(); i++) {
+        Register dst = insn->getDst(i);
+        if (dst == r1)
+          return false;
+      }
+      for (unsigned i = 0; i < insn->getSrcNum(); i++) {
+        ir::Register src = insn->getSrc(i);
+        if (src == r1)
+          return true;
+      }
+      ++iter;
+    }
+
+    return false;
+  }
+
+  // r0 and r1 both are in Livein set.
+  // Only if r0/r1 is used after r1/r0 has been modified.
+  bool FunctionDAG::interfereLivein(const BasicBlock *bb, Register r0, Register r1) const {
+    set <const Instruction *> defInsns0, defInsns1;
+    auto defSet0 = getRegDef(r0);
+    auto defSet1 = getRegDef(r1);
+    getBlockDefInsns(bb, defSet0, r0, defInsns0);
+    getBlockDefInsns(bb, defSet1, r1, defInsns1);
+    if (defInsns0.size() == 0 && defInsns1.size() == 0)
+      return false;
+
+    for (auto insn : defInsns0) {
+      if (liveinInterfere(bb, insn, r1))
+        return true;
+    }
+
+    for (auto insn : defInsns1) {
+      if (liveinInterfere(bb, insn, r0))
+        return true;
+    }
+    return false;
+  }
+
+  // r0 and r1 both are in Liveout set.
+  // Only if the last definition of r0/r1 is a MOV r0, r1 or MOV r1, r0,
+  // it will not introduce interfering in this BB.
+  bool FunctionDAG::interfereLiveout(const BasicBlock *bb, Register r0, Register r1) const {
+    set <const Instruction *> defInsns0, defInsns1;
+    auto defSet0 = getRegDef(r0);
+    auto defSet1 = getRegDef(r1);
+    getBlockDefInsns(bb, defSet0, r0, defInsns0);
+    getBlockDefInsns(bb, defSet1, r1, defInsns1);
+    if (defInsns0.size() == 0 && defInsns1.size() == 0)
+      return false;
+
+    BasicBlock::const_iterator iter = --bb->end();
+    BasicBlock::const_iterator iterE = bb->begin();
+    do {
+      const Instruction *insn = iter.node();
+      for (unsigned i = 0; i < insn->getDstNum(); i++) {
+        Register dst = insn->getDst(i);
+        if (dst == r0 || dst == r1) {
+          if (insn->getOpcode() != OP_MOV)
+            return true;
+          if (dst == r0 && insn->getSrc(0) != r1)
+            return true;
+          if (dst == r1 && insn->getSrc(0) != r0)
+            return true;
+          return false;
+        }
+      }
+      --iter;
+    } while (iter != iterE);
+    return false;
+  }
+
+  // check instructions after the def of r0, if there is any def of r1, then no interefere for this
+  // range. Otherwise, if there is any use of r1, then return true.
   bool FunctionDAG::interfere(const BasicBlock *bb, Register inReg, Register outReg) const {
     auto dSet = getRegDef(outReg);
-    bool visited = false;
     for (auto &def : *dSet) {
       auto defInsn = def->getInstruction();
       if (defInsn->getParent() == bb) {
-        visited = true;
         if (defInsn->getOpcode() == OP_MOV && defInsn->getSrc(0) == inReg)
           continue;
         BasicBlock::const_iterator iter = BasicBlock::const_iterator(defInsn);
@@ -602,19 +691,17 @@ namespace ir {
         }
       }
     }
-    // We must visit the outReg at least once. Otherwise, something going wrong.
-    GBE_ASSERT(visited);
     return false;
   }
 
   bool FunctionDAG::interfere(const Liveness &liveness, Register r0, Register r1) const {
-    // There are two interfering cases:
-    //   1. Two registers are in the Livein set of the same BB.
-    //   2. Two registers are in the Liveout set of the same BB.
     // If there are no any intersection BB, they are not interfering to each other.
-    // If they are some intersection BBs, but one is only in the LiveIn and the other is
-    // only in the Liveout, then we need to check whether they interefere each other in
-    // that BB.
+    // There are three different interfering cases which need further checking:
+    //   1. Both registers are in the LiveIn register set.
+    //   2. Both registers are in the LiveOut register set.
+    //   3. One is in LiveIn set and the Other is in LiveOut set.
+    // For the above 3 cases, we need 3 different ways to check whether they really
+    // interfering to each other.
     set<const BasicBlock *> bbSet0;
     set<const BasicBlock *> bbSet1;
     getRegUDBBs(r0, bbSet0);
@@ -624,20 +711,31 @@ namespace ir {
     set<const BasicBlock *> liveOutBBSet0, liveOutBBSet1;
     getLivenessBBs(liveness, r0, bbSet0, liveInBBSet0, liveOutBBSet0);
     getLivenessBBs(liveness, r1, bbSet1, liveInBBSet1, liveOutBBSet1);
+    GBE_ASSERT(liveInBBSet0.size() + liveOutBBSet0.size() > 0);
+    GBE_ASSERT(liveInBBSet1.size() + liveOutBBSet1.size() > 0);
 
     set<const BasicBlock *> intersect;
     set_intersection(liveInBBSet0.begin(), liveInBBSet0.end(),
                      liveInBBSet1.begin(), liveInBBSet1.end(),
                      std::inserter(intersect, intersect.begin()));
-    if (intersect.size() != 0)
-      return true;
+    for (auto bb : intersect) {
+      if (interfereLivein(bb, r0, r1))
+        return true;
+    }
     intersect.clear();
-    set_intersection(liveOutBBSet0.begin(), liveOutBBSet0.end(),
-                     liveOutBBSet1.begin(), liveOutBBSet1.end(),
-                     std::inserter(intersect, intersect.begin()));
-    if (intersect.size() != 0)
-      return true;
+    for (auto &bb: liveOutBBSet0) {
+      if (liveness.getBlockInfo(bb).inLiveOut(r1))
+        intersect.insert(bb);
+    }
 
+    for (auto bb: liveOutBBSet1) {
+      if (liveness.getBlockInfo(bb).inLiveOut(r0))
+        intersect.insert(bb);
+    }
+    for (auto bb : intersect) {
+      if (interfereLiveout(bb, r0, r1))
+        return true;
+    }
     set<const BasicBlock *> OIIntersect, IOIntersect;
     set_intersection(liveOutBBSet0.begin(), liveOutBBSet0.end(),
                      liveInBBSet1.begin(), liveInBBSet1.end(),
@@ -647,7 +745,6 @@ namespace ir {
       if (interfere(bb, r1, r0))
         return true;
     }
-
     set_intersection(liveInBBSet0.begin(), liveInBBSet0.end(),
                      liveOutBBSet1.begin(), liveOutBBSet1.end(),
                      std::inserter(IOIntersect, IOIntersect.begin()));
