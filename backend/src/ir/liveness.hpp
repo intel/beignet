@@ -116,6 +116,13 @@ namespace ir {
         }
       }
     }
+
+    // remove some registers from the liveness information.
+    void removeRegs(const set<Register> &removes);
+
+    // replace some registers according to (from, to) register map.
+    void replaceRegs(const map<Register, Register> &replaceMap);
+
   private:
     /*! Store the liveness of all blocks */
     Info liveness;

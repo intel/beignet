@@ -59,6 +59,43 @@ namespace ir {
     }
   }
 
+  void Liveness::removeRegs(const set<Register> &removes) {
+    for (auto &pair : liveness) {
+      BlockInfo &info = *(pair.second);
+      for (auto reg : removes) {
+        if (info.liveOut.contains(reg))
+          info.liveOut.erase(reg);
+        if (info.upwardUsed.contains(reg))
+          info.upwardUsed.erase(reg);
+      }
+    }
+  }
+
+  void Liveness::replaceRegs(const map<Register, Register> &replaceMap) {
+
+    for (auto &pair : liveness) {
+      BlockInfo &info = *pair.second;
+      BasicBlock *bb = const_cast<BasicBlock *>(&info.bb);
+      for (auto &pair : replaceMap) {
+        Register from = pair.first;
+        Register to = pair.second;
+        if (info.liveOut.contains(from)) {
+          info.liveOut.erase(from);
+          info.liveOut.insert(to);
+          bb->definedPhiRegs.insert(to);
+        }
+        if (info.upwardUsed.contains(from)) {
+          info.upwardUsed.erase(from);
+          info.upwardUsed.insert(to);
+        }
+        if (info.varKill.contains(from)) {
+          info.varKill.erase(from);
+          info.varKill.insert(to);
+        }
+      }
+    }
+  }
+
   Liveness::~Liveness(void) {
     for (auto &pair : liveness) GBE_SAFE_DELETE(pair.second);
   }
