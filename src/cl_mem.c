@@ -288,7 +288,6 @@ cl_mem_allocate(enum cl_mem_type type,
       int cacheline_size = 0;
       cl_get_device_info(ctx->device, CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, sizeof(cacheline_size), &cacheline_size, NULL);
 
-      /* currently only cl buf is supported, will add cl image support later */
       if (type == CL_MEM_BUFFER_TYPE) {
         if (flags & CL_MEM_USE_HOST_PTR) {
           assert(host_ptr != NULL);
@@ -310,6 +309,18 @@ cl_mem_allocate(enum cl_mem_type type,
           mem->host_ptr = internal_host_ptr;
           mem->is_userptr = 1;
           mem->bo = cl_buffer_alloc_userptr(bufmgr, "CL userptr memory object", internal_host_ptr, alignedSZ, 0);
+          bufCreated = 1;
+        }
+      } else if (type == CL_MEM_IMAGE_TYPE) {
+        if (host_ptr != NULL) {
+          assert(flags & CL_MEM_USE_HOST_PTR);
+          assert(!is_tiled);
+          assert(ALIGN((unsigned long)host_ptr, cacheline_size) == (unsigned long)host_ptr);
+          void* aligned_host_ptr = (void*)(((unsigned long)host_ptr) & (~(page_size - 1)));
+          mem->offset = host_ptr - aligned_host_ptr;
+          mem->is_userptr = 1;
+          size_t aligned_sz = ALIGN((mem->offset + sz), page_size);
+          mem->bo = cl_buffer_alloc_userptr(bufmgr, "CL userptr memory object", aligned_host_ptr, aligned_sz, 0);
           bufCreated = 1;
         }
       }
@@ -823,6 +834,16 @@ _cl_mem_new_image(cl_context ctx,
 
 #undef DO_IMAGE_ERROR
 
+  uint8_t enableUserptr = 0;
+  if (ctx->device->host_unified_memory && data != NULL && (flags & CL_MEM_USE_HOST_PTR)) {
+    int cacheline_size = 0;
+    cl_get_device_info(ctx->device, CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, sizeof(cacheline_size), &cacheline_size, NULL);
+    if (ALIGN((unsigned long)data, cacheline_size) == (unsigned long)data) {  //might more conditions here
+      tiling = CL_NO_TILE;
+      enableUserptr = 1;
+    }
+  }
+
   /* Tiling requires to align both pitch and height */
   if (tiling == CL_NO_TILE) {
     aligned_pitch = w * bpp;
@@ -861,8 +882,12 @@ _cl_mem_new_image(cl_context ctx,
   if (image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
     if (image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL)
       mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, NULL, buffer, &err);
-    else
-      mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, data, NULL, &err);
+    else {
+      if (enableUserptr)
+        mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, data, NULL, &err);
+      else
+        mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, NULL, NULL, &err);
+    }
   } else {
     mem = cl_mem_allocate(CL_MEM_BUFFER1D_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, NULL, NULL, &err);
     if (mem != NULL && err == CL_SUCCESS) {
@@ -892,13 +917,15 @@ _cl_mem_new_image(cl_context ctx,
                     0, 0, 0);
 
   /* Copy the data if required */
-  if (flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR)) {
+  if (flags & CL_MEM_COPY_HOST_PTR)
     cl_mem_copy_image(cl_mem_image(mem), pitch, slice_pitch, data);
-    if (flags & CL_MEM_USE_HOST_PTR) {
-      mem->host_ptr = data;
-      cl_mem_image(mem)->host_row_pitch = pitch;
-      cl_mem_image(mem)->host_slice_pitch = slice_pitch;
-    }
+
+  if (flags & CL_MEM_USE_HOST_PTR) {
+    mem->host_ptr = data;
+    cl_mem_image(mem)->host_row_pitch = pitch;
+    cl_mem_image(mem)->host_slice_pitch = slice_pitch;
+    if (!enableUserptr)
+      cl_mem_copy_image(cl_mem_image(mem), pitch, slice_pitch, data);
   }
 
 exit:

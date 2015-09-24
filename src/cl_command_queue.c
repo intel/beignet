@@ -133,19 +133,16 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k)
     struct _cl_mem_image *image;
     assert(interp_kernel_get_arg_type(k->opaque, id) == GBE_ARG_IMAGE);
 
-    //currently, user ptr is not supported for cl image, so offset should be always zero
-    assert(k->args[id].mem->offset == 0);
-
     image = cl_mem_image(k->args[id].mem);
     set_image_info(k->curbe, &k->images[i], image);
-    cl_gpgpu_bind_image(gpgpu, k->images[i].idx, image->base.bo, image->offset,
+    cl_gpgpu_bind_image(gpgpu, k->images[i].idx, image->base.bo, image->offset + k->args[id].mem->offset,
                         image->intel_fmt, image->image_type, image->bpp,
                         image->w, image->h, image->depth,
                         image->row_pitch, image->slice_pitch, (cl_gpgpu_tiling)image->tiling);
     // TODO, this workaround is for GEN7/GEN75 only, we may need to do it in the driver layer
     // on demand.
     if (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
-      cl_gpgpu_bind_image(gpgpu, k->images[i].idx + BTI_WORKAROUND_IMAGE_OFFSET, image->base.bo, image->offset,
+      cl_gpgpu_bind_image(gpgpu, k->images[i].idx + BTI_WORKAROUND_IMAGE_OFFSET, image->base.bo, image->offset + k->args[id].mem->offset,
                           image->intel_fmt, image->image_type, image->bpp,
                           image->w, image->h, image->depth,
                           image->row_pitch, image->slice_pitch, (cl_gpgpu_tiling)image->tiling);
