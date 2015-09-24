@@ -2870,7 +2870,7 @@ namespace gbe
     if (OCL_OPTIMIZE_PHI_MOVES) {
       map <ir::Register, ir::Register> replaceMap, redundantPhiCopyMap;
       this->optimizePhiCopy(liveness, fn, replaceMap, redundantPhiCopyMap);
-      //this->postPhiCopyOptimization(liveness, fn, replaceMap, redundantPhiCopyMap);
+      this->postPhiCopyOptimization(liveness, fn, replaceMap, redundantPhiCopyMap);
       this->removeMOVs(liveness, fn);
     }
   }
