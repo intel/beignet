@@ -558,6 +558,106 @@ namespace ir {
     return it->second;
   }
 
+  void FunctionDAG::getRegUDBBs(Register r, set<const BasicBlock *> &BBs) const{
+    auto dSet = getRegDef(r);
+    for (auto &def : *dSet)
+      BBs.insert(def->getInstruction()->getParent());
+    auto uSet = getRegUse(r);
+    for (auto &use : *uSet)
+      BBs.insert(use->getInstruction()->getParent());
+  }
+
+  static void getLivenessBBs(const Liveness &liveness, Register r, const set<const BasicBlock *> &useDefSet,
+                             set<const BasicBlock *> &liveInSet, set<const BasicBlock *> &liveOutSet){
+    for (auto bb : useDefSet) {
+      if (liveness.getLiveOut(bb).contains(r))
+        liveOutSet.insert(bb);
+      if (liveness.getLiveIn(bb).contains(r))
+        liveInSet.insert(bb);
+    }
+  }
+
+  bool FunctionDAG::interfere(const BasicBlock *bb, Register inReg, Register outReg) const {
+    auto dSet = getRegDef(outReg);
+    bool visited = false;
+    for (auto &def : *dSet) {
+      auto defInsn = def->getInstruction();
+      if (defInsn->getParent() == bb) {
+        visited = true;
+        if (defInsn->getOpcode() == OP_MOV && defInsn->getSrc(0) == inReg)
+          continue;
+        BasicBlock::const_iterator iter = BasicBlock::const_iterator(defInsn);
+        BasicBlock::const_iterator iterE = bb->end();
+        iter++;
+        // check no use of phi in this basicblock between [phiCopySrc def, bb end]
+        while (iter != iterE) {
+          const ir::Instruction *insn = iter.node();
+          // check phiUse
+          for (unsigned i = 0; i < insn->getSrcNum(); i++) {
+            ir::Register src = insn->getSrc(i);
+            if (src == inReg)
+              return true;
+          }
+          ++iter;
+        }
+      }
+    }
+    // We must visit the outReg at least once. Otherwise, something going wrong.
+    GBE_ASSERT(visited);
+    return false;
+  }
+
+  bool FunctionDAG::interfere(const Liveness &liveness, Register r0, Register r1) const {
+    // There are two interfering cases:
+    //   1. Two registers are in the Livein set of the same BB.
+    //   2. Two registers are in the Liveout set of the same BB.
+    // If there are no any intersection BB, they are not interfering to each other.
+    // If they are some intersection BBs, but one is only in the LiveIn and the other is
+    // only in the Liveout, then we need to check whether they interefere each other in
+    // that BB.
+    set<const BasicBlock *> bbSet0;
+    set<const BasicBlock *> bbSet1;
+    getRegUDBBs(r0, bbSet0);
+    getRegUDBBs(r1, bbSet1);
+
+    set<const BasicBlock *> liveInBBSet0, liveInBBSet1;
+    set<const BasicBlock *> liveOutBBSet0, liveOutBBSet1;
+    getLivenessBBs(liveness, r0, bbSet0, liveInBBSet0, liveOutBBSet0);
+    getLivenessBBs(liveness, r1, bbSet1, liveInBBSet1, liveOutBBSet1);
+
+    set<const BasicBlock *> intersect;
+    set_intersection(liveInBBSet0.begin(), liveInBBSet0.end(),
+                     liveInBBSet1.begin(), liveInBBSet1.end(),
+                     std::inserter(intersect, intersect.begin()));
+    if (intersect.size() != 0)
+      return true;
+    intersect.clear();
+    set_intersection(liveOutBBSet0.begin(), liveOutBBSet0.end(),
+                     liveOutBBSet1.begin(), liveOutBBSet1.end(),
+                     std::inserter(intersect, intersect.begin()));
+    if (intersect.size() != 0)
+      return true;
+
+    set<const BasicBlock *> OIIntersect, IOIntersect;
+    set_intersection(liveOutBBSet0.begin(), liveOutBBSet0.end(),
+                     liveInBBSet1.begin(), liveInBBSet1.end(),
+                     std::inserter(OIIntersect, OIIntersect.begin()));
+
+    for (auto bb : OIIntersect) {
+      if (interfere(bb, r1, r0))
+        return true;
+    }
+
+    set_intersection(liveInBBSet0.begin(), liveInBBSet0.end(),
+                     liveOutBBSet1.begin(), liveOutBBSet1.end(),
+                     std::inserter(IOIntersect, IOIntersect.begin()));
+    for (auto bb : IOIntersect) {
+      if (interfere(bb, r0, r1))
+        return true;
+    }
+    return false;
+  }
+
   std::ostream &operator<< (std::ostream &out, const FunctionDAG &dag) {
     const Function &fn = dag.getFunction();
 
