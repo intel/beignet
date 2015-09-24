@@ -201,14 +201,14 @@ ADD_CUSTOM_COMMAND(OUTPUT ${OCL_OBJECT_DIR}/beignet.bc
 
 ADD_CUSTOM_COMMAND(OUTPUT ${OCL_OBJECT_DIR}/beignet.local.pch
     COMMAND mkdir -p ${OCL_OBJECT_DIR}
-    COMMAND ${CLANG_EXECUTABLE} -cc1 ${CLANG_OCL_FLAGS} -triple spir -I ${OCL_OBJECT_DIR}/include/ -emit-pch -x cl ${OCL_OBJECT_DIR}/include/ocl.h -o ${OCL_OBJECT_DIR}/beignet.local.pch
+    COMMAND ${CLANG_EXECUTABLE} -cc1 ${CLANG_OCL_FLAGS} -triple spir -I ${OCL_OBJECT_DIR}/include/ -emit-pch -x cl -cl-std=CL2.0 ${OCL_OBJECT_DIR}/include/ocl.h -o ${OCL_OBJECT_DIR}/beignet.local.pch
     DEPENDS ${OCL_HEADER_FILES}
     COMMENT "Generate the pch file: ${OCL_OBJECT_DIR}/beignet.local.pch"
     )
 
 ADD_CUSTOM_COMMAND(OUTPUT ${OCL_OBJECT_DIR}/beignet.pch
     COMMAND mkdir -p ${OCL_OBJECT_DIR}
-    COMMAND ${CLANG_EXECUTABLE} -cc1 ${CLANG_OCL_FLAGS} -triple spir -I ${OCL_OBJECT_DIR}/include/ --relocatable-pch -emit-pch -isysroot ${LIBOCL_BINARY_DIR} -x cl ${OCL_OBJECT_DIR}/include/ocl.h -o ${OCL_OBJECT_DIR}/beignet.pch
+    COMMAND ${CLANG_EXECUTABLE} -cc1 ${CLANG_OCL_FLAGS} -triple spir -I ${OCL_OBJECT_DIR}/include/ --relocatable-pch -emit-pch -isysroot ${LIBOCL_BINARY_DIR} -x cl -cl-std=CL2.0 ${OCL_OBJECT_DIR}/include/ocl.h -o ${OCL_OBJECT_DIR}/beignet.pch
     DEPENDS ${OCL_HEADER_FILES}
     COMMENT "Generate the pch file: ${OCL_OBJECT_DIR}/beignet.pch"
     )

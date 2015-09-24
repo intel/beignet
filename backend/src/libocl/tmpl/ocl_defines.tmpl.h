@@ -18,10 +18,11 @@
 #ifndef __OCL_COMMON_DEF_H__
 #define __OCL_COMMON_DEF_H__
 
-#define __OPENCL_VERSION__ 120
+#define __OPENCL_VERSION__ 200
 #define __CL_VERSION_1_0__ 100
 #define __CL_VERSION_1_1__ 110
 #define __CL_VERSION_1_2__ 120
+#define __CL_VERSION_2_0__ 200
 #define __ENDIAN_LITTLE__ 1
 #define __IMAGE_SUPPORT__ 1
 #define __kernel_exec(X, TYPE) __kernel __attribute__((work_group_size_hint(X,1,1))) \

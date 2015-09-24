@@ -740,6 +740,8 @@ namespace gbe {
             clOpt.push_back("-D__OPENCL_C_VERSION__=110");
           else if (str == "-cl-std=CL1.2")
             clOpt.push_back("-D__OPENCL_C_VERSION__=120");
+          else if (str == "-cl-std=CL2.0")
+            clOpt.push_back("-D__OPENCL_C_VERSION__=200");
           else {
             if (err && stringSize > 0 && errSize)
               *errSize = snprintf(err, stringSize, "Invalid build option: %s\n", str.c_str());
@@ -771,8 +773,8 @@ namespace gbe {
     }
 
     if (useDefaultCLCVersion) {
-      clOpt.push_back("-D__OPENCL_C_VERSION__=120");
-      clOpt.push_back("-cl-std=CL1.2");
+      clOpt.push_back("-D__OPENCL_C_VERSION__=200");
+      clOpt.push_back("-cl-std=CL2.0");
     }
     //for clCompilerProgram usage.
     if(temp_header_path){
