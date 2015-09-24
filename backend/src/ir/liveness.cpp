@@ -27,7 +27,7 @@
 namespace gbe {
 namespace ir {
 
-  Liveness::Liveness(Function &fn) : fn(fn) {
+  Liveness::Liveness(Function &fn, bool isInGenBackend) : fn(fn) {
     // Initialize UEVar and VarKill for each block
     fn.foreachBlock([this](const BasicBlock &bb) {
       this->initBlock(bb);
@@ -48,12 +48,15 @@ namespace ir {
     }
     // extend register (def in loop, use out-of-loop) liveness to the whole loop
     set<Register> extentRegs;
-    this->computeExtraLiveInOut(extentRegs);
-    // analyze uniform values. The extentRegs contains all the values which is
-    // defined in a loop and use out-of-loop which could not be a uniform. The reason
-    // is that when it reenter the second time, it may active different lanes. So
-    // reenter many times may cause it has different values in different lanes.
-    this->analyzeUniform(&extentRegs);
+    // Only in Gen backend we need to take care of extra live out analysis.
+    if (isInGenBackend) {
+      this->computeExtraLiveInOut(extentRegs);
+      // analyze uniform values. The extentRegs contains all the values which is
+      // defined in a loop and use out-of-loop which could not be a uniform. The reason
+      // is that when it reenter the second time, it may active different lanes. So
+      // reenter many times may cause it has different values in different lanes.
+      this->analyzeUniform(&extentRegs);
+    }
   }
 
   Liveness::~Liveness(void) {

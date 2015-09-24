@@ -48,7 +48,7 @@ namespace ir {
   class Liveness : public NonCopyable
   {
   public:
-    Liveness(Function &fn);
+    Liveness(Function &fn, bool isInGenBackend = false);
     ~Liveness(void);
     /*! Set of variables used upwards in the block (before a definition) */
     typedef set<Register> UEVar;
