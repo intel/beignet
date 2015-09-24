@@ -154,25 +154,6 @@ namespace ir {
           workSet.insert(prevInfo);
       }
     };
-#if 0
-    fn.foreachBlock([this](const BasicBlock &bb){
-      printf("label %d:\n", bb.getLabelIndex());
-      BlockInfo *info = liveness[&bb];
-      auto &outVarSet = info->liveOut;
-      auto &inVarSet = info->upwardUsed;
-      printf("\n\tin Lives: ");
-      for (auto inVar : inVarSet) {
-        printf("%d ", inVar);
-      }
-      printf("\n");
-      printf("\tout Lives: ");
-      for (auto outVar : outVarSet) {
-        printf("%d ", outVar);
-      }
-      printf("\n");
-
-    });
-#endif
    }
 /*
   As we run in SIMD mode with prediction mask to indicate active lanes.
@@ -216,27 +197,28 @@ namespace ir {
         }
       }
     }
-#if 0
-    fn.foreachBlock([this](const BasicBlock &bb){
-      printf("label %d:\n", bb.getLabelIndex());
-      BlockInfo *info = liveness[&bb];
-      auto &outVarSet = info->liveOut;
-      auto &inVarSet = info->upwardUsed;
-      printf("\n\tLive Ins: ");
-      for (auto inVar : inVarSet) {
-        printf("%d ", inVar);
-      }
-      printf("\n");
-      printf("\tLive outs: ");
-      for (auto outVar : outVarSet) {
-        printf("%d ", outVar);
-      }
-      printf("\n");
-
-    });
-#endif
    }
 
+  std::ostream &operator<< (std::ostream &out, const Liveness &live) {
+    const Function &fn = live.getFunction();
+    fn.foreachBlock([&] (const BasicBlock &bb) {
+      out << std::endl;
+      out << "Label $" << bb.getLabelIndex() << std::endl;
+      const Liveness::BlockInfo &bbInfo = live.getBlockInfo(&bb);
+      out << "liveIn:" << std::endl;
+      for (auto &x: bbInfo.upwardUsed) {
+        out << x << " ";
+      }
+      out << std::endl << "liveOut:" << std::endl;
+      for (auto &x : bbInfo.liveOut)
+        out << x << " ";
+      out << std::endl << "varKill:" << std::endl;
+      for (auto &x : bbInfo.varKill)
+        out << x << " ";
+      out << std::endl;
+    });
+    return out;
+  }
 
   /*! To pretty print the livfeness info */
   static const uint32_t prettyInsnStrSize = 48;
