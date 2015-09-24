@@ -2149,6 +2149,11 @@ namespace gbe
     // destinations)
     uint32_t insnID = 2;
     bb.foreach([&](ir::Instruction &insn) {
+      if (insn.getOpcode() == ir::OP_MOV &&
+          insn.getDst(0) == insn.getSrc(0)) {
+        insn.remove();
+        return;
+      }
       const uint32_t dstNum = insn.getDstNum();
       const uint32_t srcNum = insn.getSrcNum();
       for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
@@ -2245,8 +2250,7 @@ namespace gbe
               ++iter;
             }
             if (!phiPhiCopySrcInterfere) {
-              // phiCopy source can be coaleased with phiCopy
-              const_cast<Instruction *>(phiCopyDefInsn)->remove();
+              replaceSrc(const_cast<Instruction *>(phiCopyDefInsn), phiCopySrc, phiCopy);
 
               for (auto &s : *phiCopySrcDef) {
                 const Instruction *phiSrcDefInsn = s->getInstruction();
@@ -2300,7 +2304,7 @@ namespace gbe
       // coalease phi and phiCopy
       if (isOpt) {
         for (auto &x : *phiDef) {
-          const_cast<Instruction *>(x->getInstruction())->remove();
+          replaceDst(const_cast<Instruction *>(x->getInstruction()), phi, phiCopy);
         }
         for (auto &x : *phiUse) {
           const Instruction *phiUseInsn = x->getInstruction();
@@ -2361,21 +2365,11 @@ namespace gbe
           const ir::UseSet *phiCopySrcUse = dag->getRegUse(phiCopySrc);
           for (auto &s : *phiCopySrcDef) {
             const Instruction *phiSrcDefInsn = s->getInstruction();
-            if (phiSrcDefInsn->getOpcode() == ir::OP_MOV &&
-                phiSrcDefInsn->getSrc(0) == phiCopy) {
-               const_cast<Instruction *>(phiSrcDefInsn)->remove();
-               continue;
-            }
             replaceDst(const_cast<Instruction *>(phiSrcDefInsn), phiCopySrc, phiCopy);
           }
 
           for (auto &s : *phiCopySrcUse) {
             const Instruction *phiSrcUseInsn = s->getInstruction();
-            if (phiSrcUseInsn->getOpcode() == ir::OP_MOV &&
-                phiSrcUseInsn->getDst(0) == phiCopy) {
-               const_cast<Instruction *>(phiSrcUseInsn)->remove();
-               continue;
-            }
             replaceSrc(const_cast<Instruction *>(phiSrcUseInsn), phiCopySrc, phiCopy);
           }
 
@@ -2405,7 +2399,6 @@ namespace gbe
       } else
         break;
 
-      break;
       nextRedundant->clear();
       replacedRegs.clear();
       revReplacedRegs.clear();
