@@ -629,7 +629,15 @@ namespace gbe
     /*! Will try to remove MOVs due to PHI resolution */
     void removeMOVs(const ir::Liveness &liveness, ir::Function &fn);
     /*! Optimize phi move based on liveness information */
-    void optimizePhiCopy(ir::Liveness &liveness, ir::Function &fn);
+    void optimizePhiCopy(ir::Liveness &liveness, ir::Function &fn,
+                         map <ir::Register, ir::Register> &replaceMap,
+                         map <ir::Register, ir::Register> &redundantPhiCopyMap);
+    /*! further optimization after phi copy optimization.
+     *  Global liveness interefering checking based redundant phy value
+     *  elimination. */
+    void postPhiCopyOptimization(ir::Liveness &liveness, ir::Function &fn,
+                                 map <ir::Register, ir::Register> &replaceMap,
+                                 map <ir::Register, ir::Register> &redundantPhiCopyMap);
     /*! Will try to remove redundants LOADI in basic blocks */
     void removeLOADIs(const ir::Liveness &liveness, ir::Function &fn);
     /*! To avoid lost copy, we need two values for PHI. This function create a
@@ -2157,7 +2165,9 @@ namespace gbe
     });
   }
 
-  void GenWriter::optimizePhiCopy(ir::Liveness &liveness, ir::Function &fn)
+  void GenWriter::optimizePhiCopy(ir::Liveness &liveness, ir::Function &fn,
+          map<ir::Register, ir::Register> &replaceMap,
+          map<ir::Register, ir::Register> &redundantPhiCopyMap)
   {
     // The overall idea behind is we check whether there is any interference
     // between phi and phiCopy live range. If there is no point that
@@ -2168,7 +2178,6 @@ namespace gbe
 
     using namespace ir;
     ir::FunctionDAG *dag = new ir::FunctionDAG(liveness);
-
     for (auto &it : phiMap) {
       const Register phi = it.first;
       const Register phiCopy = it.second;
@@ -2248,8 +2257,15 @@ namespace gbe
                 const Instruction *phiSrcUseInsn = s->getInstruction();
                 replaceSrc(const_cast<Instruction *>(phiSrcUseInsn), phiCopySrc, phiCopy);
               }
+              replaceMap.insert(std::make_pair(phiCopySrc, phiCopy));
             }
           }
+        } else {
+          // FIXME, if the phiCopySrc is a phi value and has been used for more than one phiCopySrc
+          // This 1:1 map will ignore the second one.
+          if (((*(phiCopySrcDef->begin()))->getType() == ValueDef::DEF_INSN_DST) &&
+              redundantPhiCopyMap.find(phiCopySrc) == redundantPhiCopyMap.end())
+            redundantPhiCopyMap.insert(std::make_pair(phiCopySrc, phiCopy));
         }
 
         // If phi is used in the same BB that define the phiCopy,
@@ -2281,7 +2297,7 @@ namespace gbe
         }
       }
 
-      // coalease phi and phiCopy 
+      // coalease phi and phiCopy
       if (isOpt) {
         for (auto &x : *phiDef) {
           const_cast<Instruction *>(x->getInstruction())->remove();
@@ -2289,8 +2305,112 @@ namespace gbe
         for (auto &x : *phiUse) {
           const Instruction *phiUseInsn = x->getInstruction();
           replaceSrc(const_cast<Instruction *>(phiUseInsn), phi, phiCopy);
+          replaceMap.insert(std::make_pair(phi, phiCopy));
         }
       }
+    }
+    delete dag;
+  }
+
+  void GenWriter::postPhiCopyOptimization(ir::Liveness &liveness,
+         ir::Function &fn, map <ir::Register, ir::Register> &replaceMap,
+         map <ir::Register, ir::Register> &redundantPhiCopyMap)
+  {
+    // When doing the first pass phi copy optimization, we skip all the phi src MOV cases
+    // whoes phiSrdDefs are also a phi value. We leave it here when all phi copy optimizations
+    // have been done. Then we don't need to worry about there are still reducible phi copy remained.
+    // We only need to check whether those possible redundant phi copy pairs' interfering to
+    // each other globally, by leverage the DAG information.
+    using namespace ir;
+
+    // Firstly, validate all possible redundant phi copy map and update liveness information
+    // accordingly.
+    if (replaceMap.size() != 0) {
+      for (auto pair : replaceMap) {
+        if (redundantPhiCopyMap.find(pair.first) != redundantPhiCopyMap.end()) {
+          auto it = redundantPhiCopyMap.find(pair.first);
+          Register phiCopy = it->second;
+          Register newPhiCopySrc = pair.second;
+          redundantPhiCopyMap.erase(it);
+          redundantPhiCopyMap.insert(std::make_pair(newPhiCopySrc, phiCopy));
+        }
+      }
+      liveness.replaceRegs(replaceMap);
+      replaceMap.clear();
+    }
+    if (redundantPhiCopyMap.size() == 0)
+      return;
+    auto dag = new FunctionDAG(liveness);
+
+    map<Register, Register> newRedundant;
+    map<Register, Register> *curRedundant = &redundantPhiCopyMap;
+    map<Register, Register> *nextRedundant = &newRedundant, tmp;
+    map<Register, Register> replacedRegs, revReplacedRegs;
+    // Do multi pass redundant phi copy elimination based on the global interfering information.
+    // FIXME, we don't need to re-compute the whole DAG for each pass.
+    while (curRedundant->size() > 0) {
+      for (auto &pair : *curRedundant) {
+        auto phiCopySrc = pair.first;
+        auto phiCopy = pair.second;
+        if (replacedRegs.find(phiCopy) != replacedRegs.end() ||
+            revReplacedRegs.find(phiCopy) != revReplacedRegs.end() ||
+            revReplacedRegs.find(phiCopySrc) != revReplacedRegs.end())
+          continue;
+        if (!dag->interfere(liveness, phiCopySrc, phiCopy)) {
+          const ir::DefSet *phiCopySrcDef = dag->getRegDef(phiCopySrc);
+          const ir::UseSet *phiCopySrcUse = dag->getRegUse(phiCopySrc);
+          for (auto &s : *phiCopySrcDef) {
+            const Instruction *phiSrcDefInsn = s->getInstruction();
+            if (phiSrcDefInsn->getOpcode() == ir::OP_MOV &&
+                phiSrcDefInsn->getSrc(0) == phiCopy) {
+               const_cast<Instruction *>(phiSrcDefInsn)->remove();
+               continue;
+            }
+            replaceDst(const_cast<Instruction *>(phiSrcDefInsn), phiCopySrc, phiCopy);
+          }
+
+          for (auto &s : *phiCopySrcUse) {
+            const Instruction *phiSrcUseInsn = s->getInstruction();
+            if (phiSrcUseInsn->getOpcode() == ir::OP_MOV &&
+                phiSrcUseInsn->getDst(0) == phiCopy) {
+               const_cast<Instruction *>(phiSrcUseInsn)->remove();
+               continue;
+            }
+            replaceSrc(const_cast<Instruction *>(phiSrcUseInsn), phiCopySrc, phiCopy);
+          }
+
+          replacedRegs.insert(std::make_pair(phiCopySrc, phiCopy));
+          revReplacedRegs.insert(std::make_pair(phiCopy, phiCopySrc));
+          curRedundant->erase(phiCopySrc);
+        }
+      }
+
+      if (replacedRegs.size() != 0) {
+        liveness.replaceRegs(replacedRegs);
+        for (auto &pair : *curRedundant) {
+          auto from = pair.first;
+          auto to = pair.second;
+          bool revisit = false;
+          if (replacedRegs.find(pair.second) != replacedRegs.end()) {
+            to = replacedRegs.find(to)->second;
+            revisit = true;
+          }
+          if (revReplacedRegs.find(from) != revReplacedRegs.end() ||
+              revReplacedRegs.find(to) != revReplacedRegs.end())
+            revisit = true;
+          if (revisit)
+            nextRedundant->insert(std::make_pair(from, to));
+        }
+        std::swap(curRedundant, nextRedundant);
+      } else
+        break;
+
+      break;
+      nextRedundant->clear();
+      replacedRegs.clear();
+      revReplacedRegs.clear();
+      delete dag;
+      dag = new ir::FunctionDAG(liveness);
     }
     delete dag;
   }
@@ -2754,8 +2874,12 @@ namespace gbe
     ir::Liveness liveness(fn);
 
     if (OCL_OPTIMIZE_LOADI) this->removeLOADIs(liveness, fn);
-    if (OCL_OPTIMIZE_PHI_MOVES) this->optimizePhiCopy(liveness, fn);
-    if (OCL_OPTIMIZE_PHI_MOVES) this->removeMOVs(liveness, fn);
+    if (OCL_OPTIMIZE_PHI_MOVES) {
+      map <ir::Register, ir::Register> replaceMap, redundantPhiCopyMap;
+      this->optimizePhiCopy(liveness, fn, replaceMap, redundantPhiCopyMap);
+      //this->postPhiCopyOptimization(liveness, fn, replaceMap, redundantPhiCopyMap);
+      this->removeMOVs(liveness, fn);
+    }
   }
 
   void GenWriter::regAllocateReturnInst(ReturnInst &I) {}
