@@ -486,6 +486,17 @@ namespace ir {
     /*! Get surface starting address register from bti */
     Register getSurfaceBaseReg(uint8_t bti) const;
     void appendSurface(uint8_t bti, Register reg);
+    /*! Get instruction distance between two BBs include both b0 and b1,
+        and b0 must be less than b1. */
+    INLINE uint32_t getDistance(LabelIndex b0, LabelIndex b1) const {
+      uint32_t insnNum = 0;
+      GBE_ASSERT(b0.value() <= b1.value());
+      for(uint32_t i = b0.value(); i <= b1.value(); i++) {
+        BasicBlock &bb = getBlock(LabelIndex(i));
+        insnNum += bb.size();
+      }
+      return insnNum;
+    }
     /*! Output the control flow graph to .dot file */
     void outputCFG();
   private:

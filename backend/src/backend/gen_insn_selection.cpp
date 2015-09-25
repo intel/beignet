@@ -1163,7 +1163,19 @@ namespace gbe
     SelectionInstruction *insn = this->appendInsn(SEL_OP_JMPI, 0, 1);
     insn->src(0) = src;
     insn->index = index.value();
-    insn->extra.longjmp = abs(index - origin) > 800;
+    ir::LabelIndex start, end;
+    if (origin.value() < index.value()) {
+    // Forward Jump, need to exclude the target BB. Because we
+    // need to jump to the beginning of it.
+      start = origin;
+      end = ir::LabelIndex(index.value() - 1);
+    } else {
+      start = index;
+      end = origin;
+    }
+    // FIXME, this longjmp check is too hacky. We need to support instruction
+    // insertion at code emission stage in the future.
+    insn->extra.longjmp = ctx.getFunction().getDistance(start, end) > 8000;
     return insn->extra.longjmp ? 2 : 1;
   }
 
@@ -5187,7 +5199,8 @@ namespace gbe
           sel.curr.execWidth = 1;
           sel.curr.noMask = 1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
-          sel.block->endifOffset -= sel.JMPI(GenRegister::immd(0), jip, curr->getLabelIndex());
+          // Actually, the origin of this JMPI should be the beginning of next BB.
+          sel.block->endifOffset -= sel.JMPI(GenRegister::immd(0), jip, ir::LabelIndex(curr->getLabelIndex().value() + 1));
         sel.pop();
       }
     }
