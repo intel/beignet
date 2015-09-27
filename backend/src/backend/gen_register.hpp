@@ -1224,6 +1224,27 @@ namespace gbe
       return reg;
     }
 
+    static INLINE void propagateRegister(GenRegister& dst, const GenRegister& src)
+    {
+      dst.type = src.type;
+      dst.file = src.file;
+      dst.physical = src.physical;
+      dst.subphysical = src.subphysical;
+      dst.value.reg = src.value.reg;
+      dst.vstride = src.vstride;
+      dst.width = src.width;
+      dst.hstride = src.hstride;
+      dst.quarter = src.quarter;
+      dst.nr = src.nr;
+      dst.subnr = src.subnr;
+      dst.address_mode = src.address_mode;
+      dst.a0_subnr = src.a0_subnr;
+      dst.addr_imm = src.addr_imm;
+
+      dst.negation = dst.negation ^ src.negation;
+      dst.absolute = dst.absolute | src.absolute;
+    }
+
     /*! Generate register encoding with run-time simdWidth */
 #define DECL_REG_ENCODER(NAME, SIMD16, SIMD8, SIMD1) \
     template <typename... Args> \

@@ -2097,6 +2097,10 @@ namespace gbe
   ///////////////////////////////////////////////////////////////////////////
   // Code selection public implementation
   ///////////////////////////////////////////////////////////////////////////
+  const GenContext& Selection::getCtx()
+  {
+    return this->opaque->ctx;
+  }
 
   Selection::Selection(GenContext &ctx) {
     this->blockList = NULL;

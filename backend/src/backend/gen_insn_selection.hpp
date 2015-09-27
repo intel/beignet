@@ -271,6 +271,8 @@ namespace gbe
     void optimize(void);
     uint32_t opt_features;
 
+    const GenContext &getCtx();
+
     /*! Use custom allocators */
     GBE_CLASS(Selection);
   };
