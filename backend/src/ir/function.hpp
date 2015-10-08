@@ -487,23 +487,6 @@ namespace ir {
     Register getSurfaceBaseReg(uint8_t bti) const;
     void appendSurface(uint8_t bti, Register reg);
     /*! Output the control flow graph to .dot file */
-    /*! Get instruction distance between two BBs */
-    INLINE uint32_t getDistance(LabelIndex b0, LabelIndex b1) const {
-      int start, end;
-      if (b0.value() < b1.value()) {
-        start = b0.value();
-        end = b1.value() - 1;
-      } else {
-        start = b1.value();
-        end = b0.value() - 1;
-      }
-      uint32_t insnNum = 0;
-      for(int i = start; i <= end; i++) {
-        BasicBlock &bb = getBlock(LabelIndex(i));
-        insnNum += bb.size();
-      }
-      return insnNum;
-    }
     void outputCFG();
   private:
     friend class Context;           //!< Can freely modify a function

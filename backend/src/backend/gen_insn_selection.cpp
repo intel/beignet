@@ -1163,7 +1163,7 @@ namespace gbe
     SelectionInstruction *insn = this->appendInsn(SEL_OP_JMPI, 0, 1);
     insn->src(0) = src;
     insn->index = index.value();
-    insn->extra.longjmp = ctx.getFunction().getDistance(origin, index) > 8000;
+    insn->extra.longjmp = abs(index - origin) > 800;
     return insn->extra.longjmp ? 2 : 1;
   }
 
