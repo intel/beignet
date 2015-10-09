@@ -119,6 +119,7 @@ DECL_INFO_STRING(built_in_kernels, "__cl_copy_region_align4;"
                                    "__cl_fill_image_3d;")
 
 DECL_INFO_STRING(driver_version, LIBCL_DRIVER_VERSION_STRING)
+DECL_INFO_STRING(spir_versions, "1.2")
 #undef DECL_INFO_STRING
 .parent_device = NULL,
 .partition_max_sub_device = 1,
