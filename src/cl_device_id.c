@@ -803,6 +803,7 @@ cl_get_device_info(cl_device_id     device,
     DECL_STRING_FIELD(VERSION, version)
     DECL_STRING_FIELD(PROFILE, profile)
     DECL_STRING_FIELD(OPENCL_C_VERSION, opencl_c_version)
+    DECL_STRING_FIELD(SPIR_VERSIONS, spir_versions)
     DECL_STRING_FIELD(EXTENSIONS, extensions);
     DECL_STRING_FIELD(BUILT_IN_KERNELS, built_in_kernels)
     DECL_FIELD(PARENT_DEVICE, parent_device)
