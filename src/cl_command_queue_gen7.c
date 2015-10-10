@@ -173,7 +173,8 @@ cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
       uint32_t alignment = interp_kernel_get_arg_align(ker->opaque, arg);
       offset = ALIGN(offset, alignment);
       curbe_offset = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_KERNEL_ARGUMENT, arg);
-      assert(curbe_offset >= 0);
+      if (curbe_offset < 0)
+        continue;
       *(uint32_t *) (ker->curbe + curbe_offset) = offset;
 
       cl_buffer_map(mem->bo, 1);
@@ -228,7 +229,8 @@ cl_curbe_fill(cl_kernel ker,
     assert(align != 0);
     slm_offset = ALIGN(slm_offset, align);
     offset = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_KERNEL_ARGUMENT, arg);
-    assert(offset >= 0);
+    if (offset < 0)
+      continue;
     uint32_t *slmptr = (uint32_t *) (ker->curbe + offset);
     *slmptr = slm_offset;
     slm_offset += ker->args[arg].local_sz;

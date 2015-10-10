@@ -153,9 +153,10 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
   /* Copy the structure or the value directly into the curbe */
   if (arg_type == GBE_ARG_VALUE) {
     offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
-    assert(offset + sz <= k->curbe_sz);
-    if (offset >= 0)
+    if (offset >= 0) {
+      assert(offset + sz <= k->curbe_sz);
       memcpy(k->curbe + offset, value, sz);
+    }
     k->args[index].local_sz = 0;
     k->args[index].is_set = 1;
     k->args[index].mem = NULL;
@@ -193,7 +194,8 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
   if(value == NULL || mem == NULL) {
     /* for buffer object GLOBAL_PTR CONSTANT_PTR, it maybe NULL */
     int32_t offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
-    *((uint32_t *)(k->curbe + offset)) = 0;
+    if (offset >= 0)
+      *((uint32_t *)(k->curbe + offset)) = 0;
     assert(arg_type == GBE_ARG_GLOBAL_PTR || arg_type == GBE_ARG_CONSTANT_PTR);
 
     if (k->args[index].mem)
