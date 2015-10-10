@@ -232,7 +232,8 @@ cl_mem_allocate(enum cl_mem_type type,
                 cl_mem_flags flags,
                 size_t sz,
                 cl_int is_tiled,
-                void *host_ptr,
+                void *host_ptr,         //pointer from application
+                cl_mem buffer,          //image2D from buffer
                 cl_int *errcode)
 {
   cl_buffer_mgr bufmgr = NULL;
@@ -281,6 +282,7 @@ cl_mem_allocate(enum cl_mem_type type,
     assert(bufmgr);
 
 #ifdef HAS_USERPTR
+    uint8_t bufCreated = 0;
     if (ctx->device->host_unified_memory) {
       int page_size = getpagesize();
       int cacheline_size = 0;
@@ -298,6 +300,7 @@ cl_mem_allocate(enum cl_mem_type type,
               mem->is_userptr = 1;
               size_t aligned_sz = ALIGN((mem->offset + sz), page_size);
               mem->bo = cl_buffer_alloc_userptr(bufmgr, "CL userptr memory object", aligned_host_ptr, aligned_sz, 0);
+              bufCreated = 1;
             }
           }
         }
@@ -307,20 +310,24 @@ cl_mem_allocate(enum cl_mem_type type,
           mem->host_ptr = internal_host_ptr;
           mem->is_userptr = 1;
           mem->bo = cl_buffer_alloc_userptr(bufmgr, "CL userptr memory object", internal_host_ptr, alignedSZ, 0);
+          bufCreated = 1;
         }
       }
     }
 
-    if(type == CL_MEM_IMAGE_TYPE && host_ptr && ((cl_mem)host_ptr)->magic == CL_MAGIC_MEM_HEADER) {
+    if(type == CL_MEM_IMAGE_TYPE && buffer != NULL) {
       // if the image if created from buffer, should use the bo directly to share same bo.
-      mem->bo = ((cl_mem)host_ptr)->bo;
+      mem->bo = buffer->bo;
       cl_mem_image(mem)->is_image_from_buffer = 1;
-    } else  if (!mem->is_userptr)
+      bufCreated = 1;
+    }
+
+    if (!bufCreated)
       mem->bo = cl_buffer_alloc(bufmgr, "CL memory object", sz, alignment);
 #else
-    if(type == CL_MEM_IMAGE_TYPE && host_ptr && ((cl_mem)host_ptr)->magic == CL_MAGIC_MEM_HEADER) {
+    if(type == CL_MEM_IMAGE_TYPE && buffer != NULL) {
       // if the image if created from buffer, should use the bo directly to share same bo.
-      mem->bo = ((cl_mem)host_ptr)->bo;
+      mem->bo = buffer->bo;
       cl_mem_image(mem)->is_image_from_buffer = 1;
     } else
       mem->bo = cl_buffer_alloc(bufmgr, "CL memory object", sz, alignment);
@@ -436,7 +443,7 @@ cl_mem_new_buffer(cl_context ctx,
   sz = ALIGN(sz, 4);
 
   /* Create the buffer in video memory */
-  mem = cl_mem_allocate(CL_MEM_BUFFER_TYPE, ctx, flags, sz, CL_FALSE, data, &err);
+  mem = cl_mem_allocate(CL_MEM_BUFFER_TYPE, ctx, flags, sz, CL_FALSE, data, NULL, &err);
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
 
@@ -704,7 +711,8 @@ _cl_mem_new_image(cl_context ctx,
                   size_t depth,
                   size_t pitch,
                   size_t slice_pitch,
-                  void *data,
+                  void *data,           //pointer from application
+                  cl_mem buffer,        //for image2D from buffer
                   cl_int *errcode_ret)
 {
   cl_int err = CL_SUCCESS;
@@ -768,7 +776,7 @@ _cl_mem_new_image(cl_context ctx,
       h = (w + ctx->device->image2d_max_width - 1) / ctx->device->image2d_max_width;
       w = w > ctx->device->image2d_max_width ? ctx->device->image2d_max_width : w;
       tiling = CL_NO_TILE;
-    } else if(image_type == CL_MEM_OBJECT_IMAGE2D && data && ((cl_mem)data)->magic == CL_MAGIC_MEM_HEADER) {
+    } else if(image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL) {
       tiling = CL_NO_TILE;
     } else if (cl_driver_get_ver(ctx->drv) != 6) {
       /* Pick up tiling mode (we do only linear on SNB) */
@@ -782,7 +790,7 @@ _cl_mem_new_image(cl_context ctx,
     if (UNLIKELY(w > ctx->device->image2d_max_width)) DO_IMAGE_ERROR;
     if (UNLIKELY(h > ctx->device->image2d_max_height)) DO_IMAGE_ERROR;
     if (UNLIKELY(data && min_pitch > pitch)) DO_IMAGE_ERROR;
-    if (UNLIKELY(!data && pitch != 0)) DO_IMAGE_ERROR;
+    if (UNLIKELY(!data && pitch != 0 && buffer == NULL)) DO_IMAGE_ERROR;
 
     depth = 1;
   } else if (image_type == CL_MEM_OBJECT_IMAGE3D ||
@@ -831,10 +839,10 @@ _cl_mem_new_image(cl_context ctx,
   }
 
   sz = aligned_pitch * aligned_h * depth;
-  if(image_type == CL_MEM_OBJECT_IMAGE2D && data && ((cl_mem)data)->magic == CL_MAGIC_MEM_HEADER)  {
+  if (image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL)  {
     //image 2d created from buffer: per spec, the buffer sz maybe larger than the image 2d.
-    if( ((cl_mem)data)->size >= sz)
-      sz = ((cl_mem)data)->size;
+    if (buffer->size >= sz)
+      sz = buffer->size;
     else {
       err = CL_INVALID_IMAGE_SIZE;
       goto error;
@@ -850,10 +858,13 @@ _cl_mem_new_image(cl_context ctx,
     sz = aligned_pitch * aligned_h * depth;
   }
 
-  if (image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER)
-    mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, data, &err);
-  else {
-    mem = cl_mem_allocate(CL_MEM_BUFFER1D_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, NULL, &err);
+  if (image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+    if (image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL)
+      mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, NULL, buffer, &err);
+    else
+      mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, data, NULL, &err);
+  } else {
+    mem = cl_mem_allocate(CL_MEM_BUFFER1D_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, NULL, NULL, &err);
     if (mem != NULL && err == CL_SUCCESS) {
       struct _cl_mem_buffer1d_image *buffer1d_image = (struct _cl_mem_buffer1d_image *)mem;
       buffer1d_image->size = origin_width;;
@@ -863,7 +874,7 @@ _cl_mem_new_image(cl_context ctx,
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
 
-  if(!(image_type == CL_MEM_OBJECT_IMAGE2D && data && ((cl_mem)data)->magic == CL_MAGIC_MEM_HEADER))  {
+  if(!(image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL))  {
     //no need set tiling if image 2d created from buffer since share same bo.
     cl_buffer_set_tiling(mem->bo, tiling, aligned_pitch);
   }
@@ -1005,14 +1016,14 @@ _cl_mem_new_image_from_buffer(cl_context ctx,
     image = _cl_mem_new_image(ctx, flags, image_format, image_desc->image_type,
                              image_desc->image_width, image_desc->image_height, image_desc->image_depth,
                              image_desc->image_row_pitch, image_desc->image_slice_pitch,
-                             image_desc->buffer, errcode_ret);
+                             NULL, image_desc->buffer, errcode_ret);
   } else if (image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
     // Per bspec, a image should has a at least 2 line vertical alignment,
     // thus we can't simply attach a buffer to a 1d image surface which has the same size.
     // We have to create a new image, and copy the buffer data to this new image.
     // And replace all the buffer object's reference to this image.
     image = _cl_mem_new_image(ctx, flags, image_format, image_desc->image_type,
-                    mem_buffer->base.size / bpp, 0, 0, 0, 0, NULL, errcode_ret);
+                    mem_buffer->base.size / bpp, 0, 0, 0, 0, NULL, NULL, errcode_ret);
   }
   else
     assert(0);
@@ -1077,7 +1088,7 @@ cl_mem_new_image(cl_context context,
     return _cl_mem_new_image(context, flags, image_format, image_desc->image_type,
                              image_desc->image_width, image_desc->image_height, image_desc->image_depth,
                              image_desc->image_row_pitch, image_desc->image_slice_pitch,
-                             host_ptr, errcode_ret);
+                             host_ptr, NULL, errcode_ret);
   case CL_MEM_OBJECT_IMAGE2D:
     if(image_desc->buffer)
       return _cl_mem_new_image_from_buffer(context, flags, image_format,
@@ -1086,13 +1097,13 @@ cl_mem_new_image(cl_context context,
       return _cl_mem_new_image(context, flags, image_format, image_desc->image_type,
                              image_desc->image_width, image_desc->image_height, image_desc->image_depth,
                              image_desc->image_row_pitch, image_desc->image_slice_pitch,
-                             host_ptr, errcode_ret);
+                             host_ptr, NULL, errcode_ret);
   case CL_MEM_OBJECT_IMAGE1D_ARRAY:
   case CL_MEM_OBJECT_IMAGE2D_ARRAY:
     return _cl_mem_new_image(context, flags, image_format, image_desc->image_type,
                              image_desc->image_width, image_desc->image_height, image_desc->image_array_size,
                              image_desc->image_row_pitch, image_desc->image_slice_pitch,
-                             host_ptr, errcode_ret);
+                             host_ptr, NULL, errcode_ret);
   case CL_MEM_OBJECT_IMAGE1D_BUFFER:
     return _cl_mem_new_image_from_buffer(context, flags, image_format,
                                          image_desc, errcode_ret);
@@ -2069,7 +2080,7 @@ LOCAL cl_mem cl_mem_new_libva_buffer(cl_context ctx,
   cl_int err = CL_SUCCESS;
   cl_mem mem = NULL;
 
-  mem = cl_mem_allocate(CL_MEM_BUFFER_TYPE, ctx, 0, 0, CL_FALSE, NULL, &err);
+  mem = cl_mem_allocate(CL_MEM_BUFFER_TYPE, ctx, 0, 0, CL_FALSE, NULL, NULL, &err);
   if (mem == NULL || err != CL_SUCCESS)
     goto error;
 
@@ -2114,7 +2125,7 @@ LOCAL cl_mem cl_mem_new_libva_image(cl_context ctx,
     goto error;
   }
 
-  mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, 0, 0, 0, NULL, &err);
+  mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, 0, 0, 0, NULL, NULL, &err);
   if (mem == NULL || err != CL_SUCCESS) {
     err = CL_OUT_OF_HOST_MEMORY;
     goto error;

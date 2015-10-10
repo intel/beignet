@@ -272,6 +272,7 @@ cl_mem_allocate(enum cl_mem_type type,
                 size_t sz,
                 cl_int is_tiled,
                 void *host_ptr,
+                cl_mem buffer,
                 cl_int *errcode);
 
 void
