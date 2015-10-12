@@ -890,7 +890,7 @@ namespace gbe {
         err += *errSize;
       }
 
-      p = gbe_program_new_gen_program(deviceID, out_module, NULL);
+      p = gbe_program_new_gen_program(deviceID, out_module, NULL, NULL);
 
       if (OCL_OUTPUT_BUILD_LOG && options)
         llvm::errs() << options;
@@ -935,6 +935,10 @@ namespace gbe {
       pos = s.find("-enable-link-options");
       if(pos != std::string::npos) {
         s.erase(pos, strlen("-enable-link-options"));
+      }
+      pos = s.find("-dump-opt-asm");
+      if(pos != std::string::npos) {
+        s.erase(pos, strlen("-dump-opt-asm"));
       }
       args.push_back(s.c_str());
 

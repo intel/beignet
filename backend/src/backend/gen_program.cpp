@@ -379,9 +379,9 @@ namespace gbe {
   }
 
   static gbe_program genProgramNewGenProgram(uint32_t deviceID, const void* module,
-                                             const void* llvm_ctx)  {
+                                             const void* llvm_ctx,const char* asm_file_name)  {
     using namespace gbe;
-    GenProgram *program = GBE_NEW(GenProgram, deviceID, module, llvm_ctx);
+    GenProgram *program = GBE_NEW(GenProgram, deviceID, module, llvm_ctx, asm_file_name);
     // Everything run fine
     return (gbe_program) program;
   }
@@ -425,17 +425,41 @@ namespace gbe {
 #ifdef GBE_COMPILER_AVAILABLE
     using namespace gbe;
     std::string error;
-
     int optLevel = 1;
+    std::string dumpASMFileName;
+    size_t start = 0, end = 0;
 
     if(options) {
       char *p;
       p = strstr(const_cast<char *>(options), "-cl-opt-disable");
       if (p)
         optLevel = 0;
+
+    char *options_str = (char *)malloc(sizeof(char) * (strlen(options) + 1));
+      memcpy(options_str, options, strlen(options) + 1);
+      std::string optionStr(options_str);
+      while (end != std::string::npos) {
+        end = optionStr.find(' ', start);
+        std::string str = optionStr.substr(start, end - start);
+        start = end + 1;
+        if(str.size() == 0)
+          continue;
+
+        if(str.find("-dump-opt-asm=") != std::string::npos) {
+          dumpASMFileName = str.substr(str.find("=") + 1);
+          continue; // Don't push this str back; ignore it.
+        }
+      }
+      free(options_str);
     }
 
     GenProgram* p = (GenProgram*) program;
+    if (!dumpASMFileName.empty()) {
+        p->asm_file_name = dumpASMFileName.c_str();
+        FILE *asmDumpStream = fopen(dumpASMFileName.c_str(), "w");
+        if (asmDumpStream)
+          fclose(asmDumpStream);
+      }
     // Try to compile the program
     acquireLLVMContextLock();
     llvm::Module* module = (llvm::Module*)p->module;

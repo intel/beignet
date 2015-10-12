@@ -192,7 +192,8 @@ extern gbe_program_check_opt_cb *gbe_program_check_opt;
 /*! create s new genprogram for link. */
 typedef gbe_program (gbe_program_new_gen_program_cb)(uint32_t deviceID,
                                                      const void *module,
-                                                     const void *act);
+                                                     const void *act,
+                                                     const char *asm_file_name);
 extern gbe_program_new_gen_program_cb *gbe_program_new_gen_program;
 
 /*! Create a new program from the given blob */

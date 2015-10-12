@@ -620,13 +620,11 @@ cl_program_link(cl_context            context,
   int copyed = 0;
   cl_bool ret = 0;
   int avialable_program = 0;
-
   //Although we don't use options, but still need check options
   if(!compiler_program_check_opt(options)) {
     err = CL_INVALID_LINKER_OPTIONS;
     goto error;
   }
-
   for(i = 0; i < num_input_programs; i++) {
     //num_input_programs >0 and input_programs MUST not NULL, so compare with input_programs[0] directly.
     if(input_programs[i]->binary_type == CL_PROGRAM_BINARY_TYPE_LIBRARY ||
@@ -657,7 +655,7 @@ cl_program_link(cl_context            context,
     goto error;
   }
 
-  p->opaque = compiler_program_new_gen_program(context->device->device_id, NULL, NULL);
+  p->opaque = compiler_program_new_gen_program(context->device->device_id, NULL, NULL, NULL);
   for(i = 0; i < num_input_programs; i++) {
     // if program create with llvm binary, need deserilize first to get module.
     if(input_programs[i])
