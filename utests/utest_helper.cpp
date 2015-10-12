@@ -286,6 +286,115 @@ error:
   goto exit;
 }
 
+int
+cl_kernel_compile(const char *file_name, const char *kernel_name, const char * compile_opt)
+{
+  cl_file_map_t *fm = NULL;
+  char *ker_path = NULL;
+  cl_int status = CL_SUCCESS;
+  static const char *prevFileName = NULL;
+  cl_int err;
+
+  /* Load the program and build it */
+  if (!program || (program && (!prevFileName || strcmp(prevFileName, file_name)))) {
+    if (program) clReleaseProgram(program);
+    ker_path = cl_do_kiss_path(file_name, device);
+    cl_file_map_t *fm = cl_file_map_new();
+    FATAL_IF (cl_file_map_open(fm, ker_path) != CL_FILE_MAP_SUCCESS,
+                "Failed to open file \"%s\" with kernel \"%s\". Did you properly set OCL_KERNEL_PATH variable?",
+                file_name, kernel_name);
+    const char *src = cl_file_map_begin(fm);
+    const size_t sz = cl_file_map_size(fm);
+    program = clCreateProgramWithSource(ctx, 1, &src, &sz, &status);
+    cl_file_map_delete(fm);
+    
+    if (status != CL_SUCCESS) {
+      fprintf(stderr, "error calling clCreateProgramWithSource\n");
+      goto error;
+    }
+    prevFileName = file_name;
+
+    OCL_CALL (clCompileProgram, program,
+                                1, &device, // num_devices & device_list
+                                compile_opt, // compile_options
+                                0, // num_input_headers
+                                NULL,
+                                NULL,
+                                NULL, NULL);
+   OCL_ASSERT(err==CL_SUCCESS);
+
+  }
+
+exit:
+  free(ker_path);
+  cl_file_map_delete(fm);
+  return status;
+error:
+  prevFileName = NULL;
+  goto exit;
+}
+
+int
+cl_kernel_link(const char *file_name, const char *kernel_name, const char * link_opt)
+{
+  cl_file_map_t *fm = NULL;
+  char *ker_path = NULL;
+  cl_int status = CL_SUCCESS;
+  static const char *prevFileName = NULL;
+  cl_int err;
+
+  /* Load the program and build it */
+  if (!program || (program && (!prevFileName || strcmp(prevFileName, file_name)))) {
+    if (program) clReleaseProgram(program);
+    ker_path = cl_do_kiss_path(file_name, device);
+    cl_file_map_t *fm = cl_file_map_new();
+    FATAL_IF (cl_file_map_open(fm, ker_path) != CL_FILE_MAP_SUCCESS,
+                "Failed to open file \"%s\" with kernel \"%s\". Did you properly set OCL_KERNEL_PATH variable?",
+                file_name, kernel_name);
+    const char *src = cl_file_map_begin(fm);
+    const size_t sz = cl_file_map_size(fm);
+    program = clCreateProgramWithSource(ctx, 1, &src, &sz, &status);
+    cl_file_map_delete(fm);
+    
+    if (status != CL_SUCCESS) {
+      fprintf(stderr, "error calling clCreateProgramWithSource\n");
+      goto error;
+    }
+    prevFileName = file_name;
+
+    OCL_CALL (clCompileProgram, program,
+                                1, &device, // num_devices & device_list
+                                NULL, // compile_options
+                                0, // num_input_headers
+                                NULL,
+                                NULL,
+                                NULL, NULL);
+   OCL_ASSERT(err==CL_SUCCESS);
+  cl_program input_programs[1] = {program};
+  program = clLinkProgram(ctx, 1, &device, link_opt, 1, input_programs, NULL, NULL, &err);
+  OCL_ASSERT(program != NULL);
+  OCL_ASSERT(err == CL_SUCCESS);
+  }
+  
+  /* Create a kernel from the program */
+  if (kernel)
+    clReleaseKernel(kernel);
+  kernel = clCreateKernel(program, kernel_name, &status);
+  if (status != CL_SUCCESS) {
+    fprintf(stderr, "error calling clCreateKernel\n");
+    goto error;
+  }
+
+exit:
+  free(ker_path);
+  cl_file_map_delete(fm);
+  return status;
+error:
+  prevFileName = NULL;
+  goto exit;
+}
+
+
 #define GET_PLATFORM_STR_INFO(LOWER_NAME, NAME) \
   { \
     size_t param_value_size; \

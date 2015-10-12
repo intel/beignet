@@ -470,6 +470,101 @@ void get_build_asm_info(void)
 
 MAKE_UTEST_FROM_FUNCTION(get_build_asm_info);
 
+void get_compile_llvm_info(void)
+{
+    map<cl_program_info, void *> maps;
+    cl_build_status expect_status;
+    char llvm_file[] = "test_llvm_dump.txt";
+    char compile_opt[] = "-dump-opt-llvm=test_llvm_dump.txt";
+    FILE *fp = NULL;
+
+    //Remove any pre-existing file
+    if( (fp = fopen(llvm_file, "r")) != NULL) {
+        fclose(fp);
+        std::remove(llvm_file);
+    }
+
+    OCL_CALL (cl_kernel_compile, "compiler_if_else.cl", "compiler_if_else", compile_opt);
+
+    /* Do our test.*/
+    expect_status = CL_BUILD_SUCCESS;
+    maps.insert(make_pair(CL_PROGRAM_BUILD_STATUS,
+                          (void *)(new Info_Result<cl_build_status>(expect_status))));
+
+
+    for (map<cl_program_info, void *>::iterator x = maps.begin(); x != maps.end(); ++x) {
+        switch (x->first) {
+        case CL_PROGRAM_BUILD_STATUS:
+            CALL_PROG_BUILD_INFO_AND_RET(cl_build_status);
+            break;
+        case CL_PROGRAM_BUILD_OPTIONS:
+            CALL_PROG_BUILD_INFO_AND_RET(char *);
+            break;
+        default:
+            break;
+        }
+    }
+
+    //Test is successful if the backend created the file
+    if( (fp = fopen(llvm_file, "r")) == NULL) {
+        std::cout << "LLVM file creation.. FAILED";
+        OCL_ASSERT(0);
+    } else {
+        fclose(fp);
+        std::cout << "LLVM file created.. SUCCESS";
+    }
+
+}
+
+MAKE_UTEST_FROM_FUNCTION(get_compile_llvm_info);
+
+void get_link_asm_info(void)
+{
+    map<cl_program_info, void *> maps;
+    cl_build_status expect_status;
+    char asm_file[] = "test_asm_dump.txt";
+    char link_opt[] = "-dump-opt-asm=test_asm_dump.txt";
+    FILE *fp = NULL;
+
+    //Remove any pre-existing file
+    if( (fp = fopen(asm_file, "r")) != NULL) {
+        fclose(fp);
+        std::remove(asm_file);
+    } 
+
+    OCL_CALL (cl_kernel_link, "compiler_if_else.cl", "compiler_if_else", link_opt);
+
+    /* Do our test.*/
+    expect_status = CL_BUILD_SUCCESS;
+    maps.insert(make_pair(CL_PROGRAM_BUILD_STATUS,
+                          (void *)(new Info_Result<cl_build_status>(expect_status))));
+
+
+    for (map<cl_program_info, void *>::iterator x = maps.begin(); x != maps.end(); ++x) {
+        switch (x->first) {
+        case CL_PROGRAM_BUILD_STATUS:
+            CALL_PROG_BUILD_INFO_AND_RET(cl_build_status);
+            break;
+        case CL_PROGRAM_BUILD_OPTIONS:
+            CALL_PROG_BUILD_INFO_AND_RET(char *);
+            break;
+        default:
+            break;
+        }
+    }
+
+    //Test is successful if the backend created the file
+    if( (fp = fopen(asm_file, "r")) == NULL) {
+        std::cout << "ASM file creation.. FAILED";
+        OCL_ASSERT(0);
+    } else {
+        fclose(fp);
+        std::cout << "ASM file created.. SUCCESS";
+    } 
+}
+
+MAKE_UTEST_FROM_FUNCTION(get_link_asm_info);
+
 
 /* ***************************************************** *
  * clGetContextInfo                                      *
