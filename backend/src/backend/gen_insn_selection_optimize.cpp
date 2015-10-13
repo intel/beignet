@@ -170,6 +170,10 @@ namespace gbe
     if (insn.isWrite() || insn.isRead()) //register in selection vector
       return false;
 
+    if (features & SIOF_OP_AND_LOGICAL_SRCMOD)
+      if (insn.opcode == SEL_OP_AND && (info->replacement.absolute || info->replacement.negation))
+        return false;
+
     if (info->replacementOverwritten)
       return false;
 

@@ -226,6 +226,12 @@ namespace gbe
     bool removeSimpleIfEndif;
   };
 
+  enum SEL_IR_OPT_FEATURE {
+    //for OP_AND, on BDW+, SrcMod value indicates a logical source modifier
+    //            on PRE-BDW, SrcMod value indicates a numeric source modifier
+    SIOF_OP_AND_LOGICAL_SRCMOD = 1 << 0,
+  };
+
   /*! Owns the selection engine */
   class GenContext;
   /*! Selection engine produces the pre-ISA instruction blocks */
