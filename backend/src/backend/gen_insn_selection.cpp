@@ -3585,9 +3585,9 @@ namespace gbe
               sel.curr.execWidth = 1;
             }
             if (elemSize == GEN_BYTE_SCATTER_WORD)
-              sel.MOV(GenRegister::retype(value, GEN_TYPE_UW), GenRegister::unpacked_uw(dst));
+              sel.MOV(GenRegister::retype(value, GEN_TYPE_UW), GenRegister::unpacked_uw(dst, isUniform));
             else if (elemSize == GEN_BYTE_SCATTER_BYTE)
-              sel.MOV(GenRegister::retype(value, GEN_TYPE_UB), GenRegister::unpacked_ub(dst));
+              sel.MOV(GenRegister::retype(value, GEN_TYPE_UB), GenRegister::unpacked_ub(dst, isUniform));
           sel.pop();
         }
       }
