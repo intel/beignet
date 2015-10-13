@@ -187,7 +187,7 @@ intel_gpgpu_delete(intel_gpgpu_t *gpgpu)
     node = p->next;
     while(node) {
       if(node->gpgpu->batch && node->gpgpu->batch->buffer &&
-         !drm_intel_bo_busy(node->gpgpu->batch->buffer)) {
+         drm_intel_bo_busy(node->gpgpu->batch->buffer)) {
         p->next = node->next;
         intel_gpgpu_delete_finished(node->gpgpu);
         cl_free(node);
