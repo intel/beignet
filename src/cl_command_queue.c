@@ -76,11 +76,9 @@ cl_command_queue_delete(cl_command_queue queue)
   assert(queue);
   if (atomic_dec(&queue->ref_n) != 1) return;
 
-  // If there is a valid last event, we need to give it a chance to
-  // call the call-back function.
-  cl_event last_event = get_last_event(queue);
-  if (last_event && last_event->user_cb)
-    cl_event_update_status(last_event, 1);
+  // If there is a list of valid events, we need to give them
+  // a chance to call the call-back function.
+  cl_event_update_last_events(queue,1);
   /* Remove it from the list */
   assert(queue->ctx);
   pthread_mutex_lock(&queue->ctx->queue_lock);
@@ -257,14 +255,11 @@ cl_command_queue_flush(cl_command_queue queue)
   int err;
   GET_QUEUE_THREAD_GPGPU(queue);
   err = cl_command_queue_flush_gpgpu(queue, gpgpu);
-  // As we don't have a deadicate timer thread to take care the possible
-  // event which has a call back function registerred and the event will
-  // be released at the call back function, no other function will access
-  // the event any more. If we don't do this here, we will leak that event
-  // and all the corresponding buffers which is really bad.
-  cl_event last_event = get_last_event(queue);
-  if (last_event && last_event->user_cb)
-    cl_event_update_status(last_event, 1);
+  // We now keep a list of uncompleted events and check if they compelte
+  // every flush. This can make sure all events created have chance to be
+  // update status, so the callback functions or reference can be handled.
+  cl_event_update_last_events(queue,0);
+
   cl_event current_event = get_current_event(queue);
   if (current_event && err == CL_SUCCESS) {
     err = cl_event_flush(current_event);
@@ -278,9 +273,7 @@ LOCAL cl_int
 cl_command_queue_finish(cl_command_queue queue)
 {
   cl_gpgpu_sync(cl_get_thread_batch_buf(queue));
-  cl_event last_event = get_last_event(queue);
-  if (last_event)
-    cl_event_update_status(last_event, 1);
+  cl_event_update_last_events(queue,1);
   return CL_SUCCESS;
 }
 

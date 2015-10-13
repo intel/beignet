@@ -71,6 +71,7 @@ struct _cl_event {
   cl_bool            emplict;     /* Identify this event whether created by api emplict*/
   cl_ulong           timestamp[4];/* The time stamps for profiling. */
   cl_ulong	     queued_timestamp;
+  cl_event   last_next, last_prev;/* We need a list to monitor untouchable api event*/
 };
 
 /* Create a new event object */
@@ -115,5 +116,9 @@ cl_int cl_event_insert_user_event(user_event** p_u_ev, cl_event event);
 cl_int cl_event_remove_user_event(user_event** p_u_ev, cl_event event);
 /* flush the event's pending gpgpu batch buffer and notify driver this gpgpu event has been flushed. */
 cl_int cl_event_flush(cl_event event);
+/* monitor or block wait all events in the last_event list */
+void cl_event_update_last_events(cl_command_queue queuet, int wait);
+/* insert the event into the last_event list in queue */
+void cl_event_insert_last_events(cl_command_queue queue, cl_event event);
 #endif /* __CL_EVENT_H__ */
 
