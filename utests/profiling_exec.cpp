@@ -85,6 +85,7 @@ static void profiling_exec(void)
     OCL_CALL(clGetEventProfilingInfo, exec_event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &time_start, NULL);
     OCL_CALL(clGetEventProfilingInfo, exec_event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &time_end, NULL);
 
+    clReleaseEvent(exec_event);
     check_profiling_time(time_queue, time_submit, time_start, time_end);
 
     // Compare
