@@ -622,6 +622,7 @@ cl_self_test(cl_device_id device, cl_self_test_res atomic_in_l3_flag)
                   // Atomic fail need to test SLM again with atomic in L3 feature disabled.
                   tested = 0;
                 }
+                clReleaseEvent(kernel_finished);
               }
             }
             clReleaseMemObject(buffer);
