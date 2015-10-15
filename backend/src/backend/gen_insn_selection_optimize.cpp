@@ -30,7 +30,7 @@ namespace gbe
         elements |= (1 << offsetInType);
         offsetInByte += hstride * elementSize;
       }
-      offsetInByte += vstride * elementSize;
+      base += vstride * elementSize;
     }
     return elements;
   }
@@ -173,6 +173,12 @@ namespace gbe
     if (features & SIOF_OP_AND_LOGICAL_SRCMOD)
       if (insn.opcode == SEL_OP_AND && (info->replacement.absolute || info->replacement.negation))
         return false;
+
+    if (features & SIOF_OP_MOV_LONG_REG_RESTRICT && insn.opcode == SEL_OP_MOV) {
+      const GenRegister& dst = insn.dst(0);
+      if (dst.isint64() && !info->replacement.isint64() && info->elements != CalculateElements(info->replacement, insn.state.execWidth))
+        return false;
+    }
 
     if (info->replacementOverwritten)
       return false;

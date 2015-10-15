@@ -2140,7 +2140,7 @@ namespace gbe
     this->opaque->setLongRegRestrict(true);
     this->opaque->setSlowByteGather(true);
     this->opaque->setHasHalfType(true);
-    opt_features = SIOF_OP_AND_LOGICAL_SRCMOD;
+    opt_features = SIOF_OP_AND_LOGICAL_SRCMOD | SIOF_OP_MOV_LONG_REG_RESTRICT;
   }
 
   Selection9::Selection9(GenContext &ctx) : Selection(ctx) {
