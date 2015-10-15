@@ -28,6 +28,8 @@ static void image_from_buffer(void)
   memset(&desc, 0x0, sizeof(cl_image_desc));
   memset(&format, 0x0, sizeof(cl_image_format));
 
+  OCL_CREATE_KERNEL("image_from_buffer");
+
   // Setup kernel and images
   size_t buffer_sz = sizeof(uint32_t) * w * h;
   //buf_data[0] = (uint32_t*) malloc(buffer_sz);
@@ -52,20 +54,38 @@ static void image_from_buffer(void)
   desc.buffer = buff;
   OCL_CREATE_IMAGE(buf[1], 0, &format, &desc, NULL);
 
+  desc.buffer = 0;
+  desc.image_row_pitch = 0;
+  OCL_CREATE_IMAGE(buf[2], CL_MEM_WRITE_ONLY, &format, &desc, NULL);
+
   free(buf_data[0]);
   buf_data[0] = NULL;
+
+  OCL_SET_ARG(0, sizeof(cl_mem), &buf[1]);
+  OCL_SET_ARG(1, sizeof(cl_mem), &buf[2]);
+
+  globals[0] = w;
+  globals[1] = h;
+  locals[0] = 16;
+  locals[1] = 4;
+
+  OCL_NDRANGE(2);
 
   // Check result
   OCL_MAP_BUFFER_GTT(0);
   OCL_MAP_BUFFER_GTT(1);
+  OCL_MAP_BUFFER_GTT(2);
   for (uint32_t j = 0; j < h; ++j)
     for (uint32_t i = 0; i < w; i++)
     {
       //printf("%d,%d\n", ((uint32_t*)buf_data[0])[j * w + i], ((uint32_t*)buf_data[1])[j * w + i]);
+      //printf("%d,%d,%d,%d\n", j, i, ((uint32_t*)buf_data[0])[j * w + i], ((uint32_t*)buf_data[2])[j * w + i]);
       OCL_ASSERT(((uint32_t*)buf_data[0])[j * w + i] == ((uint32_t*)buf_data[1])[j * w + i]);
+      OCL_ASSERT(((uint32_t*)buf_data[0])[j * w + i] == ((uint32_t*)buf_data[2])[j * w + i]);
     }
   OCL_UNMAP_BUFFER_GTT(0);
   OCL_UNMAP_BUFFER_GTT(1);
+  OCL_UNMAP_BUFFER_GTT(2);
 
   //spec didn't tell the sequence of release buffer of image. so release either buffer or image first is ok here.
   //we follow the rule of destroy the bo at the last release, then the access of buffer after release image is legal
@@ -77,6 +97,7 @@ static void image_from_buffer(void)
   clReleaseMemObject(buff);
   clReleaseMemObject(buf[1]);
 #endif
+  clReleaseMemObject(buf[2]);
 }
 
 MAKE_UTEST_FROM_FUNCTION(image_from_buffer);
