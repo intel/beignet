@@ -847,10 +847,11 @@ _cl_mem_new_image(cl_context ctx,
   /* Tiling requires to align both pitch and height */
   if (tiling == CL_NO_TILE) {
     aligned_pitch = w * bpp;
-    if(image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY || image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY)
-      aligned_h  = ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_NO_TILE, 1));
-    else
+    //no need align the height if 2d image from buffer.
+    if (image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL)
       aligned_h = h;
+    else
+      aligned_h  = ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_NO_TILE, 1));
   } else if (tiling == CL_TILE_X) {
     aligned_pitch = ALIGN(w * bpp, cl_buffer_get_tiling_align(ctx, CL_TILE_X, 0));
     aligned_h     = ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_TILE_X, 1));
