@@ -838,7 +838,8 @@ _cl_mem_new_image(cl_context ctx,
   if (ctx->device->host_unified_memory && data != NULL && (flags & CL_MEM_USE_HOST_PTR)) {
     int cacheline_size = 0;
     cl_get_device_info(ctx->device, CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, sizeof(cacheline_size), &cacheline_size, NULL);
-    if (ALIGN((unsigned long)data, cacheline_size) == (unsigned long)data) {  //might more conditions here
+    if (ALIGN((unsigned long)data, cacheline_size) == (unsigned long)data &&
+        ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_NO_TILE, 1)) == h) {
       tiling = CL_NO_TILE;
       enableUserptr = 1;
     }
@@ -847,6 +848,8 @@ _cl_mem_new_image(cl_context ctx,
   /* Tiling requires to align both pitch and height */
   if (tiling == CL_NO_TILE) {
     aligned_pitch = w * bpp;
+    if (aligned_pitch < pitch && enableUserptr)
+      aligned_pitch = pitch;
     //no need align the height if 2d image from buffer.
     if (image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL)
       aligned_h = h;
