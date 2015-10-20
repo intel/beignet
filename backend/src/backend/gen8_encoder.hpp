@@ -31,8 +31,6 @@ namespace gbe
   class Gen8Encoder : public GenEncoder
   {
   public:
-    /*! exec width of the double data type */
-    #define GEN8_DOUBLE_EXEC_WIDTH  4
     virtual ~Gen8Encoder(void) { }
 
     Gen8Encoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID)
@@ -42,8 +40,6 @@ namespace gbe
     virtual void JMPI(GenRegister src, bool longjmp = false);
     /*! Patch JMPI/BRC/BRD (located at index insnID) with the given jump distance */
     virtual void patchJMPI(uint32_t insnID, int32_t jip, int32_t uip);
-    /*! Get double/long exec width */
-    virtual int getDoubleExecWidth(void) { return GEN8_DOUBLE_EXEC_WIDTH; }
     virtual void F16TO32(GenRegister dest, GenRegister src0);
     virtual void F32TO16(GenRegister dest, GenRegister src0);
     virtual void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
@@ -66,6 +62,7 @@ namespace gbe
                        GenRegister src0, GenRegister src1, GenRegister src2);
     virtual bool canHandleLong(uint32_t opcode, GenRegister dst, GenRegister src0,
                             GenRegister src1 = GenRegister::null());
+    virtual void handleDouble(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src0, GenRegister src1 = GenRegister::null());
     virtual unsigned setAtomicMessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum);
     virtual unsigned setUntypedReadMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
     virtual unsigned setUntypedWriteMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);

@@ -135,8 +135,6 @@ namespace gbe
 
     virtual void F16TO32(GenRegister dest, GenRegister src0);
     virtual void F32TO16(GenRegister dest, GenRegister src0);
-    /*! Get double/long exec width */
-    virtual int getDoubleExecWidth(void) = 0;
     virtual void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
     virtual void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);
     virtual void LOAD_INT64_IMM(GenRegister dest, GenRegister value);
@@ -252,6 +250,7 @@ namespace gbe
     uint32_t n_instruction(void) const { return store.size(); }
     virtual bool canHandleLong(uint32_t opcode, GenRegister dst, GenRegister src0,
                             GenRegister src1 = GenRegister::null());
+    virtual void handleDouble(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src0, GenRegister src1 = GenRegister::null());
 
     GBE_CLASS(GenEncoder); //!< Use custom allocators
     virtual void alu3(uint32_t opcode, GenRegister dst,

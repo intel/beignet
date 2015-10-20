@@ -33,8 +33,6 @@ namespace gbe
   class Gen75Encoder : public Gen7Encoder
   {
   public:
-    /*! exec width of the double data type */    
-    #define GEN75_DOUBLE_EXEC_WIDTH  4
     virtual ~Gen75Encoder(void) { }
 
     Gen75Encoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID)
@@ -44,8 +42,6 @@ namespace gbe
     virtual void JMPI(GenRegister src, bool longjmp = false);
     /*! Patch JMPI/BRC/BRD (located at index insnID) with the given jump distance */
     virtual void patchJMPI(uint32_t insnID, int32_t jip, int32_t uip);
-    /*! Get double/long exec width */
-    virtual int getDoubleExecWidth(void) { return GEN75_DOUBLE_EXEC_WIDTH; }
     virtual void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
     virtual void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);
     virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum);

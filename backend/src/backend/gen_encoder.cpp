@@ -610,61 +610,21 @@ namespace gbe
 
   bool GenEncoder::canHandleLong(uint32_t opcode, GenRegister dst, GenRegister src0, GenRegister src1)
   {
-	/* By now, just alu1 insn will come to here. So just MOV */
+    /* By now, just alu1 insn will come to here. So just MOV */
     this->MOV(dst.bottom_half(), src0.bottom_half());
     this->MOV(dst.top_half(this->simdWidth), src0.top_half(this->simdWidth));
     return true;
   }
 
-  INLINE void _handleDouble(GenEncoder *p, uint32_t opcode, GenRegister dst,
-                            GenRegister src0, GenRegister src1 = GenRegister::null()) {
-       int w = p->curr.execWidth;
-       p->push();
-       p->curr.execWidth = p->getDoubleExecWidth();
-       p->curr.nibControl = 0;
-       GenNativeInstruction *insn = p->next(opcode);
-       p->setHeader(insn);
-       p->setDst(insn, dst);
-       p->setSrc0(insn, src0);
-       if (!GenRegister::isNull(src1))
-         p->setSrc1(insn, src1);
-       if (w == 8)
-         p->curr.nibControl = 1; // second 1/8 mask
-       insn = p->next(opcode);
-       p->setHeader(insn);
-       p->setDst(insn, GenRegister::suboffset(dst, w / 2));
-       p->setSrc0(insn, GenRegister::suboffset(src0, w / 2));
-       if (!GenRegister::isNull(src1))
-         p->setSrc1(insn, GenRegister::suboffset(src1, w / 2));
-       p->pop();
-  }
-
-  // Double register accessing is a little special,
-  // Per Gen spec, then only supported mode is SIMD8 and, it only
-  // handles four doubles each time.
-  // We need to lower down SIMD16 to two SIMD8 and lower down SIMD8
-  // to two SIMD1x4.
-  INLINE void handleDouble(GenEncoder *p, uint32_t opcode, GenRegister dst,
-                           GenRegister src0, GenRegister src1 = GenRegister::null()) {
-      if (p->curr.execWidth == 8)
-        _handleDouble(p, opcode, dst, src0, src1);
-      else if (p->curr.execWidth == 16) {
-        p->push();
-        p->curr.execWidth = 8;
-        p->curr.quarterControl = GEN_COMPRESSION_Q1;
-        _handleDouble(p, opcode, dst, src0, src1);
-        p->curr.quarterControl = GEN_COMPRESSION_Q2;
-        if (!GenRegister::isNull(src1))
-          src1 = GenRegister::offset(src1, 2);
-        _handleDouble(p, opcode, GenRegister::offset(dst, 2), GenRegister::offset(src0, 2), src1);
-        p->pop();
-      }
+  void GenEncoder::handleDouble(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src0, GenRegister src1) {
+    /* For platform before gen8, we do not support double and can not get here. */
+    GBE_ASSERT(0);
   }
 
   void alu1(GenEncoder *p, uint32_t opcode, GenRegister dst,
             GenRegister src, uint32_t condition) {
      if (dst.isdf() && src.isdf()) {
-       handleDouble(p, opcode, dst, src);
+       p->handleDouble(p, opcode, dst, src);
      } else if (dst.isint64() && src.isint64()
                 && p->canHandleLong(opcode, dst, src)) { // handle int64
        return;
@@ -709,7 +669,7 @@ namespace gbe
             uint32_t condition)
   {
     if (dst.isdf() && src0.isdf() && src1.isdf()) {
-       handleDouble(p, opcode, dst, src0, src1);
+       p->handleDouble(p, opcode, dst, src0, src1);
     } else if (needToSplitAlu2(p, dst, src0, src1) == false) {
        if(compactAlu2(p, opcode, dst, src0, src1, condition, false))
          return;

@@ -31,15 +31,11 @@ namespace gbe
   class Gen7Encoder : public GenEncoder
   {
   public:
-    /*! gen7 exec width of the double data type */
-    #define GEN7_DOUBLE_EXEC_WIDTH  8
     virtual ~Gen7Encoder(void) { }
 
     Gen7Encoder(uint32_t simdWidth, uint32_t gen, uint32_t deviceID)
          : GenEncoder(simdWidth, gen, deviceID) { }
 
-    /*! Get double/long exec width */
-    virtual int getDoubleExecWidth(void) { return GEN7_DOUBLE_EXEC_WIDTH; }
     virtual void setHeader(GenNativeInstruction *insn);
     virtual void setDst(GenNativeInstruction *insn, GenRegister dest);
     virtual void setSrc0(GenNativeInstruction *insn, GenRegister reg);

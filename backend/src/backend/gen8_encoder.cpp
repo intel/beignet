@@ -459,6 +459,53 @@ namespace gbe
     return false;
   }
 
+  void Gen8Encoder::handleDouble(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src0, GenRegister src1)
+  {
+    uint32_t w = p->curr.execWidth;
+    GenNativeInstruction *insn = NULL;
+
+    if (w <= 8) {
+      insn = p->next(opcode);
+      p->setHeader(insn);
+      p->setDst(insn, dst);
+      p->setSrc0(insn, src0);
+      if (!GenRegister::isNull(src1))
+        p->setSrc1(insn, src1);
+      return;
+    } else {
+      GBE_ASSERT(w == 16);
+      GBE_ASSERT(dst.hstride != GEN_HORIZONTAL_STRIDE_0); //Should not be a uniform.
+      p->push(); {
+        p->curr.execWidth = 8;
+        p->curr.quarterControl = GEN_COMPRESSION_Q1;
+        insn = p->next(opcode);
+        p->setHeader(insn);
+        p->setDst(insn, dst);
+        p->setSrc0(insn, src0);
+        if (!GenRegister::isNull(src1))
+          p->setSrc1(insn, src1);
+
+        // second half
+        p->curr.quarterControl = GEN_COMPRESSION_Q2;
+        insn = p->next(opcode);
+        p->setHeader(insn);
+        p->setDst(insn, GenRegister::offset(dst, 2));
+
+        if (src0.hstride != GEN_HORIZONTAL_STRIDE_0)
+          p->setSrc0(insn, GenRegister::offset(src0, 2));
+        else
+          p->setSrc0(insn, src0);
+
+        if (!GenRegister::isNull(src1)) {
+          if (src1.hstride != GEN_HORIZONTAL_STRIDE_0)
+            p->setSrc1(insn, GenRegister::offset(src1, 2));
+          else
+            p->setSrc1(insn, src1);
+        }
+      } p->pop();
+    }
+  }
+
 #define NO_SWIZZLE ((0<<0) | (1<<2) | (2<<4) | (3<<6))
 
   void Gen8Encoder::alu3(uint32_t opcode,
