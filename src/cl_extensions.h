@@ -95,6 +95,6 @@ typedef struct cl_extensions {
 extern void
 cl_intel_platform_extension_init(cl_platform_id intel_platform);
 extern void
-cl_intel_platform_enable_fp16_extension(cl_device_id device);
+cl_intel_platform_enable_extension(cl_device_id device, uint32_t name);
 extern void
 cl_intel_platform_get_default_extension(cl_device_id device);

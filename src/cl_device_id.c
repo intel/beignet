@@ -406,7 +406,9 @@ brw_gt1_break:
       intel_brw_gt1_device.device_id = device_id;
       intel_brw_gt1_device.platform = cl_get_platform_default();
       ret = &intel_brw_gt1_device;
-      cl_intel_platform_enable_fp16_extension(ret);
+      cl_intel_platform_get_default_extension(ret);
+      cl_intel_platform_enable_extension(ret, cl_khr_fp64_ext_id);
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
     case PCI_CHIP_BROADWLL_M_GT2:
@@ -423,7 +425,9 @@ brw_gt2_break:
       intel_brw_gt2_device.device_id = device_id;
       intel_brw_gt2_device.platform = cl_get_platform_default();
       ret = &intel_brw_gt2_device;
-      cl_intel_platform_enable_fp16_extension(ret);
+      cl_intel_platform_get_default_extension(ret);
+      cl_intel_platform_enable_extension(ret, cl_khr_fp64_ext_id);
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
     case PCI_CHIP_BROADWLL_M_GT3:
@@ -442,7 +446,9 @@ brw_gt3_break:
       intel_brw_gt3_device.device_id = device_id;
       intel_brw_gt3_device.platform = cl_get_platform_default();
       ret = &intel_brw_gt3_device;
-      cl_intel_platform_enable_fp16_extension(ret);
+      cl_intel_platform_get_default_extension(ret);
+      cl_intel_platform_enable_extension(ret, cl_khr_fp64_ext_id);
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
     case PCI_CHIP_CHV_0:
@@ -454,7 +460,8 @@ chv_break:
       intel_chv_device.device_id = device_id;
       intel_chv_device.platform = cl_get_platform_default();
       ret = &intel_chv_device;
-      cl_intel_platform_enable_fp16_extension(ret);
+      cl_intel_platform_get_default_extension(ret);
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
 
@@ -472,7 +479,8 @@ skl_gt1_break:
       intel_skl_gt1_device.device_id = device_id;
       intel_skl_gt1_device.platform = cl_get_platform_default();
       ret = &intel_skl_gt1_device;
-      cl_intel_platform_enable_fp16_extension(ret);
+      cl_intel_platform_get_default_extension(ret);
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
     case PCI_CHIP_SKYLAKE_ULT_GT2:
@@ -491,7 +499,8 @@ skl_gt2_break:
       intel_skl_gt2_device.device_id = device_id;
       intel_skl_gt2_device.platform = cl_get_platform_default();
       ret = &intel_skl_gt2_device;
-      cl_intel_platform_enable_fp16_extension(ret);
+      cl_intel_platform_get_default_extension(ret);
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
     case PCI_CHIP_SKYLAKE_ULT_GT3:
@@ -504,7 +513,8 @@ skl_gt3_break:
       intel_skl_gt3_device.device_id = device_id;
       intel_skl_gt3_device.platform = cl_get_platform_default();
       ret = &intel_skl_gt3_device;
-      cl_intel_platform_enable_fp16_extension(ret);
+      cl_intel_platform_get_default_extension(ret);
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
     case PCI_CHIP_SKYLAKE_HALO_GT4:
@@ -515,7 +525,8 @@ skl_gt4_break:
       intel_skl_gt4_device.device_id = device_id;
       intel_skl_gt4_device.platform = cl_get_platform_default();
       ret = &intel_skl_gt4_device;
-      cl_intel_platform_enable_fp16_extension(ret);
+      cl_intel_platform_get_default_extension(ret);
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
     case PCI_CHIP_SANDYBRIDGE_BRIDGE:
