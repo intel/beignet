@@ -82,6 +82,8 @@ namespace ir {
         if (info.liveOut.contains(from)) {
           info.liveOut.erase(from);
           info.liveOut.insert(to);
+          // FIXME, a hack method to avoid the "to" register be treated as
+          // uniform value.
           bb->definedPhiRegs.insert(to);
         }
         if (info.upwardUsed.contains(from)) {
@@ -91,6 +93,10 @@ namespace ir {
         if (info.varKill.contains(from)) {
           info.varKill.erase(from);
           info.varKill.insert(to);
+        }
+        if (bb->undefPhiRegs.contains(from)) {
+          bb->undefPhiRegs.erase(from);
+          bb->undefPhiRegs.insert(to);
         }
       }
     }
