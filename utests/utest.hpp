@@ -54,6 +54,8 @@ struct UTest
   Function fn;
   /*! Name of the test */
   const char *name;
+  /*! numbers of the jobs */
+  const char *number;
   /*! whether it is a bench mark. */
   bool isBenchMark;
   /*! Indicate whether current test cases has issue to be fixes */
@@ -64,6 +66,8 @@ struct UTest
   static std::vector<UTest> *utestList;
   /*! Run the test with the given name */
   static void run(const char *name);
+  /*! Run the test with the given name */
+  static void runMultiThread(const char *number);
   /*! Run all the tests without known issue*/
   static void runAllNoIssue(void);
   /*! Run all the benchmark. */

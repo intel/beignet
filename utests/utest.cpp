@@ -31,6 +31,12 @@
 #include <cstring>
 #include <stdlib.h>
 #include <csignal>
+#include <algorithm>
+#include <random>
+#include <chrono>
+#include <iterator>
+#include <semaphore.h>
+#include <unistd.h>
 
 struct signalMap
 {
@@ -39,7 +45,9 @@ struct signalMap
 };
 
 using namespace std;
+sem_t tag;
 vector<UTest> *UTest::utestList = NULL;
+vector<int> v;
 // Initialize and declare statistics struct
 RStatistics UTest::retStatistics;
 
@@ -105,6 +113,30 @@ void catch_signal(void){
       perror("Could not set signal handler");
   }
 }
+void *multithread(void * arg)
+{
+  int SerialNumber;
+  //size_t PhtreadNumber = (size_t)arg;
+
+  while(! v.empty()){
+    sem_wait(&tag);
+
+    SerialNumber = v.back();
+    v.pop_back();
+
+    sem_post(&tag);
+
+    const  UTest &utest = (*UTest::utestList)[SerialNumber];
+   // printf("thread%lu  %d, utests.name is %s\n",PhtreadNumber, SerialNumber,utest.name);
+
+    UTest::do_run(utest);
+    cl_kernel_destroy(true);
+    cl_buffer_destroy();
+  }
+
+  return 0;
+}
+
 
 UTest::UTest(Function fn, const char *name, bool isBenchMark, bool haveIssue, bool needDestroyProgram)
        : fn(fn), name(name), isBenchMark(isBenchMark), haveIssue(haveIssue), needDestroyProgram(needDestroyProgram) {
@@ -146,6 +178,34 @@ void UTest::run(const char *name) {
       cl_buffer_destroy();
     }
   }
+}
+
+void UTest::runMultiThread(const char *number) {
+  if (number == NULL) return;
+  if (utestList == NULL) return;
+
+  unsigned long i, num;
+  sem_init(&tag, 0, 1);
+
+  num = atoi(number);
+
+  unsigned long max_num = sysconf(_SC_NPROCESSORS_ONLN);
+
+  if(num < 1 || num > max_num){
+    printf("the value range of multi-thread is [1 - %lu]",max_num);
+    return;
+  }
+
+  for(i = 0; i < utestList->size(); ++i) v.push_back (i);
+  unsigned seed = chrono::system_clock::now ().time_since_epoch ().count ();
+  shuffle (v.begin (), v.end (), std::default_random_engine (seed));
+
+  pthread_t pthread_arry[num];
+
+  for(i=0; i<num;i++) pthread_create(&pthread_arry[i], NULL, multithread, (void *)i);
+  for(i=0; i<num;i++) pthread_join(pthread_arry[i], NULL);
+
+  sem_destroy(&tag);
 }
 
 void UTest::runAll(void) {

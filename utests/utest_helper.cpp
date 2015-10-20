@@ -46,13 +46,13 @@ do { \
 cl_platform_id platform = NULL;
 cl_device_id device = NULL;
 cl_context ctx = NULL;
-cl_program program = NULL;
-cl_kernel kernel = NULL;
+__thread cl_program program = NULL;
+__thread cl_kernel kernel = NULL;
 cl_command_queue queue = NULL;
-cl_mem buf[MAX_BUFFER_N] = {};
-void *buf_data[MAX_BUFFER_N] = {};
-size_t globals[3] = {};
-size_t locals[3] = {};
+__thread cl_mem buf[MAX_BUFFER_N] = {};
+__thread void *buf_data[MAX_BUFFER_N] = {};
+__thread size_t globals[3] = {};
+__thread size_t locals[3] = {};
 float ULPSIZE_FAST_MATH = 10000.;
 
 #ifdef HAS_EGL

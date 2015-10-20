@@ -158,13 +158,13 @@ enum { MAX_BUFFER_N = 16 };
 extern cl_platform_id platform;
 extern cl_device_id device;
 extern cl_context ctx;
-extern cl_program program;
-extern cl_kernel kernel;
+extern __thread cl_program program;
+extern __thread cl_kernel kernel;
 extern cl_command_queue queue;
-extern cl_mem buf[MAX_BUFFER_N];
-extern void* buf_data[MAX_BUFFER_N];
-extern size_t globals[3];
-extern size_t locals[3];
+extern __thread cl_mem buf[MAX_BUFFER_N];
+extern __thread void* buf_data[MAX_BUFFER_N];
+extern __thread size_t globals[3];
+extern __thread size_t locals[3];
 extern float ULPSIZE_FAST_MATH;
 
 enum {
