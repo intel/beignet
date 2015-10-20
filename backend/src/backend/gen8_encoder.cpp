@@ -638,4 +638,65 @@ namespace gbe
      this->setSrc0WithAcc(insn, src0, src0Acc);
      this->setSrc1WithAcc(insn, src1, src1Acc);
   }
+
+  void Gen8Encoder::MADM(GenRegister dst, GenRegister src0, GenRegister src1, GenRegister src2,
+      uint32_t dstAcc, uint32_t src0Acc, uint32_t src1Acc, uint32_t src2Acc)
+  {
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_MADM);
+    Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
+    assert(dst.file == GEN_GENERAL_REGISTER_FILE);
+    assert(src0.file == GEN_GENERAL_REGISTER_FILE);
+    assert(src1.file == GEN_GENERAL_REGISTER_FILE);
+    assert(src2.file == GEN_GENERAL_REGISTER_FILE);
+    assert(dst.hstride == GEN_HORIZONTAL_STRIDE_1 || dst.hstride == GEN_HORIZONTAL_STRIDE_0);
+    assert(src0.type == GEN_TYPE_DF || src0.type == GEN_TYPE_F);
+    assert(src0.type == dst.type);
+    assert(src0.type == src1.type);
+    assert(src0.type == src2.type);
+      // If in double, width should be less than 4
+    assert((src0.type == GEN_TYPE_DF && this->curr.execWidth <= 4)
+      // If in float, width should be less than 8
+        || (src0.type == GEN_TYPE_F && this->curr.execWidth <= 8));
+
+    int32_t dataType = src0.type == GEN_TYPE_DF ? 3 : 0;
+
+    this->setHeader(insn);
+    gen8_insn->bits1.da3srcacc.dest_reg_nr = dst.nr;
+    gen8_insn->bits1.da3srcacc.dest_subreg_nr = dst.subnr / 16;
+    gen8_insn->bits1.da3srcacc.dst_special_acc = dstAcc;
+    gen8_insn->bits1.da3srcacc.src_type = dataType;
+    gen8_insn->bits1.da3srcacc.dest_type = dataType;
+    gen8_insn->header.access_mode = GEN_ALIGN_16;
+
+    assert(src0.file == GEN_GENERAL_REGISTER_FILE);
+    assert(src0.address_mode == GEN_ADDRESS_DIRECT);
+    assert(src0.nr < 128);
+    gen8_insn->bits2.da3srcacc.src0_special_acc = src0Acc;
+    gen8_insn->bits2.da3srcacc.src0_subreg_nr = src0.subnr / 4 ;
+    gen8_insn->bits2.da3srcacc.src0_reg_nr = src0.nr;
+    gen8_insn->bits1.da3srcacc.src0_abs = src0.absolute;
+    gen8_insn->bits1.da3srcacc.src0_negate = src0.negation;
+    gen8_insn->bits2.da3srcacc.src0_rep_ctrl = src0.vstride == GEN_VERTICAL_STRIDE_0;
+
+    assert(src1.file == GEN_GENERAL_REGISTER_FILE);
+    assert(src1.address_mode == GEN_ADDRESS_DIRECT);
+    assert(src1.nr < 128);
+    gen8_insn->bits2.da3srcacc.src1_special_acc = src1Acc;
+    gen8_insn->bits2.da3srcacc.src1_subreg_nr_low = (src1.subnr / 4) & 0x3;
+    gen8_insn->bits3.da3srcacc.src1_subreg_nr_high = (src1.subnr / 4) >> 2;
+    gen8_insn->bits2.da3srcacc.src1_rep_ctrl = src1.vstride == GEN_VERTICAL_STRIDE_0;
+    gen8_insn->bits3.da3srcacc.src1_reg_nr = src1.nr;
+    gen8_insn->bits1.da3srcacc.src1_abs = src1.absolute;
+    gen8_insn->bits1.da3srcacc.src1_negate = src1.negation;
+
+    assert(src2.file == GEN_GENERAL_REGISTER_FILE);
+    assert(src2.address_mode == GEN_ADDRESS_DIRECT);
+    assert(src2.nr < 128);
+    gen8_insn->bits3.da3srcacc.src2_special_acc = src2Acc;
+    gen8_insn->bits3.da3srcacc.src2_subreg_nr = src2.subnr / 4;
+    gen8_insn->bits3.da3srcacc.src2_rep_ctrl = src2.vstride == GEN_VERTICAL_STRIDE_0;
+    gen8_insn->bits3.da3srcacc.src2_reg_nr = src2.nr;
+    gen8_insn->bits1.da3srcacc.src2_abs = src2.absolute;
+    gen8_insn->bits1.da3srcacc.src2_negate = src2.negation;
+  }
 } /* End of the name space. */

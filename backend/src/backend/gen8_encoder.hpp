@@ -71,6 +71,8 @@ namespace gbe
 
     void MATH_WITH_ACC(GenRegister dst, uint32_t function, GenRegister src0, GenRegister src1,
                        uint32_t dstAcc, uint32_t src0Acc, uint32_t src1Acc);
+    void MADM(GenRegister dst, GenRegister src0, GenRegister src1, GenRegister src2,
+              uint32_t dstAcc, uint32_t src0Acc, uint32_t src1Acc, uint32_t src2Acc);
   };
 }
 #endif /* __GBE_GEN8_ENCODER_HPP__ */
