@@ -293,7 +293,6 @@ cl_kernel_compile(const char *file_name, const char *kernel_name, const char * c
   char *ker_path = NULL;
   cl_int status = CL_SUCCESS;
   static const char *prevFileName = NULL;
-  cl_int err;
 
   /* Load the program and build it */
   if (!program || (program && (!prevFileName || strcmp(prevFileName, file_name)))) {
@@ -321,7 +320,7 @@ cl_kernel_compile(const char *file_name, const char *kernel_name, const char * c
                                 NULL,
                                 NULL,
                                 NULL, NULL);
-   OCL_ASSERT(err==CL_SUCCESS);
+   OCL_ASSERT(status == CL_SUCCESS);
 
   }
 
@@ -341,7 +340,6 @@ cl_kernel_link(const char *file_name, const char *kernel_name, const char * link
   char *ker_path = NULL;
   cl_int status = CL_SUCCESS;
   static const char *prevFileName = NULL;
-  cl_int err;
 
   /* Load the program and build it */
   if (!program || (program && (!prevFileName || strcmp(prevFileName, file_name)))) {
@@ -369,11 +367,11 @@ cl_kernel_link(const char *file_name, const char *kernel_name, const char * link
                                 NULL,
                                 NULL,
                                 NULL, NULL);
-   OCL_ASSERT(err==CL_SUCCESS);
-  cl_program input_programs[1] = {program};
-  program = clLinkProgram(ctx, 1, &device, link_opt, 1, input_programs, NULL, NULL, &err);
-  OCL_ASSERT(program != NULL);
-  OCL_ASSERT(err == CL_SUCCESS);
+    OCL_ASSERT(status==CL_SUCCESS);
+    cl_program input_programs[1] = {program};
+    program = clLinkProgram(ctx, 1, &device, link_opt, 1, input_programs, NULL, NULL, &status);
+    OCL_ASSERT(program != NULL);
+    OCL_ASSERT(status == CL_SUCCESS);
   }
   
   /* Create a kernel from the program */
