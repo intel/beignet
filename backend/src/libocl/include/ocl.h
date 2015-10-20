@@ -31,6 +31,7 @@
 #include "ocl_integer.h"
 #include "ocl_math.h"
 #include "ocl_memcpy.h"
+#include "ocl_memset.h"
 #include "ocl_misc.h"
 #include "ocl_printf.h"
 #include "ocl_relational.h"
