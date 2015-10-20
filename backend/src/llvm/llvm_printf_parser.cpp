@@ -723,6 +723,8 @@ error:
 
     deadprintfs.clear();
     delete builder;
+    g1Xg2Xg3 = NULL;
+    wg_offset = NULL;
 
     return changed;
   }
