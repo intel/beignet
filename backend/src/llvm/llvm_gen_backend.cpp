@@ -2491,7 +2491,6 @@ namespace gbe
   {
     // Allocate a address register for each global variable
     const Module::GlobalListType &globalList = TheModule->getGlobalList();
-    size_t j = 0;
     for(auto i = globalList.begin(); i != globalList.end(); i ++) {
       const GlobalVariable &v = *i;
       if(!v.isConstantUsed()) continue;
@@ -2523,8 +2522,7 @@ namespace gbe
         GBE_ASSERT(v.hasInitializer());
         this->newRegister(const_cast<GlobalVariable*>(&v));
         ir::Register reg = regTranslator.getScalar(const_cast<GlobalVariable*>(&v), 0);
-        ir::Constant &con = unit.getConstantSet().getConstant(j ++);
-        GBE_ASSERT(con.getName() == v.getName());
+        ir::Constant &con = unit.getConstantSet().getConstant(v.getName());
         ctx.LOADI(ir::TYPE_S32, reg, ctx.newIntegerImmediate(con.getOffset(), ir::TYPE_S32));
       } else {
         if(v.getName().equals(StringRef("__gen_ocl_printf_buf"))) {
