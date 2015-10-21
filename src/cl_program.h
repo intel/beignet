@@ -37,6 +37,14 @@ enum {
   FROM_LLVM_SPIR = 3
 };
 
+typedef enum _BINARY_HEADER_INDEX {
+  BHI_SPIR = 0,
+  BHI_COMPIRED_OBJECT = 1,
+  BHI_LIBRARY = 2,
+  BHI_GEN_BINARY = 3, /*remember update BHI_MAX if add option.*/
+  BHI_MAX,
+}BINARY_HEADER_INDEX;
+
 /* This maps an OCL file containing some kernels */
 struct _cl_program {
   DEFINE_ICD(dispatch)

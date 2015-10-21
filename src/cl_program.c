@@ -166,29 +166,30 @@ error:
   return err;
 }
 
-inline cl_bool isBitcodeWrapper(const unsigned char *BufPtr, const unsigned char *BufEnd)
+#define BINARY_HEADER_LENGTH 5
+
+static const unsigned char binary_type_header[BHI_MAX][BINARY_HEADER_LENGTH]=  \
+                                              {{'B','C', 0xC0, 0xDE},
+                                               {1, 'B', 'C', 0xC0, 0xDE},
+                                               {2, 'B', 'C', 0xC0, 0xDE},
+                                               {0, 'G','E', 'N', 'C'}};
+
+LOCAL cl_bool headerCompare(const unsigned char *BufPtr, BINARY_HEADER_INDEX index)
 {
-  // See if you can find the hidden message in the magic bytes :-).
-  // (Hint: it's a little-endian encoding.)
-  return BufPtr != BufEnd &&
-    BufPtr[0] == 0xDE &&
-    BufPtr[1] == 0xC0 &&
-    BufPtr[2] == 0x17 &&
-    BufPtr[3] == 0x0B;
+  bool matched = true;
+  int length = index == BHI_SPIR ? BINARY_HEADER_LENGTH -1 :BINARY_HEADER_LENGTH;
+  int i = 0;
+  for (i = 0; i < length; ++i)
+  {
+    matched = matched && (BufPtr[i] == binary_type_header[index][i]);
+  }
+  return matched;
 }
 
-inline cl_bool isRawBitcode(const unsigned char *BufPtr, const unsigned char *BufEnd)
-{
-  // These bytes sort of have a hidden message, but it's not in
-  // little-endian this time, and it's a little redundant.
-  return BufPtr != BufEnd &&
-    BufPtr[0] == 'B' &&
-    BufPtr[1] == 'C' &&
-    BufPtr[2] == 0xc0 &&
-    BufPtr[3] == 0xde;
-}
-
-#define isBitcode(BufPtr,BufEnd)  (isBitcodeWrapper(BufPtr, BufEnd) || isRawBitcode(BufPtr, BufEnd))
+#define isSPIR(BufPtr)      headerCompare(BufPtr, BHI_SPIR)
+#define isLLVM_C_O(BufPtr)  headerCompare(BufPtr, BHI_COMPIRED_OBJECT)
+#define isLLVM_LIB(BufPtr)  headerCompare(BufPtr, BHI_LIBRARY)
+#define isGenBinary(BufPtr) headerCompare(BufPtr, BHI_GEN_BINARY)
 
 LOCAL cl_program
 cl_program_create_from_binary(cl_context             ctx,
@@ -216,7 +217,8 @@ cl_program_create_from_binary(cl_context             ctx,
     goto error;
   }
 
-  if (lengths[0] == 0) {
+  //need at least 4 bytes to check the binary type.
+  if (lengths[0] == 0 || lengths[0] < 4) {
     err = CL_INVALID_VALUE;
     if (binary_status)
       binary_status[0] = CL_INVALID_VALUE;
@@ -229,13 +231,12 @@ cl_program_create_from_binary(cl_context             ctx,
       goto error;
   }
 
-  // TODO:  Need to check the binary format here to return CL_INVALID_BINARY.
   TRY_ALLOC(program->binary, cl_calloc(lengths[0], sizeof(char)));
   memcpy(program->binary, binaries[0], lengths[0]);
   program->binary_sz = lengths[0];
   program->source_type = FROM_BINARY;
 
-  if(isBitcode((unsigned char*)program->binary, (unsigned char*)program->binary+program->binary_sz)) {
+  if(isSPIR((unsigned char*)program->binary)) {
 
     char* typed_binary;
     TRY_ALLOC(typed_binary, cl_calloc(lengths[0]+1, sizeof(char)));
@@ -249,10 +250,10 @@ cl_program_create_from_binary(cl_context             ctx,
     }
 
     program->source_type = FROM_LLVM_SPIR;
-  }else if(isBitcode((unsigned char*)program->binary+1, (unsigned char*)program->binary+program->binary_sz)) {
-    if(*program->binary == 1){
+  }else if(isLLVM_C_O((unsigned char*)program->binary) || isLLVM_LIB((unsigned char*)program->binary)) {
+    if(*program->binary == BHI_COMPIRED_OBJECT){
       program->binary_type = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
-    }else if(*program->binary == 2){
+    }else if(*program->binary == BHI_LIBRARY){
       program->binary_type = CL_PROGRAM_BINARY_TYPE_LIBRARY;
     }else{
       err= CL_INVALID_BINARY;
@@ -266,7 +267,7 @@ cl_program_create_from_binary(cl_context             ctx,
     }
     program->source_type = FROM_LLVM;
   }
-  else if (*program->binary == 0) {
+  else if (isGenBinary((unsigned char*)program->binary)) {
     program->opaque = interp_program_new_from_binary(program->ctx->device->device_id, program->binary, program->binary_sz);
     if (UNLIKELY(program->opaque == NULL)) {
       err = CL_INVALID_PROGRAM;
@@ -276,6 +277,10 @@ cl_program_create_from_binary(cl_context             ctx,
     /* Create all the kernels */
     TRY (cl_program_load_gen_program, program);
     program->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+  }
+  else {
+    err= CL_INVALID_BINARY;
+    goto error;
   }
 
   if (binary_status)

@@ -204,37 +204,72 @@ namespace gbe {
 #endif
   }
 
-#define BINARY_HEADER_LENGTH 8
-#define IS_GEN_BINARY(binary) (*binary == '\0' && *(binary+1) == 'G'&& *(binary+2) == 'E' &&*(binary+3) == 'N' &&*(binary+4) == 'C')
-#define FILL_GEN_BINARY(binary) do{*binary = '\0'; *(binary+1) = 'G'; *(binary+2) = 'E'; *(binary+3) = 'N'; *(binary+4) = 'C';}while(0)
-#define FILL_DEVICE_ID(binary, src_hw_info) do {*(binary+5) = src_hw_info[0]; *(binary+6) = src_hw_info[1]; *(binary+7) = src_hw_info[2];}while(0)
-#define DEVICE_MATCH(typeA, src_hw_info) ((IS_IVYBRIDGE(typeA) && !strcmp(src_hw_info, "IVB")) ||  \
-                                      (IS_IVYBRIDGE(typeA) && !strcmp(src_hw_info, "BYT")) ||  \
-                                      (IS_BAYTRAIL_T(typeA) && !strcmp(src_hw_info, "BYT")) ||  \
-                                      (IS_HASWELL(typeA) && !strcmp(src_hw_info, "HSW")) ||  \
-                                      (IS_BROADWELL(typeA) && !strcmp(src_hw_info, "BDW")) ||  \
-                                      (IS_CHERRYVIEW(typeA) && !strcmp(src_hw_info, "CHV")) ||  \
-                                      (IS_SKYLAKE(typeA) && !strcmp(src_hw_info, "SKL")) )
+#define GEN_BINARY_HEADER_LENGTH 8
+
+  enum GEN_BINARY_HEADER_INDEX {
+    GBHI_BYT = 0,
+    GBHI_IVB = 1,
+    GBHI_HSW = 2,
+    GBHI_CHV = 3,
+    GBHI_BDW = 4,
+    GBHI_SKL = 5,//remember update GBHI_MAX if add option.
+    GBHI_MAX,
+  };
+
+  static const unsigned char gen_binary_header[GBHI_MAX][GEN_BINARY_HEADER_LENGTH]= \
+                                             {{0, 'G','E', 'N', 'C', 'B', 'Y', 'T'},
+                                              {0, 'G','E', 'N', 'C', 'I', 'V', 'B'},
+                                              {0, 'G','E', 'N', 'C', 'H', 'S', 'W'},
+                                              {0, 'G','E', 'N', 'C', 'C', 'H', 'V'},
+                                              {0, 'G','E', 'N', 'C', 'B', 'D', 'W'},
+                                              {0, 'G','E', 'N', 'C', 'S', 'K', 'L'}};
+
+#define FILL_GEN_HEADER(binary, index)  do {int i = 0; do {*(binary+i) = gen_binary_header[index][i]; i++; }while(i < GEN_BINARY_HEADER_LENGTH);}while(0)
+#define FILL_BYT_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_BYT)
+#define FILL_IVB_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_IVB)
+#define FILL_HSW_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_HSW)
+#define FILL_CHV_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_CHV)
+#define FILL_BDW_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_BDW)
+#define FILL_SKL_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_SKL)
+
+  static bool genHeaderCompare(const unsigned char *BufPtr, GEN_BINARY_HEADER_INDEX index)
+  {
+    bool matched = true;
+    for (int i =0; i < GEN_BINARY_HEADER_LENGTH; ++i)
+    {
+      matched = matched && (BufPtr[i] == gen_binary_header[index][i]);
+    }
+    return matched;
+  }
+
+#define MATCH_BYT_HEADER(binary) genHeaderCompare(binary, GBHI_BYT)
+#define MATCH_IVB_HEADER(binary) genHeaderCompare(binary, GBHI_IVB)
+#define MATCH_HSW_HEADER(binary) genHeaderCompare(binary, GBHI_HSW)
+#define MATCH_CHV_HEADER(binary) genHeaderCompare(binary, GBHI_CHV)
+#define MATCH_BDW_HEADER(binary) genHeaderCompare(binary, GBHI_BDW)
+#define MATCH_SKL_HEADER(binary) genHeaderCompare(binary, GBHI_SKL)
+
+#define MATCH_DEVICE(deviceID, binary) ((IS_IVYBRIDGE(deviceID) && MATCH_IVB_HEADER(binary)) ||  \
+                                      (IS_IVYBRIDGE(deviceID) && MATCH_IVB_HEADER(binary)) ||  \
+                                      (IS_BAYTRAIL_T(deviceID) && MATCH_BYT_HEADER(binary)) ||  \
+                                      (IS_HASWELL(deviceID) && MATCH_HSW_HEADER(binary)) ||  \
+                                      (IS_BROADWELL(deviceID) && MATCH_BDW_HEADER(binary)) ||  \
+                                      (IS_CHERRYVIEW(deviceID) && MATCH_CHV_HEADER(binary)) ||  \
+                                      (IS_SKYLAKE(deviceID) && MATCH_SKL_HEADER(binary)) )
 
   static gbe_program genProgramNewFromBinary(uint32_t deviceID, const char *binary, size_t size) {
     using namespace gbe;
     std::string binary_content;
-    //the header length is 8 bytes: 1 byte is binary type, 4 bytes are bitcode header, 3  bytes are hw info.
-    char src_hw_info[4]="";
-    src_hw_info[0] = *(binary+5);
-    src_hw_info[1] = *(binary+6);
-    src_hw_info[2] = *(binary+7);
 
-    // check whether is gen binary ('/0GENC')
-    if(!IS_GEN_BINARY(binary)){
-        return NULL;
-    }
-    // check the whether the current device ID match the binary file's.
-    if(!DEVICE_MATCH(deviceID, src_hw_info)){
+    if(size < GEN_BINARY_HEADER_LENGTH)
+      return NULL;
+
+    //the header length is 8 bytes: 1 byte is binary type, 4 bytes are bitcode header, 3  bytes are hw info.
+    if(!MATCH_DEVICE(deviceID, (unsigned char*)binary)){
       return NULL;
     }
 
-    binary_content.assign(binary+BINARY_HEADER_LENGTH, size-BINARY_HEADER_LENGTH);
+    binary_content.assign(binary+GEN_BINARY_HEADER_LENGTH, size-GEN_BINARY_HEADER_LENGTH);
     GenProgram *program = GBE_NEW(GenProgram, deviceID);
     std::istringstream ifs(binary_content, std::ostringstream::binary);
 
@@ -299,39 +334,31 @@ namespace gbe {
 
       //add header to differetiate from llvm bitcode binary.
       //the header length is 8 bytes: 1 byte is binary type, 4 bytes are bitcode header, 3  bytes are hw info.
-      *binary = (char *)malloc(sizeof(char) * (sz+BINARY_HEADER_LENGTH) );
-      memset(*binary, 0, sizeof(char) * (sz+BINARY_HEADER_LENGTH) );
-      FILL_GEN_BINARY(*binary);
-      char src_hw_info[4]="";
+      *binary = (char *)malloc(sizeof(char) * (sz+GEN_BINARY_HEADER_LENGTH) );
+      if(*binary == NULL)
+        return 0;
+
+      memset(*binary, 0, sizeof(char) * (sz+GEN_BINARY_HEADER_LENGTH) );
       if(IS_IVYBRIDGE(prog->deviceID)){
-        src_hw_info[0]='I';
-        src_hw_info[1]='V';
-        src_hw_info[2]='B';
+        FILL_IVB_HEADER(*binary);
         if(IS_BAYTRAIL_T(prog->deviceID)){
-          src_hw_info[0]='B';
-          src_hw_info[1]='Y';
-          src_hw_info[2]='T';
+        FILL_BYT_HEADER(*binary);
         }
       }else if(IS_HASWELL(prog->deviceID)){
-        src_hw_info[0]='H';
-        src_hw_info[1]='S';
-        src_hw_info[2]='W';
+        FILL_HSW_HEADER(*binary);
       }else if(IS_BROADWELL(prog->deviceID)){
-        src_hw_info[0]='B';
-        src_hw_info[1]='D';
-        src_hw_info[2]='W';
+        FILL_BDW_HEADER(*binary);
       }else if(IS_CHERRYVIEW(prog->deviceID)){
-        src_hw_info[0]='C';
-        src_hw_info[1]='H';
-        src_hw_info[2]='V';
+        FILL_CHV_HEADER(*binary);
       }else if(IS_SKYLAKE(prog->deviceID)){
-        src_hw_info[0]='S';
-        src_hw_info[1]='K';
-        src_hw_info[2]='L';
+        FILL_SKL_HEADER(*binary);
+      }else {
+        free(*binary);
+        *binary = NULL;
+        return 0;
       }
-      FILL_DEVICE_ID(*binary, src_hw_info);
-      memcpy(*binary+BINARY_HEADER_LENGTH, oss.str().c_str(), sz*sizeof(char));
-      return sz+BINARY_HEADER_LENGTH;
+      memcpy(*binary+GEN_BINARY_HEADER_LENGTH, oss.str().c_str(), sz*sizeof(char));
+      return sz+GEN_BINARY_HEADER_LENGTH;
     }else{
 #ifdef GBE_COMPILER_AVAILABLE
       std::string str;
@@ -340,6 +367,9 @@ namespace gbe {
       std::string& bin_str = OS.str();
       int llsz = bin_str.size();
       *binary = (char *)malloc(sizeof(char) * (llsz+1) );
+      if(*binary == NULL)
+        return 0;
+
       *(*binary) = binary_type;
       memcpy(*binary+1, bin_str.c_str(), llsz);
       return llsz+1;
