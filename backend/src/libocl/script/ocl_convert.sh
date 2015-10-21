@@ -161,7 +161,8 @@ else
     echo '
 #define DEF(DSTTYPE, SRCTYPE, MIN, MAX) \
 OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x) { \
-  return x >= MAX ? (DSTTYPE)MAX : x <= MIN ? (DSTTYPE)MIN : x; \
+  x = x >= MAX ? MAX : x; \
+  return x <= MIN ? (DSTTYPE)MIN : (DSTTYPE)x; \
 }
 '
 fi
@@ -173,8 +174,27 @@ DEF(short, long, -32768, 32767);
 DEF(ushort, long, 0, 65535);
 DEF(int, long, -0x7fffffff-1, 0x7fffffff);
 DEF(uint, long, 0, 0xffffffffu);
-DEF(long, float, -9.223372036854776e+18f, 9.223372036854776e+18f);
-DEF(ulong, float, 0, 1.8446744073709552e+19f);
+#undef DEF
+'
+
+if [ $1"a" = "-pa" ]; then
+    echo "
+#define DEF(DSTTYPE, SRCTYPE, SRC_MIN, SRC_MAX, DST_MIN, DST_MAX) \
+OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x);"
+else
+    echo '
+//convert float to long/ulong must take care of overflow, if overflow the value is undef.
+#define DEF(DSTTYPE, SRCTYPE, SRC_MIN, SRC_MAX, DST_MIN, DST_MAX) \
+OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat(SRCTYPE x) { \
+  DSTTYPE y = x >= SRC_MAX ? DST_MAX : (DSTTYPE)x; \
+  return x <= SRC_MIN ? DST_MIN : y; \
+}
+'
+fi
+
+echo '
+DEF(long, float, -0x1.0p63, 0x1.0p63, 0x8000000000000000, 0x7fffffffffffffff);
+DEF(ulong, float, 0, 0x1.0p64, 0, 0xffffffffffffffff);
 #undef DEF
 '
 
