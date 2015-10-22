@@ -821,3 +821,22 @@ float select_ulpsize(float ULPSIZE_FAST_MATH, float ULPSIZE_NO_FAST_MATH)
 
   return ULPSIZE_FACTOR;
 }
+
+int cl_check_double(void)
+{
+  std::string extStr;
+  size_t param_value_size;
+  OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_EXTENSIONS, 0, 0, &param_value_size);
+  std::vector<char> param_value(param_value_size);
+  OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_EXTENSIONS, param_value_size,
+           param_value.empty() ? NULL : &param_value.front(), &param_value_size);
+  if (!param_value.empty())
+    extStr = std::string(&param_value.front(), param_value_size-1);
+
+  if (std::strstr(extStr.c_str(), "cl_khr_fp64") == NULL) {
+    printf("No cl_khr_fp64, Skip!");
+    return 0;
+  }
+
+  return 1;
+}

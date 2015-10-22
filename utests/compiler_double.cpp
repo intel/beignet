@@ -12,6 +12,9 @@ void compiler_double(void)
   const size_t n = 16;
   double cpu_dst[n], cpu_src[n];
 
+  if (!cl_check_double())
+    return;
+
   // Setup kernel and buffers
   OCL_CREATE_KERNEL("compiler_double");
   OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(double), NULL);
@@ -38,7 +41,7 @@ void compiler_double(void)
     // Compare
     OCL_MAP_BUFFER(1);
     for (int32_t i = 0; i < (int32_t) n; ++i)
-      OCL_ASSERT(fabs(((double*)buf_data[1])[i] - cpu_dst[i]) < 1e-4);
+      OCL_ASSERT(fabs(((double*)buf_data[1])[i] - cpu_dst[i]) < 1e-32);
     OCL_UNMAP_BUFFER(1);
   }
 }

@@ -241,5 +241,8 @@ double time_subtract(struct timeval *y, struct timeval *x, struct timeval *resul
 /* check ulpsize */
 float select_ulpsize(float ULPSIZE_FAST_MATH, float ULPSIZE_NO_FAST_MATH);
 
+/* Check is FP64 enabled. */
+extern int cl_check_double(void);
+
 #endif /* __UTEST_HELPER_HPP__ */
 

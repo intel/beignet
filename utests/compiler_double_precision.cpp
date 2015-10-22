@@ -9,6 +9,9 @@ static void double_precision_check(void)
   double d1 = 0.12355678922345678;
   float cpu_result = d1 - d0;
 
+  if (!cl_check_double())
+    return;
+
   // Setup kernel and buffers
   OCL_CREATE_KERNEL("double_precision_check");
   //OCL_CREATE_KERNEL("compiler_array");
