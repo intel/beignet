@@ -4334,7 +4334,6 @@ namespace gbe
   void GenWriter::emitUnalignedDQLoadStore(ir::Register ptr, Value *llvmValues, ir::AddressSpace addrSpace, ir::Register bti, bool isLoad, bool dwAligned, bool fixedBTI)
   {
     Type *llvmType = llvmValues->getType();
-    const ir::Type type = getType(ctx, llvmType);
     unsigned byteSize = getTypeByteSize(unit, llvmType);
 
     Type *elemType = llvmType;
@@ -4344,6 +4343,7 @@ namespace gbe
       elemType = vectorType->getElementType();
       elemNum = vectorType->getNumElements();
     }
+    const ir::Type type = getType(ctx, elemType);
 
     vector<ir::Register> tupleData;
     for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
@@ -4386,7 +4386,7 @@ namespace gbe
           ctx.LOADI(ir::TYPE_S32, offset, immIndex);
           ctx.ADD(ir::TYPE_S32, addr, ptr, offset);
         }
-       ctx.STORE(type, addr, addrSpace, dwAligned, fixedBTI, bti, reg);
+       ctx.STORE(ir::TYPE_U8, addr, addrSpace, dwAligned, fixedBTI, bti, reg);
       }
     }
   }
@@ -4440,9 +4440,10 @@ namespace gbe
     else
       ptr = pointer;
 
+    unsigned primitiveBits = scalarType->getPrimitiveSizeInBits();
     if (!dwAligned
-       && (scalarType == IntegerType::get(I.getContext(), 64)
-          || scalarType == IntegerType::get(I.getContext(), 32))
+       && (primitiveBits == 64
+          || primitiveBits == 32)
        ) {
       emitUnalignedDQLoadStore(ptr, llvmValues, addrSpace, btiReg, isLoad, dwAligned, fixedBTI);
       return;
