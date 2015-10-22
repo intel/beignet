@@ -27,6 +27,10 @@ namespace gbe
       uint32_t offsetInByte = base;
       for (uint32_t j = 0; j < width; ++j) {
         uint32_t offsetInType = offsetInByte / elementSize;
+        //it is possible that offsetInType > 32, it doesn't matter even elements is 32 bit.
+        //the reseason is that if one instruction span several registers,
+        //the other registers' visit pattern is same as first register if the vstride is normal(width * hstride)
+        assert(vstride == width * hstride);
         elements |= (1 << offsetInType);
         offsetInByte += hstride * elementSize;
       }
