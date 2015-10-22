@@ -2146,7 +2146,7 @@ namespace gbe
     this->opaque->setHasDoubleType(true);
     this->opaque->setSlowByteGather(true);
     this->opaque->setHasHalfType(true);
-    opt_features = SIOF_OP_AND_LOGICAL_SRCMOD;
+    opt_features = SIOF_LOGICAL_SRCMOD;
   }
 
   SelectionChv::SelectionChv(GenContext &ctx) : Selection(ctx) {
@@ -2156,7 +2156,7 @@ namespace gbe
     this->opaque->setLongRegRestrict(true);
     this->opaque->setSlowByteGather(true);
     this->opaque->setHasHalfType(true);
-    opt_features = SIOF_OP_AND_LOGICAL_SRCMOD | SIOF_OP_MOV_LONG_REG_RESTRICT;
+    opt_features = SIOF_LOGICAL_SRCMOD | SIOF_OP_MOV_LONG_REG_RESTRICT;
   }
 
   Selection9::Selection9(GenContext &ctx) : Selection(ctx) {
@@ -2166,7 +2166,7 @@ namespace gbe
     this->opaque->setLdMsgOrder(LD_MSG_ORDER_SKL);
     this->opaque->setSlowByteGather(true);
     this->opaque->setHasHalfType(true);
-    opt_features = SIOF_OP_AND_LOGICAL_SRCMOD;
+    opt_features = SIOF_LOGICAL_SRCMOD;
   }
 
   void Selection::Opaque::TYPED_WRITE(GenRegister *msgs, uint32_t msgNum,

@@ -227,9 +227,9 @@ namespace gbe
   };
 
   enum SEL_IR_OPT_FEATURE {
-    //for OP_AND, on BDW+, SrcMod value indicates a logical source modifier
-    //            on PRE-BDW, SrcMod value indicates a numeric source modifier
-    SIOF_OP_AND_LOGICAL_SRCMOD = 1 << 0,
+    //for OP_AND/not/or/xor , on BDW+, SrcMod value indicates a logical source modifier
+    //                        on PRE-BDW, SrcMod value indicates a numeric source modifier
+    SIOF_LOGICAL_SRCMOD = 1 << 0,
     //for OP_MOV, on BSW, for long data type, src and dst hstride must be aligned to the same qword
     SIOF_OP_MOV_LONG_REG_RESTRICT = 1 << 1,
   };

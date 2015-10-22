@@ -174,8 +174,9 @@ namespace gbe
     if (insn.isWrite() || insn.isRead()) //register in selection vector
       return false;
 
-    if (features & SIOF_OP_AND_LOGICAL_SRCMOD)
-      if (insn.opcode == SEL_OP_AND && (info->replacement.absolute || info->replacement.negation))
+    if (features & SIOF_LOGICAL_SRCMOD)
+      if ((insn.opcode == SEL_OP_AND || insn.opcode == SEL_OP_NOT || insn.opcode == SEL_OP_OR || insn.opcode == SEL_OP_XOR) &&
+            (info->replacement.absolute || info->replacement.negation))
         return false;
 
     if (features & SIOF_OP_MOV_LONG_REG_RESTRICT && insn.opcode == SEL_OP_MOV) {
