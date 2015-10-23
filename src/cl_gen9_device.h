@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright © 2012 Intel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -17,15 +17,15 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
-/* Common fields for both IVB devices (either GT1 or GT2) */
+/* Common fields for both SKL devices */
 .max_parameter_size = 1024,
 .global_mem_cache_line_size = 64, /* XXX */
 .global_mem_cache_size = 8 << 10, /* XXX */
 .local_mem_type = CL_GLOBAL,
 .local_mem_size = 64 << 10,
-.scratch_mem_size = 12 << 10,
-.max_mem_alloc_size = 2 * 1024 * 1024 * 1024ul,
-.global_mem_size = 2 * 1024 * 1024 * 1024ul,
+.scratch_mem_size = 2 << 20,
+.max_mem_alloc_size = 4 * 1024 * 1024 * 1024ul,
+.global_mem_size = 4 * 1024 * 1024 * 1024ul,
 
 #include "cl_gt_device.h"
 

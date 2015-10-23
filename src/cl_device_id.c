@@ -116,7 +116,7 @@ static struct _cl_device_id intel_brw_gt1_device = {
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
-#include "cl_gen75_device.h"
+#include "cl_gen8_device.h"
 };
 
 static struct _cl_device_id intel_brw_gt2_device = {
@@ -127,7 +127,7 @@ static struct _cl_device_id intel_brw_gt2_device = {
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
-#include "cl_gen75_device.h"
+#include "cl_gen8_device.h"
 };
 
 static struct _cl_device_id intel_brw_gt3_device = {
@@ -138,7 +138,7 @@ static struct _cl_device_id intel_brw_gt3_device = {
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
-#include "cl_gen75_device.h"
+#include "cl_gen8_device.h"
 };
 
 //Cherryview has the same pciid, must get the max_compute_unit and max_thread_per_unit from drm
@@ -162,7 +162,7 @@ static struct _cl_device_id intel_skl_gt1_device = {
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
-#include "cl_gen75_device.h"
+#include "cl_gen9_device.h"
 };
 
 static struct _cl_device_id intel_skl_gt2_device = {
@@ -173,7 +173,7 @@ static struct _cl_device_id intel_skl_gt2_device = {
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
-#include "cl_gen75_device.h"
+#include "cl_gen9_device.h"
 };
 
 static struct _cl_device_id intel_skl_gt3_device = {
@@ -184,7 +184,7 @@ static struct _cl_device_id intel_skl_gt3_device = {
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
-#include "cl_gen75_device.h"
+#include "cl_gen9_device.h"
 };
 
 static struct _cl_device_id intel_skl_gt4_device = {
@@ -195,7 +195,7 @@ static struct _cl_device_id intel_skl_gt4_device = {
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
-#include "cl_gen75_device.h"
+#include "cl_gen9_device.h"
 };
 
 LOCAL cl_device_id
