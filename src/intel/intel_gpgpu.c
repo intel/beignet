@@ -1103,6 +1103,43 @@ intel_gpgpu_setup_bti_gen8(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t int
                     buf);
 }
 
+static void
+intel_gpgpu_setup_bti_gen9(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t internal_offset,
+                                   size_t size, unsigned char index, uint32_t format)
+{
+  assert(size <= (4ul<<30));
+  size_t s = size - 1;
+  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
+  gen8_surface_state_t *ss0 = (gen8_surface_state_t *) &heap->surface[index * sizeof(gen8_surface_state_t)];
+  memset(ss0, 0, sizeof(gen8_surface_state_t));
+  ss0->ss0.surface_type = I965_SURFACE_BUFFER;
+  ss0->ss0.surface_format = format;
+  if(format != I965_SURFACEFORMAT_RAW) {
+    ss0->ss7.shader_channel_select_red = I965_SURCHAN_SELECT_RED;
+    ss0->ss7.shader_channel_select_green = I965_SURCHAN_SELECT_GREEN;
+    ss0->ss7.shader_channel_select_blue = I965_SURCHAN_SELECT_BLUE;
+    ss0->ss7.shader_channel_select_alpha = I965_SURCHAN_SELECT_ALPHA;
+  }
+  ss0->ss2.width  = s & 0x7f;   /* bits 6:0 of sz */
+  // Per bspec, I965_SURFACE_BUFFER and RAW format, size must be a multiple of 4 byte.
+  if(format == I965_SURFACEFORMAT_RAW)
+    assert((ss0->ss2.width & 0x03) == 3);
+  ss0->ss2.height = (s >> 7) & 0x3fff; /* bits 20:7 of sz */
+  ss0->ss3.depth  = (s >> 21) & 0x7ff; /* bits 31:21 of sz, from bespec only gen 9 support that*/
+  ss0->ss1.mem_obj_ctrl_state = cl_gpgpu_get_cache_ctrl();
+  heap->binding_table[index] = offsetof(surface_heap_t, surface) + index * sizeof(gen8_surface_state_t);
+  ss0->ss8.surface_base_addr_lo = (buf->offset64 + internal_offset) & 0xffffffff;
+  ss0->ss9.surface_base_addr_hi = ((buf->offset64 + internal_offset) >> 32) & 0xffffffff;
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
+                    I915_GEM_DOMAIN_RENDER,
+                    I915_GEM_DOMAIN_RENDER,
+                    internal_offset,
+                    gpgpu->aux_offset.surface_heap_offset +
+                    heap->binding_table[index] +
+                    offsetof(gen8_surface_state_t, ss8),
+                    buf);
+}
+
 static int
 intel_is_surface_array(cl_mem_object_type type)
 {
@@ -2186,10 +2223,10 @@ intel_set_gpgpu_callbacks(int device_id)
     intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen8;
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen9;
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen8;
-    intel_gpgpu_post_action = intel_gpgpu_post_action_gen7; //BDW need not restore SLM, same as gen7
+    intel_gpgpu_post_action = intel_gpgpu_post_action_gen7; //SKL need not restore SLM, same as gen7
     intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_gen7;
     intel_gpgpu_set_base_address = intel_gpgpu_set_base_address_gen9;
-    intel_gpgpu_setup_bti = intel_gpgpu_setup_bti_gen8;
+    intel_gpgpu_setup_bti = intel_gpgpu_setup_bti_gen9;
     intel_gpgpu_load_vfe_state = intel_gpgpu_load_vfe_state_gen8;
     cl_gpgpu_walker = (cl_gpgpu_walker_cb *)intel_gpgpu_walker_gen8;
     intel_gpgpu_build_idrt = intel_gpgpu_build_idrt_gen9;
