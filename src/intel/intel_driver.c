@@ -829,6 +829,11 @@ intel_update_device_info(cl_device_id device)
   if (IS_CHERRYVIEW(device->device_id))
     printf(CHV_CONFIG_WARNING);
 #endif
+  //We should get the device memory dynamically, but the
+  //mapablce mem size usage is unknown. Just ignore it.
+  size_t total_mem,map_mem;
+  if(drm_intel_get_aperture_sizes(driver->fd,&map_mem,&total_mem) == 0)
+    device->global_mem_size = (cl_ulong)total_mem;
 
   intel_driver_context_destroy(driver);
   intel_driver_close(driver);

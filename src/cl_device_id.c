@@ -559,13 +559,24 @@ skl_gt4_break:
   /* Apply any driver-dependent updates to the device info */
   cl_driver_update_device_info(ret);
 
+  #define toMB(size) (size)&(0xfffffffffffffff<<20)
+  /* Get the global_mem_size and max_mem_alloc size from
+   * driver, system ram and hardware*/
   struct sysinfo info;
   if (sysinfo(&info) == 0) {
-    uint64_t two_gb = 2 * 1024 * 1024 * 1024ul; 
+    uint64_t totalgpumem = ret->global_mem_size;
+	uint64_t maxallocmem = ret->max_mem_alloc_size;
     uint64_t totalram = info.totalram * info.mem_unit;
-    ret->global_mem_size = (totalram > two_gb) ? 
-                            two_gb : info.totalram;
-    ret->max_mem_alloc_size = ret->global_mem_size / 2;
+	/* In case to keep system stable we just use half
+	 * of the raw as global mem */
+    ret->global_mem_size = toMB((totalram / 2 > totalgpumem) ?
+                            totalgpumem: totalram / 2);
+	/* The hardware has some limit about the alloc size
+	 * and the excution of kernel need some global mem
+	 * so we now make sure single mem does not use much
+	 * than 3/4 global mem*/
+    ret->max_mem_alloc_size = toMB((ret->global_mem_size * 3 / 4 > maxallocmem) ?
+                              maxallocmem: ret->global_mem_size * 3 / 4);
   }
 
   return ret;
