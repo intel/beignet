@@ -86,7 +86,7 @@ typedef void (intel_gpgpu_set_base_address_t)(intel_gpgpu_t *gpgpu);
 intel_gpgpu_set_base_address_t *intel_gpgpu_set_base_address = NULL;
 
 typedef void (intel_gpgpu_setup_bti_t)(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t internal_offset,
-                                       uint32_t size, unsigned char index, uint32_t format);
+                                       size_t size, unsigned char index, uint32_t format);
 intel_gpgpu_setup_bti_t *intel_gpgpu_setup_bti = NULL;
 
 
@@ -1000,9 +1000,10 @@ intel_gpgpu_alloc_constant_buffer(intel_gpgpu_t *gpgpu, uint32_t size, uint8_t b
 
 static void
 intel_gpgpu_setup_bti_gen7(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t internal_offset,
-                                   uint32_t size, unsigned char index, uint32_t format)
+                                   size_t size, unsigned char index, uint32_t format)
 {
-  uint32_t s = size - 1;
+  assert(size <= (2ul<<30));
+  size_t s = size - 1;
   surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
   gen7_surface_state_t *ss0 = (gen7_surface_state_t *) &heap->surface[index * sizeof(gen7_surface_state_t)];
   memset(ss0, 0, sizeof(gen7_surface_state_t));
@@ -1030,9 +1031,10 @@ intel_gpgpu_setup_bti_gen7(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t int
 
 static void
 intel_gpgpu_setup_bti_gen75(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t internal_offset,
-                                   uint32_t size, unsigned char index, uint32_t format)
+                                   size_t size, unsigned char index, uint32_t format)
 {
-  uint32_t s = size - 1;
+  assert(size <= (2ul<<30));
+  size_t s = size - 1;
   surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
   gen7_surface_state_t *ss0 = (gen7_surface_state_t *) &heap->surface[index * sizeof(gen7_surface_state_t)];
   memset(ss0, 0, sizeof(gen7_surface_state_t));
@@ -1066,9 +1068,10 @@ intel_gpgpu_setup_bti_gen75(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t in
 
 static void
 intel_gpgpu_setup_bti_gen8(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t internal_offset,
-                                   uint32_t size, unsigned char index, uint32_t format)
+                                   size_t size, unsigned char index, uint32_t format)
 {
-  uint32_t s = size - 1;
+  assert(size <= (2ul<<30));
+  size_t s = size - 1;
   surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
   gen8_surface_state_t *ss0 = (gen8_surface_state_t *) &heap->surface[index * sizeof(gen8_surface_state_t)];
   memset(ss0, 0, sizeof(gen8_surface_state_t));
@@ -1395,7 +1398,7 @@ intel_gpgpu_bind_image_gen9(intel_gpgpu_t *gpgpu,
 
 static void
 intel_gpgpu_bind_buf(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t offset,
-                     uint32_t internal_offset, uint32_t size, uint8_t bti)
+                     uint32_t internal_offset, size_t size, uint8_t bti)
 {
   assert(gpgpu->binded_n < max_buf_n);
   gpgpu->binded_buf[gpgpu->binded_n] = buf;
