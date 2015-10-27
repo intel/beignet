@@ -32,13 +32,13 @@ static void image_from_buffer(void)
 
   // Setup kernel and images
   size_t buffer_sz = sizeof(uint32_t) * w * h;
-  //buf_data[0] = (uint32_t*) malloc(buffer_sz);
-  buf_data[0] = (uint32_t*)memalign(base_address_alignment, buffer_sz);
+  uint32_t* src_data;
+  src_data = (uint32_t*)memalign(base_address_alignment, buffer_sz);
   for (uint32_t j = 0; j < h; ++j)
     for (uint32_t i = 0; i < w; i++)
-      ((uint32_t*)buf_data[0])[j * w + i] = j * w + i;
+      src_data[j * w + i] = j * w + i;
 
-  cl_mem buff = clCreateBuffer(ctx, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, buffer_sz, buf_data[0], &error);
+  cl_mem buff = clCreateBuffer(ctx, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, buffer_sz, src_data, &error);
 
   OCL_ASSERT(error == CL_SUCCESS);
   format.image_channel_order = CL_RGBA;
@@ -49,7 +49,7 @@ static void image_from_buffer(void)
   desc.image_row_pitch = w * sizeof(uint32_t);
 
   desc.buffer = 0;
-  OCL_CREATE_IMAGE(buf[0], CL_MEM_COPY_HOST_PTR, &format, &desc, buf_data[0]);
+  OCL_CREATE_IMAGE(buf[0], CL_MEM_COPY_HOST_PTR, &format, &desc, src_data);
 
   desc.buffer = buff;
   OCL_CREATE_IMAGE(buf[1], 0, &format, &desc, NULL);
@@ -57,9 +57,6 @@ static void image_from_buffer(void)
   desc.buffer = 0;
   desc.image_row_pitch = 0;
   OCL_CREATE_IMAGE(buf[2], CL_MEM_WRITE_ONLY, &format, &desc, NULL);
-
-  free(buf_data[0]);
-  buf_data[0] = NULL;
 
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[1]);
   OCL_SET_ARG(1, sizeof(cl_mem), &buf[2]);
@@ -87,6 +84,8 @@ static void image_from_buffer(void)
   OCL_UNMAP_BUFFER_GTT(1);
   OCL_UNMAP_BUFFER_GTT(2);
 
+  free(src_data);
+
   //spec didn't tell the sequence of release buffer of image. so release either buffer or image first is ok here.
   //we follow the rule of destroy the bo at the last release, then the access of buffer after release image is legal
   //and vice verse.
@@ -98,6 +97,8 @@ static void image_from_buffer(void)
   clReleaseMemObject(buf[1]);
 #endif
   clReleaseMemObject(buf[2]);
+  buf[1] = NULL;
+  buf[2] = NULL;
 }
 
 MAKE_UTEST_FROM_FUNCTION(image_from_buffer);
