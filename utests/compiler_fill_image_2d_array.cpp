@@ -11,6 +11,7 @@ static void compiler_fill_image_2d_array(void)
   size_t origin[3] = { };
   size_t region[3];
   uint32_t* dst;
+  uint32_t* src;
 
   memset(&desc, 0x0, sizeof(cl_image_desc));
   memset(&format, 0x0, sizeof(cl_image_format));
@@ -28,9 +29,16 @@ static void compiler_fill_image_2d_array(void)
 
   OCL_CREATE_IMAGE(buf[0], 0, &format, &desc, NULL);
 
-  OCL_MAP_BUFFER_GTT(0);
-  memset(buf_data[0], 0, sizeof(uint32_t) * w * h * array);
-  OCL_UNMAP_BUFFER_GTT(0);
+  region[0] = w;
+  region[1] = h;
+  region[2] = array;
+
+  // As we don't know the pitch right now, we cannot
+  // use map to setup the image. It is safer to use
+  // write image
+  src = (uint32_t*)malloc(sizeof(uint32_t) * w * h * array);
+  memset(src, 0, sizeof(uint32_t) * w * h * array);
+  OCL_WRITE_IMAGE(buf[0], origin, region, src);
 
   // Run the kernel
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
@@ -43,9 +51,6 @@ static void compiler_fill_image_2d_array(void)
   OCL_NDRANGE(3);
 
   // Check result
-  region[0] = w;
-  region[1] = h;
-  region[2] = array;
   dst = (uint32_t*)malloc(w*h*array*sizeof(uint32_t));
   OCL_READ_IMAGE(buf[0], origin, region, dst);
 
@@ -79,6 +84,7 @@ static void compiler_fill_image_2d_array(void)
     }
   }
   free(dst);
+  free(src);
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_fill_image_2d_array);
