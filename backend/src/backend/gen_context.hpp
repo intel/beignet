@@ -156,6 +156,8 @@ namespace gbe
     void emitMathInstruction(const SelectionInstruction &insn);
     virtual void emitRead64Instruction(const SelectionInstruction &insn);
     virtual void emitWrite64Instruction(const SelectionInstruction &insn);
+    virtual void emitRead64A64Instruction(const SelectionInstruction &insn);
+    virtual void emitWrite64A64Instruction(const SelectionInstruction &insn);
     void emitUntypedReadInstruction(const SelectionInstruction &insn);
     void emitUntypedWriteInstruction(const SelectionInstruction &insn);
     virtual void emitUntypedReadA64Instruction(const SelectionInstruction &insn);
