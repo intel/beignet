@@ -185,6 +185,7 @@ namespace gbe
     return this->opcode == SEL_OP_UNTYPED_READ ||
            this->opcode == SEL_OP_UNTYPED_READA64 ||
            this->opcode == SEL_OP_READ64       ||
+           this->opcode == SEL_OP_READ64A64       ||
            this->opcode == SEL_OP_ATOMIC       ||
            this->opcode == SEL_OP_BYTE_GATHER  ||
            this->opcode == SEL_OP_BYTE_GATHERA64  ||
@@ -213,6 +214,7 @@ namespace gbe
     return this->opcode == SEL_OP_UNTYPED_WRITE ||
            this->opcode == SEL_OP_UNTYPED_WRITEA64 ||
            this->opcode == SEL_OP_WRITE64       ||
+           this->opcode == SEL_OP_WRITE64A64       ||
            this->opcode == SEL_OP_ATOMIC        ||
            this->opcode == SEL_OP_BYTE_SCATTER  ||
            this->opcode == SEL_OP_BYTE_SCATTERA64  ||
@@ -640,6 +642,10 @@ namespace gbe
     void READ64(Reg addr, const GenRegister *dst, const GenRegister *tmp, uint32_t elemNum, const GenRegister bti, bool native_long, vector<GenRegister> temps);
     /*! Write 64 bits float/int array */
     void WRITE64(Reg addr, const GenRegister *src, const GenRegister *tmp, uint32_t srcNum, GenRegister bti, bool native_long, vector<GenRegister> temps);
+    /*! Read64 A64 */
+    void READ64A64(Reg addr, const GenRegister *dst, const GenRegister *tmp, uint32_t elemNum);
+    /*! write64 a64 */
+    void WRITE64A64(Reg addr, const GenRegister *src, const GenRegister *tmp, uint32_t srcNum);
     /*! Untyped read (up to 4 elements) */
     void UNTYPED_READ(Reg addr, const GenRegister *dst, uint32_t elemNum, GenRegister bti, vector<GenRegister> temps);
     /*! Untyped write (up to 4 elements) */
@@ -1411,6 +1417,39 @@ namespace gbe
     srcVector->reg = &insn->src(0);
   }
 
+  void Selection::Opaque::READ64A64(Reg addr,
+                                 const GenRegister *dst,
+                                 const GenRegister *tmp,
+                                 uint32_t elemNum)
+  {
+    SelectionInstruction *insn = NULL;
+    SelectionVector *srcVector = NULL;
+    SelectionVector *dstVector = NULL;
+    insn = this->appendInsn(SEL_OP_READ64A64,elemNum*2, 1);
+    srcVector = this->appendVector();
+    dstVector = this->appendVector();
+
+    for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+      insn->dst(elemID) = tmp[elemID];
+
+    for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+      insn->dst(elemID + elemNum) = dst[elemID];
+
+    insn->src(0) = addr;
+
+    insn->extra.elem = elemNum;
+
+    dstVector->regNum = elemNum;
+    dstVector->isSrc = 0;
+    dstVector->offsetID = 0;
+    dstVector->reg = &insn->dst(0);
+
+    srcVector->regNum = 1;
+    srcVector->offsetID = 0;
+    srcVector->isSrc = 1;
+    srcVector->reg = &insn->src(0);
+  }
+
   void Selection::Opaque::UNTYPED_READ(Reg addr,
                                        const GenRegister *dst,
                                        uint32_t elemNum,
@@ -1550,6 +1589,38 @@ namespace gbe
       insn->state.flag = 0;
       insn->state.subFlag = 1;
     }
+  }
+
+  void Selection::Opaque::WRITE64A64(Reg addr,
+                                  const GenRegister *src,
+                                  const GenRegister *tmp,
+                                  uint32_t srcNum)
+  {
+    SelectionVector *vector = NULL;
+    SelectionInstruction *insn = NULL;
+
+    const uint32_t dstNum = srcNum;
+    insn = this->appendInsn(SEL_OP_WRITE64A64, dstNum, srcNum*2 + 1);
+    vector = this->appendVector();
+
+    for (uint32_t elemID = 0; elemID < srcNum; ++elemID)
+      insn->src(elemID) = src[elemID];
+
+    insn->src(srcNum) = addr;
+    for (uint32_t elemID = 0; elemID < srcNum; ++elemID)
+      insn->src(srcNum + 1 + elemID) = tmp[elemID];
+
+    /* We also need to add the tmp reigster to dst, in order
+       to avoid the post schedule error . */
+    for (uint32_t elemID = 0; elemID < srcNum; ++elemID)
+      insn->dst(elemID) = tmp[elemID];
+
+    insn->extra.elem = srcNum;
+
+    vector->regNum = srcNum + 1;
+    vector->offsetID = srcNum;
+    vector->reg = &insn->src(srcNum);
+    vector->isSrc = 1;
   }
 
   void Selection::Opaque::UNTYPED_WRITE(Reg addr,

@@ -2229,6 +2229,12 @@ namespace gbe
   void GenContext::emitByteScatterA64Instruction(const SelectionInstruction &insn) {
     assert(0);
   }
+  void GenContext::emitRead64A64Instruction(const SelectionInstruction &insn) {
+    assert(0);
+  }
+  void GenContext::emitWrite64A64Instruction(const SelectionInstruction &insn) {
+    assert(0);
+  }
 
   void GenContext::emitUnpackByteInstruction(const SelectionInstruction &insn) {
     const GenRegister src = ra->genReg(insn.src(0));
