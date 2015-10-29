@@ -182,11 +182,12 @@ namespace gbe
   }
 
   bool SelectionInstruction::isRead(void) const {
-    return this->opcode == SEL_OP_UNTYPED_READ ||
-           this->opcode == SEL_OP_READ64       ||
-           this->opcode == SEL_OP_ATOMIC       ||
-           this->opcode == SEL_OP_BYTE_GATHER  ||
-           this->opcode == SEL_OP_SAMPLE ||
+    return this->opcode == SEL_OP_UNTYPED_READ    ||
+           this->opcode == SEL_OP_UNTYPED_READA64 ||
+           this->opcode == SEL_OP_READ64          ||
+           this->opcode == SEL_OP_ATOMIC          ||
+           this->opcode == SEL_OP_BYTE_GATHER     ||
+           this->opcode == SEL_OP_SAMPLE          ||
            this->opcode == SEL_OP_DWORD_GATHER;
   }
 
@@ -205,10 +206,11 @@ namespace gbe
   }
 
   bool SelectionInstruction::isWrite(void) const {
-    return this->opcode == SEL_OP_UNTYPED_WRITE ||
-           this->opcode == SEL_OP_WRITE64       ||
-           this->opcode == SEL_OP_ATOMIC        ||
-           this->opcode == SEL_OP_BYTE_SCATTER  ||
+    return this->opcode == SEL_OP_UNTYPED_WRITE    ||
+           this->opcode == SEL_OP_UNTYPED_WRITEA64 ||
+           this->opcode == SEL_OP_WRITE64          ||
+           this->opcode == SEL_OP_ATOMIC           ||
+           this->opcode == SEL_OP_BYTE_SCATTER     ||
            this->opcode == SEL_OP_TYPED_WRITE;
   }
 
@@ -635,6 +637,10 @@ namespace gbe
     void BYTE_GATHER(Reg dst, Reg addr, uint32_t elemSize, GenRegister bti, vector<GenRegister> temps);
     /*! Byte scatter (for unaligned bytes, shorts and ints) */
     void BYTE_SCATTER(Reg addr, Reg src, uint32_t elemSize, GenRegister bti, vector <GenRegister> temps);
+    /*! Untyped read (up to 4 elements) */
+    void UNTYPED_READA64(Reg addr, const GenRegister *dst, uint32_t dstNum, uint32_t elemNum);
+    /*! Untyped write (up to 4 elements) */
+    void UNTYPED_WRITEA64(const GenRegister *msgs, uint32_t msgNum, uint32_t elemNum);
     /*! DWord scatter (for constant cache read) */
     void DWORD_GATHER(Reg dst, Reg addr, uint32_t bti);
     /*! Unpack the uint to charN */
@@ -1396,6 +1402,34 @@ namespace gbe
     srcVector->offsetID = 0;
     srcVector->reg = &insn->src(0);
   }
+  void Selection::Opaque::UNTYPED_READA64(Reg addr,
+                                       const GenRegister *dst,
+                                       uint32_t dstNum,
+                                       uint32_t elemNum)
+  {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_UNTYPED_READA64, dstNum, 1);
+    SelectionVector *srcVector = this->appendVector();
+    SelectionVector *dstVector = this->appendVector();
+    if (this->isScalarReg(dst[0].reg()))
+      insn->state.noMask = 1;
+    // Regular instruction to encode
+    for (uint32_t id = 0; id < dstNum; ++id)
+      insn->dst(id) = dst[id];
+
+    insn->src(0) = addr;
+    insn->extra.elem = elemNum;
+
+    // Sends require contiguous allocation
+    dstVector->regNum = dstNum;
+    dstVector->isSrc = 0;
+    dstVector->offsetID = 0;
+    dstVector->reg = &insn->dst(0);
+
+    srcVector->regNum = 1;
+    srcVector->isSrc = 1;
+    srcVector->offsetID = 0;
+    srcVector->reg = &insn->src(0);
+  }
 
   void Selection::Opaque::WRITE64(Reg addr,
                                   const GenRegister *src,
@@ -1500,6 +1534,25 @@ namespace gbe
 
     // Sends require contiguous allocation for the sources
     vector->regNum = elemNum+1;
+    vector->reg = &insn->src(0);
+    vector->offsetID = 0;
+    vector->isSrc = 1;
+  }
+
+  void Selection::Opaque::UNTYPED_WRITEA64(const GenRegister *src,
+                                        uint32_t msgNum,
+                                        uint32_t elemNum)
+  {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_UNTYPED_WRITEA64, 0, msgNum);
+    SelectionVector *vector = this->appendVector();
+
+    // Regular instruction to encode
+    for (uint32_t id = 0; id < msgNum; ++id)
+      insn->src(id) = src[id];
+    insn->extra.elem = elemNum;
+
+    // Sends require contiguous allocation for the sources
+    vector->regNum = msgNum;
     vector->reg = &insn->src(0);
     vector->offsetID = 0;
     vector->isSrc = 1;

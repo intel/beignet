@@ -2212,6 +2212,14 @@ namespace gbe
 
   }
 
+  void GenContext::emitUntypedReadA64Instruction(const SelectionInstruction &insn) {
+    assert(0);
+  }
+
+  void GenContext::emitUntypedWriteA64Instruction(const SelectionInstruction &insn) {
+    assert(0);
+  }
+
   void GenContext::emitUnpackByteInstruction(const SelectionInstruction &insn) {
     const GenRegister src = ra->genReg(insn.src(0));
     for(uint32_t i = 0; i < insn.dstNum; i++) {

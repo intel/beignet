@@ -357,6 +357,11 @@ enum GenMessageTarget {
 #define GEN75_P1_ATOMIC_COUNTER_4X2    12 //1100: Atomic Counter Operation 4X2
 #define GEN75_P1_TYPED_SURFACE_WRITE   13 //1101: Typed Surface Write
 
+#define GEN8_P1_BYTE_GATHER_A64       16 //10000
+#define GEN8_P1_UNTYPED_READ_A64      17 //10001
+#define GEN8_P1_UNTYPED_WRITE_A64     25 //11001
+#define GEN8_P1_BYTE_SCATTER_A64      26 //11010
+
 /* Data port data cache scratch messages*/
 #define GEN_SCRATCH_READ                  0
 #define GEN_SCRATCH_WRITE                 1

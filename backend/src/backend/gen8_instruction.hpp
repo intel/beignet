@@ -566,6 +566,19 @@ union Gen8NativeInstruction
         uint32_t end_of_thread:1;
       } gen7_atomic_op;
 
+      // gen8 untyped read/write
+      struct {
+        uint32_t bti:8;
+        uint32_t rgba:4;
+        uint32_t simd_mode:2;
+        uint32_t msg_type:5;
+        uint32_t header_present:1;
+        uint32_t response_length:5;
+        uint32_t msg_length:4;
+        uint32_t pad2:2;
+        uint32_t end_of_thread:1;
+      } gen8_untyped_rw_a64;
+
       struct {
         uint32_t src1_subreg_nr_high:1;
         uint32_t src1_reg_nr:8;

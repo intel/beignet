@@ -72,13 +72,13 @@ namespace gbe
     Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
     const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA;
     setMessageDescriptor(insn, sfid, msg_length, response_length);
-    gen8_insn->bits3.gen7_untyped_rw.msg_type = msg_type;
-    gen8_insn->bits3.gen7_untyped_rw.bti = bti;
-    gen8_insn->bits3.gen7_untyped_rw.rgba = rgba;
+    gen8_insn->bits3.gen8_untyped_rw_a64.msg_type = msg_type;
+    gen8_insn->bits3.gen8_untyped_rw_a64.bti = bti;
+    gen8_insn->bits3.gen8_untyped_rw_a64.rgba = rgba;
     if (curr.execWidth == 8)
-      gen8_insn->bits3.gen7_untyped_rw.simd_mode = GEN_UNTYPED_SIMD8;
+      gen8_insn->bits3.gen8_untyped_rw_a64.simd_mode = GEN_UNTYPED_SIMD8;
     else if (curr.execWidth == 16)
-      gen8_insn->bits3.gen7_untyped_rw.simd_mode = GEN_UNTYPED_SIMD16;
+      gen8_insn->bits3.gen8_untyped_rw_a64.simd_mode = GEN_UNTYPED_SIMD16;
     else
       NOT_SUPPORTED;
   }
@@ -227,6 +227,53 @@ namespace gbe
       this->setSrc1(insn, bti);
     }
   }
+  void Gen8Encoder::UNTYPED_READA64(GenRegister dst, GenRegister src, uint32_t elemNum) {
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    assert(elemNum >= 1 || elemNum <= 4);
+    uint32_t msg_length = 0;
+    uint32_t response_length = 0;
+    assert(this->curr.execWidth == 8);
+
+    if (this->curr.execWidth == 8) {
+      msg_length = 2;
+      response_length = elemNum;
+    } else
+      NOT_IMPLEMENTED;
+
+    this->setHeader(insn);
+    this->setDst(insn,  GenRegister::uw16grf(dst.nr, 0));
+    this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
+    this->setSrc1(insn, GenRegister::immud(0));
+    setDPUntypedRW(insn,
+                   255, // stateless bti
+                   untypedRWMask[elemNum],
+                   GEN8_P1_UNTYPED_READ_A64,
+                   msg_length,
+                   response_length);
+  }
+
+  void Gen8Encoder::UNTYPED_WRITEA64(GenRegister msg, uint32_t elemNum) {
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    assert(elemNum >= 1 || elemNum <= 4);
+    uint32_t msg_length = 0;
+    uint32_t response_length = 0;
+    this->setHeader(insn);
+    if (this->curr.execWidth == 8) {
+      this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));
+      msg_length = 2 + elemNum;
+    } else
+      NOT_IMPLEMENTED;
+
+    this->setSrc0(insn, GenRegister::ud8grf(msg.nr, 0));
+    this->setSrc1(insn, GenRegister::immud(0));
+    setDPUntypedRW(insn,
+                   255, //stateless bti
+                   untypedRWMask[elemNum],
+                   GEN8_P1_UNTYPED_WRITE_A64,
+                   msg_length,
+                   response_length);
+  }
+
   void Gen8Encoder::LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value) {
     union { double d; unsigned u[2]; } u;
     u.d = value;

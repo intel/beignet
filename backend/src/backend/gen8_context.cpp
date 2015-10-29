@@ -900,6 +900,18 @@ namespace gbe
       p->pop();
     }
   }
+  void Gen8Context::emitUntypedReadA64Instruction(const SelectionInstruction &insn) {
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    const GenRegister src = ra->genReg(insn.src(0));
+    const uint32_t elemNum = insn.extra.elem;
+    p->UNTYPED_READA64(dst, src, elemNum);
+  }
+
+  void Gen8Context::emitUntypedWriteA64Instruction(const SelectionInstruction &insn) {
+    const GenRegister src = ra->genReg(insn.src(0));
+    const uint32_t elemNum = insn.extra.elem;
+    p->UNTYPED_WRITEA64(src, elemNum);
+  }
   void Gen8Context::emitRead64Instruction(const SelectionInstruction &insn)
   {
     const uint32_t elemNum = insn.extra.elem;
