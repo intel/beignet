@@ -912,6 +912,20 @@ namespace gbe
     const uint32_t elemNum = insn.extra.elem;
     p->UNTYPED_WRITEA64(src, elemNum);
   }
+
+  void Gen8Context::emitByteGatherA64Instruction(const SelectionInstruction &insn) {
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    const GenRegister src = ra->genReg(insn.src(0));
+    const uint32_t elemSize = insn.extra.elem;
+    p->BYTE_GATHERA64(dst, src, elemSize);
+  }
+
+  void Gen8Context::emitByteScatterA64Instruction(const SelectionInstruction &insn) {
+    const GenRegister src = ra->genReg(insn.src(0));
+    const uint32_t elemSize = insn.extra.elem;
+    p->BYTE_SCATTERA64(src, elemSize);
+  }
+
   void Gen8Context::emitRead64Instruction(const SelectionInstruction &insn)
   {
     const uint32_t elemNum = insn.extra.elem;

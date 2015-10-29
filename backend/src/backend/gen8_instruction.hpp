@@ -580,6 +580,19 @@ union Gen8NativeInstruction
       } gen8_untyped_rw_a64;
 
       struct {
+        uint32_t bti:8;
+        uint32_t block_sz:2; // 00 byte 01 dword
+        uint32_t data_sz:2; // 0 ->1block 1->2block
+        uint32_t ignored:2;
+        uint32_t msg_type:5;  // 10000 scatter read,  11010 scatter write 11001 a64 untyped write
+        uint32_t header_present:1;
+        uint32_t response_length:5;
+        uint32_t msg_length:4;
+        uint32_t pad2:2;
+        uint32_t end_of_thread:1;
+      } gen8_scatter_rw_a64;
+
+      struct {
         uint32_t src1_subreg_nr_high:1;
         uint32_t src1_reg_nr:8;
         uint32_t src1_subreg_nr_w:1;
