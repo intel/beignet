@@ -359,6 +359,10 @@ enum GenMessageTarget {
 
 #define GEN8_P1_BLOCK_READ_A64        20 //10100
 #define GEN8_P1_BLOCK_WRITE_A64       21 //10101
+#define GEN8_P1_BYTE_GATHER_A64       16 //10000
+#define GEN8_P1_UNTYPED_READ_A64      17 //10001
+#define GEN8_P1_UNTYPED_WRITE_A64     25 //11001
+#define GEN8_P1_BYTE_SCATTER_A64      26 //11010
 
 /* Data port data cache scratch messages*/
 #define GEN_SCRATCH_READ                  0

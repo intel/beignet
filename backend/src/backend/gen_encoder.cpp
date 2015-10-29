@@ -411,6 +411,14 @@ namespace gbe
     return insn->bits3.ud;
   }
 
+  void GenEncoder::UNTYPED_READA64(GenRegister dst, GenRegister src, uint32_t elemNum) {
+    assert(0);
+  }
+
+  void GenEncoder::UNTYPED_WRITEA64(GenRegister src, uint32_t elemNum){
+    assert(0);
+  }
+
   void GenEncoder::UNTYPED_WRITE(GenRegister msg, GenRegister bti, uint32_t elemNum) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     assert(elemNum >= 1 || elemNum <= 4);
