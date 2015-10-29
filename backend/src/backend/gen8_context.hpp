@@ -68,6 +68,8 @@ namespace gbe
 
     virtual void emitUntypedWriteA64Instruction(const SelectionInstruction &insn);
     virtual void emitUntypedReadA64Instruction(const SelectionInstruction &insn);
+    virtual void emitByteGatherA64Instruction(const SelectionInstruction &insn);
+    virtual void emitByteScatterA64Instruction(const SelectionInstruction &insn);
     virtual void emitWrite64Instruction(const SelectionInstruction &insn);
     virtual void emitRead64Instruction(const SelectionInstruction &insn);
     virtual void emitI64MULInstruction(const SelectionInstruction &insn);

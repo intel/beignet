@@ -50,6 +50,8 @@ namespace gbe
     virtual void UNTYPED_WRITE(GenRegister src, GenRegister bti, uint32_t elemNum);
     virtual void UNTYPED_READA64(GenRegister dst, GenRegister src, uint32_t elemNum);
     virtual void UNTYPED_WRITEA64(GenRegister src, uint32_t elemNum);
+    virtual void BYTE_GATHERA64(GenRegister dst, GenRegister src, uint32_t elemSize);
+    virtual void BYTE_SCATTERA64(GenRegister src, uint32_t elemSize);
     virtual void setHeader(GenNativeInstruction *insn);
     virtual void setDPUntypedRW(GenNativeInstruction *insn, uint32_t bti, uint32_t rgba,
                    uint32_t msg_type, uint32_t msg_length, uint32_t response_length);

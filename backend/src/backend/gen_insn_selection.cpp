@@ -187,6 +187,7 @@ namespace gbe
            this->opcode == SEL_OP_READ64          ||
            this->opcode == SEL_OP_ATOMIC          ||
            this->opcode == SEL_OP_BYTE_GATHER     ||
+           this->opcode == SEL_OP_BYTE_GATHERA64  ||
            this->opcode == SEL_OP_SAMPLE          ||
            this->opcode == SEL_OP_DWORD_GATHER;
   }
@@ -211,6 +212,7 @@ namespace gbe
            this->opcode == SEL_OP_WRITE64          ||
            this->opcode == SEL_OP_ATOMIC           ||
            this->opcode == SEL_OP_BYTE_SCATTER     ||
+           this->opcode == SEL_OP_BYTE_SCATTERA64  ||
            this->opcode == SEL_OP_TYPED_WRITE;
   }
 
@@ -637,6 +639,10 @@ namespace gbe
     void BYTE_GATHER(Reg dst, Reg addr, uint32_t elemSize, GenRegister bti, vector<GenRegister> temps);
     /*! Byte scatter (for unaligned bytes, shorts and ints) */
     void BYTE_SCATTER(Reg addr, Reg src, uint32_t elemSize, GenRegister bti, vector <GenRegister> temps);
+    /*! Byte gather a64 (for unaligned bytes, shorts and ints) */
+    void BYTE_GATHERA64(Reg dst, Reg addr, uint32_t elemSize);
+    /*! Byte scatter (for unaligned bytes, shorts and ints) */
+    void BYTE_SCATTERA64(GenRegister *msg, unsigned msgNum, uint32_t elemSize);
     /*! Untyped read (up to 4 elements) */
     void UNTYPED_READA64(Reg addr, const GenRegister *dst, uint32_t dstNum, uint32_t elemNum);
     /*! Untyped write (up to 4 elements) */
@@ -1620,6 +1626,42 @@ namespace gbe
 
     // value and address are contiguous in the send
     vector->regNum = 2;
+    vector->isSrc = 1;
+    vector->offsetID = 0;
+    vector->reg = &insn->src(0);
+  }
+
+  void Selection::Opaque::BYTE_GATHERA64(Reg dst, Reg addr, uint32_t elemSize) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_BYTE_GATHERA64, 1, 1);
+    SelectionVector *srcVector = this->appendVector();
+    SelectionVector *dstVector = this->appendVector();
+
+    if (this->isScalarReg(dst.reg()))
+      insn->state.noMask = 1;
+
+    insn->src(0) = addr;
+    insn->dst(0) = dst;
+    insn->extra.elem = elemSize;
+
+    dstVector->regNum = 1;
+    dstVector->isSrc = 0;
+    dstVector->offsetID = 0;
+    dstVector->reg = &insn->dst(0);
+    srcVector->regNum = 1;
+    srcVector->isSrc = 1;
+    srcVector->offsetID = 0;
+    srcVector->reg = &insn->src(0);
+  }
+
+  void Selection::Opaque::BYTE_SCATTERA64(GenRegister *msg, uint32_t msgNum, uint32_t elemSize) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_BYTE_SCATTERA64, 0, msgNum);
+    SelectionVector *vector = this->appendVector();
+    for (unsigned i = 0; i < msgNum; i++)
+      insn->src(i) = msg[i];
+
+    insn->extra.elem = elemSize;
+
+    vector->regNum = msgNum;
     vector->isSrc = 1;
     vector->offsetID = 0;
     vector->reg = &insn->src(0);

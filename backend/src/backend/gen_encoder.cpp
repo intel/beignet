@@ -518,6 +518,13 @@ namespace gbe
       this->setSrc1(insn, bti);
     }
   }
+  void GenEncoder::BYTE_GATHERA64(GenRegister dst, GenRegister src, uint32_t elemSize) {
+    assert(0);
+  }
+
+  void GenEncoder::BYTE_SCATTERA64(GenRegister src, uint32_t elemSize){
+    assert(0);
+  }
 
   void GenEncoder::DWORD_GATHER(GenRegister dst, GenRegister src, uint32_t bti) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);

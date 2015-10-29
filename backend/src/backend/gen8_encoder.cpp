@@ -83,6 +83,25 @@ namespace gbe
       NOT_SUPPORTED;
   }
 
+  static void setDPByteScatterGather(GenEncoder *p,
+                                     GenNativeInstruction *insn,
+                                     uint32_t bti,
+                                     uint32_t block_size,
+                                     uint32_t data_size,
+                                     uint32_t msg_type,
+                                     uint32_t msg_length,
+                                     uint32_t response_length)
+  {
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA;
+    Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
+    p->setMessageDescriptor(insn, sfid, msg_length, response_length);
+    gen8_insn->bits3.gen8_scatter_rw_a64.msg_type = msg_type;
+    gen8_insn->bits3.gen8_scatter_rw_a64.bti = bti;
+    gen8_insn->bits3.gen8_scatter_rw_a64.data_sz = data_size;
+    gen8_insn->bits3.gen8_scatter_rw_a64.block_sz = block_size;
+    GBE_ASSERT(p->curr.execWidth == 8);
+  }
+
   void Gen8Encoder::setTypedWriteMessage(GenNativeInstruction *insn, unsigned char bti,
                                           unsigned char msg_type, uint32_t msg_length, bool header_present)
   {
@@ -272,6 +291,54 @@ namespace gbe
                    GEN8_P1_UNTYPED_WRITE_A64,
                    msg_length,
                    response_length);
+  }
+
+  void Gen8Encoder::BYTE_GATHERA64(GenRegister dst, GenRegister src, uint32_t elemSize) {
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    this->setHeader(insn);
+    insn->header.destreg_or_condmod = GEN_SFID_DATAPORT1_DATA;
+
+    this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
+    this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
+
+    this->setSrc1(insn, GenRegister::immud(0));
+    //setByteGatherMessageDesc(insn, bti.value.ud, elemSize);
+    GBE_ASSERT(this->curr.execWidth == 8);
+    const uint32_t msg_length = 2;
+    const uint32_t response_length = 1;
+    setDPByteScatterGather(this,
+                           insn,
+                           0xff,
+                           0x0,
+                           elemSize,
+                           GEN8_P1_BYTE_GATHER_A64,
+                           msg_length,
+                           response_length);
+  }
+
+  void Gen8Encoder::BYTE_SCATTERA64(GenRegister msg, uint32_t elemSize) {
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+
+    this->setHeader(insn);
+    insn->header.destreg_or_condmod = GEN_SFID_DATAPORT1_DATA;
+
+    // only support simd8
+    GBE_ASSERT(this->curr.execWidth == 8);
+    this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));
+
+    this->setSrc0(insn, GenRegister::ud8grf(msg.nr, 0));
+
+    this->setSrc1(insn, GenRegister::immud(0));
+    const uint32_t msg_length = 3;
+    const uint32_t response_length = 0;
+    setDPByteScatterGather(this,
+                           insn,
+                           0xff,
+                           0x0,
+                           elemSize,
+                           GEN8_P1_BYTE_SCATTER_A64,
+                           msg_length,
+                           response_length);
   }
 
   void Gen8Encoder::LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value) {
