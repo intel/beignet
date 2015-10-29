@@ -852,8 +852,13 @@ _cl_mem_new_image(cl_context ctx,
     if (aligned_pitch < pitch && enableUserptr)
       aligned_pitch = pitch;
     //no need align the height if 2d image from buffer.
-    if (image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL)
+    //the pitch should be same with buffer's pitch as they share same bo.
+    if (image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL) {
+      if(aligned_pitch < pitch) {
+        aligned_pitch = pitch;
+      }
       aligned_h = h;
+    }
     else
       aligned_h  = ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_NO_TILE, 1));
   } else if (tiling == CL_TILE_X) {
