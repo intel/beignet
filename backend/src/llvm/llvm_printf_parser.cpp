@@ -261,7 +261,7 @@ again:
         printf("string end with %%\n");
         goto error;
       }
-      if (*(p + 1) == '%') { // %%
+      if (p + 1 < end && *(p + 1) == '%') { // %%
         p += 2;
         goto again;
       }
