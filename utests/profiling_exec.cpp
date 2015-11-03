@@ -45,7 +45,6 @@ static void profiling_exec(void)
     const size_t n = 512;
     cl_int status = CL_SUCCESS;
     cl_command_queue profiling_queue = NULL;
-    cl_command_queue tmp_queue = NULL;
     float* cpu_src = (float *)malloc(n*sizeof(float));
     float* cpu_dst = (float *)malloc(n*sizeof(float));
     cl_event exec_event;
@@ -55,10 +54,6 @@ static void profiling_exec(void)
     /* Because the profiling prop, we can not use default queue. */
     profiling_queue = clCreateCommandQueue(ctx, device, CL_QUEUE_PROFILING_ENABLE, &status);
     OCL_ASSERT(status == CL_SUCCESS);
-
-    /* save the default queue. */
-    tmp_queue = queue;
-    queue = profiling_queue;
 
     OCL_CREATE_KERNEL("compiler_fabs");
 
@@ -77,7 +72,7 @@ static void profiling_exec(void)
     cpu_exec(n, cpu_src, cpu_dst);
 
     // Run the kernel on GPU
-    OCL_CALL(clEnqueueNDRangeKernel, queue, kernel, 1, NULL, globals, locals, 0, NULL, &exec_event);
+    OCL_CALL(clEnqueueNDRangeKernel, profiling_queue, kernel, 1, NULL, globals, locals, 0, NULL, &exec_event);
     OCL_CALL(clWaitForEvents, 1, &exec_event);
 
     OCL_CALL(clGetEventProfilingInfo, exec_event, CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &time_queue, NULL);
@@ -94,7 +89,6 @@ static void profiling_exec(void)
 	OCL_ASSERT(((float *)buf_data[1])[i] == cpu_dst[i]);
     OCL_UNMAP_BUFFER(1);
 
-    queue = tmp_queue;
     clReleaseCommandQueue(profiling_queue);
     free(cpu_dst);
     free(cpu_src);
