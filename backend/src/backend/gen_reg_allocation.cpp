@@ -704,15 +704,15 @@ namespace gbe
       set<const ir::BasicBlock *> liveOutSet01;
       set<const ir::BasicBlock *> workSet(liveInSet01.begin(), liveInSet01.end());
       while(workSet.size()) {
-        for(auto bb : workSet) {
-          for(auto predBB : bb->getPredecessorSet()) {
+        for (auto bb = workSet.begin(); bb != workSet.end(); ) {
+          for(auto predBB : (*bb)->getPredecessorSet()) {
             liveOutSet01.insert(predBB);
-            if (liveInSet01.contains(predBB))
+            if (liveInSet01.find(predBB) != liveInSet01.end())
               continue;
             liveInSet01.insert(predBB);
             workSet.insert(predBB);
           }
-          workSet.erase(bb);
+          bb = workSet.erase(bb);
         }
       }
       int32_t maxID = 0;

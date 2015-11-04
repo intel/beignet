@@ -2450,13 +2450,16 @@ namespace gbe
     // Do multi pass redundant phi copy elimination based on the global interfering information.
     // FIXME, we don't need to re-compute the whole DAG for each pass.
     while (curRedundant->size() > 0) {
-      for (auto &pair : *curRedundant) {
-        auto phiCopySrc = pair.first;
-        auto phiCopy = pair.second;
+      //for (auto &pair = *curRedundant) {
+      for (auto pair = curRedundant->begin(); pair != curRedundant->end(); ) {
+        auto phiCopySrc = pair->first;
+        auto phiCopy = pair->second;
         if (replacedRegs.find(phiCopy) != replacedRegs.end() ||
             revReplacedRegs.find(phiCopy) != revReplacedRegs.end() ||
-            revReplacedRegs.find(phiCopySrc) != revReplacedRegs.end())
+            revReplacedRegs.find(phiCopySrc) != revReplacedRegs.end()) {
+          pair++;
           continue;
+        }
         if (!dag->interfere(liveness, phiCopySrc, phiCopy)) {
           const ir::DefSet *phiCopySrcDef = dag->getRegDef(phiCopySrc);
           const ir::UseSet *phiCopySrcUse = dag->getRegUse(phiCopySrc);
@@ -2472,8 +2475,9 @@ namespace gbe
 
           replacedRegs.insert(std::make_pair(phiCopySrc, phiCopy));
           revReplacedRegs.insert(std::make_pair(phiCopy, phiCopySrc));
-          curRedundant->erase(phiCopySrc);
-        }
+          curRedundant->erase(pair++);
+        } else
+          pair++;
       }
 
       if (replacedRegs.size() != 0) {
