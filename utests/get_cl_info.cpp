@@ -418,6 +418,105 @@ void get_build_llvm_info(void)
 MAKE_UTEST_FROM_FUNCTION(get_build_llvm_info);
 
 
+// This method uses clGetProgramBuildInfo to check the dump-spir-binary options
+// and verifies that the spir dump file is actually generated in the backend.
+void compile_spir_binary(void)
+{
+    map<cl_program_info, void *> maps;
+    cl_build_status expect_status;
+    char spir_file[] = "test_spir_dump.txt";
+    char compile_opt[] = "-dump-spir-binary=test_spir_dump.txt";
+    FILE *fp = NULL;
+    int sz;
+
+    //Remove any pre-existing file
+    if( (fp = fopen(spir_file, "r")) != NULL) {
+        fclose(fp);
+        std::remove(spir_file);
+    }
+
+    OCL_CALL (cl_kernel_compile, "compiler_ceil.cl", "compiler_ceil", compile_opt);
+
+    /* Do our test.*/
+    expect_status = CL_BUILD_SUCCESS;
+    maps.insert(make_pair(CL_PROGRAM_BUILD_STATUS,
+                          (void *)(new Info_Result<cl_build_status>(expect_status))));
+    sz = strlen(compile_opt) + 1;
+    maps.insert(make_pair(CL_PROGRAM_BUILD_OPTIONS,
+                          (void *)(new Info_Result<char *>(compile_opt, sz))));
+
+    for (map<cl_program_info, void *>::iterator x = maps.begin(); x != maps.end(); ++x) {
+        switch (x->first) {
+        case CL_PROGRAM_BUILD_STATUS:
+            CALL_PROG_BUILD_INFO_AND_RET(cl_build_status);
+            break;
+        case CL_PROGRAM_BUILD_OPTIONS:
+            CALL_PROG_BUILD_INFO_AND_RET(char *);
+            break;
+        default:
+            break;
+        }
+    }
+
+    //Test is successful if the backend created the file
+    if( (fp = fopen(spir_file, "r")) == NULL) {
+        std::cout << "SPIR file creation.. FAILED";
+        OCL_ASSERT(0);
+    } else {
+        fclose(fp);
+        std::cout << "SPIR file created.. SUCCESS";
+    }
+}
+MAKE_UTEST_FROM_FUNCTION(compile_spir_binary);
+
+void build_spir_binary(void)
+{
+    map<cl_program_info, void *> maps;
+    cl_build_status expect_status;
+    char spir_file[] = "test_spir_dump.txt";
+    char build_opt[] = "-dump-spir-binary=test_spir_dump.txt";
+    FILE *fp = NULL;
+    int sz;
+
+    //Remove any pre-existing file
+    if( (fp = fopen(spir_file, "r")) != NULL) {
+        fclose(fp);
+        std::remove(spir_file);
+    }
+
+    OCL_CALL (cl_kernel_init, "compiler_ceil.cl", "compiler_ceil", SOURCE, build_opt);
+
+    /* Do our test.*/
+    expect_status = CL_BUILD_SUCCESS;
+    maps.insert(make_pair(CL_PROGRAM_BUILD_STATUS,
+                          (void *)(new Info_Result<cl_build_status>(expect_status))));
+    sz = strlen(build_opt) + 1;
+    maps.insert(make_pair(CL_PROGRAM_BUILD_OPTIONS,
+                          (void *)(new Info_Result<char *>(build_opt, sz))));
+
+    for (map<cl_program_info, void *>::iterator x = maps.begin(); x != maps.end(); ++x) {
+        switch (x->first) {
+        case CL_PROGRAM_BUILD_STATUS:
+            CALL_PROG_BUILD_INFO_AND_RET(cl_build_status);
+            break;
+        case CL_PROGRAM_BUILD_OPTIONS:
+            CALL_PROG_BUILD_INFO_AND_RET(char *);
+            break;
+        default:
+            break;
+        }
+    }
+
+    //Test is successful if the backend created the file
+    if( (fp = fopen(spir_file, "r")) == NULL) {
+        std::cout << "SPIR file creation.. FAILED";
+        OCL_ASSERT(0);
+    } else {
+        fclose(fp);
+        std::cout << "SPIR file created.. SUCCESS";
+    }
+}
+MAKE_UTEST_FROM_FUNCTION(build_spir_binary);
 // This method uses clGetProgramBuildInfo to check the asm dump build options sent
 // And verifies that the asm dump file is actually generated in the backend.
 void get_build_asm_info(void)
