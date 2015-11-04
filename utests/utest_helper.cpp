@@ -697,7 +697,15 @@ void cl_write_bmp(const int *data, int width, int height, const char *filename)
 {
   int x, y;
 
-  FILE *fp = fopen(filename, "wb");
+  FILE *fp = NULL;
+#if defined(__ANDROID__)
+  char dst_img[256];
+  snprintf(dst_img, sizeof(dst_img), "/sdcard/ocl/%s", filename);
+  fp = fopen(dst_img, "wb");
+  if(fp == NULL) return;
+#else
+  fp = fopen(filename, "wb");
+#endif
   assert(fp);
 
   char *raw = (char *) malloc(width * height * sizeof(int));	// at most

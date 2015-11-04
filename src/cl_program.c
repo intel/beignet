@@ -782,7 +782,12 @@ cl_program_compile(cl_program            p,
     p->build_opts = NULL;
   }
 
+#if defined(__ANDROID__)
+  char temp_header_template[]= "/data/local/tmp/beignet.XXXXXX";
+#else
   char temp_header_template[]= "/tmp/beignet.XXXXXX";
+#endif
+
   char* temp_header_path = mkdtemp(temp_header_template);
 
   if (p->source_type == FROM_SOURCE) {
