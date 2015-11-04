@@ -386,6 +386,36 @@ namespace gbe
     ir::Context &ctx;
   };
 
+  class GenWriter;
+  class MemoryInstHelper {
+    public:
+      MemoryInstHelper(ir::Context &c, ir::Unit &u, GenWriter *w, bool l)
+                : ctx(c),
+                  unit(u),
+                  writer(w),
+                  legacyMode(l)
+                  { }
+      void         emitUnalignedDQLoadStore(Value *llvmValues);
+      ir::Tuple    getValueTuple(llvm::Value *llvmValues, llvm::Type *elemType, unsigned start, unsigned elemNum);
+      void         emitBatchLoadOrStore(const ir::Type type, const uint32_t elemNum, Value *llvmValues, Type * elemType);
+      ir::Register getOffsetAddress(ir::Register basePtr, unsigned offset);
+      void         shootMessage(ir::Type type, ir::Register offset, ir::Tuple value, unsigned elemNum);
+      template <bool isLoad, typename T>
+      void         emitLoadOrStore(T &I);
+    private:
+      ir::Context             &ctx;
+      ir::Unit               &unit;
+      GenWriter            *writer;
+      bool              legacyMode;
+      ir::AddressSpace   addrSpace;
+      ir::Register            mBTI;
+      ir::Register            mPtr;
+      ir::AddressMode mAddressMode;
+      unsigned        SurfaceIndex;
+      bool                  isLoad;
+      bool               dwAligned;
+  };
+
   /*! Translate LLVM IR code to Gen IR code */
   class GenWriter : public FunctionPass, public InstVisitor<GenWriter>
   {
@@ -437,6 +467,9 @@ namespace gbe
     Function *Func;
     const Module *TheModule;
     int btiBase;
+    /*! legacyMode is for hardware before BDW,
+     * which do not support stateless memory access */
+    bool legacyMode;
   public:
     static char ID;
     explicit GenWriter(ir::Unit &unit)
@@ -446,7 +479,8 @@ namespace gbe
         regTranslator(ctx),
         LI(0),
         TheModule(0),
-        btiBase(BTI_RESERVED_NUM)
+        btiBase(BTI_RESERVED_NUM),
+        legacyMode(true)
     {
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=7
       initializeLoopInfoWrapperPassPass(*PassRegistry::getPassRegistry());
@@ -491,7 +525,8 @@ namespace gbe
 
       Func = &F;
       assignBti(F);
-      analyzePointerOrigin(F);
+      if (legacyMode)
+        analyzePointerOrigin(F);
 
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=7
       LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
@@ -643,6 +678,7 @@ namespace gbe
       ir::ImmediateIndex processSeqConstant(ConstantDataSequential *seq,
                                             int index, ConstTypeId tid);
       ir::ImmediateIndex processConstantVector(ConstantVector *cv, int index);
+      friend class MemoryInstHelper;
   };
 
   char GenWriter::ID = 0;
@@ -3570,47 +3606,55 @@ namespace gbe
     CallSite::arg_iterator AI = CS.arg_begin();
     CallSite::arg_iterator AE = CS.arg_end();
     GBE_ASSERT(AI != AE);
-
-    ir::AddressSpace addrSpace;
-
     Value *llvmPtr = *AI;
-    Value *bti = getBtiRegister(llvmPtr);
-    Value *ptrBase = getPointerBase(llvmPtr);
+    ir::AddressSpace addrSpace = addressSpaceLLVMToGen(llvmPtr->getType()->getPointerAddressSpace());
     ir::Register pointer = this->getRegister(llvmPtr);
-    ir::Register baseReg = this->getRegister(ptrBase);
 
+    ir::Register ptr;
     ir::Register btiReg;
-    bool fixedBTI = false;
-    if (isa<ConstantInt>(bti)) {
-      fixedBTI = true;
-      unsigned index = cast<ConstantInt>(bti)->getZExtValue();
-      addrSpace = btiToGen(index);
-      ir::ImmediateIndex immIndex = ctx.newImmediate((uint32_t)index);
-      btiReg = ctx.reg(ir::FAMILY_DWORD);
-      ctx.LOADI(ir::TYPE_U32, btiReg, immIndex);
-    } else {
-      addrSpace = ir::MEM_MIXED;
-      btiReg = this->getRegister(bti);
-    }
+    unsigned SurfaceIndex = 0xff;;
 
-    const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
-    const ir::Register ptr = ctx.reg(pointerFamily);
-    ctx.SUB(ir::TYPE_U32, ptr, pointer, baseReg);
+    ir::AddressMode AM;
+    if (legacyMode) {
+      Value *bti = getBtiRegister(llvmPtr);
+      Value *ptrBase = getPointerBase(llvmPtr);
+      ir::Register baseReg = this->getRegister(ptrBase);
+      if (isa<ConstantInt>(bti)) {
+        AM = ir::AM_StaticBti;
+        SurfaceIndex = cast<ConstantInt>(bti)->getZExtValue();
+        addrSpace = btiToGen(SurfaceIndex);
+      } else {
+        AM = ir::AM_DynamicBti;
+        addrSpace = ir::MEM_MIXED;
+        btiReg = this->getRegister(bti);
+      }
+      const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
+      ptr = ctx.reg(pointerFamily);
+      ctx.SUB(ir::TYPE_U32, ptr, pointer, baseReg);
+    } else {
+      AM = ir::AM_Stateless;
+      ptr = pointer;
+    }
 
     const ir::Register dst = this->getRegister(&I);
 
-    uint32_t srcNum = 0;
-    vector<ir::Register> src;
-    src.push_back(ptr);
-    srcNum++;
+    uint32_t payloadNum = 0;
+    vector<ir::Register> payload;
     AI++;
 
     while(AI != AE) {
-      src.push_back(this->getRegister(*(AI++)));
-      srcNum++;
+      payload.push_back(this->getRegister(*(AI++)));
+      payloadNum++;
     }
-    const ir::Tuple srcTuple = ctx.arrayTuple(&src[0], srcNum);
-    ctx.ATOMIC(opcode, dst, addrSpace, btiReg, fixedBTI, srcTuple);
+    ir::Type type = getType(ctx, llvmPtr->getType()->getPointerElementType());
+    const ir::Tuple payloadTuple = payloadNum == 0 ?
+                                   ir::Tuple(0) :
+                                   ctx.arrayTuple(&payload[0], payloadNum);
+    if (AM == ir::AM_DynamicBti) {
+      ctx.ATOMIC(opcode, type, dst, addrSpace, ptr, payloadTuple, AM, btiReg);
+    } else {
+      ctx.ATOMIC(opcode, type, dst, addrSpace, ptr, payloadTuple, AM, SurfaceIndex);
+    }
   }
 
   /* append a new sampler. should be called before any reference to
@@ -4323,65 +4367,82 @@ namespace gbe
     this->newRegister(&I);
   }
   void GenWriter::regAllocateStoreInst(StoreInst &I) {}
+  void GenWriter::emitLoadInst(LoadInst &I) {
+    MemoryInstHelper *h = new MemoryInstHelper(ctx, unit, this, legacyMode);
+    h->emitLoadOrStore<true>(I);
+    delete h;
+  }
 
-  void GenWriter::emitBatchLoadOrStore(const ir::Type type, const uint32_t elemNum,
-                                      Value *llvmValues, const ir::Register ptr,
-                                      const ir::AddressSpace addrSpace,
-                                      Type * elemType, bool isLoad, ir::Register bti,
-                                      bool dwAligned, bool fixedBTI) {
-    const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
+  void GenWriter::emitStoreInst(StoreInst &I) {
+    MemoryInstHelper *h = new MemoryInstHelper(ctx, unit, this, legacyMode);
+    h->emitLoadOrStore<false>(I);
+    delete h;
+  }
+
+  llvm::FunctionPass *createGenPass(ir::Unit &unit) {
+    return new GenWriter(unit);
+  }
+
+  ir::Tuple MemoryInstHelper::getValueTuple(llvm::Value *llvmValues, llvm::Type *elemType, unsigned start, unsigned elemNum) {
+      vector<ir::Register> tupleData; // put registers here
+      for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
+        ir::Register reg;
+        if(writer->regTranslator.isUndefConst(llvmValues, elemID)) {
+          Value *v = Constant::getNullValue(elemType);
+          reg = writer->getRegister(v);
+        } else
+          reg = writer->getRegister(llvmValues, start + elemID);
+
+        tupleData.push_back(reg);
+      }
+      const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], elemNum);
+      return tuple;
+  }
+
+  void MemoryInstHelper::emitBatchLoadOrStore(const ir::Type type, const uint32_t elemNum,
+                                      Value *llvmValues,
+                                      Type * elemType) {
     uint32_t totalSize = elemNum * getFamilySize(getFamily(type));
     uint32_t msgNum = totalSize > 16 ? totalSize / 16 : 1;
     const uint32_t perMsgNum = elemNum / msgNum;
 
     for (uint32_t msg = 0; msg < msgNum; ++msg) {
       // Build the tuple data in the vector
-      vector<ir::Register> tupleData; // put registers here
-      for (uint32_t elemID = 0; elemID < perMsgNum; ++elemID) {
-        ir::Register reg;
-        if(regTranslator.isUndefConst(llvmValues, elemID)) {
-          Value *v = Constant::getNullValue(elemType);
-          reg = this->getRegister(v);
-        } else
-          reg = this->getRegister(llvmValues, perMsgNum*msg+elemID);
-
-        tupleData.push_back(reg);
-      }
-      const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], perMsgNum);
-
-      // We may need to update to offset the pointer
-      ir::Register addr;
-      if (msg == 0)
-        addr = ptr;
-      else {
-        const ir::Register offset = ctx.reg(pointerFamily);
-        ir::ImmediateIndex immIndex;
-        ir::Type immType;
+     ir::Tuple tuple = getValueTuple(llvmValues, elemType, perMsgNum*msg, perMsgNum);
         // each message can read/write 16 byte
         const int32_t stride = 16;
-        if (pointerFamily == ir::FAMILY_DWORD) {
-          immIndex = ctx.newImmediate(int32_t(msg*stride));
-          immType = ir::TYPE_S32;
-        } else {
-          immIndex = ctx.newImmediate(int64_t(msg*stride));
-          immType = ir::TYPE_S64;
-        }
-
-        addr = ctx.reg(pointerFamily);
-        ctx.LOADI(immType, offset, immIndex);
-        ctx.ADD(immType, addr, ptr, offset);
-      }
-
-      // Emit the instruction
-      if (isLoad)
-        ctx.LOAD(type, tuple, addr, addrSpace, perMsgNum, dwAligned, fixedBTI, bti);
-      else
-        ctx.STORE(type, tuple, addr, addrSpace, perMsgNum, dwAligned, fixedBTI, bti);
+      ir::Register addr = getOffsetAddress(mPtr, msg*stride);
+      shootMessage(type, addr, tuple, perMsgNum);
     }
   }
 
+  ir::Register MemoryInstHelper::getOffsetAddress(ir::Register basePtr, unsigned offset) {
+    const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
+    ir::Register addr;
+    if (offset == 0)
+      addr = basePtr;
+    else {
+      const ir::Register offsetReg = ctx.reg(pointerFamily);
+      ir::ImmediateIndex immIndex;
+      ir::Type immType;
+
+      if (pointerFamily == ir::FAMILY_DWORD) {
+        immIndex = ctx.newImmediate(int32_t(offset));
+        immType = ir::TYPE_S32;
+      } else {
+        immIndex = ctx.newImmediate(int64_t(offset));
+        immType = ir::TYPE_S64;
+      }
+
+      addr = ctx.reg(pointerFamily);
+      ctx.LOADI(immType, offsetReg, immIndex);
+      ctx.ADD(immType, addr, basePtr, offsetReg);
+    }
+    return addr;
+  }
+
   // handle load of dword/qword with unaligned address
-  void GenWriter::emitUnalignedDQLoadStore(ir::Register ptr, Value *llvmValues, ir::AddressSpace addrSpace, ir::Register bti, bool isLoad, bool dwAligned, bool fixedBTI)
+  void MemoryInstHelper::emitUnalignedDQLoadStore(Value *llvmValues)
   {
     Type *llvmType = llvmValues->getType();
     unsigned byteSize = getTypeByteSize(unit, llvmType);
@@ -4395,19 +4456,7 @@ namespace gbe
     }
     const ir::Type type = getType(ctx, elemType);
 
-    vector<ir::Register> tupleData;
-    for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
-      ir::Register reg;
-      if(regTranslator.isUndefConst(llvmValues, elemID)) {
-        Value *v = Constant::getNullValue(elemType);
-        reg = this->getRegister(v);
-      } else
-        reg = this->getRegister(llvmValues, elemID);
-
-      tupleData.push_back(reg);
-    }
-    const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], elemNum);
-
+    ir::Tuple tuple = getValueTuple(llvmValues, elemType, 0, elemNum);
     vector<ir::Register> byteTupleData;
     for (uint32_t elemID = 0; elemID < byteSize; ++elemID) {
       byteTupleData.push_back(ctx.reg(ir::FAMILY_BYTE));
@@ -4415,97 +4464,83 @@ namespace gbe
     const ir::Tuple byteTuple = ctx.arrayTuple(&byteTupleData[0], byteSize);
 
     if (isLoad) {
-      ctx.LOAD(ir::TYPE_U8, byteTuple, ptr, addrSpace, byteSize, dwAligned, fixedBTI, bti);
+      shootMessage(ir::TYPE_U8, mPtr, byteTuple, byteSize);
       ctx.BITCAST(type, ir::TYPE_U8, tuple, byteTuple, elemNum, byteSize);
     } else {
       ctx.BITCAST(ir::TYPE_U8, type, byteTuple, tuple, byteSize, elemNum);
       // FIXME: byte scatter does not handle correctly vector store, after fix that,
       //        we can directly use on store instruction like:
       //        ctx.STORE(ir::TYPE_U8, byteTuple, ptr, addrSpace, byteSize, dwAligned, fixedBTI, bti);
-      const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
       for (uint32_t elemID = 0; elemID < byteSize; elemID++) {
-        const ir::Register reg = byteTupleData[elemID];
-        ir::Register addr;
-        if (elemID == 0)
-          addr = ptr;
-        else {
-          const ir::Register offset = ctx.reg(pointerFamily);
-          ir::ImmediateIndex immIndex;
-          immIndex = ctx.newImmediate(int32_t(elemID));
-          addr = ctx.reg(pointerFamily);
-          ctx.LOADI(ir::TYPE_S32, offset, immIndex);
-          ctx.ADD(ir::TYPE_S32, addr, ptr, offset);
-        }
-       ctx.STORE(ir::TYPE_U8, addr, addrSpace, dwAligned, fixedBTI, bti, reg);
+        const ir::Register addr = getOffsetAddress(mPtr, elemID);
+        const ir::Tuple value = ctx.arrayTuple(&byteTupleData[elemID], 1);
+        shootMessage(ir::TYPE_U8, addr, value, 1);
       }
     }
   }
 
-  extern int OCL_SIMD_WIDTH;
   template <bool isLoad, typename T>
-  INLINE void GenWriter::emitLoadOrStore(T &I)
-  {
+  void MemoryInstHelper::emitLoadOrStore(T &I) {
     Value *llvmPtr = I.getPointerOperand();
     Value *llvmValues = getLoadOrStoreValue(I);
     Type *llvmType = llvmValues->getType();
-    const bool dwAligned = (I.getAlignment() % 4) == 0;
-    ir::AddressSpace addrSpace;
-    const ir::Register pointer = this->getRegister(llvmPtr);
+    dwAligned = (I.getAlignment() % 4) == 0;
+    addrSpace = addressSpaceLLVMToGen(llvmPtr->getType()->getPointerAddressSpace());
+    const ir::Register pointer = writer->getRegister(llvmPtr);
     const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
 
-    Value *bti = getBtiRegister(llvmPtr);
-    Value *ptrBase = getPointerBase(llvmPtr);
-    ir::Register baseReg = this->getRegister(ptrBase);
-    bool zeroBase = false;
-    if (isa<ConstantPointerNull>(ptrBase)) {
-      zeroBase = true;
-    }
-
-    ir::Register btiReg;
-    bool fixedBTI = false;
-    if (isa<ConstantInt>(bti)) {
-      fixedBTI = true;
-      unsigned index = cast<ConstantInt>(bti)->getZExtValue();
-      addrSpace = btiToGen(index);
-      ir::ImmediateIndex immIndex = ctx.newImmediate((uint32_t)index);
-      btiReg = ctx.reg(ir::FAMILY_DWORD);
-      ctx.LOADI(ir::TYPE_U32, btiReg, immIndex);
-    } else {
-      addrSpace = ir::MEM_MIXED;
-      btiReg = this->getRegister(bti);
-    }
-
+    this->isLoad = isLoad;
     Type *scalarType = llvmType;
     if (!isScalarType(llvmType)) {
       VectorType *vectorType = cast<VectorType>(llvmType);
       scalarType = vectorType->getElementType();
     }
 
-    ir::Register ptr = ctx.reg(pointerFamily);
-    // FIXME: avoid subtraction zero at this stage is not a good idea,
-    // but later ArgumentLower pass need to match exact load/addImm pattern
-    // so, I avoid subtracting zero base to satisfy ArgumentLower pass.
-    if (!zeroBase)
-      ctx.SUB(ir::TYPE_U32, ptr, pointer, baseReg);
-    else
-      ptr = pointer;
+    // calculate bti and pointer operand
+    if (legacyMode) {
+      Value *bti = writer->getBtiRegister(llvmPtr);
+      Value *ptrBase = writer->getPointerBase(llvmPtr);
+      ir::Register baseReg = writer->getRegister(ptrBase);
+      bool zeroBase = isa<ConstantPointerNull>(ptrBase) ? true : false;
+
+      if (isa<ConstantInt>(bti)) {
+        SurfaceIndex = cast<ConstantInt>(bti)->getZExtValue();
+        addrSpace = btiToGen(SurfaceIndex);
+        mAddressMode = ir::AM_StaticBti;
+      } else {
+        addrSpace = ir::MEM_MIXED;
+        mBTI = writer->getRegister(bti);
+        mAddressMode = ir::AM_DynamicBti;
+      }
+      mPtr = ctx.reg(pointerFamily);
+
+      // FIXME: avoid subtraction zero at this stage is not a good idea,
+      // but later ArgumentLower pass need to match exact load/addImm pattern
+      // so, I avoid subtracting zero base to satisfy ArgumentLower pass.
+      if (!zeroBase)
+        ctx.SUB(ir::TYPE_U32, mPtr, pointer, baseReg);
+      else
+        mPtr = pointer;
+    } else {
+      mPtr = pointer;
+      SurfaceIndex = 0xff;
+      mAddressMode = ir::AM_Stateless;
+    }
 
     unsigned primitiveBits = scalarType->getPrimitiveSizeInBits();
     if (!dwAligned
        && (primitiveBits == 64
           || primitiveBits == 32)
        ) {
-      emitUnalignedDQLoadStore(ptr, llvmValues, addrSpace, btiReg, isLoad, dwAligned, fixedBTI);
+      emitUnalignedDQLoadStore(llvmValues);
       return;
     }
     // Scalar is easy. We neednot build register tuples
     if (isScalarType(llvmType) == true) {
       const ir::Type type = getType(ctx, llvmType);
-      const ir::Register values = this->getRegister(llvmValues);
-      if (isLoad)
-        ctx.LOAD(type, ptr, addrSpace, dwAligned, fixedBTI, btiReg, values);
-      else
-        ctx.STORE(type, ptr, addrSpace, dwAligned, fixedBTI, btiReg, values);
+      const ir::Register values = writer->getRegister(llvmValues);
+      const ir::Tuple tuple = ctx.arrayTuple(&values, 1);
+      shootMessage(type, mPtr, tuple, 1);
     }
     // A vector type requires to build a tuple
     else {
@@ -4521,7 +4556,7 @@ namespace gbe
       // And the llvm does cast a type3 data to type4 for load/store instruction,
       // so a 4 elements vector may only have 3 valid elements. We need to fix it to correct element
       // count here.
-      if (elemNum == 4 && regTranslator.isUndefConst(llvmValues, 3))
+      if (elemNum == 4 && writer->regTranslator.isUndefConst(llvmValues, 3))
           elemNum = 3;
 
       // The code is going to be fairly different from types to types (based on
@@ -4532,72 +4567,44 @@ namespace gbe
       if(dataFamily == ir::FAMILY_DWORD && addrSpace != ir::MEM_CONSTANT) {
         // One message is enough here. Nothing special to do
         if (elemNum <= 4) {
-          // Build the tuple data in the vector
-          vector<ir::Register> tupleData; // put registers here
-          for (uint32_t elemID = 0; elemID < elemNum; ++elemID) {
-            ir::Register reg;
-            if(regTranslator.isUndefConst(llvmValues, elemID)) {
-              Value *v = Constant::getNullValue(elemType);
-              reg = this->getRegister(v);
-            } else
-              reg = this->getRegister(llvmValues, elemID);
-
-            tupleData.push_back(reg);
-          }
-          const ir::Tuple tuple = ctx.arrayTuple(&tupleData[0], elemNum);
-
-          // Emit the instruction
-          if (isLoad)
-            ctx.LOAD(type, tuple, ptr, addrSpace, elemNum, dwAligned, fixedBTI, btiReg);
-          else
-            ctx.STORE(type, tuple, ptr, addrSpace, elemNum, dwAligned, fixedBTI, btiReg);
+          ir::Tuple tuple = getValueTuple(llvmValues, elemType, 0, elemNum);
+          shootMessage(type, mPtr, tuple, elemNum);
         }
-        // Not supported by the hardware. So, we split the message and we use
-        // strided loads and stores
         else {
-          emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad, btiReg, dwAligned, fixedBTI);
+          emitBatchLoadOrStore(type, elemNum, llvmValues, elemType);
         }
       }
       else if((dataFamily == ir::FAMILY_WORD && (isLoad || elemNum % 2 == 0)) ||
               (dataFamily == ir::FAMILY_BYTE && (isLoad || elemNum % 4 == 0))) {
-          emitBatchLoadOrStore(type, elemNum, llvmValues, ptr, addrSpace, elemType, isLoad, btiReg, dwAligned, fixedBTI);
+          emitBatchLoadOrStore(type, elemNum, llvmValues, elemType);
       } else {
         for (uint32_t elemID = 0; elemID < elemNum; elemID++) {
-          if(regTranslator.isUndefConst(llvmValues, elemID))
+          if(writer->regTranslator.isUndefConst(llvmValues, elemID))
             continue;
 
-          const ir::Register reg = this->getRegister(llvmValues, elemID);
-          ir::Register addr;
-          if (elemID == 0)
-            addr = ptr;
-          else {
-              const ir::Register offset = ctx.reg(pointerFamily);
-              ir::ImmediateIndex immIndex;
-              int elemSize = getTypeByteSize(unit, elemType);
-              immIndex = ctx.newImmediate(int32_t(elemID * elemSize));
-              addr = ctx.reg(pointerFamily);
-              ctx.LOADI(ir::TYPE_S32, offset, immIndex);
-              ctx.ADD(ir::TYPE_S32, addr, ptr, offset);
-          }
-          if (isLoad)
-           ctx.LOAD(type, addr, addrSpace, dwAligned, fixedBTI, btiReg, reg);
-          else
-           ctx.STORE(type, addr, addrSpace, dwAligned, fixedBTI, btiReg, reg);
+          const ir::Register reg = writer->getRegister(llvmValues, elemID);
+          int elemSize = getTypeByteSize(unit, elemType);
+
+          ir::Register addr = getOffsetAddress(mPtr, elemID*elemSize);
+          const ir::Tuple tuple = ctx.arrayTuple(&reg, 1);
+          shootMessage(type, addr, tuple, 1);
         }
       }
     }
   }
 
-  void GenWriter::emitLoadInst(LoadInst &I) {
-    this->emitLoadOrStore<true>(I);
-  }
-
-  void GenWriter::emitStoreInst(StoreInst &I) {
-    this->emitLoadOrStore<false>(I);
-  }
-
-  llvm::FunctionPass *createGenPass(ir::Unit &unit) {
-    return new GenWriter(unit);
+  void MemoryInstHelper::shootMessage(ir::Type type, ir::Register offset, ir::Tuple value, unsigned elemNum) {
+    if (mAddressMode == ir::AM_DynamicBti) {
+      if (isLoad)
+        ctx.LOAD(type, value, offset, addrSpace, elemNum, dwAligned, mAddressMode, mBTI);
+      else
+        ctx.STORE(type, value, offset, addrSpace, elemNum, dwAligned, mAddressMode, mBTI);
+    } else {
+      if (isLoad)
+        ctx.LOAD(type, value, offset, addrSpace, elemNum, dwAligned, mAddressMode, SurfaceIndex);
+      else
+        ctx.STORE(type, value, offset, addrSpace, elemNum, dwAligned, mAddressMode, SurfaceIndex);
+    }
   }
 } /* namespace gbe */
 

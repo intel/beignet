@@ -316,60 +316,104 @@ namespace ir {
       Type srcType; //!< Type to convert from
     };
 
+    class ALIGNED_INSTRUCTION MemInstruction :
+      public BasePolicy
+    {
+    public:
+      MemInstruction(AddressMode   _AM,
+                     AddressSpace _AS,
+                     bool _dwAligned,
+                     Type _type,
+                     Register _offset)
+                   : AM(_AM),
+                     AS(_AS),
+                     dwAligned(_dwAligned),
+                     type(_type),
+                     SurfaceIndex(0),
+                     offset(_offset) {
+      }
+      AddressMode  getAddressMode()    const { return AM; }
+      AddressSpace getAddressSpace()   const { return AS; }
+      /*! MemInstruction may have one possible btiReg */
+      Register     getBtiReg()         const { assert(AM == AM_DynamicBti); return BtiReg; }
+      unsigned     getSurfaceIndex()   const { assert(AM != AM_DynamicBti); return SurfaceIndex; }
+      Register     getAddressRegister()const { return offset; }
+      unsigned     getAddressIndex()   const { return 0; }
+      Type         getValueType()      const { return type; }
+      INLINE bool  isAligned(void)     const { return !!dwAligned; }
+
+      void         setSurfaceIndex (unsigned id)  { SurfaceIndex = id; }
+      void         setBtiReg(Register reg)        { BtiReg = reg;      }
+    protected:
+      /*! including address reg + optional bti reg */
+      int          getBaseSrcNum()    const { return AM == AM_DynamicBti ? 2 : 1; }
+      bool         hasExtraBtiReg()   const { return AM == AM_DynamicBti; }
+      AddressMode       AM;
+      AddressSpace      AS;
+      uint8_t           dwAligned : 1;
+      Type              type;
+      union {
+        Register        BtiReg;
+        unsigned        SurfaceIndex;
+      };
+      Register          offset;
+    };
+
     class ALIGNED_INSTRUCTION AtomicInstruction :
-      public BasePolicy,
+      public MemInstruction,
       public NDstPolicy<AtomicInstruction, 1>
     {
     public:
       AtomicInstruction(AtomicOps atomicOp,
+                         Type type,
                          Register dst,
                          AddressSpace addrSpace,
-                         Register bti,
-                         bool fixedBTI,
-                         Tuple src)
+                         Register address,
+                         Tuple payload,
+                         AddressMode AM)
+        : MemInstruction(AM, addrSpace, true, type, address)
       {
         this->opcode = OP_ATOMIC;
         this->atomicOp = atomicOp;
         this->dst[0] = dst;
-        this->src = src;
-        this->addrSpace = addrSpace;
-        this->bti = bti;
-        this->fixedBTI = fixedBTI ? 1: 0;
-        srcNum = 2;
+        this->payload = payload;
+
+        int payloadNum = 1;
         if((atomicOp == ATOMIC_OP_INC) ||
           (atomicOp == ATOMIC_OP_DEC))
-          srcNum = 1;
+          payloadNum = 0;
         if(atomicOp == ATOMIC_OP_CMPXCHG)
-          srcNum = 3;
-        srcNum++;
+          payloadNum = 2;
+
+        srcNum = payloadNum + getBaseSrcNum();
       }
       INLINE Register getSrc(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID < srcNum, "Out-of-bound source register for atomic");
-        if (ID == 0u)
-          return bti;
-        else
-          return fn.getRegister(src, ID -1);
+        GBE_ASSERTM((int)ID < (int)srcNum, "Out-of-bound source register for atomic");
+        if (ID == 0) {
+          return offset;
+        } else if (hasExtraBtiReg() && (int)ID == (int)srcNum-1) {
+          return getBtiReg();
+        } else {
+          return fn.getRegister(payload, ID - 1);
+        }
       }
       INLINE void setSrc(Function &fn, uint32_t ID, Register reg) {
-        GBE_ASSERTM(ID < srcNum, "Out-of-bound source register for atomic");
-        if (ID == 0u)
-          bti = reg;
-        else
-          fn.setRegister(src, ID - 1, reg);
+        GBE_ASSERTM((int)ID < (int)srcNum, "Out-of-bound source register for atomic");
+        if (ID == 0) {
+          offset = reg;
+        } else if (hasExtraBtiReg() && (int)ID == (int)srcNum - 1) {
+          setBtiReg(reg);
+        } else {
+          fn.setRegister(payload, ID - 1, reg);
+        }
       }
       INLINE uint32_t getSrcNum(void) const { return srcNum; }
 
-      INLINE AddressSpace getAddressSpace(void) const { return this->addrSpace; }
-      INLINE Register getBTI(void) const { return bti; }
-      INLINE bool isFixedBTI(void) const { return !!fixedBTI; }
       INLINE AtomicOps getAtomicOpcode(void) const { return this->atomicOp; }
       INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
       Register dst[1];
-      Tuple src;
-      AddressSpace addrSpace; //!< Address space
-      Register bti;               //!< bti
-      uint8_t fixedBTI:1;      //!< fixed bti or not
+      Tuple payload;
       uint8_t srcNum:3;     //!<Source Number
       AtomicOps atomicOp:6;     //!<Source Number
     };
@@ -428,119 +472,102 @@ namespace ir {
       Register dst[0];       //!< No destination
     };
 
-    class ALIGNED_INSTRUCTION LoadInstruction :
-      public BasePolicy,
-      public NSrcPolicy<LoadInstruction, 2>
-    {
-    public:
-      LoadInstruction(Type type,
-                      Tuple dstValues,
-                      Register offset,
-                      AddressSpace addrSpace,
-                      uint32_t valueNum,
-                      bool dwAligned,
-                      bool fixedBTI,
-                      Register bti)
-      {
-        GBE_ASSERT(valueNum < 128);
-        this->opcode = OP_LOAD;
-        this->type = type;
-        this->offset = offset;
-        this->values = dstValues;
-        this->addrSpace = addrSpace;
-        this->valueNum = valueNum;
-        this->dwAligned = dwAligned ? 1 : 0;
-        this->fixedBTI = fixedBTI ? 1 : 0;
-        this->bti = bti;
-      }
-      INLINE Register getDst(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID < valueNum, "Out-of-bound source register");
-        return fn.getRegister(values, ID);
-      }
-      INLINE void setDst(Function &fn, uint32_t ID, Register reg) {
-        GBE_ASSERTM(ID < valueNum, "Out-of-bound source register");
-        fn.setRegister(values, ID, reg);
-      }
-      INLINE uint32_t getDstNum(void) const { return valueNum; }
-      INLINE Type getValueType(void) const { return type; }
-      INLINE uint32_t getValueNum(void) const { return valueNum; }
-      INLINE AddressSpace getAddressSpace(void) const { return addrSpace; }
-      INLINE Register getBTI(void) const { return bti; }
-      INLINE bool wellFormed(const Function &fn, std::string &why) const;
-      INLINE void out(std::ostream &out, const Function &fn) const;
-      INLINE bool isAligned(void) const { return !!dwAligned; }
-      INLINE bool isFixedBTI(void) const { return !!fixedBTI; }
-      Type type;              //!< Type to store
-      Register src[0];        //!< Address where to load from
-      Register bti;
-      Register offset;        //!< Alias to make it similar to store
-      Tuple values;           //!< Values to load
-      AddressSpace addrSpace; //!< Where to load
-      uint8_t fixedBTI:1;
-      uint8_t valueNum:7;     //!< Number of values to load
-      uint8_t dwAligned:1;    //!< DWORD aligned is what matters with GEN
-    };
 
-    class ALIGNED_INSTRUCTION StoreInstruction :
-      public BasePolicy, public NDstPolicy<StoreInstruction, 0>
+    class ALIGNED_INSTRUCTION LoadInstruction :
+      public MemInstruction
     {
-    public:
-      StoreInstruction(Type type,
-                       Tuple values,
-                       Register offset,
-                       AddressSpace addrSpace,
-                       uint32_t valueNum,
-                       bool dwAligned,
-                       bool fixedBTI,
-                       Register bti)
-      {
-        GBE_ASSERT(valueNum < 255);
-        this->opcode = OP_STORE;
-        this->type = type;
-        this->offset = offset;
-        this->values = values;
-        this->addrSpace = addrSpace;
-        this->valueNum = valueNum;
-        this->dwAligned = dwAligned ? 1 : 0;
-        this->fixedBTI = fixedBTI ? 1 : 0;
-        this->bti = bti;
-      }
-      INLINE Register getSrc(const Function &fn, uint32_t ID) const {
-        GBE_ASSERTM(ID < valueNum + 2u, "Out-of-bound source register for store");
-        if (ID == 0u)
-          return bti;
-        else if (ID == 1u)
-          return offset;
-        else
-          return fn.getRegister(values, ID - 2);
-      }
-      INLINE void setSrc(Function &fn, uint32_t ID, Register reg) {
-        GBE_ASSERTM(ID < valueNum + 2u, "Out-of-bound source register for store");
-        if (ID == 0u)
-          bti = reg;
-        else if (ID == 1u)
-          offset = reg;
-        else
-          fn.setRegister(values, ID - 2, reg);
-      }
-      INLINE uint32_t getSrcNum(void) const { return valueNum + 2u; }
-      INLINE uint32_t getValueNum(void) const { return valueNum; }
-      INLINE Type getValueType(void) const { return type; }
-      INLINE AddressSpace getAddressSpace(void) const { return addrSpace; }
-      INLINE Register getBTI(void) const { return bti; }
-      INLINE bool wellFormed(const Function &fn, std::string &why) const;
-      INLINE void out(std::ostream &out, const Function &fn) const;
-      INLINE bool isAligned(void) const { return !!dwAligned; }
-      INLINE bool isFixedBTI(void) const { return !!fixedBTI; }
-      Type type;              //!< Type to store
-      Register bti;
-      Register offset;        //!< First source is the offset where to store
-      Tuple values;           //!< Values to store
-      AddressSpace addrSpace; //!< Where to store
-      uint8_t fixedBTI:1;                //!< Which btis need access
-      uint8_t valueNum:7;     //!< Number of values to store
-      uint8_t dwAligned:1;    //!< DWORD aligned is what matters with GEN
-      Register dst[0];        //!< No destination
+      public:
+        LoadInstruction(Type type,
+                        Tuple dstValues,
+                        Register offset,
+                        AddressSpace AS,
+                        uint32_t _valueNum,
+                        bool dwAligned,
+                        AddressMode AM)
+                      : MemInstruction(AM, AS, dwAligned, type, offset),
+                        valueNum(_valueNum),
+                        values(dstValues)
+        {
+          this->opcode = OP_LOAD;
+        }
+
+        INLINE unsigned getSrcNum() const { return getBaseSrcNum(); }
+        INLINE Register getSrc(const Function &fn, unsigned id) const {
+          if (id == 0) return offset;
+          if (hasExtraBtiReg() && id == 1) return BtiReg;
+          assert(0 && "LoadInstruction::getSrc() out-of-range");
+          return ir::Register(0);
+        }
+        INLINE void     setSrc(Function &fn, unsigned id, Register reg) {
+          assert(id < getSrcNum());
+          if (id == 0) { offset = reg;   return; }
+          if (id == 1) { setBtiReg(reg); return; }
+        }
+        INLINE unsigned getDstNum() const { return valueNum; }
+        INLINE Register getDst(const Function &fn, unsigned id) const {
+          assert(id < valueNum);
+          return fn.getRegister(values, id);
+        }
+        INLINE void     setDst(Function &fn, unsigned id, Register reg) {
+          assert(id < getDstNum());
+          fn.setRegister(values, id, reg);
+        }
+        INLINE uint32_t getValueNum(void) const { return valueNum; }
+        INLINE Register getValue(const Function &fn, unsigned id) const {
+          assert(id < valueNum);
+          return fn.getRegister(values, id);
+        }
+        INLINE bool wellFormed(const Function &fn, std::string &why) const;
+        INLINE void out(std::ostream &out, const Function &fn) const;
+
+        uint8_t         valueNum;
+        Tuple             values;
+    };
+    class ALIGNED_INSTRUCTION StoreInstruction :
+      public MemInstruction,
+      public NDstPolicy<StoreInstruction, 0>
+    {
+      public:
+        StoreInstruction(Type type,
+                         Tuple values,
+                         Register offset,
+                         AddressSpace addrSpace,
+                         uint32_t valueNum,
+                         bool dwAligned,
+                         AddressMode AM)
+          : MemInstruction(AM, addrSpace, dwAligned, type, offset)
+        {
+          this->opcode = OP_STORE;
+          this->values = values;
+          this->valueNum = valueNum;
+        }
+        INLINE unsigned getValueNum()      const { return valueNum; }
+        INLINE Register getValue(const Function &fn, unsigned id) const {
+          return fn.getRegister(values, id);
+        }
+        INLINE unsigned getSrcNum()        const { return getBaseSrcNum() + valueNum; }
+        INLINE Register getSrc(const Function &fn, unsigned id) const {
+          if (id == 0)  return offset;
+          if (id <= valueNum) return fn.getRegister(values, id-1);
+          if (hasExtraBtiReg() && (int)id == (int)valueNum+1) return getBtiReg();
+          assert(0 && "StoreInstruction::getSrc() out-of-range");
+          return Register(0);
+        }
+        INLINE void     setSrc(Function &fn, unsigned id, Register reg) {
+          if (id == 0)                   { offset = reg; return; }
+          if (id > 0 && id <= valueNum)  { fn.setRegister(values, id-1, reg); return; }
+          if (hasExtraBtiReg() &&
+              (int)id == (int)valueNum + 1)        {
+            setBtiReg(reg);
+            return;
+          }
+          assert(0 && "StoreInstruction::setSrc() index out-of-range");
+        }
+        INLINE bool wellFormed(const Function &fn, std::string &why) const;
+        INLINE void out(std::ostream &out, const Function &fn) const;
+        Register      dst[0];
+        uint8_t     valueNum;
+        Tuple         values;
     };
 
     class ALIGNED_INSTRUCTION SampleInstruction : // TODO
@@ -1037,8 +1064,6 @@ namespace ir {
         if (UNLIKELY(checkRegisterData(FAMILY_DWORD, getSrc(fn, srcID+1u), fn, whyNot) == false))
           return false;
 
-      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, bti, fn, whyNot) == false))
-        return false;
       return true;
     }
 
@@ -1065,7 +1090,7 @@ namespace ir {
     template <typename T>
     INLINE bool wellFormedLoadStore(const T &insn, const Function &fn, std::string &whyNot)
     {
-      if (UNLIKELY(insn.offset >= fn.regNum())) {
+      if (UNLIKELY(insn.getAddressRegister() >= fn.regNum())) {
         whyNot = "Out-of-bound offset register index";
         return false;
       }
@@ -1073,10 +1098,11 @@ namespace ir {
         whyNot = "Out-of-bound tuple index";
         return false;
       }
+
       // Check all registers
-      const RegisterFamily family = getFamily(insn.type);
-      for (uint32_t valueID = 0; valueID < insn.valueNum; ++valueID) {
-        const Register regID = fn.getRegister(insn.values, valueID);
+      const RegisterFamily family = getFamily(insn.getValueType());
+      for (uint32_t valueID = 0; valueID < insn.getValueNum(); ++valueID) {
+        const Register regID = insn.getValue(fn, valueID);;
         if (UNLIKELY(checkRegisterData(family, regID, fn, whyNot) == false))
           return false;
       }
@@ -1260,12 +1286,18 @@ namespace ir {
 
     INLINE void AtomicInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
-      out << "." << addrSpace;
+      out << "." << AS;
       out << " %" << this->getDst(fn, 0);
-      out << " {" << "%" << this->getSrc(fn, 1) << "}";
-      for (uint32_t i = 2; i < srcNum; ++i)
+      out << " {" << "%" << this->getSrc(fn, 0) << "}";
+      for (uint32_t i = 1; i < srcNum; ++i)
         out << " %" << this->getSrc(fn, i);
-      out <<  (fixedBTI ? " bti" : " bti(mixed)") << " %" << this->getBTI();
+      AddressMode am = this->getAddressMode();
+      out << " bti:";
+      if ( am == AM_DynamicBti) {
+        out << " %" << this->getBtiReg();
+      } else {
+        out << this->getSurfaceIndex();
+      }
     }
 
 
@@ -1294,23 +1326,35 @@ namespace ir {
 
     INLINE void LoadInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
-      out << "." << type << "." << addrSpace << (dwAligned ? "." : ".un") << "aligned";
+      out << "." << type << "." << AS << (dwAligned ? "." : ".un") << "aligned";
       out << " {";
       for (uint32_t i = 0; i < valueNum; ++i)
         out << "%" << this->getDst(fn, i) << (i != (valueNum-1u) ? " " : "");
       out << "}";
-      out << " %" << this->getSrc(fn, 1);
-      out << (fixedBTI ? " bti" : " bti(mixed)") << " %" << this->getBTI();
+      out << " %" << this->getSrc(fn, 0);
+      AddressMode am = this->getAddressMode();
+      out << " bti:";
+      if ( am == AM_DynamicBti) {
+        out << " %" << this->getBtiReg();
+      } else {
+        out << this->getSurfaceIndex();
+      }
     }
 
     INLINE void StoreInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
-      out << "." << type << "." << addrSpace << (dwAligned ? "." : ".un") << "aligned";
-      out << " %" << this->getSrc(fn, 1) << " {";
+      out << "." << type << "." << AS << (dwAligned ? "." : ".un") << "aligned";
+      out << " %" << this->getSrc(fn, 0) << " {";
       for (uint32_t i = 0; i < valueNum; ++i)
-        out << "%" << this->getSrc(fn, i+2) << (i != (valueNum-1u) ? " " : "");
+        out << "%" << this->getSrc(fn, i+1) << (i != (valueNum-1u) ? " " : "");
       out << "}";
-      out <<  (fixedBTI ? " bti" : " bti(mixed)") << " %" << this->getBTI();
+      AddressMode am = this->getAddressMode();
+      out << " bti:";
+      if ( am == AM_DynamicBti) {
+        out << " %" << this->getBtiReg();
+      } else {
+        out << this->getSurfaceIndex();
+      }
     }
 
     INLINE void ReadARFInstruction::out(std::ostream &out, const Function &fn) const {
@@ -1664,19 +1708,17 @@ DECL_MEM_FN(BitCastInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(BitCastInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(ConvertInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(ConvertInstruction, Type, getDstType(void), getDstType())
-DECL_MEM_FN(AtomicInstruction, AddressSpace, getAddressSpace(void), getAddressSpace())
+DECL_MEM_FN(MemInstruction, AddressSpace, getAddressSpace(void), getAddressSpace())
+DECL_MEM_FN(MemInstruction, AddressMode, getAddressMode(void), getAddressMode())
+DECL_MEM_FN(MemInstruction, Register, getAddressRegister(void), getAddressRegister())
+DECL_MEM_FN(MemInstruction, Register, getBtiReg(void), getBtiReg())
+DECL_MEM_FN(MemInstruction, unsigned, getSurfaceIndex(void), getSurfaceIndex())
+DECL_MEM_FN(MemInstruction, Type,     getValueType(void), getValueType())
+DECL_MEM_FN(MemInstruction, bool,     isAligned(void), isAligned())
+DECL_MEM_FN(MemInstruction, unsigned, getAddressIndex(void), getAddressIndex())
 DECL_MEM_FN(AtomicInstruction, AtomicOps, getAtomicOpcode(void), getAtomicOpcode())
-DECL_MEM_FN(AtomicInstruction, bool, isFixedBTI(void), isFixedBTI())
-DECL_MEM_FN(StoreInstruction, Type, getValueType(void), getValueType())
 DECL_MEM_FN(StoreInstruction, uint32_t, getValueNum(void), getValueNum())
-DECL_MEM_FN(StoreInstruction, AddressSpace, getAddressSpace(void), getAddressSpace())
-DECL_MEM_FN(StoreInstruction, bool, isAligned(void), isAligned())
-DECL_MEM_FN(StoreInstruction, bool, isFixedBTI(void), isFixedBTI())
-DECL_MEM_FN(LoadInstruction, Type, getValueType(void), getValueType())
 DECL_MEM_FN(LoadInstruction, uint32_t, getValueNum(void), getValueNum())
-DECL_MEM_FN(LoadInstruction, AddressSpace, getAddressSpace(void), getAddressSpace())
-DECL_MEM_FN(LoadInstruction, bool, isAligned(void), isAligned())
-DECL_MEM_FN(LoadInstruction, bool, isFixedBTI(void), isFixedBTI())
 DECL_MEM_FN(LoadImmInstruction, Type, getType(void), getType())
 DECL_MEM_FN(LabelInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
@@ -1699,6 +1741,15 @@ DECL_MEM_FN(TypedWriteInstruction, Type, getCoordType(void), getCoordType())
 DECL_MEM_FN(TypedWriteInstruction, uint8_t, getImageIndex(void), getImageIndex())
 DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
 DECL_MEM_FN(GetImageInfoInstruction, uint8_t, getImageIndex(void), getImageIndex())
+
+#undef DECL_MEM_FN
+
+#define DECL_MEM_FN(CLASS, RET, PROTOTYPE, CALL) \
+  RET CLASS::PROTOTYPE { \
+    return reinterpret_cast<internal::CLASS*>(this)->CALL; \
+  }
+DECL_MEM_FN(MemInstruction, void,     setSurfaceIndex(unsigned id), setSurfaceIndex(id))
+DECL_MEM_FN(MemInstruction, void,     setBtiReg(Register reg), setBtiReg(reg))
 
 #undef DECL_MEM_FN
 
@@ -1843,8 +1894,16 @@ DECL_MEM_FN(GetImageInfoInstruction, uint8_t, getImageIndex(void), getImageIndex
   }
 
   // For all unary functions with given opcode
-  Instruction ATOMIC(AtomicOps atomicOp, Register dst, AddressSpace space, Register bti, bool fixedBTI, Tuple src) {
-    return internal::AtomicInstruction(atomicOp, dst, space, bti, fixedBTI, src).convert();
+  Instruction ATOMIC(AtomicOps atomicOp, Type type, Register dst, AddressSpace space, Register address, Tuple payload, AddressMode AM, Register bti) {
+    internal::AtomicInstruction insn = internal::AtomicInstruction(atomicOp, type, dst, space, address, payload, AM);
+    insn.setBtiReg(bti);
+    return insn.convert();
+  }
+
+  Instruction ATOMIC(AtomicOps atomicOp, Type type, Register dst, AddressSpace space, Register address, Tuple payload, AddressMode AM, unsigned SurfaceIndex) {
+    internal::AtomicInstruction insn = internal::AtomicInstruction(atomicOp, type, dst, space, address, payload, AM);
+    insn.setSurfaceIndex(SurfaceIndex);
+    return insn.convert();
   }
 
   // BRA
@@ -1892,10 +1951,25 @@ DECL_MEM_FN(GetImageInfoInstruction, uint8_t, getImageIndex(void), getImageIndex
                    AddressSpace space, \
                    uint32_t valueNum, \
                    bool dwAligned, \
-                   bool fixedBTI, \
+                   AddressMode AM, \
+                   unsigned SurfaceIndex) \
+  { \
+    internal::CLASS insn = internal::CLASS(type,tuple,offset,space,valueNum,dwAligned,AM); \
+    insn.setSurfaceIndex(SurfaceIndex);\
+    return insn.convert(); \
+  } \
+  Instruction NAME(Type type, \
+                   Tuple tuple, \
+                   Register offset, \
+                   AddressSpace space, \
+                   uint32_t valueNum, \
+                   bool dwAligned, \
+                   AddressMode AM, \
                    Register bti) \
   { \
-    return internal::CLASS(type,tuple,offset,space,valueNum,dwAligned,fixedBTI,bti).convert(); \
+    internal::CLASS insn = internal::CLASS(type,tuple,offset,space,valueNum,dwAligned,AM); \
+    insn.setBtiReg(bti); \
+    return insn.convert(); \
   }
 
   DECL_EMIT_FUNCTION(LOAD, LoadInstruction)

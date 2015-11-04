@@ -1252,11 +1252,11 @@ namespace gbe
   }
 
   void Selection::Opaque::ATOMIC(Reg dst, uint32_t function,
-                                 uint32_t srcNum, Reg src0,
+                                 uint32_t msgPayload, Reg src0,
                                  Reg src1, Reg src2, GenRegister bti,
                                  vector<GenRegister> temps) {
     unsigned dstNum = 1 + temps.size();
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_ATOMIC, dstNum, srcNum + 1);
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_ATOMIC, dstNum, msgPayload + 1);
 
     if (bti.file != GEN_IMMEDIATE_VALUE) {
       insn->state.flag = 0;
@@ -1270,14 +1270,15 @@ namespace gbe
     }
 
     insn->src(0) = src0;
-    if(srcNum > 1) insn->src(1) = src1;
-    if(srcNum > 2) insn->src(2) = src2;
-    insn->src(srcNum) = bti;
+    if(msgPayload > 1) insn->src(1) = src1;
+    if(msgPayload > 2) insn->src(2) = src2;
+    insn->src(msgPayload) = bti;
+
     insn->extra.function = function;
-    insn->extra.elem = srcNum;
+    insn->extra.elem = msgPayload;
 
     SelectionVector *vector = this->appendVector();
-    vector->regNum = srcNum;
+    vector->regNum = msgPayload; //bti not included in SelectionVector
     vector->offsetID = 0;
     vector->reg = &insn->src(0);
     vector->isSrc = 1;
@@ -3419,8 +3420,6 @@ namespace gbe
                    uint32_t valueNum,
                    ir::BTI bti) const
     {
-        //GenRegister temp = getRelativeAddress(sel, addr, sel.selReg(bti.base, ir::TYPE_U32));
-
         GenRegister b = bti.isConst ? GenRegister::immud(bti.imm) : sel.selReg(bti.reg, ir::TYPE_U32);
         sel.UNTYPED_READ(addr, dst.data(), valueNum, b, sel.getBTITemps(bti));
     }
@@ -3721,28 +3720,12 @@ namespace gbe
       return false;
     }
 
-    INLINE ir::BTI getBTI(SelectionDAG &dag, const ir::LoadInstruction &insn) const {
-      using namespace ir;
-      SelectionDAG *child0 = dag.child[0];
-      ir::BTI b;
-      if (insn.isFixedBTI()) {
-        const auto &immInsn = cast<LoadImmInstruction>(child0->insn);
-        const auto imm = immInsn.getImmediate();
-        b.isConst = 1;
-        b.imm = imm.getIntegerValue();
-      } else {
-        b.isConst = 0;
-        b.reg = insn.getBTI();
-      }
-      return b;
-    }
-
     /*! Implements base class */
     virtual bool emit(Selection::Opaque  &sel, SelectionDAG &dag) const
     {
       using namespace ir;
       const ir::LoadInstruction &insn = cast<ir::LoadInstruction>(dag.insn);
-      GenRegister address = sel.selReg(insn.getAddress(), ir::TYPE_U32);
+      GenRegister address = sel.selReg(insn.getAddressRegister(), ir::TYPE_U32);
       GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL ||
                  insn.getAddressSpace() == MEM_CONSTANT ||
                  insn.getAddressSpace() == MEM_PRIVATE ||
@@ -3750,8 +3733,17 @@ namespace gbe
                  insn.getAddressSpace() == MEM_MIXED);
       //GBE_ASSERT(sel.isScalarReg(insn.getValue(0)) == false);
 
-      BTI bti = getBTI(dag, insn);
-
+      BTI bti;
+      AddressMode am = insn.getAddressMode();
+      if (am == AM_StaticBti) {
+        bti.isConst = 1;
+        bti.imm = insn.getSurfaceIndex();
+      } else if (am == AM_DynamicBti) {
+        bti.isConst = 0;
+        bti.reg = insn.getBtiReg();
+      } else {
+        assert(0 && "stateless not supported yet");
+      }
       const Type type = insn.getValueType();
       const uint32_t elemSize = getByteScatterGatherSize(sel, type);
       bool allConstant = isAllConstant(bti);
@@ -3779,12 +3771,7 @@ namespace gbe
           this->emitUnalignedByteGather(sel, insn, elemSize, address, bti);
       }
 
-
-      // for fixed bti, don't generate the useless loadi
-      if (insn.isFixedBTI())
-        dag.child[0] = NULL;
       markAllChildren(dag);
-
       return true;
     }
   };
@@ -3888,32 +3875,26 @@ namespace gbe
       }
     }
 
-
-    INLINE ir::BTI getBTI(SelectionDAG &dag, const ir::StoreInstruction &insn) const {
-      using namespace ir;
-      SelectionDAG *child0 = dag.child[0];
-      ir::BTI b;
-      if (insn.isFixedBTI()) {
-        const auto &immInsn = cast<LoadImmInstruction>(child0->insn);
-        const auto imm = immInsn.getImmediate();
-        b.isConst = 1;
-        b.imm = imm.getIntegerValue();
-      } else {
-        b.isConst = 0;
-        b.reg = insn.getBTI();
-      }
-      return b;
-    }
     virtual bool emit(Selection::Opaque  &sel, SelectionDAG &dag) const
     {
       using namespace ir;
       const ir::StoreInstruction &insn = cast<ir::StoreInstruction>(dag.insn);
-      GenRegister address = sel.selReg(insn.getAddress(), ir::TYPE_U32);
+      GenRegister address = sel.selReg(insn.getAddressRegister(), ir::TYPE_U32);
       const Type type = insn.getValueType();
       const uint32_t elemSize = getByteScatterGatherSize(sel, type);
 
-      const bool isUniform = sel.isScalarReg(insn.getAddress()) && sel.isScalarReg(insn.getValue(0));
-      BTI bti = getBTI(dag, insn);
+      const bool isUniform = sel.isScalarReg(insn.getAddressRegister()) && sel.isScalarReg(insn.getValue(0));
+      BTI bti;
+      AddressMode am = insn.getAddressMode();
+      if (am == AM_StaticBti) {
+        bti.isConst = 1;
+        bti.imm = insn.getSurfaceIndex();
+      } else if (am == AM_DynamicBti) {
+        bti.isConst = 0;
+        bti.reg = insn.getBtiReg();
+      } else {
+        assert(0 && "stateless not supported yet");
+      }
 
       if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
         this->emitWrite64(sel, insn, address, bti);
@@ -3923,11 +3904,7 @@ namespace gbe
         this->emitByteScatter(sel, insn, elemSize, address, bti, isUniform);
       }
 
-      // for fixed bti, don't generate the useless loadi
-      if (insn.isFixedBTI())
-        dag.child[0] = NULL;
       markAllChildren(dag);
-
       return true;
     }
   };
@@ -4997,47 +4974,36 @@ namespace gbe
           this->opcodes.push_back(ir::Opcode(op));
     }
 
-    INLINE ir::BTI getBTI(SelectionDAG &dag, const ir::AtomicInstruction &insn) const {
-      using namespace ir;
-      SelectionDAG *child0 = dag.child[0];
-      ir::BTI b;
-      if (insn.isFixedBTI()) {
-        const auto &immInsn = cast<LoadImmInstruction>(child0->insn);
-        const auto imm = immInsn.getImmediate();
-        b.isConst = 1;
-        b.imm = imm.getIntegerValue();
-      } else {
-        b.isConst = 0;
-        b.reg = insn.getBTI();
-      }
-      return b;
-    }
-
     INLINE bool emit(Selection::Opaque &sel, SelectionDAG &dag) const {
       using namespace ir;
       const ir::AtomicInstruction &insn = cast<ir::AtomicInstruction>(dag.insn);
 
-      ir::BTI b = getBTI(dag, insn);
+      ir::BTI b;
       const AtomicOps atomicOp = insn.getAtomicOpcode();
       unsigned srcNum = insn.getSrcNum();
-      unsigned opNum = srcNum - 1;
+      unsigned msgPayload;
+
+      AddressMode AM = insn.getAddressMode();
+      if (AM == AM_DynamicBti) {
+        b.reg = insn.getBtiReg();
+        msgPayload = srcNum - 1;
+      } else {
+        b.imm = insn.getSurfaceIndex();
+        b.isConst = 1;
+        msgPayload = srcNum;
+      }
 
       GenRegister dst  = sel.selReg(insn.getDst(0), TYPE_U32);
       GenRegister bti =  b.isConst ? GenRegister::immud(b.imm) : sel.selReg(b.reg, ir::TYPE_U32);
-      GenRegister src0 = sel.selReg(insn.getSrc(1), TYPE_U32);   //address
+      GenRegister src0 = sel.selReg(insn.getAddressRegister(), TYPE_U32);
       GenRegister src1 = src0, src2 = src0;
-      if(srcNum > 2) src1 = sel.selReg(insn.getSrc(2), TYPE_U32);
-      if(srcNum > 3) src2 = sel.selReg(insn.getSrc(3), TYPE_U32);
+      if(msgPayload > 1) src1 = sel.selReg(insn.getSrc(1), TYPE_U32);
+      if(msgPayload > 2) src2 = sel.selReg(insn.getSrc(2), TYPE_U32);
 
       GenAtomicOpCode genAtomicOp = (GenAtomicOpCode)atomicOp;
+      sel.ATOMIC(dst, genAtomicOp, msgPayload, src0, src1, src2, bti, sel.getBTITemps(b));
 
-      sel.ATOMIC(dst, genAtomicOp, opNum, src0, src1, src2, bti, sel.getBTITemps(b));
-
-      // for fixed bti, don't generate the useless loadi
-      if (insn.isFixedBTI())
-        dag.child[0] = NULL;
       markAllChildren(dag);
-
       return true;
     }
   };
