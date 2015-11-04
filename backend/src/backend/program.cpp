@@ -532,7 +532,7 @@ namespace gbe {
   BVAR(OCL_DEBUGINFO, false);
 #ifdef GBE_COMPILER_AVAILABLE
   static bool buildModuleFromSource(const char *source, llvm::Module** out_module, llvm::LLVMContext* llvm_ctx,
-                                    std::string dumpLLVMFileName, std::vector<std::string>& options, size_t stringSize, char *err,
+                                    std::string dumpLLVMFileName, std::string dumpSPIRBinaryName, std::vector<std::string>& options, size_t stringSize, char *err,
                                     size_t *errSize) {
     // Arguments to pass to the clang frontend
     vector<const char *> args;
@@ -676,6 +676,14 @@ namespace gbe {
         (*out_module)->print(ostream, 0);
       } //Otherwise, you'll have to make do without the dump.
     }
+
+    if (!dumpSPIRBinaryName.empty()) {
+      std::error_code err;
+      llvm::raw_fd_ostream ostream (dumpSPIRBinaryName.c_str(),
+                                    err, llvm::sys::fs::F_None);
+      if (!err)
+        llvm::WriteBitcodeToFile(*out_module, ostream);
+    }
 #endif
     return true;
   }
@@ -691,6 +699,7 @@ namespace gbe {
                                      std::vector<std::string>& clOpt,
                                      std::string& dumpLLVMFileName,
                                      std::string& dumpASMFileName,
+                                     std::string& dumpSPIRBinaryName,
                                      int& optLevel,
                                      size_t stringSize,
                                      char *err,
@@ -779,6 +788,11 @@ namespace gbe {
           continue; // Don't push this str back; ignore it.
         }
 
+        if(str.find("-dump-spir-binary=") != std::string::npos) {
+          dumpSPIRBinaryName = str.substr(str.find("=") + 1);
+          continue; // Don't push this str back; ignore it.
+        }
+
         clOpt.push_back(str);
       }
       free(str);
@@ -823,8 +837,9 @@ namespace gbe {
     int optLevel = 1;
     std::vector<std::string> clOpt;
     std::string dumpLLVMFileName, dumpASMFileName;
+    std::string dumpSPIRBinaryName;
     if (!processSourceAndOption(source, options, NULL, clOpt,
-                                dumpLLVMFileName, dumpASMFileName,
+                                dumpLLVMFileName, dumpASMFileName, dumpSPIRBinaryName,
                                 optLevel,
                                 stringSize, err, errSize))
       return NULL;
@@ -837,7 +852,7 @@ namespace gbe {
     if (!llvm::llvm_is_multithreaded())
       llvm_mutex.lock();
 
-    if (buildModuleFromSource(source, &out_module, llvm_ctx, dumpLLVMFileName, clOpt,
+    if (buildModuleFromSource(source, &out_module, llvm_ctx, dumpLLVMFileName, dumpSPIRBinaryName, clOpt,
                               stringSize, err, errSize)) {
     // Now build the program from llvm
       size_t clangErrSize = 0;
@@ -853,6 +868,7 @@ namespace gbe {
         if (asmDumpStream)
           fclose(asmDumpStream);
       }
+
       p = gbe_program_new_from_llvm(deviceID, NULL, out_module, llvm_ctx,
                                     dumpASMFileName.empty() ? NULL : dumpASMFileName.c_str(),
                                     stringSize, err, errSize, optLevel);
@@ -883,8 +899,9 @@ namespace gbe {
     int optLevel = 1;
     std::vector<std::string> clOpt;
     std::string dumpLLVMFileName, dumpASMFileName;
+    std::string dumpSPIRBinaryName;
     if (!processSourceAndOption(source, options, temp_header_path, clOpt,
-                                dumpLLVMFileName, dumpASMFileName,
+                                dumpLLVMFileName, dumpASMFileName, dumpSPIRBinaryName,
                                 optLevel, stringSize, err, errSize))
       return NULL;
 
@@ -895,7 +912,7 @@ namespace gbe {
     llvm::Module * out_module;
     llvm::LLVMContext* llvm_ctx = &llvm::getGlobalContext();
 
-    if (buildModuleFromSource(source, &out_module, llvm_ctx, dumpLLVMFileName, clOpt,
+    if (buildModuleFromSource(source, &out_module, llvm_ctx, dumpLLVMFileName, dumpSPIRBinaryName, clOpt,
                               stringSize, err, errSize)) {
     // Now build the program from llvm
       if (err != NULL) {
