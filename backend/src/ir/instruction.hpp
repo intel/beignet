@@ -65,6 +65,13 @@ namespace ir {
     MEM_INVALID
   };
 
+  enum AddressMode : uint8_t {
+    AM_DynamicBti = 0,
+    AM_Stateless,
+    AM_StaticBti,
+    AM_INVALID
+  };
+
   enum AtomicOps {
     ATOMIC_OP_AND       = 1,
     ATOMIC_OP_OR        = 2,
@@ -288,20 +295,30 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
+  class MemInstruction : public Instruction {
+  public:
+    unsigned getSurfaceIndex() const;
+    unsigned getAddressIndex() const;
+    /*! Address space that is manipulated here */
+    AddressMode getAddressMode() const;
+    Register getBtiReg() const;
+    /*! Return the register that contains the addresses */
+    Register getAddressRegister() const;
+    AddressSpace getAddressSpace() const;
+    /*! Return the types of the values */
+    Type getValueType() const;
+    bool isAligned(void) const;
+    void setBtiReg(Register reg);
+    void setSurfaceIndex(unsigned idx);
+  };
+
   /*! Atomic instruction */
-  class AtomicInstruction : public Instruction {
+  class AtomicInstruction : public MemInstruction {
   public:
     /*! Where the address register goes */
-    static const uint32_t btiIndex = 0;
-    static const uint32_t addressIndex = 1;
-    /*! Address space that is manipulated here */
-    AddressSpace getAddressSpace(void) const;
-    Register getBTI(void) const { return this->getSrc(btiIndex); }
-    bool isFixedBTI(void) const;
+    static const uint32_t addressIndex = 0;
     /*! Return the atomic function code */
     AtomicOps getAtomicOpcode(void) const;
-    /*! Return the register that contains the addresses */
-    INLINE Register getAddress(void) const { return this->getSrc(addressIndex); }
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
   };
@@ -309,27 +326,15 @@ namespace ir {
   /*! Store instruction. First source is the address. Next sources are the
    *  values to store contiguously at the given address
    */
-  class StoreInstruction : public Instruction {
+  class StoreInstruction : public MemInstruction {
   public:
     /*! Where the address register goes */
-    static const uint32_t btiIndex = 0;
-    static const uint32_t addressIndex = 1;
-    /*! Return the types of the values to store */
-    Type getValueType(void) const;
-    /*! Give the number of values the instruction is storing (srcNum-1) */
+    static const uint32_t addressIndex = 0;
     uint32_t getValueNum(void) const;
-    Register getBTI(void) const { return this->getSrc(btiIndex); }
-    bool isFixedBTI(void) const;
-    /*! Address space that is manipulated here */
-    AddressSpace getAddressSpace(void) const;
-    /*! DWORD aligned means untyped read for Gen. That is what matters */
-    bool isAligned(void) const;
-    /*! Return the register that contains the addresses */
-    INLINE Register getAddress(void) const { return this->getSrc(addressIndex); }
     /*! Return the register that contain value valueID */
     INLINE Register getValue(uint32_t valueID) const {
       GBE_ASSERT(valueID < this->getValueNum());
-      return this->getSrc(valueID + 2u);
+      return this->getSrc(valueID + 1u);
     }
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
@@ -339,20 +344,10 @@ namespace ir {
    *  The multiple destinations are the contiguous values loaded at the given
    *  address
    */
-  class LoadInstruction : public Instruction {
+  class LoadInstruction : public MemInstruction {
   public:
-    /*! Type of the loaded values (ie type of all the destinations) */
-    Type getValueType(void) const;
     /*! Number of values loaded (ie number of destinations) */
     uint32_t getValueNum(void) const;
-    /*! Address space that is manipulated here */
-    AddressSpace getAddressSpace(void) const;
-    /*! DWORD aligned means untyped read for Gen. That is what matters */
-    bool isAligned(void) const;
-    /*! Return the register that contains the addresses */
-    INLINE Register getAddress(void) const { return this->getSrc(1u); }
-    Register getBTI(void) const {return this->getSrc(0u);}
-    bool isFixedBTI(void) const;
     /*! Return the register that contain value valueID */
     INLINE Register getValue(uint32_t valueID) const {
       return this->getDst(valueID);
@@ -725,7 +720,8 @@ namespace ir {
   /*! F32TO16.{dstType <- srcType} dst src */
   Instruction F32TO16(Type dstType, Type srcType, Register dst, Register src);
   /*! atomic dst addr.space {src1 {src2}} */
-  Instruction ATOMIC(AtomicOps opcode, Register dst, AddressSpace space, Register bti, bool fixedBTI, Tuple src);
+  Instruction ATOMIC(AtomicOps opcode, Type, Register dst, AddressSpace space, Register ptr, Tuple payload, AddressMode, unsigned);
+  Instruction ATOMIC(AtomicOps opcode, Type, Register dst, AddressSpace space, Register ptr, Tuple src, AddressMode, Register);
   /*! bra labelIndex */
   Instruction BRA(LabelIndex labelIndex);
   /*! (pred) bra labelIndex */
@@ -740,10 +736,12 @@ namespace ir {
   Instruction WHILE(LabelIndex labelIndex, Register pred);
   /*! ret */
   Instruction RET(void);
-  /*! load.type.space {dst1,...,dst_valueNum} offset value */
-  Instruction LOAD(Type type, Tuple dst, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, bool fixedBTI, Register bti);
-  /*! store.type.space offset {src1,...,src_valueNum} value */
-  Instruction STORE(Type type, Tuple src, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, bool fixedBTI, Register bti);
+  /*! load.type.space {dst1,...,dst_valueNum} offset value, {bti} */
+  Instruction LOAD(Type type, Tuple dst, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, AddressMode, unsigned SurfaceIndex);
+  Instruction LOAD(Type type, Tuple dst, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, AddressMode, Register bti);
+  /*! store.type.space offset {src1,...,src_valueNum} value {bti}*/
+  Instruction STORE(Type type, Tuple src, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, AddressMode, unsigned SurfaceIndex);
+  Instruction STORE(Type type, Tuple src, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, AddressMode, Register bti);
   /*! loadi.type dst value */
   Instruction LOADI(Type type, Register dst, ImmediateIndex value);
   /*! sync.params... (see Sync instruction) */

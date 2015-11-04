@@ -320,7 +320,7 @@ namespace ir {
             continue;
 
           IndirectLoad indirectLoad;
-          Register addr = load->getAddress();
+          Register addr = load->getAddressRegister();
           indirectLoad.argID = argID;
           indirectLoad.load = insn;
 
@@ -368,7 +368,7 @@ namespace ir {
 
         const Register reg = load->getValue(valueID);
 
-        Instruction mov = ir::INDIRECT_MOV(type, reg, arg, load->getAddress(), offset);
+        Instruction mov = ir::INDIRECT_MOV(type, reg, arg, load->getAddressRegister(), offset);
         mov.insert(ins_after, &ins_after);
         replaced = true;
       }
