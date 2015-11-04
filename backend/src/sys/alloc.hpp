@@ -121,7 +121,8 @@ namespace gbe
 {
   /*! STL compliant allocator to intercept all memory allocations */
   template<typename T>
-  class Allocator {
+  class Allocator : public std::allocator<T>
+  {
   public:
     typedef T value_type;
     typedef value_type* pointer;
@@ -156,7 +157,6 @@ namespace gbe
     INLINE size_type max_size(void) const {
       return std::numeric_limits<size_type>::max() / sizeof(T);
     }
-    INLINE void construct(pointer p, const T& t = T()) { ::new(p) T(t); }
     INLINE void destroy(pointer p) { p->~T(); }
     INLINE bool operator==(Allocator const&) { return true; }
     INLINE bool operator!=(Allocator const& a) { return !operator==(a); }
