@@ -613,8 +613,7 @@ void compiler_float_convert_double(void)
   OCL_MAP_BUFFER(1);
   for (int32_t i = 0; i < (int32_t) n; ++i) {
     //printf("%f,   \t%f\n", ((double*)buf_data[1])[i], cpu_dst[i]);
-    OCL_ASSERT(((double*)buf_data[2])[i] == cpu_dst0[i]);
-    OCL_ASSERT(((double*)buf_data[3])[i] == cpu_dst1[i]);
+    OCL_ASSERT(((double*)buf_data[1])[i] == cpu_dst[i]);
   }
   OCL_UNMAP_BUFFER(1);
 }

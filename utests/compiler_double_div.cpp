@@ -23,12 +23,15 @@ void compiler_double_div(void)
   // Run random tests
   OCL_MAP_BUFFER(0);
   OCL_MAP_BUFFER(1);
+  OCL_MAP_BUFFER(2);
   for (int32_t i = 0; i < (int32_t) n; ++i) {
     cpu_src0[i] = ((double*)buf_data[0])[i] = ((double)(((i - 5)*1334) * 11105));
     cpu_src1[i] = ((double*)buf_data[1])[i] = 499.13542123d*(i + 132.43d + 142.32*i);
+    ((double*)buf_data[2])[i] = 0.0d;
   }
   OCL_UNMAP_BUFFER(0);
   OCL_UNMAP_BUFFER(1);
+  OCL_UNMAP_BUFFER(2);
 
   // Run the kernel on GPU
   OCL_NDRANGE(1);
