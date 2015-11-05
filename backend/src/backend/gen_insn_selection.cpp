@@ -4603,7 +4603,7 @@ namespace gbe
           sel.CONVF_TO_I64(dst, src, tmp);
           sel.pop();
         }
-      } else if (srcType == ir::TYPE_HALF) { // TODO: We may consider bsw's hasLongRegRestrict case here.
+      } else if (srcType == ir::TYPE_HALF) {
         /* No need to consider old platform. if we support half, we must have native long. */
         GBE_ASSERT(sel.hasLongType());
         GBE_ASSERT(sel.hasHalfType());
@@ -4615,9 +4615,19 @@ namespace gbe
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.curr.noMask = 1;
         }
+
         sel.MOV(tmp, src);
-        sel.pop();
-        sel.MOV(dst, tmp);
+
+        if (sel.hasLongRegRestrict()) { // special for BSW case.
+          GenRegister unpacked = sel.unpacked_ud(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+          unpacked = GenRegister::retype(unpacked, type);
+          sel.MOV(unpacked, tmp);
+          sel.pop();
+          sel.MOV(dst, unpacked);
+        } else {
+          sel.pop();
+          sel.MOV(dst, tmp);
+        }
       } else if (src.type == GEN_TYPE_DF) {
         GBE_ASSERT(sel.hasDoubleType());
         GBE_ASSERT(sel.hasLongType()); //So far, if we support double, we support native long.
