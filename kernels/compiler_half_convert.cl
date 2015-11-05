@@ -1,5 +1,4 @@
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
-
 kernel void compiler_half_to_long_sat(global half *src, global long *dst) {
   int i = get_global_id(0);
   dst[i] = convert_long_sat(src[i]);
@@ -53,4 +52,14 @@ kernel void compiler_half_as_char2(global half *src, global char2 *dst) {
 kernel void compiler_half_to_float(global half4 *src, global float4 *dst) {
   int i = get_global_id(0);
   dst[i] = convert_float4(src[i]);
+}
+
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+kernel void compiler_half_to_double(global half *src, global double *dst) {
+  int i = get_global_id(0);
+  dst[i] = src[i];
+}
+kernel void compiler_double_to_half(global double *src, global half *dst) {
+  int i = get_global_id(0);
+  dst[i] = src[i];
 }

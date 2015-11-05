@@ -922,3 +922,105 @@ void compiler_half_to_long_sat(void)
   OCL_UNMAP_BUFFER(1);
 }
 MAKE_UTEST_FROM_FUNCTION(compiler_half_to_long_sat);
+
+void compiler_half_to_double(void)
+{
+  const size_t n = 16;
+  uint16_t hsrc[n];
+  double ddst[n];
+  uint32_t tmp_f;
+  float f;
+
+//  if (!check_half_device())
+//    return;
+  if (!cl_check_double())
+    return;
+
+  // Setup kernel and buffers
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_half_convert", "compiler_half_to_double");
+  OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(uint16_t), NULL);
+  OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(double), NULL);
+  OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
+  OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
+  globals[0] = n;
+  locals[0] = 16;
+
+  for (int32_t i = 0; i < (int32_t) n; ++i) {
+    f = -100.1f + 10.3f * i;
+    memcpy(&tmp_f, &f, sizeof(float));
+    hsrc[i] = __float_to_half(tmp_f);
+    ddst[i] = (double)f;
+  }
+
+  OCL_MAP_BUFFER(0);
+  OCL_MAP_BUFFER(1);
+  memcpy(buf_data[0], hsrc, sizeof(hsrc));
+  memset(buf_data[1], 0, n*sizeof(double));
+  OCL_UNMAP_BUFFER(0);
+  OCL_UNMAP_BUFFER(1);
+
+  // Run the kernel on GPU
+  OCL_NDRANGE(1);
+
+  // Compare
+  OCL_MAP_BUFFER(1);
+  for (int32_t i = 0; i < (int32_t) n; ++i) {
+    double dd = ((double *)(buf_data[1]))[i];
+//    printf("%f	   %f, diff is %%%f\n", dd, ddst[i], fabs(dd - ddst[i])/fabs(ddst[i]));
+    OCL_ASSERT(fabs(dd - ddst[i]) < 0.001f * fabs(ddst[i]));
+  }
+  OCL_UNMAP_BUFFER(1);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_half_to_double);
+
+void compiler_double_to_half(void)
+{
+  const size_t n = 16;
+  uint16_t hdst[n];
+  double src[n];
+  uint32_t tmp_f;
+  float f;
+
+//  if (!check_half_device())
+//    return;
+  if (!cl_check_double())
+    return;
+
+  // Setup kernel and buffers
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_half_convert", "compiler_double_to_half");
+  OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(double), NULL);
+  OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(uint16_t), NULL);
+  OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
+  OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
+  globals[0] = n;
+  locals[0] = 16;
+
+  for (int32_t i = 0; i < (int32_t) n; ++i) {
+    f = -100.1f + 10.3f * i;
+    src[i] = (double)f;
+    memcpy(&tmp_f, &f, sizeof(float));
+    hdst[i] = __float_to_half(tmp_f);
+  }
+
+  OCL_MAP_BUFFER(0);
+  OCL_MAP_BUFFER(1);
+  memcpy(buf_data[0], src, sizeof(src));
+  memset(buf_data[1], 0, n*sizeof(uint16_t));
+  OCL_UNMAP_BUFFER(0);
+  OCL_UNMAP_BUFFER(1);
+
+  // Run the kernel on GPU
+  OCL_NDRANGE(1);
+
+  // Compare
+  OCL_MAP_BUFFER(1);
+  for (int32_t i = 0; i < (int32_t) n; ++i) {
+    uint16_t hf = ((uint16_t *)(buf_data[1]))[i];
+    //tmp_f = __half_to_float(hf);
+    //memcpy(&f, &tmp_f, sizeof(float));
+    //printf("%f, %x, %x\n", f, hf, hdst[i]);
+    OCL_ASSERT(hf == hdst[i]);
+  }
+  OCL_UNMAP_BUFFER(1);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_double_to_half);
