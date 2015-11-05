@@ -4619,8 +4619,11 @@ namespace gbe
         sel.pop();
         sel.MOV(dst, tmp);
       } else if (src.type == GEN_TYPE_DF) {
-        //TODO:
-        GBE_ASSERT(0);
+        GBE_ASSERT(sel.hasDoubleType());
+        GBE_ASSERT(sel.hasLongType()); //So far, if we support double, we support native long.
+
+        // Just Mov
+        sel.MOV(dst, src);
       } else {
         /* Invalid case. */
         GBE_ASSERT(0);
@@ -4630,11 +4633,77 @@ namespace gbe
     INLINE void convertBetweenFloatDouble(Selection::Opaque &sel, const ir::ConvertInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
+      const Type dstType = insn.getDstType();
+      const Type srcType = insn.getSrcType();
+      const GenRegister dst = sel.selReg(insn.getDst(0), dstType);
+      const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
+
+      GBE_ASSERT(sel.hasDoubleType());
+
+      if (sel.isScalarReg(insn.getDst(0))) {
+        // dst is scalar, just MOV and nothing more.
+        GBE_ASSERT(sel.isScalarReg(insn.getSrc(0)));
+        sel.MOV(dst, src);
+      } else if (srcType == ir::TYPE_DOUBLE) {
+        // double to float
+        GBE_ASSERT(dstType == ir::TYPE_FLOAT);
+        GenRegister unpacked;
+        unpacked = sel.unpacked_ud(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+        unpacked = GenRegister::retype(unpacked, GEN_TYPE_F);
+
+        sel.MOV(unpacked, src);
+        sel.MOV(dst, unpacked);
+      } else {
+        // float to double, just mov
+        sel.MOV(dst, src);
+      }
+
+      return;
     }
 
     INLINE void convertBetweenHalfDouble(Selection::Opaque &sel, const ir::ConvertInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
+      const Type dstType = insn.getDstType();
+      const Type srcType = insn.getSrcType();
+      const GenRegister dst = sel.selReg(insn.getDst(0), dstType);
+      const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
+
+      GBE_ASSERT(sel.hasDoubleType());
+      GBE_ASSERT(sel.hasHalfType()); //So far, if we support double, we support half.
+
+      if (sel.isScalarReg(insn.getDst(0))) { // uniform case.
+        GBE_ASSERT(sel.isScalarReg(insn.getSrc(0)));
+        GBE_ASSERT(sel.curr.execWidth == 1);
+        GenRegister tmpFloat = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_F);
+        sel.MOV(tmpFloat, src);
+        sel.MOV(dst, tmpFloat);
+        return;
+      }
+
+      if (dstType == ir::TYPE_DOUBLE) {
+        // half to double. There is no direct double to half MOV, need tmp float.
+        GBE_ASSERT(srcType == ir::TYPE_HALF);
+        GenRegister tmpFloat = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_F);
+        sel.MOV(tmpFloat, src);
+        sel.MOV(dst, tmpFloat);
+      } else {
+        // double to half. No direct MOV from double to half, so double->float->half
+        GBE_ASSERT(srcType == ir::TYPE_DOUBLE);
+        GBE_ASSERT(dstType == ir::TYPE_HALF);
+
+        // double to float
+        GenRegister unpackedFloat = sel.unpacked_ud(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+        unpackedFloat = GenRegister::retype(unpackedFloat, GEN_TYPE_F);
+        sel.MOV(unpackedFloat, src);
+
+        // float to half
+        GenRegister unpackedHalf = sel.unpacked_uw(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+        unpackedHalf = GenRegister::retype(unpackedHalf, GEN_TYPE_HF);
+        sel.MOV(unpackedHalf, unpackedFloat);
+
+        sel.MOV(dst, unpackedHalf);
+      }
     }
 
     INLINE void convertHalfToSmallInts(Selection::Opaque &sel, const ir::ConvertInstruction &insn, bool &markChildren) const
@@ -4694,6 +4763,105 @@ namespace gbe
       sel.MOV(dst, tmp);
     }
 
+    INLINE void convertDoubleToSmallInts(Selection::Opaque &sel, const ir::ConvertInstruction &insn, bool &markChildren) const
+    {
+      using namespace ir;
+      const Type dstType = insn.getDstType();
+      const Type srcType = insn.getSrcType();
+      const GenRegister dst = sel.selReg(insn.getDst(0), dstType);
+      const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
+      const RegisterFamily dstFamily = getFamily(dstType);
+
+      GBE_ASSERT(sel.hasDoubleType());
+      GBE_ASSERT(sel.hasHalfType()); //So far, if we support double, we support half.
+      if (sel.isScalarReg(insn.getDst(0))) {
+        // dst is scalar, just MOV and nothing more.
+        GBE_ASSERT(sel.isScalarReg(insn.getSrc(0)));
+        sel.MOV(dst, src);
+      } else {
+        GenRegister unpacked;
+        if (dstFamily == FAMILY_DWORD) {
+          // double to int
+          unpacked = sel.unpacked_ud(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+          unpacked = GenRegister::retype(unpacked, dstType == TYPE_U32 ? GEN_TYPE_UD : GEN_TYPE_D);
+        } else if (dstFamily == FAMILY_WORD) {
+          // double to short
+          unpacked = sel.unpacked_uw(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+          unpacked = GenRegister::retype(unpacked, dstType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W);
+        } else {
+          GBE_ASSERT(dstFamily == FAMILY_BYTE);
+          // double to char
+          unpacked = sel.unpacked_uw(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+          unpacked = GenRegister::retype(unpacked, dstType == TYPE_U8 ? GEN_TYPE_UW : GEN_TYPE_W);
+        }
+
+        sel.MOV(unpacked, src);
+        sel.MOV(dst, unpacked);
+      }
+    }
+
+    INLINE void convertI64ToDouble(Selection::Opaque &sel, const ir::ConvertInstruction &insn, bool &markChildren) const
+    {
+      using namespace ir;
+      const Type dstType = insn.getDstType();
+      const Type srcType = insn.getSrcType();
+      const GenRegister dst = sel.selReg(insn.getDst(0), dstType);
+      const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
+
+      GBE_ASSERT(sel.hasDoubleType());
+      GBE_ASSERT(sel.hasLongType()); //So far, if we support double, we support native long.
+      // Just Mov
+      sel.MOV(dst, src);
+    }
+
+    INLINE void convertSmallIntsToDouble(Selection::Opaque &sel, const ir::ConvertInstruction &insn, bool &markChildren) const
+    {
+      using namespace ir;
+      const Type dstType = insn.getDstType();
+      const Type srcType = insn.getSrcType();
+      const GenRegister dst = sel.selReg(insn.getDst(0), dstType);
+      const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
+      const RegisterFamily srcFamily = getFamily(srcType);
+
+      GBE_ASSERT(sel.hasDoubleType());
+      GBE_ASSERT(sel.hasLongType()); //So far, if we support double, we support native long.
+
+      if (sel.hasLongType() && sel.hasLongRegRestrict()) {
+        // Convert i32/i16/i8 to i64 if hasLongRegRestrict(src and dst hstride must be aligned to the same qword).
+        GenRegister unpacked;
+        GenRegister unpacked_src = src;
+
+        sel.push();
+        if (sel.isScalarReg(insn.getSrc(0))) {
+          sel.curr.execWidth = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+        }
+
+        if(srcFamily == FAMILY_DWORD) {
+          unpacked = sel.unpacked_ud(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+          unpacked = GenRegister::retype(unpacked, srcType == TYPE_U32 ? GEN_TYPE_UD : GEN_TYPE_D);
+        } else if(srcFamily == FAMILY_WORD) {
+          unpacked = sel.unpacked_uw(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+          unpacked = GenRegister::retype(unpacked, srcType == TYPE_U16 ? GEN_TYPE_UW : GEN_TYPE_W);
+        } else if(srcFamily == FAMILY_BYTE) {
+          GenRegister tmp = sel.selReg(sel.reg(FAMILY_WORD, sel.isScalarReg(insn.getSrc(0))));
+          tmp = GenRegister::retype(tmp, srcType == TYPE_U8 ? GEN_TYPE_UW : GEN_TYPE_W);
+          unpacked = sel.unpacked_uw(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
+          unpacked = GenRegister::retype(unpacked, srcType == TYPE_U8 ? GEN_TYPE_UW : GEN_TYPE_W);
+          sel.MOV(tmp, src);
+          unpacked_src = tmp;
+        } else
+          GBE_ASSERT(0);
+
+        sel.MOV(unpacked, unpacked_src);
+        sel.pop();
+        sel.MOV(dst, unpacked);
+      } else if (sel.hasLongType()) {
+        sel.MOV(dst, src);
+      }
+    }
+
     INLINE bool emitOne(Selection::Opaque &sel, const ir::ConvertInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
@@ -4713,30 +4881,39 @@ namespace gbe
       if(opcode == ir::OP_SAT_CVT)
         sel.curr.saturate = 1;
 
-      if (opcode == OP_F16TO32 || opcode == OP_F32TO16) { /* Conversion between float and half. */
+      if (opcode == OP_F16TO32 || opcode == OP_F32TO16) {
+        /* Conversion between float and half. */
         convertBetweenHalfFloat(sel, insn, markChildren);
       } else if (dstFamily != FAMILY_DWORD && dstFamily != FAMILY_QWORD && srcFamily == FAMILY_DWORD) {
         //convert i32/float to small int/half
         convert32bitsToSmall(sel, insn, markChildren);
       } else if (dstFamily == FAMILY_WORD && srcFamily == FAMILY_QWORD && srcType != ir::TYPE_DOUBLE) {
-       //convert i64 to i16 and half.
+        //convert i64 to i16 and half.
         convertI64To16bits(sel, insn, markChildren);
       } else if (dstFamily == FAMILY_BYTE && srcFamily == FAMILY_QWORD && srcType != ir::TYPE_DOUBLE) {
         //convert i64 to i8
         convertI64ToI8(sel, insn, markChildren);
       } else if ((dstType == ir::TYPE_S32 || dstType == ir::TYPE_U32) &&
-          (srcType == ir::TYPE_U64 || srcType == ir::TYPE_S64)) {// Convert i64 to i32
+          (srcType == ir::TYPE_U64 || srcType == ir::TYPE_S64)) {
+        // Convert i64 to i32
         convertI64ToI32(sel, insn, markChildren);
       } else if (dstType == ir::TYPE_FLOAT && (srcType == ir::TYPE_U64 || srcType == ir::TYPE_S64)) {
+        // long -> float
         convertI64ToFloat(sel, insn, markChildren);
       } else if (dstType == ir::TYPE_DOUBLE && (srcType == ir::TYPE_U64 || srcType == ir::TYPE_S64)) {
-        // TODO: long -> double
-        GBE_ASSERT(0);
+        // long -> double
+        convertI64ToDouble(sel, insn, markChildren);
       } else if ((dstType == ir::TYPE_U64 || dstType == ir::TYPE_S64)
           && (srcFamily != FAMILY_QWORD && srcType != ir::TYPE_FLOAT && srcType != ir::TYPE_HALF)) {
+        // int/short/char to long
         convertSmallIntsToI64(sel, insn, markChildren);
+      } else if ((dstType == ir::TYPE_DOUBLE)
+          && (srcFamily != FAMILY_QWORD && srcType != ir::TYPE_FLOAT && srcType != ir::TYPE_HALF)) {
+        // int/short/char to double
+        convertSmallIntsToDouble(sel, insn, markChildren);
       } else if ((dstType == ir::TYPE_U64 || dstType == ir::TYPE_S64)
           && (srcType == ir::TYPE_FLOAT || srcType == ir::TYPE_HALF || srcType == ir::TYPE_DOUBLE)) {
+        // All float type to long
         convertFToI64(sel, insn, markChildren);
       } else if ((srcType == ir::TYPE_FLOAT && dstType == ir::TYPE_DOUBLE) ||
             (dstType == ir::TYPE_FLOAT && srcType == ir::TYPE_DOUBLE)) {
@@ -4744,8 +4921,12 @@ namespace gbe
         convertBetweenFloatDouble(sel, insn, markChildren);
       } else if ((srcType == ir::TYPE_HALF && dstType == ir::TYPE_DOUBLE) ||
             (dstType == ir::TYPE_HALF && srcType == ir::TYPE_DOUBLE)) {
-        // float and double conversion
+        // float and half conversion
         convertBetweenHalfDouble(sel, insn, markChildren);
+      } else if (srcType == ir::TYPE_DOUBLE && dstType != ir::TYPE_FLOAT
+             && dstType != ir::TYPE_HALF && dstFamily != FAMILY_QWORD) {
+        // double to int/short/char
+        convertDoubleToSmallInts(sel, insn, markChildren);
       } else if (srcType == ir::TYPE_HALF && (dstFamily == FAMILY_BYTE || dstFamily == FAMILY_WORD)) {
         // Convert half to small int
         convertHalfToSmallInts(sel, insn, markChildren);
