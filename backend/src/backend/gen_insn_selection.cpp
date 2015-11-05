@@ -4651,7 +4651,15 @@ namespace gbe
         unpacked = sel.unpacked_ud(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
         unpacked = GenRegister::retype(unpacked, GEN_TYPE_F);
 
+        sel.push();
+        if (sel.isScalarReg(insn.getSrc(0))) {
+          sel.curr.execWidth = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+        }
         sel.MOV(unpacked, src);
+        sel.pop();
+
         sel.MOV(dst, unpacked);
       } else {
         // float to double, just mov
@@ -4685,12 +4693,28 @@ namespace gbe
         // half to double. There is no direct double to half MOV, need tmp float.
         GBE_ASSERT(srcType == ir::TYPE_HALF);
         GenRegister tmpFloat = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_F);
+
+        sel.push();
+        if (sel.isScalarReg(insn.getSrc(0))) {
+          sel.curr.execWidth = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+        }
         sel.MOV(tmpFloat, src);
+        sel.pop();
+
         sel.MOV(dst, tmpFloat);
       } else {
         // double to half. No direct MOV from double to half, so double->float->half
         GBE_ASSERT(srcType == ir::TYPE_DOUBLE);
         GBE_ASSERT(dstType == ir::TYPE_HALF);
+
+        sel.push();
+        if (sel.isScalarReg(insn.getSrc(0))) {
+          sel.curr.execWidth = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+        }
 
         // double to float
         GenRegister unpackedFloat = sel.unpacked_ud(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
@@ -4701,6 +4725,7 @@ namespace gbe
         GenRegister unpackedHalf = sel.unpacked_uw(sel.reg(FAMILY_QWORD, sel.isScalarReg(insn.getSrc(0))));
         unpackedHalf = GenRegister::retype(unpackedHalf, GEN_TYPE_HF);
         sel.MOV(unpackedHalf, unpackedFloat);
+        sel.pop();
 
         sel.MOV(dst, unpackedHalf);
       }
@@ -4795,7 +4820,15 @@ namespace gbe
           unpacked = GenRegister::retype(unpacked, dstType == TYPE_U8 ? GEN_TYPE_UW : GEN_TYPE_W);
         }
 
+        sel.push();
+        if (sel.isScalarReg(insn.getSrc(0))) {
+          sel.curr.execWidth = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+        }
         sel.MOV(unpacked, src);
+        sel.pop();
+
         sel.MOV(dst, unpacked);
       }
     }
