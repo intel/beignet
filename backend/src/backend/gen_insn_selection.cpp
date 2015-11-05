@@ -516,7 +516,6 @@ namespace gbe
   INLINE void OP(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]) { I64Shift(SEL_OP_##OP, dst, src0, src1, tmp); }
     ALU1(MOV)
     ALU1(READ_ARF)
-    ALU1WithTemp(LOAD_DF_IMM)
     ALU1(LOAD_INT64_IMM)
     ALU1(RNDZ)
     ALU1(RNDE)
@@ -3347,12 +3346,12 @@ namespace gbe
           ir::half hf = imm.getHalfValue();
           sel.MOV(GenRegister::retype(dst, GEN_TYPE_HF), GenRegister::immh(hf.getVal()));
           break;
-	}
+        }
         case TYPE_U16: sel.MOV(dst, GenRegister::immuw(imm.getIntegerValue())); break;
         case TYPE_S16: sel.MOV(dst, GenRegister::immw(imm.getIntegerValue())); break;
         case TYPE_U8:  sel.MOV(dst, GenRegister::immuw(imm.getIntegerValue())); break;
         case TYPE_S8:  sel.MOV(dst, GenRegister::immw(imm.getIntegerValue())); break;
-        case TYPE_DOUBLE: sel.LOAD_DF_IMM(dst, GenRegister::immdf(imm.getDoubleValue()), sel.selReg(sel.reg(FAMILY_QWORD), TYPE_U64)); break;
+        case TYPE_DOUBLE: sel.MOV(dst, GenRegister::immdf(imm.getDoubleValue())); break;
         case TYPE_S64: sel.LOAD_INT64_IMM(dst, GenRegister::immint64(imm.getIntegerValue())); break;
         case TYPE_U64: sel.LOAD_INT64_IMM(dst, GenRegister::immuint64(imm.getIntegerValue())); break;
         default: NOT_SUPPORTED;

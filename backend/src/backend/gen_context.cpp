@@ -329,9 +329,6 @@ namespace gbe
     GenRegister src = ra->genReg(insn.src(0));
     GenRegister tmp = ra->genReg(insn.dst(1));
     switch (insn.opcode) {
-      case SEL_OP_LOAD_DF_IMM:
-        p->LOAD_DF_IMM(dst, tmp, src.value.df);
-        break;
       case SEL_OP_CONVI_TO_I64: {
         GenRegister middle = src;
         if(src.type == GEN_TYPE_B || src.type == GEN_TYPE_W) {

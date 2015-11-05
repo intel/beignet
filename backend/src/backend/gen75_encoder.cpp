@@ -221,36 +221,6 @@ namespace gbe
     }
   }
 
-
-  void Gen75Encoder::LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value) {
-    union { double d; unsigned u[2]; } u;
-    u.d = value;
-    GenRegister r = GenRegister::retype(tmp, GEN_TYPE_UD);
-    push();
-    curr.predicate = GEN_PREDICATE_NONE;
-    curr.noMask = 1;
-    curr.execWidth = 1;
-    MOV(r, GenRegister::immud(u.u[0]));
-    MOV(GenRegister::suboffset(r, 1), GenRegister::immud(u.u[1]));
-    pop();
-    r.type = GEN_TYPE_DF;
-    r.vstride = GEN_VERTICAL_STRIDE_0;
-    r.width = GEN_WIDTH_1;
-    r.hstride = GEN_HORIZONTAL_STRIDE_0;
-    push();
-    uint32_t width = curr.execWidth;
-    curr.execWidth = 8;
-    curr.predicate = GEN_PREDICATE_NONE;
-    curr.noMask = 1;
-    curr.quarterControl = GEN_COMPRESSION_Q1;
-    MOV(dest, r);
-    if (width == 16) {
-      curr.quarterControl = GEN_COMPRESSION_Q2;
-      MOV(GenRegister::offset(dest, 2), r);
-    }
-    pop();
-  }
-
   void Gen75Encoder::JMPI(GenRegister src, bool longjmp) {
     alu2(this, GEN_OPCODE_JMPI, GenRegister::ip(), GenRegister::ip(), src);
   }
