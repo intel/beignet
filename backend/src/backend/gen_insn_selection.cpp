@@ -516,7 +516,6 @@ namespace gbe
   INLINE void OP(Reg dst, Reg src0, Reg src1, GenRegister tmp[6]) { I64Shift(SEL_OP_##OP, dst, src0, src1, tmp); }
     ALU1(MOV)
     ALU1(READ_ARF)
-    ALU1WithTemp(MOV_DF)
     ALU1WithTemp(LOAD_DF_IMM)
     ALU1(LOAD_INT64_IMM)
     ALU1(RNDZ)
@@ -2452,10 +2451,7 @@ namespace gbe
             }
             break;
           case ir::OP_MOV:
-            if (dst.isdf()) {
-              ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
-              sel.MOV_DF(dst, src, sel.selReg(r, ir::TYPE_U64));
-            } else {
+            {
               sel.push();
                 auto dag = sel.regDAG[insn.getDst(0)];
                 if (sel.getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL &&
@@ -4635,28 +4631,11 @@ namespace gbe
     INLINE void convertBetweenFloatDouble(Selection::Opaque &sel, const ir::ConvertInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
-      const Type dstType = insn.getDstType();
-      const Type srcType = insn.getSrcType();
-      const GenRegister dst = sel.selReg(insn.getDst(0), dstType);
-      const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
-
-
-      //TODO:
-      ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
-      sel.MOV_DF(dst, src, sel.selReg(r, TYPE_U64));
     }
 
     INLINE void convertBetweenHalfDouble(Selection::Opaque &sel, const ir::ConvertInstruction &insn, bool &markChildren) const
     {
       using namespace ir;
-      const Type dstType = insn.getDstType();
-      const Type srcType = insn.getSrcType();
-      const GenRegister dst = sel.selReg(insn.getDst(0), dstType);
-      const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
-
-      //TODO:
-      ir::Register r = sel.reg(ir::RegisterFamily::FAMILY_QWORD);
-      sel.MOV_DF(dst, src, sel.selReg(r, TYPE_U64));
     }
 
     INLINE void convertHalfToSmallInts(Selection::Opaque &sel, const ir::ConvertInstruction &insn, bool &markChildren) const

@@ -332,9 +332,6 @@ namespace gbe
       case SEL_OP_LOAD_DF_IMM:
         p->LOAD_DF_IMM(dst, tmp, src.value.df);
         break;
-      case SEL_OP_MOV_DF:
-        p->MOV_DF(dst, src, tmp);
-        break;
       case SEL_OP_CONVI_TO_I64: {
         GenRegister middle = src;
         if(src.type == GEN_TYPE_B || src.type == GEN_TYPE_W) {

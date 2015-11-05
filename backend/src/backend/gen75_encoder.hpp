@@ -42,7 +42,6 @@ namespace gbe
     virtual void JMPI(GenRegister src, bool longjmp = false);
     /*! Patch JMPI/BRC/BRD (located at index insnID) with the given jump distance */
     virtual void patchJMPI(uint32_t insnID, int32_t jip, int32_t uip);
-    virtual void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
     virtual void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);
     virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum);
     virtual void UNTYPED_READ(GenRegister dst, GenRegister src, GenRegister bti, uint32_t elemNum);

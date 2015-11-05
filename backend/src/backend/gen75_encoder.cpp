@@ -251,42 +251,6 @@ namespace gbe
     pop();
   }
 
-  void Gen75Encoder::MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp) {
-    GBE_ASSERT((src0.type == GEN_TYPE_F && dest.isdf()) || (src0.isdf() && dest.type == GEN_TYPE_F));
-    GenRegister r = GenRegister::retype(tmp, GEN_TYPE_F);
-    int w = curr.execWidth;
-    GenRegister r0;
-    r0 = GenRegister::h2(r);
-    push();
-    curr.execWidth = 4;
-    curr.predicate = GEN_PREDICATE_NONE;
-    curr.noMask = 1;
-    MOV(r0, src0);
-    MOV(GenRegister::suboffset(r0, 4), GenRegister::suboffset(src0, 4));
-    curr.noMask = 0;
-    curr.quarterControl = 0;
-    curr.nibControl = 0;
-    MOV(dest, r0);
-    curr.nibControl = 1;
-    MOV(GenRegister::suboffset(dest, 4), GenRegister::suboffset(r0, 4));
-    pop();
-    if (w == 16) {
-      push();
-      curr.execWidth = 4;
-      curr.predicate = GEN_PREDICATE_NONE;
-      curr.noMask = 1;
-      MOV(r0, GenRegister::suboffset(src0, 8));
-      MOV(GenRegister::suboffset(r0, 4), GenRegister::suboffset(src0, 12));
-      curr.noMask = 0;
-      curr.quarterControl = 1;
-      curr.nibControl = 0;
-      MOV(GenRegister::suboffset(dest, 8), r0);
-      curr.nibControl = 1;
-      MOV(GenRegister::suboffset(dest, 12), GenRegister::suboffset(r0, 4));
-      pop();
-    }
-  }
-
   void Gen75Encoder::JMPI(GenRegister src, bool longjmp) {
     alu2(this, GEN_OPCODE_JMPI, GenRegister::ip(), GenRegister::ip(), src);
   }

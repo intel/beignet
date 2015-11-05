@@ -125,7 +125,6 @@ namespace gbe
     ALU2(LINE)
     ALU2(PLN)
     ALU3(MAD)
-    //ALU2(MOV_DF);
     ALU2(BRC)
     ALU1(BRD)
 #undef ALU1
@@ -135,7 +134,6 @@ namespace gbe
 
     virtual void F16TO32(GenRegister dest, GenRegister src0);
     virtual void F32TO16(GenRegister dest, GenRegister src0);
-    virtual void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
     virtual void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);
     virtual void LOAD_INT64_IMM(GenRegister dest, GenRegister value);
     /*! Barrier message (to synchronize threads of a workgroup) */

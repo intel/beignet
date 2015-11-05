@@ -42,7 +42,6 @@ namespace gbe
     virtual void patchJMPI(uint32_t insnID, int32_t jip, int32_t uip);
     virtual void F16TO32(GenRegister dest, GenRegister src0);
     virtual void F32TO16(GenRegister dest, GenRegister src0);
-    virtual void MOV_DF(GenRegister dest, GenRegister src0, GenRegister tmp = GenRegister::null());
     virtual void LOAD_DF_IMM(GenRegister dest, GenRegister tmp, double value);
     virtual void LOAD_INT64_IMM(GenRegister dest, GenRegister value);
     virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum);
