@@ -371,13 +371,26 @@ intel_driver_unlock_hardware(intel_driver_t *driver)
 }
 
 LOCAL dri_bo*
-intel_driver_share_buffer(intel_driver_t *driver, const char *sname, uint32_t name)
+intel_driver_share_buffer_from_name(intel_driver_t *driver, const char *sname, uint32_t name)
 {
   dri_bo *bo = intel_bo_gem_create_from_name(driver->bufmgr,
                                              sname,
                                              name);
   if (bo == NULL) {
     fprintf(stderr, "intel_bo_gem_create_from_name create \"%s\" bo from name %d failed: %s\n", sname, name, strerror(errno));
+    return NULL;
+  }
+  return bo;
+}
+
+LOCAL dri_bo*
+intel_driver_share_buffer_from_fd(intel_driver_t *driver, int fd, int size)
+{
+  dri_bo *bo = drm_intel_bo_gem_create_from_prime(driver->bufmgr,
+                                                  fd,
+                                                  size);
+  if (bo == NULL) {
+    fprintf(stderr, "drm_intel_bo_gem_create_from_prime create bo(size %d) from fd %d failed: %s\n", fd, size, strerror(errno));
     return NULL;
   }
   return bo;
@@ -697,7 +710,7 @@ cl_buffer intel_share_buffer_from_libva(cl_context ctx,
 {
   drm_intel_bo *intel_bo;
 
-  intel_bo = intel_driver_share_buffer((intel_driver_t *)ctx->drv, "shared from libva", bo_name);
+  intel_bo = intel_driver_share_buffer_from_name((intel_driver_t *)ctx->drv, "shared from libva", bo_name);
 
   if (intel_bo == NULL)
     return NULL;
@@ -715,10 +728,24 @@ cl_buffer intel_share_image_from_libva(cl_context ctx,
   drm_intel_bo *intel_bo;
   uint32_t intel_tiling, intel_swizzle_mode;
 
-  intel_bo = intel_driver_share_buffer((intel_driver_t *)ctx->drv, "shared from libva", bo_name);
+  intel_bo = intel_driver_share_buffer_from_name((intel_driver_t *)ctx->drv, "shared from libva", bo_name);
 
   drm_intel_bo_get_tiling(intel_bo, &intel_tiling, &intel_swizzle_mode);
   image->tiling = get_cl_tiling(intel_tiling);
+
+  return (cl_buffer)intel_bo;
+}
+
+cl_buffer intel_share_buffer_from_fd(cl_context ctx,
+                                     int fd,
+                                     int buffer_size)
+{
+  drm_intel_bo *intel_bo;
+
+  intel_bo = intel_driver_share_buffer_from_fd((intel_driver_t *)ctx->drv, fd, buffer_size);
+
+  if (intel_bo == NULL)
+    return NULL;
 
   return (cl_buffer)intel_bo;
 }
@@ -877,5 +904,6 @@ intel_setup_callbacks(void)
   cl_buffer_wait_rendering = (cl_buffer_wait_rendering_cb *) drm_intel_bo_wait_rendering;
   cl_buffer_get_fd = (cl_buffer_get_fd_cb *) drm_intel_bo_gem_export_to_prime;
   cl_buffer_get_tiling_align = (cl_buffer_get_tiling_align_cb *)intel_buffer_get_tiling_align;
+  cl_buffer_get_buffer_from_fd = (cl_buffer_get_buffer_from_fd_cb *) intel_share_buffer_from_fd;
   intel_set_gpgpu_callbacks(intel_get_device_id());
 }

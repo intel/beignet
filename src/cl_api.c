@@ -3190,6 +3190,7 @@ internal_clGetExtensionFunctionAddress(const char *func_name)
   EXTFUNC(clCreateBufferFromLibvaIntel)
   EXTFUNC(clCreateImageFromLibvaIntel)
   EXTFUNC(clGetMemObjectFdIntel)
+  EXTFUNC(clCreateBufferFromFdINTEL)
   return NULL;
 }
 
@@ -3357,4 +3358,26 @@ clGetMemObjectFdIntel(cl_context context,
 
 error:
   return err;
+}
+
+cl_mem
+clCreateBufferFromFdINTEL(cl_context context,
+                          const cl_import_buffer_info_intel* info,
+                          cl_int *errorcode_ret)
+{
+  cl_mem mem = NULL;
+  cl_int err = CL_SUCCESS;
+  CHECK_CONTEXT (context);
+
+  if (!info) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  mem = cl_mem_new_buffer_from_fd(context, info->fd, info->size, &err);
+
+error:
+  if (errorcode_ret)
+    *errorcode_ret = err;
+  return mem;
 }

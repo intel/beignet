@@ -53,6 +53,7 @@ LOCAL cl_buffer_get_buffer_from_libva_cb *cl_buffer_get_buffer_from_libva = NULL
 LOCAL cl_buffer_get_image_from_libva_cb *cl_buffer_get_image_from_libva = NULL;
 LOCAL cl_buffer_get_fd_cb *cl_buffer_get_fd = NULL;
 LOCAL cl_buffer_get_tiling_align_cb *cl_buffer_get_tiling_align = NULL;
+LOCAL cl_buffer_get_buffer_from_fd_cb *cl_buffer_get_buffer_from_fd = NULL;
 
 /* cl_khr_gl_sharing */
 LOCAL cl_gl_acquire_texture_cb *cl_gl_acquire_texture = NULL;

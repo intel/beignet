@@ -133,6 +133,22 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *clGetMemObjectFdIntel_fn)(
                              cl_mem       /* Memory Obejct */,
                              int*         /* returned fd */);
 
+typedef struct _cl_import_buffer_info_intel {
+    int                     fd;
+    int                     size;
+} cl_import_buffer_info_intel;
+
+/* Create memory object from external buffer object by fd */
+extern CL_API_ENTRY cl_mem CL_API_CALL
+clCreateBufferFromFdINTEL(cl_context                            /* context */,
+                          const cl_import_buffer_info_intel *   /* info */,
+                          cl_int *                              /* errcode_ret */);
+
+typedef CL_API_ENTRY cl_mem (CL_API_CALL *clCreateBufferFromFdINTEL_fn)(
+                             cl_context                            /* context */,
+                             const cl_import_buffer_info_intel *   /* info */,
+                             cl_int *                              /* errcode_ret */);
+
 #ifdef __cplusplus
 }
 #endif

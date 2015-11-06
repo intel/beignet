@@ -2206,3 +2206,33 @@ cl_mem_get_fd(cl_mem mem,
 	err = CL_INVALID_OPERATION;
   return err;
 }
+
+LOCAL cl_mem cl_mem_new_buffer_from_fd(cl_context ctx,
+                                       int fd,
+                                       int buffer_sz,
+                                       cl_int* errcode)
+{
+  cl_int err = CL_SUCCESS;
+  cl_mem mem = NULL;
+
+  mem = cl_mem_allocate(CL_MEM_BUFFER_TYPE, ctx, 0, 0, CL_FALSE, NULL, NULL, &err);
+  if (mem == NULL || err != CL_SUCCESS)
+    goto error;
+
+  mem->bo = cl_buffer_get_buffer_from_fd(ctx, fd, buffer_sz);
+  if (mem->bo == NULL) {
+    err = CL_MEM_OBJECT_ALLOCATION_FAILURE;
+    goto error;
+  }
+  mem->size = buffer_sz;
+
+exit:
+  if (errcode)
+    *errcode = err;
+  return mem;
+
+error:
+  cl_mem_delete(mem);
+  mem = NULL;
+  goto exit;
+}
