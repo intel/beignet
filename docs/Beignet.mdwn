@@ -306,6 +306,7 @@ Documents for OpenCL application developers
 - [[Kernel Optimization Guide|Beignet/optimization-guide]]
 - [[Libva Buffer Sharing|Beignet/howto/libva-buffer-sharing-howto]]
 - [[V4l2 Buffer Sharing|Beignet/howto/v4l2-buffer-sharing-howto]]
+- [[Video Motion Estimation|Beignet/howto/video-motion-estimation-howto]]
 
 The wiki URL is as below:
 [http://www.freedesktop.org/wiki/Software/Beignet/](http://www.freedesktop.org/wiki/Software/Beignet/)

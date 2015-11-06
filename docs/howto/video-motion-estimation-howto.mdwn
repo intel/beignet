@@ -1,0 +1,79 @@
+Video Motion Vector HowTo
+==========================
+
+Beignet now supports cl_intel_accelerator and part of cl_intel_motion_estimation, which
+are Khronos official extensions. It provides a hardware acceleration of video motion
+vector to users.
+
+Supported hardware platform and limitation
+------------------------------------------
+
+Only 3rd Generation Intel Core Processors is supported for vme now. And now we just
+implement this part of cl_intel_motion_estimation for motion vector computation(residuals
+can not be returned yet) on 3rd Generation Intel Core Processors:
+  mb_block_type = CL_ME_MB_TYPE_16x16_INTEL
+  subpixel_mode = CL_ME_SUBPIXEL_MODE_INTEGER_INTEL
+  search_path_type = CL_ME_SEARCH_PATH_RADIUS_2_2_INTEL / CL_ME_SEARCH_PATH_RADIUS_4_4_INTEL
+                     / CL_ME_SEARCH_PATH_RADIUS_16_12_INTEL
+We will fully support cl_intel_motion_estimation in the future.
+
+Steps
+-----
+
+In order to use video motion estimation provided by Beignet in your program, please follow
+the steps as below:
+
+- Create a cl_accelerator_intel object using extension API clCreateAcceleratorINTEL, with
+  the following parameters:
+  _accelerator_type_intel accelerator_type = CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL;
+  cl_motion_estimation_desc_intel vmedesc = {CL_ME_MB_TYPE_16x16_INTEL,
+                                             CL_ME_SUBPIXEL_MODE_INTEGER_INTEL,
+                                             CL_ME_SAD_ADJUST_MODE_NONE_INTEL,
+                                             CL_ME_SEARCH_PATH_RADIUS_16_12_INTEL(
+                                             or CL_ME_SEARCH_PATH_RADIUS_2_2_INTEL
+                                             or CL_ME_SEARCH_PATH_RADIUS_4_4_INTEL)
+                                            };
+
+- Invoke clCreateProgramWithBuiltInKernels to create a program object with built-in kernels
+  information, and invoke clCreateKernel to create a kernel object whose kernel name is
+  block_motion_estimate_intel.
+
+- The prototype of built-in kernel block_motion_estimate_intel is as following:
+  _kernel void
+  block_motion_estimate_intel
+  (
+   accelerator_intel_t accelerator,
+   __read_only  image2d_t src_image,
+   __read_only  image2d_t ref_image,
+   __global short2 * prediction_motion_vector_buffer,
+   __global short2 * motion_vector_buffer,
+   __global ushort * residuals
+   );
+  So you should create related objects and setup these kernel arguments by clSetKernelArg.
+  Create source and reference image object, on which you want to do video motion estimation.
+  The image_channel_order should be CL_R and image_channel_data_type should be CL_UNORM_INT8.
+  Create a buffer object to get the motion vector result. This motion vector buffer representing
+  a vector field of pixel block motion vectors, stored linearly in row-major order. The elements
+  (pixels) of this image contain a motion vector for the corresponding pixel block, with its x/y
+  components packed as two 16-bit integer values. Each component is encoded as a S13.2 fixed
+  point value(two's complement).
+
+- Use clEnqueueNDRangeKernel to enqueue this kernel. The only thing you need to setup is global_work_size:
+  global_work_size[0] equal to width of source image, global_work_size[1] equal to height of source
+  image.
+
+- Use clEnqueueReadBuffer or clEnqueueMapBuffer to get motion vector result.
+
+
+Sample code
+-----------
+
+We have developed an utest case of using video motion vector in utests/builtin_kernel_block_motion_estimate_intel.cpp.
+Please go through it for details.
+
+More references
+---------------
+
+https://www.khronos.org/registry/cl/extensions/intel/cl_intel_accelerator.txt
+https://www.khronos.org/registry/cl/extensions/intel/cl_intel_motion_estimation.txt
+https://software.intel.com/en-us/articles/intro-to-motion-estimation-extension-for-opencl
