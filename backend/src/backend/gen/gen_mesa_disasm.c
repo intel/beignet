@@ -476,6 +476,13 @@ static int column;
 
 static int gen_version;
 
+#define GEN7_BITS_FIELD(inst, gen7) \
+  ({                                                            \
+    int bits;                                                   \
+      bits = ((const union Gen7NativeInstruction *)inst)->gen7; \
+    bits;                                                       \
+  })
+
 #define GEN_BITS_FIELD(inst, gen)                               \
   ({                                                            \
     int bits;                                                   \
@@ -530,6 +537,8 @@ static int gen_version;
 #define EXECUTION_SIZE(inst)       GEN_BITS_FIELD(inst, header.execution_size)
 #define BRANCH_JIP(inst)           GEN_BITS_FIELD2(inst, bits3.gen7_branch.jip, bits3.gen8_branch.jip/8)
 #define BRANCH_UIP(inst)           GEN_BITS_FIELD2(inst, bits3.gen7_branch.uip, bits2.gen8_branch.uip/8)
+#define VME_BTI(inst)              GEN7_BITS_FIELD(inst, bits3.vme_gen7.bti)
+#define VME_MSG_TYPE(inst)         GEN7_BITS_FIELD(inst, bits3.vme_gen7.msg_type)
 #define SAMPLE_BTI(inst)           GEN_BITS_FIELD(inst, bits3.sampler_gen7.bti)
 #define SAMPLER(inst)              GEN_BITS_FIELD(inst, bits3.sampler_gen7.sampler)
 #define SAMPLER_MSG_TYPE(inst)     GEN_BITS_FIELD(inst, bits3.sampler_gen7.msg_type)
@@ -1431,6 +1440,11 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
 
     if (GEN_BITS_FIELD2(inst, bits1.da1.src1_reg_file, bits2.da1.src1_reg_file) == GEN_IMMEDIATE_VALUE) {
       switch (target) {
+        case GEN_SFID_VIDEO_MOTION_EST:
+          format(file, " (bti: %d, msg_type: %d)",
+                 VME_BTI(inst),
+                 VME_MSG_TYPE(inst));
+          break;
         case GEN_SFID_SAMPLER:
           format(file, " (%d, %d, %d, %d)",
                  SAMPLE_BTI(inst),

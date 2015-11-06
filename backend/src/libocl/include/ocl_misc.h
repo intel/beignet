@@ -136,5 +136,20 @@ struct time_stamp {
   uint event;
 };
 
+uint __gen_ocl_region(ushort offset, uint data);
+
 struct time_stamp __gen_ocl_get_timestamp(void);
+
+uint8 __gen_ocl_vme(image2d_t, image2d_t,
+                   uint, uint, uint, uint,
+                   uint, uint, uint, uint,
+                   uint, uint, uint, uint,
+                   uint, uint, uint, uint,
+                   uint, uint, uint, uint,
+                   uint, uint, uint, uint,
+                   uint, uint, uint, uint,
+                   uint, uint, uint, uint,
+                   uint, uint, uint, uint,
+                   uint, uint, uint, uint,
+                   int, int, int);
 #endif

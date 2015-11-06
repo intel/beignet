@@ -671,6 +671,10 @@ namespace gbe {
             *CI = InsertToVector(call, *CI);
             break;
           }
+          case GEN_OCL_VME:
+            setAppendPoint(call);
+            extractFromVector(call);
+            break;
         }
       }
     }

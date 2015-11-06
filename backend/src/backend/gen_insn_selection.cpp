@@ -187,6 +187,7 @@ namespace gbe
            this->opcode == SEL_OP_ATOMIC       ||
            this->opcode == SEL_OP_BYTE_GATHER  ||
            this->opcode == SEL_OP_SAMPLE ||
+           this->opcode == SEL_OP_VME ||
            this->opcode == SEL_OP_DWORD_GATHER;
   }
 
@@ -659,6 +660,8 @@ namespace gbe
     void ALU3(SelectionOpcode opcode, Reg dst, Reg src0, Reg src1, Reg src2);
     /*! Encode sample instructions */
     void SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *msgPayloads, uint32_t msgNum, uint32_t bti, uint32_t sampler, bool isLD, bool isUniform);
+    /*! Encode vme instructions */
+    void VME(uint32_t bti, GenRegister *dst, GenRegister *payloadVal, uint32_t dstNum, uint32_t srcNum, uint32_t msg_type, uint32_t vme_search_path_lut, uint32_t lut_sub);
     /*! Encode typed write instructions */
     void TYPED_WRITE(GenRegister *msgs, uint32_t msgNum, uint32_t bti, bool is3D);
     /*! Get image information */
@@ -2117,6 +2120,34 @@ namespace gbe
     insn->extra.rdmsglen = msgNum;
     insn->extra.isLD = isLD;
     insn->extra.isUniform = isUniform;
+  }
+
+  void Selection::Opaque::VME(uint32_t bti, GenRegister *dst, GenRegister *payloadVal,
+                              uint32_t dstNum, uint32_t srcNum, uint32_t msg_type,
+                              uint32_t vme_search_path_lut, uint32_t lut_sub) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_VME, dstNum, srcNum);
+    SelectionVector *dstVector = this->appendVector();
+    SelectionVector *msgVector = this->appendVector();
+
+    for (uint32_t elemID = 0; elemID < dstNum; ++elemID)
+      insn->dst(elemID) = dst[elemID];
+    for (uint32_t elemID = 0; elemID < srcNum; ++elemID)
+      insn->src(elemID) = payloadVal[elemID];
+
+    dstVector->regNum = dstNum;
+    dstVector->isSrc = 0;
+    dstVector->offsetID = 0;
+    dstVector->reg = &insn->dst(0);
+
+    msgVector->regNum = srcNum;
+    msgVector->isSrc = 1;
+    msgVector->offsetID = 0;
+    msgVector->reg = &insn->src(0);
+
+    insn->setbti(bti);
+    insn->extra.msg_type = msg_type;
+    insn->extra.vme_search_path_lut = vme_search_path_lut;
+    insn->extra.lut_sub = lut_sub;
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -5294,6 +5325,47 @@ namespace gbe
     DECL_CTOR(SampleInstruction, 1, 1);
   };
 
+  DECL_PATTERN(VmeInstruction)
+  {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::VmeInstruction &insn, bool &markChildren) const
+    {
+      using namespace ir;
+      uint32_t msg_type, vme_search_path_lut, lut_sub;
+      msg_type = insn.getMsgType();
+      vme_search_path_lut = 0;
+      lut_sub = 0;
+      GBE_ASSERT(msg_type == 1);
+      uint32_t payloadLen = 0;
+      //We allocate 5 virtual payload grfs to selection dst register.
+      if(msg_type == 1){
+        payloadLen = 5;
+      }
+      uint32_t selDstNum = insn.getDstNum() + payloadLen;
+      uint32_t srcNum = insn.getSrcNum();
+      vector<GenRegister> dst(selDstNum);
+      vector<GenRegister> payloadVal(srcNum);
+      uint32_t valueID = 0;
+      for (valueID = 0; valueID < insn.getDstNum(); ++valueID)
+        dst[valueID] = sel.selReg(insn.getDst(valueID), insn.getDstType());
+      for (valueID = insn.getDstNum(); valueID < selDstNum; ++valueID)
+        dst[valueID] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+
+      for (valueID = 0; valueID < srcNum; ++valueID)
+        payloadVal[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
+
+      uint32_t bti = insn.getImageIndex();
+      if (bti > BTI_MAX_ID) {
+        std::cerr << "Too large bti " << bti;
+        return false;
+      }
+
+      sel.VME(bti, dst.data(), payloadVal.data(), selDstNum, srcNum, msg_type, vme_search_path_lut, lut_sub);
+
+      return true;
+    }
+    DECL_CTOR(VmeInstruction, 1, 1);
+  };
+
   /*! Typed write instruction pattern. */
   DECL_PATTERN(TypedWriteInstruction)
   {
@@ -5759,6 +5831,7 @@ namespace gbe
     this->insert<MulAddInstructionPattern>();
     this->insert<SelectModifierInstructionPattern>();
     this->insert<SampleInstructionPattern>();
+    this->insert<VmeInstructionPattern>();
     this->insert<GetImageInfoInstructionPattern>();
     this->insert<ReadARFInstructionPattern>();
     this->insert<RegionInstructionPattern>();

@@ -350,6 +350,21 @@ union Gen7NativeInstruction
         uint32_t end_of_thread:1;
       } sampler_gen7;
 
+      struct {
+        uint32_t bti:8;
+        uint32_t vme_search_path_lut:3;
+        uint32_t lut_sub:2;
+        uint32_t msg_type:2;
+        uint32_t stream_in:1;
+        uint32_t stream_out:1;
+        uint32_t reserved_mbz:2;
+        uint32_t header_present:1;
+        uint32_t response_length:5;
+        uint32_t msg_length:4;
+        uint32_t pad1:2;
+        uint32_t end_of_thread:1;
+      } vme_gen7;
+
       /**
        * Message for the Sandybridge Sampler Cache or Constant Cache Data Port.
        *

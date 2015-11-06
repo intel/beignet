@@ -198,8 +198,8 @@ namespace ir {
     template <typename T> INLINE bool isMemberOf(void) const {
       return T::isClassOf(*this);
     }
-    /*! max_src for store instruction (vec16 + addr) */
-    static const uint32_t MAX_SRC_NUM = 32;
+    /*! max_src used by vme for payload passing and setting */
+    static const uint32_t MAX_SRC_NUM = 40;
     static const uint32_t MAX_DST_NUM = 32;
   protected:
     BasicBlock *parent;      //!< The basic block containing the instruction
@@ -388,6 +388,17 @@ namespace ir {
     uint8_t getImageIndex() const;
     uint8_t getSamplerIndex(void) const;
     uint8_t getSamplerOffset(void) const;
+    Type getSrcType(void) const;
+    Type getDstType(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  /*! Video motion estimation */
+  class VmeInstruction : public Instruction {
+  public:
+    uint8_t getImageIndex() const;
+    uint8_t getMsgType() const;
     Type getSrcType(void) const;
     Type getDstType(void) const;
     /*! Return true if the given instruction is an instance of this class */
@@ -754,6 +765,8 @@ namespace ir {
   Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, uint8_t srcNum, Type srcType, Type coordType);
   /*! sample textures */
   Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, uint8_t srcNum, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset);
+  /*! video motion estimation */
+  Instruction VME(uint8_t imageIndex, Tuple dst, Tuple src, uint32_t dstNum, uint32_t srcNum, int msg_type, int vme_search_path_lut, int lut_sub);
   /*! get image information , such as width/height/depth/... */
   Instruction GET_IMAGE_INFO(int infoType, Register dst, uint8_t imageIndex, Register infoReg);
   /*! label labelIndex */

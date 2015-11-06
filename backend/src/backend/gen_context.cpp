@@ -2260,6 +2260,104 @@ namespace gbe
     p->SAMPLE(dst, msgPayload, msgLen, false, bti, sampler, simdWidth, -1, 0, insn.extra.isLD, insn.extra.isUniform);
   }
 
+  void GenContext::emitVmeInstruction(const SelectionInstruction &insn) {
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    const unsigned int msg_type = insn.extra.msg_type;
+
+    GBE_ASSERT(msg_type == 1);
+    int rsp_len;
+    if(msg_type == 1)
+      rsp_len = 6;
+    uint32_t execWidth_org = p->curr.execWidth;
+    p->push();
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.noMask = 1;
+    p->curr.execWidth = 1;
+    /* Use MOV to Setup bits of payload: mov payload value stored in insn.src(x) to
+     * 5 consecutive payload grf.
+     * In simd8 mode, one virtual grf register map to one physical grf register. But
+     * in simd16 mode, one virtual grf register map to two physical grf registers.
+     * So we should treat them differently.
+     * */
+    if(execWidth_org == 8){
+      for(int i=0; i < 5; i++){
+        GenRegister payload_grf = ra->genReg(insn.dst(rsp_len+i));
+        payload_grf.vstride = GEN_VERTICAL_STRIDE_0;
+        payload_grf.width = GEN_WIDTH_1;
+        payload_grf.hstride = GEN_HORIZONTAL_STRIDE_0;
+        payload_grf.subphysical = 1;
+        for(int j=0; j < 8; j++){
+          payload_grf.subnr = (7 - j) * typeSize(GEN_TYPE_UD);
+          GenRegister payload_val = ra->genReg(insn.src(i*8+j));
+          payload_val.vstride = GEN_VERTICAL_STRIDE_0;
+          payload_val.width = GEN_WIDTH_1;
+          payload_val.hstride = GEN_HORIZONTAL_STRIDE_0;
+
+          p->MOV(payload_grf, payload_val);
+        }
+      }
+    }
+    else if(execWidth_org == 16){
+      for(int i=0; i < 2; i++){
+        for(int k = 0; k < 2; k++){
+          GenRegister payload_grf = ra->genReg(insn.dst(rsp_len+i));
+          payload_grf.nr += k;
+          payload_grf.vstride = GEN_VERTICAL_STRIDE_0;
+          payload_grf.width = GEN_WIDTH_1;
+          payload_grf.hstride = GEN_HORIZONTAL_STRIDE_0;
+          payload_grf.subphysical = 1;
+          for(int j=0; j < 8; j++){
+            payload_grf.subnr = (7 - j) * typeSize(GEN_TYPE_UD);
+            GenRegister payload_val = ra->genReg(insn.src(i*16+k*8+j));
+            payload_val.vstride = GEN_VERTICAL_STRIDE_0;
+            payload_val.width = GEN_WIDTH_1;
+            payload_val.hstride = GEN_HORIZONTAL_STRIDE_0;
+
+            p->MOV(payload_grf, payload_val);
+          }
+        }
+      }
+      {
+        int i = 2;
+        GenRegister payload_grf = ra->genReg(insn.dst(rsp_len+i));
+        payload_grf.vstride = GEN_VERTICAL_STRIDE_0;
+        payload_grf.width = GEN_WIDTH_1;
+        payload_grf.hstride = GEN_HORIZONTAL_STRIDE_0;
+        payload_grf.subphysical = 1;
+        for(int j=0; j < 8; j++){
+          payload_grf.subnr = (7 - j) * typeSize(GEN_TYPE_UD);
+          GenRegister payload_val = ra->genReg(insn.src(i*16+j));
+          payload_val.vstride = GEN_VERTICAL_STRIDE_0;
+          payload_val.width = GEN_WIDTH_1;
+          payload_val.hstride = GEN_HORIZONTAL_STRIDE_0;
+
+          p->MOV(payload_grf, payload_val);
+        }
+      }
+    }
+    p->pop();
+
+    p->push();
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.noMask = 1;
+    p->curr.execWidth = 1;
+    GenRegister payload_did = GenRegister::retype(ra->genReg(insn.dst(rsp_len)), GEN_TYPE_UB);
+    payload_did.vstride = GEN_VERTICAL_STRIDE_0;
+    payload_did.width = GEN_WIDTH_1;
+    payload_did.hstride = GEN_HORIZONTAL_STRIDE_0;
+    payload_did.subphysical = 1;
+    payload_did.subnr = 20 * typeSize(GEN_TYPE_UB);
+    GenRegister grf0 = GenRegister::ub1grf(0, 20);
+    p->MOV(payload_did, grf0);
+    p->pop();
+
+    const GenRegister msgPayload = ra->genReg(insn.dst(rsp_len));
+    const unsigned char bti = insn.getbti();
+    const unsigned int vme_search_path_lut = insn.extra.vme_search_path_lut;
+    const unsigned int lut_sub = insn.extra.lut_sub;
+    p->VME(bti, dst, msgPayload, msg_type, vme_search_path_lut, lut_sub);
+  }
+
   void GenContext::scratchWrite(const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode) {
     p->push();
     uint32_t simdWidth = p->curr.execWidth;

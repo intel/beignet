@@ -622,6 +622,58 @@ namespace ir {
       static const uint32_t dstNum = 4;
     };
 
+    class ALIGNED_INSTRUCTION VmeInstruction :
+      public BasePolicy,
+      public TupleSrcPolicy<VmeInstruction>,
+      public TupleDstPolicy<VmeInstruction>
+    {
+    public:
+      VmeInstruction(uint8_t imageIdx, Tuple dstTuple, Tuple srcTuple,
+                     uint32_t dstNum, uint32_t srcNum, int msg_type,
+                     int vme_search_path_lut, int lut_sub) {
+        this->opcode = OP_VME;
+        this->dst = dstTuple;
+        this->src = srcTuple;
+        this->dstNum = dstNum;
+        this->srcNum = srcNum;
+        this->imageIdx = imageIdx;
+        this->msg_type = msg_type;
+        this->vme_search_path_lut = vme_search_path_lut;
+        this->lut_sub = lut_sub;
+      }
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const {
+        this->outOpcode(out);
+        out << " src_surface id " << (int)this->getImageIndex()
+            << " ref_surface id " << (int)this->getImageIndex() + 1;
+        for(uint32_t i = 0; i < dstNum; i++){
+          out<< " %" << this->getDst(fn, i);
+        }
+        for(uint32_t i = 0; i < srcNum; i++){
+          out<< " %" << this->getSrc(fn, i);
+        }
+        out
+            << " msg_type " << (int)this->getMsgType()
+            << " vme_search_path_lut " << (int)this->vme_search_path_lut
+            << " lut_sub " << (int)this->lut_sub;
+      }
+      Tuple src;
+      Tuple dst;
+
+      INLINE uint8_t getImageIndex(void) const { return this->imageIdx; }
+      INLINE uint8_t getMsgType(void) const { return this->msg_type; }
+
+      INLINE Type getSrcType(void) const { return TYPE_U32; }
+      INLINE Type getDstType(void) const { return TYPE_U32; }
+      uint8_t imageIdx;
+      uint8_t msg_type;
+      uint8_t vme_search_path_lut;
+      uint8_t lut_sub;
+      uint32_t srcNum;
+      uint32_t dstNum;
+    };
+
+
     class ALIGNED_INSTRUCTION TypedWriteInstruction : // TODO
       public BasePolicy,
       public TupleSrcPolicy<TypedWriteInstruction>,
@@ -1137,6 +1189,8 @@ namespace ir {
     // TODO
     INLINE bool SampleInstruction::wellFormed(const Function &fn, std::string &why) const
     { return true; }
+    INLINE bool VmeInstruction::wellFormed(const Function &fn, std::string &why) const
+    { return true; }
     INLINE bool TypedWriteInstruction::wellFormed(const Function &fn, std::string &why) const
     { return true; }
     INLINE bool GetImageInfoInstruction::wellFormed(const Function &fn, std::string &why) const
@@ -1546,6 +1600,10 @@ START_INTROSPECTION(LabelInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(LabelInstruction)
 
+START_INTROSPECTION(VmeInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(VmeInstruction)
+
 #undef END_INTROSPECTION
 #undef START_INTROSPECTION
 #undef DECL_INSN
@@ -1736,6 +1794,10 @@ DECL_MEM_FN(SampleInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(SampleInstruction, uint8_t, getSamplerIndex(void), getSamplerIndex())
 DECL_MEM_FN(SampleInstruction, uint8_t, getSamplerOffset(void), getSamplerOffset())
 DECL_MEM_FN(SampleInstruction, uint8_t, getImageIndex(void), getImageIndex())
+DECL_MEM_FN(VmeInstruction, Type, getSrcType(void), getSrcType())
+DECL_MEM_FN(VmeInstruction, Type, getDstType(void), getDstType())
+DECL_MEM_FN(VmeInstruction, uint8_t, getImageIndex(void), getImageIndex())
+DECL_MEM_FN(VmeInstruction, uint8_t, getMsgType(void), getMsgType())
 DECL_MEM_FN(TypedWriteInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(TypedWriteInstruction, Type, getCoordType(void), getCoordType())
 DECL_MEM_FN(TypedWriteInstruction, uint8_t, getImageIndex(void), getImageIndex())
@@ -2004,6 +2066,10 @@ DECL_MEM_FN(MemInstruction, void,     setBtiReg(Register reg), setBtiReg(reg))
   // SAMPLE
   Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, uint8_t srcNum, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset) {
     return internal::SampleInstruction(imageIndex, dst, src, srcNum, dstIsFloat, srcIsFloat, sampler, samplerOffset).convert();
+  }
+
+  Instruction VME(uint8_t imageIndex, Tuple dst, Tuple src, uint32_t dstNum, uint32_t srcNum, int msg_type, int vme_search_path_lut, int lut_sub) {
+    return internal::VmeInstruction(imageIndex, dst, src, dstNum, srcNum, msg_type, vme_search_path_lut, lut_sub).convert();
   }
 
   Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, uint8_t srcNum, Type srcType, Type coordType) {

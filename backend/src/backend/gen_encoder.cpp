@@ -1119,6 +1119,50 @@ namespace gbe
                        simd_mode, return_format);
   }
 
+  void GenEncoder::setVmeMessage(GenNativeInstruction *insn,
+                                unsigned char bti,
+                                uint32_t response_length,
+                                uint32_t msg_length,
+                                uint32_t msg_type,
+                                unsigned char vme_search_path_lut,
+                                unsigned char lut_sub)
+  {
+     const GenMessageTarget sfid = GEN_SFID_VIDEO_MOTION_EST;
+     setMessageDescriptor(insn, sfid, msg_length, response_length, true);
+     insn->bits3.vme_gen7.bti = bti;
+     insn->bits3.vme_gen7.vme_search_path_lut = vme_search_path_lut;
+     insn->bits3.vme_gen7.lut_sub = lut_sub;
+     insn->bits3.vme_gen7.msg_type = msg_type;
+     insn->bits3.vme_gen7.stream_in = 0;
+     insn->bits3.vme_gen7.stream_out = 0;
+     insn->bits3.vme_gen7.reserved_mbz = 0;
+
+  }
+
+  void GenEncoder::VME(unsigned char bti,
+                       GenRegister dest,
+                       GenRegister msg,
+                       uint32_t msg_type,
+                       uint32_t vme_search_path_lut,
+                       uint32_t lut_sub)
+  {
+    /* Currectly we just support inter search only, we will support other
+     * modes in future.
+     */
+    GBE_ASSERT(msg_type == 1);
+    uint32_t msg_length, response_length;
+    if(msg_type == 1){
+      msg_length = 5;
+      response_length = 6;
+    }
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    this->setHeader(insn);
+    this->setDst(insn, dest);
+    this->setSrc0(insn, msg);
+    setVmeMessage(insn, bti, response_length, msg_length,
+                  msg_type, vme_search_path_lut, lut_sub);
+  }
+
   void GenEncoder::TYPED_WRITE(GenRegister msg, bool header_present, unsigned char bti)
   {
      GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);

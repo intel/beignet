@@ -90,8 +90,8 @@ namespace gbe
     const GenRegister &dst(uint32_t dstID) const { return regs[dstID]; }
     /*! Damn C++ */
     const GenRegister &src(uint32_t srcID) const { return regs[dstNum+srcID]; }
-    /*! No more than 9 sources (used by typed writes on simd8 mode.) */
-    enum { MAX_SRC_NUM = 9 };
+    /*! No more than 40 sources (40 sources are used by vme for payload passing and setting) */
+    enum { MAX_SRC_NUM = 40 };
     /*! No more than 16 destinations (15 used by I64DIV/I64REM) */
     enum { MAX_DST_NUM = 16 };
     /*! State of the instruction (extra fields neeed for the encoding) */
@@ -129,6 +129,12 @@ namespace gbe
         bool     isLD;  // is this a ld message?
         bool     isUniform;
       };
+      struct {
+        uint16_t vme_bti:8;
+        uint16_t msg_type:2;
+        uint16_t vme_search_path_lut:3;
+        uint16_t lut_sub:2;
+      };
       uint32_t barrierType;
       bool longjmp;
       uint32_t indirect_offset;
@@ -138,7 +144,7 @@ namespace gbe
     /*! Number of destinations */
     uint8_t dstNum:5;
     /*! Number of sources */
-    uint8_t srcNum:4;
+    uint8_t srcNum:6;
     /*! To store various indices */
     uint32_t index;
     /*! For BRC/IF to store the UIP */
@@ -152,6 +158,7 @@ namespace gbe
       switch (opcode) {
         case SEL_OP_DWORD_GATHER: return extra.function;
         case SEL_OP_SAMPLE: return extra.rdbti;
+        case SEL_OP_VME: return extra.vme_bti;
         case SEL_OP_TYPED_WRITE: return extra.bti;
         default:
           GBE_ASSERT(0);
@@ -164,6 +171,7 @@ namespace gbe
       switch (opcode) {
         case SEL_OP_DWORD_GATHER: extra.function = bti; return;
         case SEL_OP_SAMPLE: extra.rdbti = bti; return;
+        case SEL_OP_VME: extra.vme_bti = bti; return;
         case SEL_OP_TYPED_WRITE: extra.bti = bti; return;
         default:
           GBE_ASSERT(0);

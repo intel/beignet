@@ -200,6 +200,19 @@ namespace gbe
                            bool header_present,
                            uint32_t simd_mode,
                            uint32_t return_format);
+    virtual void VME(unsigned char bti,
+                         GenRegister dest,
+                         GenRegister msg,
+                         uint32_t msg_type,
+                         uint32_t vme_search_path_lut,
+                         uint32_t lut_sub);
+    void setVmeMessage(GenNativeInstruction *insn,
+                          unsigned char bti,
+                          uint32_t response_length,
+                          uint32_t msg_length,
+                          uint32_t msg_type,
+                          unsigned char vme_search_path_lut,
+                          unsigned char lut_sub);
 
     /*! TypedWrite instruction for texture */
     virtual void TYPED_WRITE(GenRegister header,

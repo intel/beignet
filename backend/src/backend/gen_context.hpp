@@ -167,6 +167,7 @@ namespace gbe
     virtual void emitUnpackLongInstruction(const SelectionInstruction &insn);
     void emitDWordGatherInstruction(const SelectionInstruction &insn);
     void emitSampleInstruction(const SelectionInstruction &insn);
+    void emitVmeInstruction(const SelectionInstruction &insn);
     void emitTypedWriteInstruction(const SelectionInstruction &insn);
     void emitSpillRegInstruction(const SelectionInstruction &insn);
     void emitUnSpillRegInstruction(const SelectionInstruction &insn);

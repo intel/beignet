@@ -3577,6 +3577,7 @@ namespace gbe
       case GEN_OCL_REGION:
       case GEN_OCL_SIMD_ID:
       case GEN_OCL_SIMD_SHUFFLE:
+      case GEN_OCL_VME:
         this->newRegister(&I);
         break;
       case GEN_OCL_PRINTF:
@@ -3881,6 +3882,52 @@ namespace gbe
           {
             const ir::Register dst = this->getRegister(&I);
             ctx.READ_ARF(ir::TYPE_U32, dst, ir::ARF_TM);
+            break;
+          }
+          case GEN_OCL_VME:
+          {
+
+            const uint8_t imageID = getImageID(I);
+
+            AI++;
+            AI++;
+
+            uint32_t src_length = 40;
+
+            vector<ir::Register> dstTupleData, srcTupleData;
+            for (uint32_t i = 0; i < src_length; i++, AI++){
+              srcTupleData.push_back(this->getRegister(*AI));
+            }
+
+            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], src_length);
+
+            Constant *msg_type_cpv = dyn_cast<Constant>(*AI);
+            assert(msg_type_cpv);
+            const ir::Immediate &msg_type_x = processConstantImm(msg_type_cpv);
+            int msg_type = msg_type_x.getIntegerValue();
+            uint32_t dst_length;
+            //msy_type =1 indicate inter search only of gen vme shared function
+            GBE_ASSERT(msg_type == 1);
+            if(msg_type == 1)
+              dst_length = 6;
+            for (uint32_t elemID = 0; elemID < dst_length; ++elemID) {
+              const ir::Register reg = this->getRegister(&I, elemID);
+              dstTupleData.push_back(reg);
+            }
+            const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], dst_length);
+            ++AI;
+            Constant *vme_search_path_lut_cpv = dyn_cast<Constant>(*AI);
+            assert(vme_search_path_lut_cpv);
+            const ir::Immediate &vme_search_path_lut_x = processConstantImm(vme_search_path_lut_cpv);
+            ++AI;
+            Constant *lut_sub_cpv = dyn_cast<Constant>(*AI);
+            assert(lut_sub_cpv);
+            const ir::Immediate &lut_sub_x = processConstantImm(lut_sub_cpv);
+
+            ctx.VME(imageID, dstTuple, srcTuple, dst_length, src_length,
+                    msg_type, vme_search_path_lut_x.getIntegerValue(),
+                    lut_sub_x.getIntegerValue());
+
             break;
           }
           case GEN_OCL_REGION:
