@@ -26,6 +26,7 @@
 #define __UTEST_HELPER_HPP__
 
 #include "CL/cl.h"
+#include "CL/cl_ext.h"
 #include "CL/cl_intel.h"
 #include "utest.hpp"
 #include "utest_assert.hpp"
