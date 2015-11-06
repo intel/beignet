@@ -138,6 +138,17 @@ typedef struct _cl_import_buffer_info_intel {
     int                     size;
 } cl_import_buffer_info_intel;
 
+typedef struct _cl_import_image_info_intel {
+    int                     fd;
+    int                     size;
+    cl_mem_object_type      type;
+    cl_image_format         fmt;
+    uint32_t                offset;
+    uint32_t                width;
+    uint32_t                height;
+    uint32_t                row_pitch;
+} cl_import_image_info_intel;
+
 /* Create memory object from external buffer object by fd */
 extern CL_API_ENTRY cl_mem CL_API_CALL
 clCreateBufferFromFdINTEL(cl_context                            /* context */,
@@ -147,6 +158,16 @@ clCreateBufferFromFdINTEL(cl_context                            /* context */,
 typedef CL_API_ENTRY cl_mem (CL_API_CALL *clCreateBufferFromFdINTEL_fn)(
                              cl_context                            /* context */,
                              const cl_import_buffer_info_intel *   /* info */,
+                             cl_int *                              /* errcode_ret */);
+
+extern CL_API_ENTRY cl_mem CL_API_CALL
+clCreateImageFromFdINTEL(cl_context                            /* context */,
+                         const cl_import_image_info_intel *    /* info */,
+                         cl_int *                              /* errcode_ret */);
+
+typedef CL_API_ENTRY cl_mem (CL_API_CALL *clCreateImageFromFdINTEL_fn)(
+                             cl_context                            /* context */,
+                             const cl_import_image_info_intel *    /* info */,
                              cl_int *                              /* errcode_ret */);
 
 #ifdef __cplusplus

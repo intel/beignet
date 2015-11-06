@@ -2236,3 +2236,61 @@ error:
   mem = NULL;
   goto exit;
 }
+
+LOCAL cl_mem cl_mem_new_image_from_fd(cl_context ctx,
+                                      int fd, int image_sz,
+                                      size_t offset,
+                                      size_t width, size_t height,
+                                      cl_image_format fmt,
+                                      size_t row_pitch,
+                                      cl_int *errcode)
+{
+  cl_int err = CL_SUCCESS;
+  cl_mem mem = NULL;
+  struct _cl_mem_image *image = NULL;
+  uint32_t intel_fmt, bpp;
+
+  /* Get the size of each pixel */
+  if (UNLIKELY((err = cl_image_byte_per_pixel(&fmt, &bpp)) != CL_SUCCESS))
+    goto error;
+
+  intel_fmt = cl_image_get_intel_format(&fmt);
+  if (intel_fmt == INTEL_UNSUPPORTED_FORMAT) {
+    err = CL_IMAGE_FORMAT_NOT_SUPPORTED;
+    goto error;
+  }
+
+  mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, 0, 0, 0, NULL, NULL, &err);
+  if (mem == NULL || err != CL_SUCCESS) {
+    err = CL_OUT_OF_HOST_MEMORY;
+    goto error;
+  }
+
+  image = cl_mem_image(mem);
+
+  mem->bo = cl_buffer_get_image_from_fd(ctx, fd, image_sz, image);
+
+  image->w = width;
+  image->h = height;
+  image->image_type = CL_MEM_OBJECT_IMAGE2D;
+  image->depth = 0;
+  image->fmt = fmt;
+  image->intel_fmt = intel_fmt;
+  image->bpp = bpp;
+  image->row_pitch = row_pitch;
+  image->slice_pitch = 0;
+  // NOTE: tiling of image is set in cl_buffer_get_image_from_fd().
+  image->tile_x = 0;
+  image->tile_y = 0;
+  image->offset = offset;
+
+exit:
+  if (errcode)
+    *errcode = err;
+  return mem;
+
+error:
+  cl_mem_delete(mem);
+  mem = NULL;
+  goto exit;
+}

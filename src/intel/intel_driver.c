@@ -750,6 +750,22 @@ cl_buffer intel_share_buffer_from_fd(cl_context ctx,
   return (cl_buffer)intel_bo;
 }
 
+cl_buffer intel_share_image_from_fd(cl_context ctx,
+                                    int fd,
+                                    int image_size,
+                                    struct _cl_mem_image *image)
+{
+  drm_intel_bo *intel_bo;
+  uint32_t intel_tiling, intel_swizzle_mode;
+
+  intel_bo = intel_driver_share_buffer_from_fd((intel_driver_t *)ctx->drv, fd, image_size);
+
+  drm_intel_bo_get_tiling(intel_bo, &intel_tiling, &intel_swizzle_mode);
+  image->tiling = get_cl_tiling(intel_tiling);
+
+  return (cl_buffer)intel_bo;
+}
+
 static cl_buffer intel_buffer_alloc_userptr(cl_buffer_mgr bufmgr, const char* name, void *data,size_t size, unsigned long flags)
 {
 #ifdef HAS_USERPTR
@@ -905,5 +921,6 @@ intel_setup_callbacks(void)
   cl_buffer_get_fd = (cl_buffer_get_fd_cb *) drm_intel_bo_gem_export_to_prime;
   cl_buffer_get_tiling_align = (cl_buffer_get_tiling_align_cb *)intel_buffer_get_tiling_align;
   cl_buffer_get_buffer_from_fd = (cl_buffer_get_buffer_from_fd_cb *) intel_share_buffer_from_fd;
+  cl_buffer_get_image_from_fd = (cl_buffer_get_image_from_fd_cb *) intel_share_image_from_fd;
   intel_set_gpgpu_callbacks(intel_get_device_id());
 }

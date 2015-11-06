@@ -384,6 +384,9 @@ extern cl_buffer_get_tiling_align_cb *cl_buffer_get_tiling_align;
 typedef cl_buffer (cl_buffer_get_buffer_from_fd_cb)(cl_context ctx, int fd, int size);
 extern cl_buffer_get_buffer_from_fd_cb *cl_buffer_get_buffer_from_fd;
 
+typedef cl_buffer (cl_buffer_get_image_from_fd_cb)(cl_context ctx, int fd, int size, struct _cl_mem_image *image);
+extern cl_buffer_get_image_from_fd_cb *cl_buffer_get_image_from_fd;
+
 /* Get the device id */
 typedef int (cl_driver_get_device_id_cb)(void);
 extern cl_driver_get_device_id_cb *cl_driver_get_device_id;

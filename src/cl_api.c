@@ -3191,6 +3191,7 @@ internal_clGetExtensionFunctionAddress(const char *func_name)
   EXTFUNC(clCreateImageFromLibvaIntel)
   EXTFUNC(clGetMemObjectFdIntel)
   EXTFUNC(clCreateBufferFromFdINTEL)
+  EXTFUNC(clCreateImageFromFdINTEL)
   return NULL;
 }
 
@@ -3375,6 +3376,43 @@ clCreateBufferFromFdINTEL(cl_context context,
   }
 
   mem = cl_mem_new_buffer_from_fd(context, info->fd, info->size, &err);
+
+error:
+  if (errorcode_ret)
+    *errorcode_ret = err;
+  return mem;
+}
+
+cl_mem
+clCreateImageFromFdINTEL(cl_context context,
+                         const cl_import_image_info_intel* info,
+                         cl_int *errorcode_ret)
+{
+  cl_mem mem = NULL;
+  cl_int err = CL_SUCCESS;
+  CHECK_CONTEXT (context);
+
+  if (!info) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  /* Create image object from fd.
+   * We just support creating CL_MEM_OBJECT_IMAGE2D image object now.
+   * Other image type will be supported later if necessary.
+   */
+  if(info->type == CL_MEM_OBJECT_IMAGE2D){
+    mem = cl_mem_new_image_from_fd(context,
+                                   info->fd, info->size,
+                                   info->offset,
+                                   info->width, info->height,
+                                   info->fmt, info->row_pitch,
+                                   &err);
+  }
+  else{
+    err = CL_INVALID_ARG_VALUE;
+    goto error;
+  }
 
 error:
   if (errorcode_ret)

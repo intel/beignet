@@ -303,5 +303,13 @@ extern cl_mem cl_mem_new_buffer_from_fd(cl_context ctx,
                                         int buffer_sz,
                                         cl_int* errcode);
 
+extern cl_mem cl_mem_new_image_from_fd(cl_context ctx,
+                                       int fd, int image_sz,
+                                       size_t offset,
+                                       size_t width, size_t height,
+                                       cl_image_format fmt,
+                                       size_t row_pitch,
+                                       cl_int *errcode);
+
 #endif /* __CL_MEM_H__ */
 
