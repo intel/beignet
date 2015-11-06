@@ -381,6 +381,57 @@ typedef struct gen8_surface_state
   } ss15;
 } gen8_surface_state_t;
 
+typedef struct gen7_media_surface_state
+{
+  struct {
+    uint32_t base_addr;
+  } ss0;
+
+  struct {
+    uint32_t uv_offset_v_direction:2;
+    uint32_t pic_struct:2;
+    uint32_t width:14;
+    uint32_t height:14;
+  } ss1;
+
+  struct {
+    uint32_t tile_mode:2;
+    uint32_t half_pitch_for_chroma:1;
+    uint32_t surface_pitch:18;
+    uint32_t pad1:1;
+    uint32_t surface_object_control_state:4;
+    uint32_t pad0:1;
+    uint32_t interleave_chroma:1;
+    uint32_t surface_format:4;
+  } ss2;
+
+  struct {
+    uint32_t y_offset_for_u:14;
+    uint32_t pad1:2;
+    uint32_t x_offset_for_u:14;
+    uint32_t pad0:2;
+  } ss3;
+
+  struct {
+    uint32_t y_offset_for_v:15;
+    uint32_t pad1:1;
+    uint32_t x_offset_for_v:14;
+    uint32_t pad0:2;
+  } ss4;
+
+  struct {
+    uint32_t pad0;
+  } ss5;
+
+  struct {
+    uint32_t pad0;
+  } ss6;
+
+  struct {
+    uint32_t pad0;
+  } ss7;
+} gen7_media_surface_state_t;
+
 typedef union gen_surface_state
 {
   gen7_surface_state_t gen7_surface_state;
@@ -554,6 +605,75 @@ typedef struct gen8_pipe_control
     uint32_t data;
   } dw5;
 } gen8_pipe_control_t;
+
+#define GEN7_NUM_VME_SEARCH_PATH_STATES 14
+#define GEN7_NUM_VME_RD_LUT_SETS 4
+
+typedef struct gen7_vme_search_path_state
+{
+    struct {
+        uint32_t SPD_0_X : BITFIELD_RANGE(0, 3);        //search path distance
+        uint32_t SPD_0_Y : BITFIELD_RANGE(4, 7);
+        uint32_t SPD_1_X : BITFIELD_RANGE(8, 11);
+        uint32_t SPD_1_Y : BITFIELD_RANGE(12, 15);
+        uint32_t SPD_2_X : BITFIELD_RANGE(16, 19);
+        uint32_t SPD_2_Y : BITFIELD_RANGE(20, 23);
+        uint32_t SPD_3_X : BITFIELD_RANGE(24, 27);
+        uint32_t SPD_3_Y : BITFIELD_RANGE(28, 31);
+    }dw0;
+}gen7_vme_search_path_state_t;
+
+typedef struct gen7_vme_rd_lut_set
+{
+    struct {
+        uint32_t LUT_MbMode_0 : BITFIELD_RANGE(0, 7);
+        uint32_t LUT_MbMode_1 : BITFIELD_RANGE(8, 15);
+        uint32_t LUT_MbMode_2 : BITFIELD_RANGE(16, 23);
+        uint32_t LUT_MbMode_3 : BITFIELD_RANGE(24, 31);
+    }dw0;
+
+    struct {
+        uint32_t LUT_MbMode_4 : BITFIELD_RANGE(0, 7);
+        uint32_t LUT_MbMode_5 : BITFIELD_RANGE(8, 15);
+        uint32_t LUT_MbMode_6 : BITFIELD_RANGE(16, 23);
+        uint32_t LUT_MbMode_7 : BITFIELD_RANGE(24, 31);
+    }dw1;
+
+    struct {
+        uint32_t LUT_MV_0 : BITFIELD_RANGE(0, 7);
+        uint32_t LUT_MV_1 : BITFIELD_RANGE(8, 15);
+        uint32_t LUT_MV_2 : BITFIELD_RANGE(16, 23);
+        uint32_t LUT_MV_3 : BITFIELD_RANGE(24, 31);
+    }dw2;
+
+    struct {
+        uint32_t LUT_MV_4 : BITFIELD_RANGE(0, 7);
+        uint32_t LUT_MV_5 : BITFIELD_RANGE(8, 15);
+        uint32_t LUT_MV_6 : BITFIELD_RANGE(16, 23);
+        uint32_t LUT_MV_7 : BITFIELD_RANGE(24, 31);
+    }dw3;
+}gen7_vme_rd_lut_set_t;
+
+typedef struct gen7_vme_state
+{
+    gen7_vme_search_path_state_t sp[GEN7_NUM_VME_SEARCH_PATH_STATES];
+
+    struct {
+        uint32_t LUT_MbMode_8_0 : BITFIELD_RANGE(0, 7);
+        uint32_t LUT_MbMode_9_0 : BITFIELD_RANGE(8, 15);
+        uint32_t LUT_MbMode_8_1 : BITFIELD_RANGE(16, 23);
+        uint32_t LUT_MbMode_9_1 : BITFIELD_RANGE(24, 31);
+    }dw14;
+
+    struct {
+        uint32_t LUT_MbMode_8_2 : BITFIELD_RANGE(0, 7);
+        uint32_t LUT_MbMode_9_2 : BITFIELD_RANGE(8, 15);
+        uint32_t LUT_MbMode_8_3 : BITFIELD_RANGE(16, 23);
+        uint32_t LUT_MbMode_9_3 : BITFIELD_RANGE(24, 31);
+    }dw15;
+
+    gen7_vme_rd_lut_set_t lut[GEN7_NUM_VME_RD_LUT_SETS];
+}gen7_vme_state_t;
 
 typedef struct gen6_sampler_state
 {

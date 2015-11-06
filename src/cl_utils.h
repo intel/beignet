@@ -202,6 +202,18 @@ do {                                                        \
   }                                                         \
 } while (0)
 
+#define CHECK_ACCELERATOR_INTEL(ACCELERATOR_INTEL)                              \
+do {                                                                            \
+  if (UNLIKELY(ACCELERATOR_INTEL == NULL)) {                                    \
+    err = CL_INVALID_ACCELERATOR_INTEL;                                         \
+    goto error;                                                                 \
+  }                                                                             \
+  if (UNLIKELY(ACCELERATOR_INTEL->magic != CL_MAGIC_ACCELERATOR_INTEL_HEADER)) {\
+    err = CL_INVALID_ACCELERATOR_INTEL;                                         \
+    goto error;                                                                 \
+  }                                                                             \
+} while (0)
+
 #define CHECK_KERNEL(KERNEL)                                \
 do {                                                        \
   if (UNLIKELY(KERNEL == NULL)) {                           \

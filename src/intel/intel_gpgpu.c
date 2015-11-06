@@ -38,6 +38,7 @@
 #include "cl_alloc.h"
 #include "cl_utils.h"
 #include "cl_sampler.h"
+#include "cl_accelerator_intel.h"
 
 #ifndef CL_VERSION_1_2
 #define CL_MEM_OBJECT_IMAGE1D                       0x10F4
@@ -941,10 +942,12 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   gpgpu->aux_offset.idrt_offset = size_aux;
   size_aux += MAX_IF_DESC * sizeof(struct gen6_interface_descriptor);
 
-  //sampler state must be 32 bytes aligned
+  //must be 32 bytes aligned
+  //sampler state and vme state share the same buffer,
   size_aux = ALIGN(size_aux, 32);
   gpgpu->aux_offset.sampler_state_offset = size_aux;
-  size_aux += GEN_MAX_SAMPLERS * sizeof(gen6_sampler_state_t);
+  size_aux += MAX(GEN_MAX_SAMPLERS * sizeof(gen6_sampler_state_t),
+                  GEN_MAX_VME_STATES * sizeof(gen7_vme_state_t));
 
   //sampler border color state must be 32 bytes aligned
   size_aux = ALIGN(size_aux, 32);
@@ -982,6 +985,22 @@ intel_gpgpu_set_buf_reloc_gen7(intel_gpgpu_t *gpgpu, int32_t index, dri_bo* obj_
                     gpgpu->aux_offset.surface_heap_offset +
                     heap->binding_table[index] +
                     offsetof(gen7_surface_state_t, ss1),
+                    obj_bo);
+}
+
+static void
+intel_gpgpu_set_buf_reloc_for_vme_gen7(intel_gpgpu_t *gpgpu, int32_t index, dri_bo* obj_bo, uint32_t obj_bo_offset)
+{
+  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
+  heap->binding_table[index] = offsetof(surface_heap_t, surface) +
+                               index * sizeof(gen7_surface_state_t);
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
+                    I915_GEM_DOMAIN_RENDER,
+                    I915_GEM_DOMAIN_RENDER,
+                    obj_bo_offset,
+                    gpgpu->aux_offset.surface_heap_offset +
+                    heap->binding_table[index] +
+                    offsetof(gen7_media_surface_state_t, ss0),
                     obj_bo);
 }
 
@@ -1239,6 +1258,55 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
 
   assert(index < GEN_MAX_SURFACES);
 }
+
+static void
+intel_gpgpu_bind_image_for_vme_gen7(intel_gpgpu_t *gpgpu,
+                                    uint32_t index,
+                                    dri_bo* obj_bo,
+                                    uint32_t obj_bo_offset,
+                                    uint32_t format,
+                                    cl_mem_object_type type,
+                                    uint32_t bpp,
+                                    int32_t w,
+                                    int32_t h,
+                                    int32_t depth,
+                                    int32_t pitch,
+                                    int32_t slice_pitch,
+                                    int32_t tiling)
+{
+  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
+  gen7_media_surface_state_t *ss = (gen7_media_surface_state_t *) &heap->surface[index * sizeof(gen7_surface_state_t)];
+
+  memset(ss, 0, sizeof(*ss));
+  ss->ss0.base_addr = obj_bo->offset + obj_bo_offset;
+  ss->ss1.uv_offset_v_direction = 0;
+  ss->ss1.pic_struct = 0;
+  ss->ss1.width = w - 1;
+  ss->ss1.height = h - 1;
+  if (tiling == GPGPU_NO_TILE) {
+    ss->ss2.tile_mode = 0;
+  }
+  else if (tiling == GPGPU_TILE_X){
+    ss->ss2.tile_mode = 2;
+  }
+  else if (tiling == GPGPU_TILE_Y){
+    ss->ss2.tile_mode = 3;
+  }
+  ss->ss2.half_pitch_for_chroma = 0;
+  ss->ss2.surface_pitch = pitch - 1;
+  ss->ss2.surface_object_control_state = cl_gpgpu_get_cache_ctrl();
+  ss->ss2.interleave_chroma = 0;
+  ss->ss2.surface_format = 12; //Y8_UNORM
+  ss->ss3.y_offset_for_u = 0;
+  ss->ss3.x_offset_for_u = 0;
+  ss->ss4.y_offset_for_v = 0;
+  ss->ss4.x_offset_for_v = 0;
+
+  intel_gpgpu_set_buf_reloc_for_vme_gen7(gpgpu, index, obj_bo, obj_bo_offset);
+
+  assert(index < GEN_MAX_SURFACES);
+}
+
 
 static void
 intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
@@ -1674,6 +1742,149 @@ int translate_wrap_mode(uint32_t cl_address_mode, int using_nearest)
    default:
       return GEN_TEXCOORDMODE_WRAP;
    }
+}
+
+static void intel_gpgpu_insert_vme_state_gen7(intel_gpgpu_t *gpgpu, cl_accelerator_intel accel, uint32_t index)
+{
+    gen7_vme_state_t* vme = (gen7_vme_state_t*)(gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.sampler_state_offset)  + index;
+    memset(vme, 0, sizeof(*vme));
+    gen7_vme_search_path_state_t* sp = vme->sp;
+
+    if(accel->desc.me.search_path_type == CL_ME_SEARCH_PATH_RADIUS_2_2_INTEL){
+      sp[0].dw0.SPD_0_X = 0;
+      sp[0].dw0.SPD_0_Y = 0;
+      sp[0].dw0.SPD_1_X = 0;
+      sp[0].dw0.SPD_1_Y = 0;
+      sp[0].dw0.SPD_2_X = 0;
+      sp[0].dw0.SPD_2_Y = 0;
+      sp[0].dw0.SPD_3_X = 0;
+      sp[0].dw0.SPD_3_Y = 0;
+    }
+    else if(accel->desc.me.search_path_type == CL_ME_SEARCH_PATH_RADIUS_4_4_INTEL){
+      sp[0].dw0.SPD_0_X = 1;
+      sp[0].dw0.SPD_0_Y = 0;
+      sp[0].dw0.SPD_1_X = 0;
+      sp[0].dw0.SPD_1_Y = 1;
+      sp[0].dw0.SPD_2_X = -1;
+      sp[0].dw0.SPD_2_Y = 0;
+      sp[0].dw0.SPD_3_X = 0;
+      sp[0].dw0.SPD_3_Y = 0;
+    }
+    else if(accel->desc.me.search_path_type == CL_ME_SEARCH_PATH_RADIUS_16_12_INTEL){
+      sp[0].dw0.SPD_0_X = 1;
+      sp[0].dw0.SPD_0_Y = 0;
+      sp[0].dw0.SPD_1_X = 1;
+      sp[0].dw0.SPD_1_Y = 0;
+      sp[0].dw0.SPD_2_X = 1;
+      sp[0].dw0.SPD_2_Y = 0;
+      sp[0].dw0.SPD_3_X = 1;
+      sp[0].dw0.SPD_3_Y = 0;
+
+      sp[1].dw0.SPD_0_X = 1;
+      sp[1].dw0.SPD_0_Y = 0;
+      sp[1].dw0.SPD_1_X = 1;
+      sp[1].dw0.SPD_1_Y = 0;
+      sp[1].dw0.SPD_2_X = 1;
+      sp[1].dw0.SPD_2_Y = 0;
+      sp[1].dw0.SPD_3_X = 0;
+      sp[1].dw0.SPD_3_Y = 1;
+
+      sp[2].dw0.SPD_0_X = -1;
+      sp[2].dw0.SPD_0_Y = 0;
+      sp[2].dw0.SPD_1_X = -1;
+      sp[2].dw0.SPD_1_Y = 0;
+      sp[2].dw0.SPD_2_X = -1;
+      sp[2].dw0.SPD_2_Y = 0;
+      sp[2].dw0.SPD_3_X = -1;
+      sp[2].dw0.SPD_3_Y = 0;
+
+      sp[3].dw0.SPD_0_X = -1;
+      sp[3].dw0.SPD_0_Y = 0;
+      sp[3].dw0.SPD_1_X = -1;
+      sp[3].dw0.SPD_1_Y = 0;
+      sp[3].dw0.SPD_2_X = -1;
+      sp[3].dw0.SPD_2_Y = 0;
+      sp[3].dw0.SPD_3_X = 0;
+      sp[3].dw0.SPD_3_Y = 1;
+
+      sp[4].dw0.SPD_0_X = 1;
+      sp[4].dw0.SPD_0_Y = 0;
+      sp[4].dw0.SPD_1_X = 1;
+      sp[4].dw0.SPD_1_Y = 0;
+      sp[4].dw0.SPD_2_X = 1;
+      sp[4].dw0.SPD_2_Y = 0;
+      sp[4].dw0.SPD_3_X = 1;
+      sp[4].dw0.SPD_3_Y = 0;
+
+      sp[5].dw0.SPD_0_X = 1;
+      sp[5].dw0.SPD_0_Y = 0;
+      sp[5].dw0.SPD_1_X = 1;
+      sp[5].dw0.SPD_1_Y = 0;
+      sp[5].dw0.SPD_2_X = 1;
+      sp[5].dw0.SPD_2_Y = 0;
+      sp[5].dw0.SPD_3_X = 0;
+      sp[5].dw0.SPD_3_Y = 1;
+
+      sp[6].dw0.SPD_0_X = -1;
+      sp[6].dw0.SPD_0_Y = 0;
+      sp[6].dw0.SPD_1_X = -1;
+      sp[6].dw0.SPD_1_Y = 0;
+      sp[6].dw0.SPD_2_X = -1;
+      sp[6].dw0.SPD_2_Y = 0;
+      sp[6].dw0.SPD_3_X = -1;
+      sp[6].dw0.SPD_3_Y = 0;
+
+      sp[7].dw0.SPD_0_X = -1;
+      sp[7].dw0.SPD_0_Y = 0;
+      sp[7].dw0.SPD_1_X = -1;
+      sp[7].dw0.SPD_1_Y = 0;
+      sp[7].dw0.SPD_2_X = -1;
+      sp[7].dw0.SPD_2_Y = 0;
+      sp[7].dw0.SPD_3_X = 0;
+      sp[7].dw0.SPD_3_Y = 1;
+
+      sp[8].dw0.SPD_0_X = 1;
+      sp[8].dw0.SPD_0_Y = 0;
+      sp[8].dw0.SPD_1_X = 1;
+      sp[8].dw0.SPD_1_Y = 0;
+      sp[8].dw0.SPD_2_X = 1;
+      sp[8].dw0.SPD_2_Y = 0;
+      sp[8].dw0.SPD_3_X = 1;
+      sp[8].dw0.SPD_3_Y = 0;
+
+      sp[9].dw0.SPD_0_X = 1;
+      sp[9].dw0.SPD_0_Y = 0;
+      sp[9].dw0.SPD_1_X = 1;
+      sp[9].dw0.SPD_1_Y = 0;
+      sp[9].dw0.SPD_2_X = 1;
+      sp[9].dw0.SPD_2_Y = 0;
+      sp[9].dw0.SPD_3_X = 0;
+      sp[9].dw0.SPD_3_Y = 1;
+
+      sp[10].dw0.SPD_0_X = -1;
+      sp[10].dw0.SPD_0_Y = 0;
+      sp[10].dw0.SPD_1_X = -1;
+      sp[10].dw0.SPD_1_Y = 0;
+      sp[10].dw0.SPD_2_X = -1;
+      sp[10].dw0.SPD_2_Y = 0;
+      sp[10].dw0.SPD_3_X = -1;
+      sp[10].dw0.SPD_3_Y = 0;
+
+      sp[11].dw0.SPD_0_X = -1;
+      sp[11].dw0.SPD_0_Y = 0;
+      sp[11].dw0.SPD_1_X = -1;
+      sp[11].dw0.SPD_1_Y = 0;
+      sp[11].dw0.SPD_2_X = -1;
+      sp[11].dw0.SPD_2_Y = 0;
+      sp[11].dw0.SPD_3_X = 0;
+      sp[11].dw0.SPD_3_Y = 0;
+    }
+}
+
+static void
+intel_gpgpu_bind_vme_state_gen7(intel_gpgpu_t *gpgpu, cl_accelerator_intel accel)
+{
+  intel_gpgpu_insert_vme_state_gen7(gpgpu, accel, 0);
 }
 
 static void
@@ -2181,6 +2392,7 @@ intel_set_gpgpu_callbacks(int device_id)
   cl_gpgpu_batch_end = (cl_gpgpu_batch_end_cb *) intel_gpgpu_batch_end;
   cl_gpgpu_flush = (cl_gpgpu_flush_cb *) intel_gpgpu_flush;
   cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler_gen7;
+  cl_gpgpu_bind_vme_state = (cl_gpgpu_bind_vme_state_cb *) intel_gpgpu_bind_vme_state_gen7;
   cl_gpgpu_set_scratch = (cl_gpgpu_set_scratch_cb *) intel_gpgpu_set_scratch;
   cl_gpgpu_event_new = (cl_gpgpu_event_new_cb *)intel_gpgpu_event_new;
   cl_gpgpu_event_flush = (cl_gpgpu_event_flush_cb *)intel_gpgpu_event_flush;
@@ -2258,6 +2470,7 @@ intel_set_gpgpu_callbacks(int device_id)
   }
   else if (IS_IVYBRIDGE(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen7;
+    cl_gpgpu_bind_image_for_vme = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_for_vme_gen7;
     if (IS_BAYTRAIL_T(device_id)) {
       intel_gpgpu_set_L3 = intel_gpgpu_set_L3_baytrail;
       intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_baytrail;

@@ -177,6 +177,7 @@ cl_context_new(struct _cl_context_prop *props)
   pthread_mutex_init(&ctx->queue_lock, NULL);
   pthread_mutex_init(&ctx->buffer_lock, NULL);
   pthread_mutex_init(&ctx->sampler_lock, NULL);
+  pthread_mutex_init(&ctx->accelerator_intel_lock, NULL);
 
 exit:
   return ctx;

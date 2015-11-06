@@ -23,9 +23,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "cl_driver_type.h"
+#include "CL/cl_ext.h"
 /* Various limitations we should remove actually */
 #define GEN_MAX_SURFACES 256
 #define GEN_MAX_SAMPLERS 16
+#define GEN_MAX_VME_STATES 8
 
 /**************************************************************************
  * cl_driver:
@@ -145,6 +147,9 @@ extern cl_gpgpu_bind_buf_cb *cl_gpgpu_bind_buf;
 typedef void (cl_gpgpu_bind_sampler_cb)(cl_gpgpu, uint32_t *samplers, size_t sampler_sz);
 extern cl_gpgpu_bind_sampler_cb *cl_gpgpu_bind_sampler;
 
+typedef void (cl_gpgpu_bind_vme_state_cb)(cl_gpgpu, cl_accelerator_intel accel);
+extern cl_gpgpu_bind_vme_state_cb *cl_gpgpu_bind_vme_state;
+
 /* get the default cache control value. */
 typedef uint32_t (cl_gpgpu_get_cache_ctrl_cb)();
 extern cl_gpgpu_get_cache_ctrl_cb *cl_gpgpu_get_cache_ctrl;
@@ -164,6 +169,22 @@ typedef void (cl_gpgpu_bind_image_cb)(cl_gpgpu state,
                                       cl_gpgpu_tiling tiling);
 
 extern cl_gpgpu_bind_image_cb *cl_gpgpu_bind_image;
+
+typedef void (cl_gpgpu_bind_image_for_vme_cb)(cl_gpgpu state,
+                                              uint32_t id,
+                                              cl_buffer obj_bo,
+                                              uint32_t obj_bo_offset,
+                                              uint32_t format,
+                                              uint32_t bpp,
+                                              uint32_t type,
+                                              int32_t w,
+                                              int32_t h,
+                                              int32_t depth,
+                                              int pitch,
+                                              int32_t slice_pitch,
+                                              cl_gpgpu_tiling tiling);
+
+extern cl_gpgpu_bind_image_for_vme_cb *cl_gpgpu_bind_image_for_vme;
 
 /* Setup a stack */
 typedef void (cl_gpgpu_set_stack_cb)(cl_gpgpu, uint32_t offset, uint32_t size, uint32_t cchint);

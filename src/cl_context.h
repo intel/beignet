@@ -21,6 +21,7 @@
 #define __CL_CONTEXT_H__
 
 #include "CL/cl.h"
+#include "CL/cl_ext.h"
 #include "cl_internals.h"
 #include "cl_driver.h"
 #include "cl_khr_icd.h"
@@ -107,11 +108,13 @@ struct _cl_context {
   cl_program programs;              /* All programs currently allocated */
   cl_mem buffers;                   /* All memory object currently allocated */
   cl_sampler samplers;              /* All sampler object currently allocated */
+  cl_accelerator_intel accels;      /* All accelerator_intel object currently allocated */
   cl_event   events;                /* All event object currently allocated */
   pthread_mutex_t queue_lock;       /* To allocate and deallocate queues */
   pthread_mutex_t program_lock;     /* To allocate and deallocate programs */
   pthread_mutex_t buffer_lock;      /* To allocate and deallocate buffers */
   pthread_mutex_t sampler_lock;     /* To allocate and deallocate samplers */
+  pthread_mutex_t accelerator_intel_lock;     /* To allocate and deallocate accelerator_intel */
   pthread_mutex_t event_lock;       /* To allocate and deallocate events */
   cl_program internal_prgs[CL_INTERNAL_KERNEL_MAX];
                                     /* All programs internal used, for example clEnqueuexxx api use */

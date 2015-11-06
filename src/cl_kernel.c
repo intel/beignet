@@ -27,6 +27,7 @@
 #include "cl_khr_icd.h"
 #include "CL/cl.h"
 #include "cl_sampler.h"
+#include "cl_accelerator_intel.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -113,10 +114,22 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
   arg_type = interp_kernel_get_arg_type(k->opaque, index);
   arg_sz = interp_kernel_get_arg_size(k->opaque, index);
 
-  if (UNLIKELY(arg_type != GBE_ARG_LOCAL_PTR && arg_sz != sz)) {
-    if (arg_type != GBE_ARG_SAMPLER ||
-        (arg_type == GBE_ARG_SAMPLER && sz != sizeof(cl_sampler)))
+  if (k->vme && index == 0) {
+    //the best method is to return the arg type of GBE_ARG_ACCELERATOR_INTEL
+    //but it is not straightforward since clang does not support it now
+    //the easy way is to consider typedef accelerator_intel_t as a struct,
+    //this easy way makes the size mismatched, so use another size check method.
+    if (sz != sizeof(cl_accelerator_intel) || arg_sz != sizeof(cl_motion_estimation_desc_intel))
       return CL_INVALID_ARG_SIZE;
+    cl_accelerator_intel* accel = (cl_accelerator_intel*)value;
+    if ((*accel)->type != CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL)
+      return CL_INVALID_ACCELERATOR_TYPE_INTEL;
+  } else {
+    if (UNLIKELY(arg_type != GBE_ARG_LOCAL_PTR && arg_sz != sz)) {
+      if (arg_type != GBE_ARG_SAMPLER ||
+          (arg_type == GBE_ARG_SAMPLER && sz != sizeof(cl_sampler)))
+        return CL_INVALID_ARG_SIZE;
+    }
   }
 
   if(UNLIKELY(arg_type == GBE_ARG_LOCAL_PTR && sz == 0))
@@ -152,15 +165,30 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
 
   /* Copy the structure or the value directly into the curbe */
   if (arg_type == GBE_ARG_VALUE) {
-    offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
-    if (offset >= 0) {
-      assert(offset + sz <= k->curbe_sz);
-      memcpy(k->curbe + offset, value, sz);
+    if (k->vme && index == 0) {
+      cl_accelerator_intel accel;
+      memcpy(&accel, value, sz);
+      offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
+      if (offset >= 0) {
+        assert(offset + sz <= k->curbe_sz);
+        memcpy(k->curbe + offset, &(accel->desc.me), arg_sz);
+      }
+      k->args[index].local_sz = 0;
+      k->args[index].is_set = 1;
+      k->args[index].mem = NULL;
+      k->accel = accel;
+      return CL_SUCCESS;
+    } else {
+      offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, index);
+      if (offset >= 0) {
+        assert(offset + sz <= k->curbe_sz);
+        memcpy(k->curbe + offset, value, sz);
+      }
+      k->args[index].local_sz = 0;
+      k->args[index].is_set = 1;
+      k->args[index].mem = NULL;
+      return CL_SUCCESS;
     }
-    k->args[index].local_sz = 0;
-    k->args[index].is_set = 1;
-    k->args[index].mem = NULL;
-    return CL_SUCCESS;
   }
 
   /* For a local pointer just save the size */
@@ -331,6 +359,12 @@ cl_kernel_setup(cl_kernel k, gbe_kernel opaque)
   cl_buffer_subdata(k->bo, 0, code_sz, code);
   k->opaque = opaque;
 
+  const char* kname = cl_kernel_get_name(k);
+  if (strncmp(kname, "block_motion_estimate_intel", sizeof("block_motion_estimate_intel")) == 0)
+    k->vme = 1;
+  else
+    k->vme = 0;
+
   /* Create the curbe */
   k->curbe_sz = interp_kernel_get_curbe_size(k->opaque);
 
@@ -367,6 +401,7 @@ cl_kernel_dup(cl_kernel from)
   SET_ICD(to->dispatch)
   to->bo = from->bo;
   to->opaque = from->opaque;
+  to->vme = from->vme;
   to->ref_n = 1;
   to->magic = CL_MAGIC_KERNEL_HEADER;
   to->program = from->program;

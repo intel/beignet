@@ -184,6 +184,109 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *clTerminateContextKHR_fn)(cl_context /
 #define CL_PRINTF_CALLBACK_ARM                      0x40B0
 #define CL_PRINTF_BUFFERSIZE_ARM                    0x40B1
 
+/*********************************
+* cl_intel_accelerator extension *
+*********************************/
+#define cl_intel_accelerator 1
+#define cl_intel_motion_estimation 1
+
+typedef struct _cl_accelerator_intel*     cl_accelerator_intel;
+typedef cl_uint                           cl_accelerator_type_intel;
+typedef cl_uint                           cl_accelerator_info_intel;
+
+typedef struct _cl_motion_estimation_desc_intel {
+    cl_uint mb_block_type;
+    cl_uint subpixel_mode;
+    cl_uint sad_adjust_mode;
+    cl_uint search_path_type;
+} cl_motion_estimation_desc_intel;
+
+/* Error Codes */
+#define CL_INVALID_ACCELERATOR_INTEL            -1094
+#define CL_INVALID_ACCELERATOR_TYPE_INTEL       -1095
+#define CL_INVALID_ACCELERATOR_DESCRIPTOR_INTEL -1096
+#define CL_ACCELERATOR_TYPE_NOT_SUPPORTED_INTEL -1097
+
+/* Deprecated Error Codes */
+#define CL_INVALID_ACCELERATOR_INTEL_DEPRECATED            -6000
+#define CL_INVALID_ACCELERATOR_TYPE_INTEL_DEPRECATED       -6001
+#define CL_INVALID_ACCELERATOR_DESCRIPTOR_INTEL_DEPRECATED -6002
+#define CL_ACCELERATOR_TYPE_NOT_SUPPORTED_INTEL_DEPRECATED -6003
+
+/* cl_accelerator_type_intel */
+#define CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL     0x0
+
+/* cl_accelerator_info_intel */
+#define CL_ACCELERATOR_DESCRIPTOR_INTEL                 0x4090
+#define CL_ACCELERATOR_REFERENCE_COUNT_INTEL            0x4091
+#define CL_ACCELERATOR_CONTEXT_INTEL                    0x4092
+#define CL_ACCELERATOR_TYPE_INTEL                       0x4093
+
+/*cl_motion_detect_desc_intel flags */
+#define CL_ME_MB_TYPE_16x16_INTEL                       0x0
+#define CL_ME_MB_TYPE_8x8_INTEL                         0x1
+#define CL_ME_MB_TYPE_4x4_INTEL                         0x2
+
+#define CL_ME_SUBPIXEL_MODE_INTEGER_INTEL               0x0
+#define CL_ME_SUBPIXEL_MODE_HPEL_INTEL                  0x1
+#define CL_ME_SUBPIXEL_MODE_QPEL_INTEL                  0x2
+
+#define CL_ME_SAD_ADJUST_MODE_NONE_INTEL                0x0
+#define CL_ME_SAD_ADJUST_MODE_HAAR_INTEL                0x1
+
+#define CL_ME_SEARCH_PATH_RADIUS_2_2_INTEL              0x0
+#define CL_ME_SEARCH_PATH_RADIUS_4_4_INTEL              0x1
+#define CL_ME_SEARCH_PATH_RADIUS_16_12_INTEL            0x5
+
+extern CL_API_ENTRY cl_accelerator_intel CL_API_CALL
+clCreateAcceleratorINTEL(
+    cl_context                  /* context */,
+    cl_accelerator_type_intel   /* accelerator_type */,
+    size_t                      /* descriptor_size */,
+    const void*                 /* descriptor */,
+    cl_int*                     /* errcode_ret */ ) CL_EXT_SUFFIX__VERSION_1_2;
+
+typedef CL_API_ENTRY cl_accelerator_intel
+    (CL_API_CALL *clCreateAcceleratorINTEL_fn)(
+    cl_context                  /* context */,
+    cl_accelerator_type_intel   /* accelerator_type */,
+    size_t                      /* descriptor_size */,
+    const void*                 /* descriptor */,
+    cl_int*                     /* errcode_ret */ ) CL_EXT_SUFFIX__VERSION_1_2;
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clGetAcceleratorInfoINTEL
+(
+    cl_accelerator_intel        /* accelerator */,
+    cl_accelerator_info_intel   /* param_name */,
+    size_t                      /* param_value_size */,
+    void*                       /* param_value */,
+    size_t*                     /* param_value_size_ret */ ) CL_EXT_SUFFIX__VERSION_1_2;
+
+typedef CL_API_ENTRY cl_int
+    (CL_API_CALL *clGetAcceleratorInfoINTEL_fn)(
+    cl_accelerator_intel        /* accelerator */,
+    cl_accelerator_info_intel   /* param_name */,
+    size_t                      /* param_value_size */,
+    void*                       /* param_value */,
+    size_t*                     /* param_value_size_ret */ ) CL_EXT_SUFFIX__VERSION_1_2;
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clRetainAcceleratorINTEL(
+    cl_accelerator_intel        /* accelerator */ ) CL_EXT_SUFFIX__VERSION_1_2;
+
+typedef CL_API_ENTRY cl_int
+    (CL_API_CALL *clRetainAcceleratorINTEL_fn)(
+    cl_accelerator_intel        /* accelerator */ ) CL_EXT_SUFFIX__VERSION_1_2;
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clReleaseAcceleratorINTEL(
+    cl_accelerator_intel        /* accelerator */ ) CL_EXT_SUFFIX__VERSION_1_2;
+
+typedef CL_API_ENTRY cl_int
+    (CL_API_CALL *clReleaseAcceleratorINTEL_fn)(
+    cl_accelerator_intel        /* accelerator */ ) CL_EXT_SUFFIX__VERSION_1_2;
+
 #ifdef CL_VERSION_1_1
    /***********************************
     * cl_ext_device_fission extension *

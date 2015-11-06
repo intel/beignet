@@ -24,6 +24,7 @@
 #include "cl_driver.h"
 #include "cl_gbe_loader.h"
 #include "CL/cl.h"
+#include "CL/cl_ext.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -37,6 +38,7 @@ struct _gbe_kernel;
 typedef struct cl_argument {
   cl_mem mem;           /* For image and regular buffers */
   cl_sampler sampler;   /* For sampler. */
+  cl_accelerator_intel accel;
   unsigned char bti;
   uint32_t local_sz:31; /* For __local size specification */
   uint32_t is_set:1;    /* All args must be set before NDRange */
@@ -50,6 +52,7 @@ struct _cl_kernel {
   cl_buffer bo;               /* The code itself */
   cl_program program;         /* Owns this structure (and pointers) */
   gbe_kernel opaque;          /* (Opaque) compiler structure for the OCL kernel */
+  cl_accelerator_intel accel;     /* accelerator */
   char *curbe;                /* One curbe per kernel */
   size_t curbe_sz;            /* Size of it */
   uint32_t samplers[GEN_MAX_SAMPLERS]; /* samplers defined in kernel & kernel args */
@@ -63,8 +66,9 @@ struct _cl_kernel {
                                 (i.e. global_work_size argument to clEnqueueNDRangeKernel.)*/
   size_t stack_size;          /* stack size per work item. */
   cl_argument *args;          /* To track argument setting */
-  uint32_t arg_n:31;          /* Number of arguments */
+  uint32_t arg_n:30;          /* Number of arguments */
   uint32_t ref_its_program:1; /* True only for the user kernel (created by clCreateKernel) */
+  uint32_t vme:1;             /* True only if it is a built-in kernel for VME */
 };
 
 /* Allocate an empty kernel */

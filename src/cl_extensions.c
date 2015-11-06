@@ -65,7 +65,9 @@ check_gl_extension(cl_extensions_t *extensions) {
 void
 check_intel_extension(cl_extensions_t *extensions)
 {
-  /* Should put those map/unmap extensions here. */
+  int id;
+  for(id = INTEL_EXT_START_ID; id <= INTEL_EXT_END_ID; id++)
+    extensions->extensions[id].base.ext_enabled = 1;
 }
 
 void

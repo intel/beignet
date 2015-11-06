@@ -135,10 +135,19 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k)
 
     image = cl_mem_image(k->args[id].mem);
     set_image_info(k->curbe, &k->images[i], image);
-    cl_gpgpu_bind_image(gpgpu, k->images[i].idx, image->base.bo, image->offset + k->args[id].mem->offset,
-                        image->intel_fmt, image->image_type, image->bpp,
-                        image->w, image->h, image->depth,
-                        image->row_pitch, image->slice_pitch, (cl_gpgpu_tiling)image->tiling);
+    if(k->vme){
+      if( (image->fmt.image_channel_order != CL_R) || (image->fmt.image_channel_data_type != CL_UNORM_INT8) )
+        return CL_IMAGE_FORMAT_NOT_SUPPORTED;
+      cl_gpgpu_bind_image_for_vme(gpgpu, k->images[i].idx, image->base.bo, image->offset + k->args[id].mem->offset,
+                          image->intel_fmt, image->image_type, image->bpp,
+                          image->w, image->h, image->depth,
+                          image->row_pitch, image->slice_pitch, (cl_gpgpu_tiling)image->tiling);
+    }
+    else
+      cl_gpgpu_bind_image(gpgpu, k->images[i].idx, image->base.bo, image->offset + k->args[id].mem->offset,
+                          image->intel_fmt, image->image_type, image->bpp,
+                          image->w, image->h, image->depth,
+                          image->row_pitch, image->slice_pitch, (cl_gpgpu_tiling)image->tiling);
     // TODO, this workaround is for GEN7/GEN75 only, we may need to do it in the driver layer
     // on demand.
     if (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)

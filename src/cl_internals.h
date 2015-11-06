@@ -31,6 +31,7 @@
 #define CL_MAGIC_EVENT_HEADER     0x8324a9c810ebf90fLL
 #define CL_MAGIC_MEM_HEADER       0x381a27b9ce6504dfLL
 #define CL_MAGIC_DEAD_HEADER      0xdeaddeaddeaddeadLL
+#define CL_MAGIC_ACCELERATOR_INTEL_HEADER   0x7c6a08c9a7ac3e3fLL
 
 #endif /* __CL_INTERNALS_H__ */
 

@@ -114,7 +114,11 @@ DECL_INFO_STRING(built_in_kernels, "__cl_copy_region_align4;"
                                    "__cl_fill_image_1d_array;"
                                    "__cl_fill_image_2d;"
                                    "__cl_fill_image_2d_array;"
-                                   "__cl_fill_image_3d;")
+                                   "__cl_fill_image_3d;"
+#ifdef GEN7_DEVICE
+                                   "block_motion_estimate_intel;"
+#endif
+                                   )
 
 DECL_INFO_STRING(driver_version, LIBCL_DRIVER_VERSION_STRING)
 DECL_INFO_STRING(spir_versions, "1.2")

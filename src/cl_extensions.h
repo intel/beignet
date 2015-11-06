@@ -23,6 +23,10 @@
   DECL_EXT(khr_spir) \
   DECL_EXT(khr_icd)
 
+#define DECL_INTEL_EXTENSIONS \
+  DECL_EXT(intel_accelerator) \
+  DECL_EXT(intel_motion_estimation)
+
 #define DECL_GL_EXTENSIONS \
   DECL_EXT(khr_gl_sharing)\
   DECL_EXT(khr_gl_event)\
@@ -37,6 +41,7 @@
 #define DECL_ALL_EXTENSIONS \
   DECL_BASE_EXTENSIONS \
   DECL_OPT1_EXTENSIONS \
+  DECL_INTEL_EXTENSIONS \
   DECL_GL_EXTENSIONS \
   DECL_D3D_EXTENSIONS
 
@@ -54,6 +59,8 @@ cl_khr_extension_id_max
 #define BASE_EXT_END_ID EXT_ID(khr_fp64)
 #define OPT1_EXT_START_ID EXT_ID(khr_int64_base_atomics)
 #define OPT1_EXT_END_ID EXT_ID(khr_icd)
+#define INTEL_EXT_START_ID EXT_ID(intel_accelerator)
+#define INTEL_EXT_END_ID EXT_ID(intel_motion_estimation)
 #define GL_EXT_START_ID EXT_ID(khr_gl_sharing)
 #define GL_EXT_END_ID EXT_ID(khr_gl_msaa_sharing)
 
@@ -75,6 +82,7 @@ struct EXT_STRUCT_NAME(name) { \
 
 DECL_BASE_EXTENSIONS
 DECL_OPT1_EXTENSIONS
+DECL_INTEL_EXTENSIONS
 DECL_D3D_EXTENSIONS
 DECL_GL_EXTENSIONS
 #undef DECL_EXT

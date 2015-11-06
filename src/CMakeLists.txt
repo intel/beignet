@@ -56,7 +56,8 @@ cl_internal_fill_buf_align8 cl_internal_fill_buf_align4
 cl_internal_fill_buf_align2 cl_internal_fill_buf_unalign
 cl_internal_fill_buf_align128 cl_internal_fill_image_1d
 cl_internal_fill_image_1d_array cl_internal_fill_image_2d
-cl_internal_fill_image_2d_array cl_internal_fill_image_3d)
+cl_internal_fill_image_2d_array cl_internal_fill_image_3d
+cl_internal_block_motion_estimate_intel)
 set (BUILT_IN_NAME  cl_internal_built_in_kernel)
 MakeBuiltInKernelStr ("${CMAKE_CURRENT_SOURCE_DIR}/kernels/" "${KERNEL_NAMES}")
 MakeKernelBinStr ("${CMAKE_CURRENT_SOURCE_DIR}/kernels/" "${KERNEL_NAMES}")
@@ -70,6 +71,7 @@ set(OPENCL_SRC
     cl_program.c
     cl_gbe_loader.cpp
     cl_sampler.c
+    cl_accelerator_intel.c
     cl_event.c
     cl_enqueue.c
     cl_image.c
