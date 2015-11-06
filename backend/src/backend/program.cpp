@@ -777,7 +777,11 @@ namespace gbe {
     std::istringstream idirs(dirs);
     std::string pchFileName;
     bool findPCH = false;
+#if defined(__ANDROID__)
+    bool invalidPCH = true;
+#else
     bool invalidPCH = false;
+#endif
     size_t start = 0, end = 0;
 
     std::string hdirs = OCL_HEADER_FILE_DIR;
