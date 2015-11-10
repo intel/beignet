@@ -253,9 +253,45 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
     cl_mem_delete(k->args[index].mem);
   k->args[index].mem = mem;
   k->args[index].is_set = 1;
+  k->args[index].is_svm = mem->is_svm;
+  if(mem->is_svm)
+    k->args[index].ptr = mem->host_ptr;
   k->args[index].local_sz = 0;
   k->args[index].bti = interp_kernel_get_arg_bti(k->opaque, index);
   return CL_SUCCESS;
+}
+
+
+LOCAL cl_int
+cl_kernel_set_arg_svm_pointer(cl_kernel k, cl_uint index, const void *value)
+{
+  enum gbe_arg_type arg_type; /* kind of argument */
+  size_t arg_sz;              /* size of the argument */
+  cl_context ctx = k->program->ctx;
+  cl_mem mem= cl_context_get_svm_from_ptr(ctx, value);
+
+  if (UNLIKELY(index >= k->arg_n))
+    return CL_INVALID_ARG_INDEX;
+  arg_type = interp_kernel_get_arg_type(k->opaque, index);
+  arg_sz = interp_kernel_get_arg_size(k->opaque, index);
+
+  if(arg_type != GBE_ARG_GLOBAL_PTR && arg_type != GBE_ARG_CONSTANT_PTR )
+    return CL_INVALID_ARG_VALUE;
+
+  if(mem == NULL)
+    return CL_INVALID_ARG_VALUE;
+
+  cl_mem_add_ref(mem);
+  if (k->args[index].mem)
+    cl_mem_delete(k->args[index].mem);
+
+  k->args[index].ptr = value;
+  k->args[index].mem = mem;
+  k->args[index].is_set = 1;
+  k->args[index].is_svm = 1;
+  k->args[index].local_sz = 0;
+  k->args[index].bti = interp_kernel_get_arg_bti(k->opaque, index);
+  return 0;
 }
 
 LOCAL int

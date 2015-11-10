@@ -33,6 +33,8 @@ LOCAL cl_driver_update_device_info_cb *cl_driver_update_device_info = NULL;
 /* Buffer */
 LOCAL cl_buffer_alloc_cb *cl_buffer_alloc = NULL;
 LOCAL cl_buffer_alloc_userptr_cb *cl_buffer_alloc_userptr = NULL;
+LOCAL cl_buffer_set_softpin_offset_cb *cl_buffer_set_softpin_offset = NULL;
+LOCAL cl_buffer_set_bo_use_full_range_cb *cl_buffer_set_bo_use_full_range = NULL;
 LOCAL cl_buffer_set_tiling_cb *cl_buffer_set_tiling = NULL;
 LOCAL cl_buffer_alloc_from_texture_cb *cl_buffer_alloc_from_texture = NULL;
 LOCAL cl_buffer_release_from_texture_cb *cl_buffer_release_from_texture = NULL;

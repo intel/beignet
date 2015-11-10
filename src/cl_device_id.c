@@ -1052,6 +1052,7 @@ cl_get_device_info(cl_device_id     device,
     DECL_FIELD(PARTITION_TYPE, partition_type)
     DECL_FIELD(IMAGE_PITCH_ALIGNMENT, image_pitch_alignment)
     DECL_FIELD(IMAGE_BASE_ADDRESS_ALIGNMENT, image_base_address_alignment)
+    DECL_FIELD(SVM_CAPABILITIES, svm_capabilities)
 
     case CL_DEVICE_REFERENCE_COUNT:
     {

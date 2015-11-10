@@ -41,8 +41,10 @@ typedef struct cl_argument {
   cl_sampler sampler;   /* For sampler. */
   cl_accelerator_intel accel;
   unsigned char bti;
-  uint32_t local_sz:31; /* For __local size specification */
+  void *ptr;            /* SVM ptr value. */
+  uint32_t local_sz:30; /* For __local size specification */
   uint32_t is_set:1;    /* All args must be set before NDRange */
+  uint32_t is_svm:1;    /* Indicate this argument is SVMPointer */
 } cl_argument;
 
 /* One OCL function */
@@ -108,6 +110,10 @@ extern int cl_kernel_set_arg(cl_kernel,
                              uint32_t    arg_index,
                              size_t      arg_size,
                              const void *arg_value);
+extern int cl_kernel_set_arg_svm_pointer(cl_kernel,
+                                            uint32_t arg_index,
+                                            const void *arg_value);
+
 
 /* Get the argument information */
 extern int cl_get_kernel_arg_info(cl_kernel k, cl_uint arg_index,

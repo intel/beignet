@@ -81,6 +81,19 @@ cl_context_add_mem(cl_context ctx, cl_mem mem) {
 }
 
 LOCAL void
+cl_context_add_svm(cl_context ctx, cl_mem mem) {
+  assert(mem->ctx == NULL);
+  cl_context_add_ref(ctx);
+
+  CL_OBJECT_LOCK(ctx);
+  list_add_tail(&mem->base.node, &ctx->svm_objects);
+  ctx->svm_object_num++;
+  CL_OBJECT_UNLOCK(ctx);
+
+  mem->ctx = ctx;
+}
+
+LOCAL void
 cl_context_remove_mem(cl_context ctx, cl_mem mem) {
   assert(mem->ctx == ctx);
   CL_OBJECT_LOCK(ctx);
@@ -451,4 +464,20 @@ cl_context_get_static_kernel_from_bin(cl_context ctx, cl_int index,
 unlock:
   CL_OBJECT_RELEASE_OWNERSHIP(ctx);
   return cl_kernel_dup(ker);
+}
+
+cl_mem
+cl_context_get_svm_from_ptr(cl_context ctx, void * p)
+{
+  struct list_head *pos;
+  cl_mem buf;
+
+  list_for_each (pos, (&ctx->mem_objects)) {
+    buf = (cl_mem)list_entry(pos, _cl_base_object, node);
+    if(buf->host_ptr == NULL) continue;
+    if(buf->is_svm == 0) continue;
+    if (buf->host_ptr == p)
+      return buf;
+  }
+  return NULL;
 }

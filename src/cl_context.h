@@ -107,6 +107,8 @@ struct _cl_context {
   cl_uint queue_cookie;             /* Cookie will change every time we change queue list. */
   list_head mem_objects;            /* All memory object currently allocated */
   cl_uint mem_object_num;           /* All memory number currently allocated */
+  list_head svm_objects;            /* All svm object currently allocated */
+  cl_uint svm_object_num;           /* All svm number currently allocated */
   list_head samplers;               /* All sampler object currently allocated */
   cl_uint sampler_num;              /* All sampler number currently allocated */
   list_head events;                 /* All event object currently allocated */
@@ -186,5 +188,7 @@ extern cl_buffer_mgr cl_context_get_bufmgr(cl_context ctx);
 extern cl_kernel cl_context_get_static_kernel_from_bin(cl_context ctx, cl_int index,
                   const char * str_kernel, size_t size, const char * str_option);
 
+/* Get the SVM from pointer, return NULL if pointer is not from SVM */
+extern cl_mem cl_context_get_svm_from_ptr(cl_context ctx, void *p);
 #endif /* __CL_CONTEXT_H__ */
 

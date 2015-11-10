@@ -487,6 +487,80 @@ error:
   return mem;
 }
 
+void *
+clSVMAlloc (cl_context context,
+            cl_svm_mem_flags flags,
+            size_t size,
+            unsigned int alignment)
+{
+  cl_int err = CL_SUCCESS;
+  CHECK_CONTEXT (context);
+  return cl_mem_svm_allocate(context, flags, size, alignment);
+error:
+  return NULL;
+}
+
+void
+ clSVMFree (cl_context context, void* svm_pointer)
+{
+  cl_int err = CL_SUCCESS;
+  CHECK_CONTEXT (context);
+  return cl_mem_svm_delete(context, svm_pointer);
+error:
+  return;
+}
+
+cl_int
+clEnqueueSVMMap (cl_command_queue command_queue,
+                 cl_bool blocking_map,
+                 cl_map_flags map_flags,
+                 void *svm_ptr,
+                 size_t size,
+                 cl_uint num_events_in_wait_list,
+                 const cl_event *event_wait_list,
+                 cl_event *event)
+{
+  cl_int err = CL_SUCCESS;
+  cl_mem buffer;
+
+  CHECK_QUEUE(command_queue);
+  buffer = cl_context_get_svm_from_ptr(command_queue->ctx, svm_ptr);
+  if(buffer == NULL) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  clEnqueueMapBuffer(command_queue, buffer, blocking_map, map_flags, 0, size,
+                     num_events_in_wait_list, event_wait_list, event, &err);
+error:
+  return err;
+}
+
+cl_int
+clEnqueueSVMUnmap (cl_command_queue command_queue,
+                   void *svm_ptr,
+                   cl_uint num_events_in_wait_list,
+                   const cl_event *event_wait_list,
+                   cl_event *event)
+{
+  cl_int err = CL_SUCCESS;
+  cl_mem buffer;
+
+  CHECK_QUEUE(command_queue);
+  buffer = cl_context_get_svm_from_ptr(command_queue->ctx, svm_ptr);
+  if(buffer == NULL) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  err = clEnqueueUnmapMemObject(command_queue, buffer, svm_ptr,
+                                num_events_in_wait_list, event_wait_list, event);
+
+error:
+  return err;
+}
+
+
 cl_mem
 clCreateImage2D(cl_context              context,
                 cl_mem_flags            flags,
@@ -1165,6 +1239,19 @@ clSetKernelArg(cl_kernel     kernel,
   else
 #endif
     err = cl_kernel_set_arg(kernel, arg_index, arg_size, arg_value);
+error:
+  return err;
+}
+
+cl_int
+clSetKernelArgSVMPointer (cl_kernel kernel,
+                          cl_uint arg_index,
+                          const void *arg_value)
+{
+  cl_int err = CL_SUCCESS;
+  CHECK_KERNEL(kernel);
+
+  err = cl_kernel_set_arg_svm_pointer(kernel, arg_index, arg_value);
 error:
   return err;
 }

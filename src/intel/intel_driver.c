@@ -995,6 +995,10 @@ intel_setup_callbacks(void)
   cl_driver_update_device_info = (cl_driver_update_device_info_cb *) intel_update_device_info;
   cl_buffer_alloc = (cl_buffer_alloc_cb *) drm_intel_bo_alloc;
   cl_buffer_alloc_userptr = (cl_buffer_alloc_userptr_cb*) intel_buffer_alloc_userptr;
+#ifdef HAS_BO_SET_SOFTPIN
+  cl_buffer_set_softpin_offset = (cl_buffer_set_softpin_offset_cb *) drm_intel_bo_set_softpin_offset;
+  cl_buffer_set_bo_use_full_range = (cl_buffer_set_bo_use_full_range_cb *) drm_intel_bo_use_48b_address_range;
+#endif
   cl_buffer_set_tiling = (cl_buffer_set_tiling_cb *) intel_buffer_set_tiling;
 #if defined(HAS_GL_EGL)
   cl_buffer_alloc_from_texture = (cl_buffer_alloc_from_texture_cb *) intel_alloc_buffer_from_texture;

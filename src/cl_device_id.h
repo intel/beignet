@@ -54,7 +54,8 @@ struct _cl_device_id {
   cl_uint  native_vector_width_half;
   cl_uint  max_clock_frequency;
   cl_uint  address_bits;
-  cl_ulong max_mem_alloc_size;
+  size_t   max_mem_alloc_size;
+  cl_device_svm_capabilities  svm_capabilities;
   cl_bool  image_support;
   cl_uint  max_read_image_args;
   cl_uint  max_write_image_args;

@@ -282,8 +282,9 @@ cl_enqueue_map_buffer(enqueue_data *data, cl_int status)
   cl_int err = CL_SUCCESS;
   cl_mem mem = data->mem_obj;
   assert(mem->type == CL_MEM_BUFFER_TYPE ||
-         mem->type == CL_MEM_SUBBUFFER_TYPE);
-  struct _cl_mem_buffer *buffer = (struct _cl_mem_buffer *)mem;
+         mem->type == CL_MEM_SUBBUFFER_TYPE ||
+         mem->type == CL_MEM_SVM_TYPE);
+  struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer *)mem;
 
   if (status == CL_SUBMITTED) {
     if (buffer->base.is_userptr) {
@@ -408,7 +409,8 @@ cl_enqueue_unmap_mem_object(enqueue_data *data, cl_int status)
 
   if (memobj->flags & CL_MEM_USE_HOST_PTR) {
     if (memobj->type == CL_MEM_BUFFER_TYPE ||
-        memobj->type == CL_MEM_SUBBUFFER_TYPE) {
+        memobj->type == CL_MEM_SUBBUFFER_TYPE ||
+        memobj->type == CL_MEM_SVM_TYPE) {
       assert(mapped_ptr >= memobj->host_ptr &&
              mapped_ptr + mapped_size <= memobj->host_ptr + memobj->size);
       /* Sync the data. */
