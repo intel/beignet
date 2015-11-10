@@ -168,7 +168,22 @@ struct _cl_icd_dispatch const cl_khr_icd_dispatch = {
   (void *) NULL,
   (void *) NULL,
   (void *) NULL,
-  (void *) NULL
+  (void *) NULL,
+  (void *) NULL,
+#endif
+#ifdef CL_VERSION_2_0
+  (void *) NULL /* clCreateCommandQueueWithProperties */,
+  (void *) NULL /* clCreatePipe */,
+  (void *) NULL /* clGetPipeInfo */,
+  clSVMAlloc,
+  clSVMFree,
+  (void *) NULL /* clEnqueueSVMFree */,
+  (void *) NULL /* clEnqueueSVMMemcpy */,
+  (void *) NULL /* clEnqueueSVMMemFill */,
+  (void *) clEnqueueSVMMap,
+  (void *) clEnqueueSVMUnmap,
+  (void *) NULL /* clCreateSamplerWithProperties */,
+  clSetKernelArgSVMPointer,
 #endif
 };
 
