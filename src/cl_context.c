@@ -330,12 +330,13 @@ unlock:
 }
 
 cl_mem
-cl_context_get_svm_from_ptr(cl_context ctx, void * p)
+cl_context_get_svm_from_ptr(cl_context ctx, const void * p)
 {
   cl_mem buf = ctx->svm_buffers;
   while(buf) {
     assert(buf->host_ptr && buf->is_svm);
-    if(buf->host_ptr == p)
+    if((size_t)buf->host_ptr <= (size_t)p &&
+       (size_t)p < ((size_t)buf->host_ptr + buf->size))
       return buf;
     buf = buf->next;
   }

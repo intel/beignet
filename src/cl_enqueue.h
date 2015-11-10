@@ -45,6 +45,9 @@ typedef enum {
   EnqueueFillBuffer,
   EnqueueFillImage,
   EnqueueMigrateMemObj,
+  EnqueueSVMFree,
+  EnqueueSVMMemCopy,
+  EnqueueSVMMemFill,
   EnqueueInvalid
 } enqueue_type;
 
@@ -66,7 +69,13 @@ typedef struct _enqueue_data {
   const cl_mem*     mem_list;         /* mem_list of clEnqueueNativeKernel */
   uint8_t           unsync_map;       /* Indicate the clEnqueueMapBuffer/Image is unsync map */
   uint8_t           write_map;        /* Indicate if the clEnqueueMapBuffer is write enable */
+  void **           pointers;         /* The svm_pointers of clEnqueueSVMFree  */
+  size_t            pattern_size;     /* the pattern_size of clEnqueueSVMMemFill */
   void (*user_func)(void *);          /* pointer to a host-callable user function */
+  void (CL_CALLBACK *free_func)( cl_command_queue queue,
+                                 cl_uint num_svm_pointers,
+                                 void *svm_pointers[],
+                                 void *user_data);  /* pointer to pfn_free_func of clEnqueueSVMFree */
 } enqueue_data;
 
 /* Do real enqueue commands */
