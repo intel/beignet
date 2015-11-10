@@ -467,7 +467,7 @@ unlock:
 }
 
 cl_mem
-cl_context_get_svm_from_ptr(cl_context ctx, void * p)
+cl_context_get_svm_from_ptr(cl_context ctx, const void * p)
 {
   struct list_head *pos;
   cl_mem buf;
@@ -476,7 +476,8 @@ cl_context_get_svm_from_ptr(cl_context ctx, void * p)
     buf = (cl_mem)list_entry(pos, _cl_base_object, node);
     if(buf->host_ptr == NULL) continue;
     if(buf->is_svm == 0) continue;
-    if (buf->host_ptr == p)
+    if((size_t)buf->host_ptr <= (size_t)p &&
+       (size_t)p < ((size_t)buf->host_ptr + buf->size))
       return buf;
   }
   return NULL;

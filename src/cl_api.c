@@ -511,6 +511,101 @@ error:
 }
 
 cl_int
+clEnqueueSVMFree (cl_command_queue command_queue,
+                  cl_uint num_svm_pointers,
+                  void *svm_pointers[],
+                  void (CL_CALLBACK *pfn_free_func)( cl_command_queue queue,
+                                                     cl_uint num_svm_pointers,
+                                                     void *svm_pointers[],
+                                                     void *user_data),
+                  void *user_data,
+                  cl_uint num_events_in_wait_list,
+                  const cl_event *event_wait_list,
+                  cl_event *event)
+{
+  cl_int err = CL_SUCCESS;
+  cl_int i = 0;
+  void** pointers = NULL;
+  cl_event e = NULL;
+  cl_int e_status;
+  enqueue_data *data;
+
+  do {
+    if (!CL_OBJECT_IS_COMMAND_QUEUE(command_queue)) {
+      err = CL_INVALID_COMMAND_QUEUE;
+      break;
+    }
+
+    if(num_svm_pointers == 0 || svm_pointers == NULL) {
+      err = CL_INVALID_VALUE;
+      break;
+    }
+    for(i=0; i<num_svm_pointers; i++) {
+      if(svm_pointers[i] == NULL) {
+        err = CL_INVALID_VALUE;
+        break;
+      }
+    }
+    if(err != CL_SUCCESS)
+        break;
+
+    err = cl_event_check_waitlist(num_events_in_wait_list, event_wait_list,
+                                  event, command_queue->ctx);
+    if (err != CL_SUCCESS) {
+      break;
+    }
+
+    e = cl_event_create(command_queue->ctx, command_queue, num_events_in_wait_list,
+                        event_wait_list, CL_COMMAND_SVM_FREE, &err);
+    if (err != CL_SUCCESS) {
+      break;
+    }
+
+    e_status = cl_event_is_ready(e);
+    if (e_status < CL_COMPLETE) {
+      err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
+      break;
+    }
+
+    pointers = malloc(num_svm_pointers * sizeof(void *));
+    if(UNLIKELY(pointers == NULL)) {
+      err = CL_OUT_OF_HOST_MEMORY;
+      break;
+    }
+    memcpy(pointers, svm_pointers, num_svm_pointers * sizeof(void *));
+
+    data = &e->exec_data;
+    data->type      = EnqueueSVMFree;
+    data->queue     = command_queue;
+    data->pointers  = pointers;
+    data->free_func = pfn_free_func;
+    data->size      = num_svm_pointers;
+    data->ptr       = user_data;
+
+    if (e_status == CL_COMPLETE) { // No need to wait
+      err = cl_enqueue_handle(data, CL_COMPLETE);
+      if (err != CL_SUCCESS) {
+        assert(err < 0);
+        e->status = err;
+        break;
+      }
+
+      e->status = CL_COMPLETE;
+    } else { // May need to wait some event to complete.
+      cl_command_queue_enqueue_event(command_queue, e);
+    }
+  } while (0);
+
+  if (err == CL_SUCCESS && event) {
+    *event = e;
+  } else {
+    cl_event_delete(e);
+  }
+
+  return err;
+}
+
+cl_int
 clEnqueueSVMMap (cl_command_queue command_queue,
                  cl_bool blocking_map,
                  cl_map_flags map_flags,
@@ -532,6 +627,8 @@ clEnqueueSVMMap (cl_command_queue command_queue,
 
   clEnqueueMapBuffer(command_queue, buffer, blocking_map, map_flags, 0, size,
                      num_events_in_wait_list, event_wait_list, event, &err);
+  if(event)
+    (*event)->event_type = CL_COMMAND_SVM_MAP;
 error:
   return err;
 }
@@ -555,11 +652,192 @@ clEnqueueSVMUnmap (cl_command_queue command_queue,
 
   err = clEnqueueUnmapMemObject(command_queue, buffer, svm_ptr,
                                 num_events_in_wait_list, event_wait_list, event);
+  if(event)
+    (*event)->event_type = CL_COMMAND_SVM_UNMAP;
 
 error:
   return err;
 }
 
+cl_int clEnqueueSVMMemcpy (cl_command_queue command_queue,
+                           cl_bool blocking_copy,
+                           void *dst_ptr,
+                           const void *src_ptr,
+                           size_t size,
+                           cl_uint num_events_in_wait_list,
+                           const cl_event *event_wait_list,
+                           cl_event *event)
+{
+  cl_int err = CL_SUCCESS;
+  enqueue_data *data;
+  cl_int e_status;
+  cl_event e = NULL;
+
+  do {
+    if (!CL_OBJECT_IS_COMMAND_QUEUE(command_queue)) {
+      err = CL_INVALID_COMMAND_QUEUE;
+      break;
+    }
+
+    if(UNLIKELY(dst_ptr == NULL || src_ptr == NULL || size == 0 )) {
+      err = CL_INVALID_VALUE;
+      break;
+    }
+
+    if(((size_t)src_ptr < (size_t)dst_ptr && ((size_t)src_ptr + size > (size_t)dst_ptr)) ||
+       ((size_t)dst_ptr < (size_t)src_ptr && ((size_t)dst_ptr + size > (size_t)src_ptr))) {
+      err = CL_MEM_COPY_OVERLAP;
+      break;
+    }
+
+    err = cl_event_check_waitlist(num_events_in_wait_list, event_wait_list,
+                                  event, command_queue->ctx);
+    if (err != CL_SUCCESS) {
+      break;
+    }
+
+    e = cl_event_create(command_queue->ctx, command_queue, num_events_in_wait_list,
+                        event_wait_list, CL_COMMAND_SVM_MEMCPY, &err);
+    if (err != CL_SUCCESS) {
+      break;
+    }
+
+    if (blocking_copy) {
+      err = cl_event_wait_for_event_ready(e);
+      if (err != CL_SUCCESS)
+        break;
+
+      /* Blocking call API is a sync point of flush. */
+      err = cl_command_queue_wait_flush(command_queue);
+      if (err != CL_SUCCESS) {
+        break;
+      }
+    }
+
+    e_status = cl_event_is_ready(e);
+    if (e_status < CL_COMPLETE) {
+      err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
+      break;
+    }
+
+    data = &e->exec_data;
+    data->type         = EnqueueSVMMemCopy;
+    data->queue        = command_queue;
+    data->ptr          = dst_ptr;
+    data->const_ptr    = src_ptr;
+    data->size         = size;
+
+    if (e_status == CL_COMPLETE) { // No need to wait
+      err = cl_enqueue_handle(data, CL_COMPLETE);
+      if (err != CL_SUCCESS) {
+        assert(err < 0);
+        e->status = err;
+        break;
+      }
+
+      e->status = CL_COMPLETE;
+    } else { // May need to wait some event to complete.
+      cl_command_queue_enqueue_event(command_queue, e);
+    }
+  } while(0);
+
+  if (err == CL_SUCCESS && event) {
+    *event = e;
+  } else {
+    cl_event_delete(e);
+  }
+
+  return err;
+}
+
+cl_int clEnqueueSVMMemFill (cl_command_queue command_queue,
+                            void *svm_ptr,
+                            const void *pattern,
+                            size_t pattern_size,
+                            size_t size,
+                            cl_uint num_events_in_wait_list,
+                            const cl_event *event_wait_list,
+                            cl_event *event)
+{
+  cl_int err = CL_SUCCESS;
+  enqueue_data *data;
+  cl_int e_status;
+  cl_event e = NULL;
+
+  do {
+    if (!CL_OBJECT_IS_COMMAND_QUEUE(command_queue)) {
+      err = CL_INVALID_COMMAND_QUEUE;
+      break;
+    }
+
+    if(UNLIKELY(svm_ptr == NULL ||
+               ((size_t)svm_ptr & (pattern_size - 1)) != 0)) {
+      err = CL_INVALID_VALUE;
+      break;
+    }
+
+    if(UNLIKELY(pattern == NULL ||
+               (pattern_size & (pattern_size - 1)) != 0 ||
+                pattern_size > 128)) {
+      err = CL_INVALID_VALUE;
+      break;
+    }
+
+    if(UNLIKELY(size == 0 ||
+               (size % pattern_size) != 0)) {
+      err = CL_INVALID_VALUE;
+      break;
+    }
+
+    err = cl_event_check_waitlist(num_events_in_wait_list, event_wait_list,
+                                  event, command_queue->ctx);
+    if (err != CL_SUCCESS) {
+      break;
+    }
+
+    e = cl_event_create(command_queue->ctx, command_queue, num_events_in_wait_list,
+                        event_wait_list, CL_COMMAND_SVM_MEMFILL, &err);
+    if (err != CL_SUCCESS) {
+      break;
+    }
+
+    e_status = cl_event_is_ready(e);
+    if (e_status < CL_COMPLETE) {
+      err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
+      break;
+    }
+
+    data = &e->exec_data;
+    data->type         = EnqueueSVMMemFill;
+    data->queue        = command_queue;
+    data->ptr          = svm_ptr;
+    data->const_ptr    = pattern;
+    data->pattern_size = pattern_size;
+    data->size         = size;
+
+    if (e_status == CL_COMPLETE) { // No need to wait
+      err = cl_enqueue_handle(data, CL_COMPLETE);
+      if (err != CL_SUCCESS) {
+        assert(err < 0);
+        e->status = err;
+        break;
+      }
+
+      e->status = CL_COMPLETE;
+    } else { // May need to wait some event to complete.
+      cl_command_queue_enqueue_event(command_queue, e);
+    }
+
+  } while(0);
+
+  if (err == CL_SUCCESS && event) {
+    *event = e;
+  } else {
+    cl_event_delete(e);
+  }
+
+  return err;
+}
 
 cl_mem
 clCreateImage2D(cl_context              context,

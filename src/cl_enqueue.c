@@ -490,6 +490,77 @@ error:
   return err;
 }
 
+cl_int cl_enqueue_svm_free(enqueue_data *data, cl_int status) {
+  int i;
+  void **pointers = data->pointers;
+  uint num_svm_ptrs = data->size;
+  cl_int err = CL_SUCCESS;
+
+  if (status != CL_COMPLETE)
+    return err;
+
+  if(data->free_func) {
+    data->free_func(data->queue, num_svm_ptrs, pointers, data->ptr);
+  } else {
+    for(i=0; i<num_svm_ptrs; i++)
+      cl_mem_svm_delete(data->queue->ctx, pointers[i]);
+  }
+
+  free(pointers);
+  return CL_SUCCESS;
+}
+
+cl_int cl_enqueue_svm_mem_copy(enqueue_data *data, cl_int status) {
+  cl_mem mem;
+  size_t size = data->size;
+  const char* src_ptr = (const char *)data->const_ptr;
+  char *dst_ptr = (char *)data->ptr;
+  cl_int err = CL_SUCCESS;
+  int i;
+
+  if (status != CL_COMPLETE)
+    return err;
+
+  if((mem = cl_context_get_svm_from_ptr(data->queue->ctx, data->ptr)) != NULL) {
+      dst_ptr = (char *)cl_mem_map_auto(mem, 1);
+  }
+
+  if((mem = cl_context_get_svm_from_ptr(data->queue->ctx, data->const_ptr)) != NULL) {
+      src_ptr = (const char *)cl_mem_map_auto(mem, 0);
+  }
+
+  for(i=0; i<size; i++) {
+    dst_ptr[i] = src_ptr[i];
+  }
+
+  return CL_SUCCESS;
+}
+
+cl_int cl_enqueue_svm_mem_fill(enqueue_data *data, cl_int status) {
+  cl_mem mem;
+  size_t size = data->size;
+  size_t pattern_size = data->pattern_size;
+  const char* pattern = (const char *)data->const_ptr;
+  char *ptr = (char *)data->ptr;
+  cl_int err = CL_SUCCESS;
+  int i, j;
+
+  if (status != CL_COMPLETE)
+    return err;
+
+  if((mem = cl_context_get_svm_from_ptr(data->queue->ctx, data->ptr)) != NULL) {
+      ptr = (char *)cl_mem_map_auto(mem, 1);
+  }
+
+  for(i=0; i<size; ) {
+    for(j=0; j<pattern_size; j++) {
+      ptr[i++] = pattern[j];
+    }
+  }
+
+  return CL_SUCCESS;
+}
+
 static cl_int
 cl_enqueue_ndrange(enqueue_data *data, cl_int status)
 {
@@ -582,6 +653,12 @@ cl_enqueue_handle(enqueue_data *data, cl_int status)
     return cl_enqueue_map_image(data, status);
   case EnqueueUnmapMemObject:
     return cl_enqueue_unmap_mem_object(data, status);
+  case EnqueueSVMFree:
+    return cl_enqueue_svm_free(data, status);
+  case EnqueueSVMMemCopy:
+    return cl_enqueue_svm_mem_copy(data, status);
+  case EnqueueSVMMemFill:
+    return cl_enqueue_svm_mem_fill(data, status);
   case EnqueueMarker:
   case EnqueueBarrier:
     return cl_enqueue_marker_or_barrier(data, status);
