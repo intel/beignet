@@ -247,8 +247,10 @@ cl_int cl_event_check_waitlist(cl_uint num_events_in_wait_list,
     }
     if(event && event == &event_wait_list[i])
       goto error;
-    if(event_wait_list[i]->ctx != ctx)
-      goto error;
+    if(event_wait_list[i]->ctx != ctx) {
+      err = CL_INVALID_CONTEXT;
+      goto exit;
+    }
   }
 
 exit:
