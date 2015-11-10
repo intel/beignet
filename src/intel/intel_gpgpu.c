@@ -1638,7 +1638,7 @@ intel_gpgpu_upload_curbes(intel_gpgpu_t *gpgpu, const void* data, uint32_t size)
   /* Now put all the relocations for our flat address space */
   for (i = 0; i < k->thread_n; ++i)
     for (j = 0; j < gpgpu->binded_n; ++j) {
-      *(uint32_t*)(curbe + gpgpu->binded_offset[j]+i*k->curbe_sz) = gpgpu->binded_buf[j]->offset + gpgpu->target_buf_offset[j];
+      *(size_t*)(curbe + gpgpu->binded_offset[j]+i*k->curbe_sz) = gpgpu->binded_buf[j]->offset + gpgpu->target_buf_offset[j];
       drm_intel_bo_emit_reloc(gpgpu->aux_buf.bo,
                               gpgpu->aux_offset.curbe_offset + gpgpu->binded_offset[j]+i*k->curbe_sz,
                               gpgpu->binded_buf[j],

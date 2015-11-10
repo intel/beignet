@@ -83,6 +83,7 @@ cl_get_mem_object_info(cl_mem mem,
     FIELD_SIZE(MEM_CONTEXT, cl_context);
     FIELD_SIZE(MEM_ASSOCIATED_MEMOBJECT, cl_mem);
     FIELD_SIZE(MEM_OFFSET, size_t);
+    FIELD_SIZE(MEM_USES_SVM_POINTER, cl_bool);
   default:
     return CL_INVALID_VALUE;
   }
@@ -131,6 +132,8 @@ cl_get_mem_object_info(cl_mem mem,
       *((size_t *)param_value) = buf->sub_offset;
     }
     break;
+  case CL_MEM_USES_SVM_POINTER:
+    *((cl_uint *)param_value) = mem->is_svm;
   }
 
   return CL_SUCCESS;
@@ -291,6 +294,9 @@ cl_mem_allocate(enum cl_mem_type type,
       if (type == CL_MEM_BUFFER_TYPE) {
         if (flags & CL_MEM_USE_HOST_PTR) {
           assert(host_ptr != NULL);
+          cl_mem svm_mem = NULL;
+          if((svm_mem = cl_context_get_svm_from_ptr(ctx, host_ptr)) != NULL)
+            mem->is_svm = 1;
           /* userptr not support tiling */
           if (!is_tiled) {
             if (ALIGN((unsigned long)host_ptr, cacheline_size) == (unsigned long)host_ptr) {
@@ -298,7 +304,13 @@ cl_mem_allocate(enum cl_mem_type type,
               mem->offset = host_ptr - aligned_host_ptr;
               mem->is_userptr = 1;
               size_t aligned_sz = ALIGN((mem->offset + sz), page_size);
-              mem->bo = cl_buffer_alloc_userptr(bufmgr, "CL userptr memory object", aligned_host_ptr, aligned_sz, 0);
+
+              if(svm_mem != NULL) {
+                mem->bo = svm_mem->bo;
+                cl_mem_add_ref(svm_mem);
+              } else
+                mem->bo = cl_buffer_alloc_userptr(bufmgr, "CL userptr memory object", aligned_host_ptr, aligned_sz, 0);
+
               bufCreated = 1;
             }
           }
@@ -606,6 +618,92 @@ void cl_mem_replace_buffer(cl_mem buffer, cl_buffer new_bo)
     it->base.bo = new_bo;
     cl_buffer_reference(new_bo);
   }
+}
+
+void* cl_mem_svm_allocate(cl_context ctx, cl_svm_mem_flags flags,
+                                 size_t size, unsigned int alignment)
+{
+  cl_int err = CL_SUCCESS;
+  size_t max_mem_size;
+
+  if(UNLIKELY(alignment & (alignment - 1)))
+    return NULL;
+
+  if ((err = cl_get_device_info(ctx->device,
+                                 CL_DEVICE_MAX_MEM_ALLOC_SIZE,
+                                 sizeof(max_mem_size),
+                                 &max_mem_size,
+                                 NULL)) != CL_SUCCESS) {
+      return NULL;
+  }
+
+  if(UNLIKELY(size == 0 || size > max_mem_size)) {
+    return NULL;
+  }
+
+  if (flags & (CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_ATOMICS)) {
+    return NULL;
+  }
+  if (flags && ((flags & (CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_FINE_GRAIN_BUFFER))
+          || ((flags & CL_MEM_WRITE_ONLY) && (flags & CL_MEM_READ_ONLY))
+          || ((flags & CL_MEM_WRITE_ONLY) && (flags & CL_MEM_READ_WRITE))
+          || ((flags & CL_MEM_READ_ONLY) && (flags & CL_MEM_READ_WRITE)))) {
+    return NULL;
+  }
+
+#ifdef HAS_USERPTR
+  cl_buffer_mgr bufmgr = NULL;
+  void * ptr = NULL;
+  cl_mem mem;
+  _cl_mem_svm* svm;
+  if(UNLIKELY((svm = CALLOC(_cl_mem_svm)) == NULL))
+    return NULL;
+  mem = &svm->base;
+
+  mem->type = CL_MEM_SVM_TYPE;
+  SET_ICD(mem->dispatch)
+  mem->ref_n = 1;
+  mem->magic = CL_MAGIC_MEM_HEADER;
+  mem->flags = flags | CL_MEM_USE_HOST_PTR;
+  mem->is_userptr = 0;
+  mem->is_svm = 0;
+  mem->offset = 0;
+
+  bufmgr = cl_context_get_bufmgr(ctx);
+  assert(bufmgr);
+
+  int page_size = getpagesize();
+  const size_t alignedSZ = ALIGN(size, page_size);
+  if(alignment == 0)
+    alignment = page_size;
+  else
+    alignment = ALIGN(alignment, page_size);
+  ptr = cl_aligned_malloc(alignedSZ, alignment);
+  if(ptr == NULL) return NULL;
+
+  mem->host_ptr = ptr;
+  mem->is_svm = 1;
+  mem->is_userptr = 1;
+  mem->bo = cl_buffer_alloc_userptr(bufmgr, "CL SVM memory object", ptr, alignedSZ, 0);
+  mem->size = size;
+  cl_buffer_set_softpin_offset(mem->bo, (size_t)ptr);
+  cl_buffer_set_bo_use_full_range(mem->bo, 1);
+
+  cl_context_add_ref(ctx);
+  mem->ctx = ctx;
+
+  /* Append the svm in the context svm list */
+  pthread_mutex_lock(&ctx->svm_lock);
+  mem->next = ctx->svm_buffers;
+  if (ctx->svm_buffers != NULL)
+    ctx->svm_buffers->prev = mem;
+  ctx->svm_buffers = mem;
+  pthread_mutex_unlock(&ctx->svm_lock);
+#else
+  printf("Warning: Need libdrm to enable SVM.");
+#endif
+
+  return ptr;
 }
 
 void
@@ -1153,6 +1251,18 @@ cl_mem_new_image(cl_context context,
 }
 
 LOCAL void
+cl_mem_svm_delete(cl_context ctx, void *svm_pointer)
+{
+  cl_mem mem;
+  if(UNLIKELY(svm_pointer == NULL))
+    return;
+  mem = cl_context_get_svm_from_ptr(ctx, svm_pointer);
+  if(mem == NULL)
+    return;
+  cl_mem_delete(mem);
+}
+
+LOCAL void
 cl_mem_delete(cl_mem mem)
 {
   cl_int i;
@@ -1234,13 +1344,18 @@ cl_mem_delete(cl_mem mem)
       buffer->parent->subs = buffer->sub_next;
     pthread_mutex_unlock(&buffer->parent->sub_lock);
     cl_mem_delete((cl_mem )(buffer->parent));
-  } else if (LIKELY(mem->bo != NULL)) {
+  } else if(mem->is_svm && mem->type != CL_MEM_SVM_TYPE) {
+    cl_mem svm_mem = cl_context_get_svm_from_ptr(mem->ctx, mem->host_ptr);
+    if(svm_mem)
+      cl_mem_delete(svm_mem);
+  }else if (LIKELY(mem->bo != NULL)) {
     cl_buffer_unreference(mem->bo);
   }
 
-  if (mem->is_userptr &&
+  if ((mem->is_userptr &&
       (mem->flags & CL_MEM_ALLOC_HOST_PTR) &&
-      (mem->type != CL_MEM_SUBBUFFER_TYPE))
+      (mem->type != CL_MEM_SUBBUFFER_TYPE)) ||
+      (mem->is_svm && mem->type == CL_MEM_SVM_TYPE))
     cl_free(mem->host_ptr);
 
   cl_free(mem);

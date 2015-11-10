@@ -328,3 +328,16 @@ unlock:
   pthread_mutex_unlock(&ctx->program_lock);
   return cl_kernel_dup(ker);
 }
+
+cl_mem
+cl_context_get_svm_from_ptr(cl_context ctx, void * p)
+{
+  cl_mem buf = ctx->svm_buffers;
+  while(buf) {
+    assert(buf->host_ptr && buf->is_svm);
+    if(buf->host_ptr == p)
+      return buf;
+    buf = buf->next;
+  }
+  return NULL;
+}

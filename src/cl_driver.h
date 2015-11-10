@@ -299,6 +299,12 @@ extern cl_buffer_alloc_cb *cl_buffer_alloc;
 typedef cl_buffer (cl_buffer_alloc_userptr_cb)(cl_buffer_mgr, const char*, void *, size_t, unsigned long);
 extern cl_buffer_alloc_userptr_cb *cl_buffer_alloc_userptr;
 
+typedef cl_buffer (cl_buffer_set_softpin_offset_cb)(cl_buffer, uint64_t);
+extern cl_buffer_set_softpin_offset_cb *cl_buffer_set_softpin_offset;
+
+typedef cl_buffer (cl_buffer_set_bo_use_full_range_cb)(cl_buffer, uint32_t);
+extern cl_buffer_set_bo_use_full_range_cb *cl_buffer_set_bo_use_full_range;
+
 /* Set a buffer's tiling mode */
 typedef cl_buffer (cl_buffer_set_tiling_cb)(cl_buffer, int tiling, size_t stride);
 extern cl_buffer_set_tiling_cb *cl_buffer_set_tiling;

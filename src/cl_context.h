@@ -106,11 +106,13 @@ struct _cl_context {
   cl_command_queue queues;          /* All command queues currently allocated */
   cl_program programs;              /* All programs currently allocated */
   cl_mem buffers;                   /* All memory object currently allocated */
+  cl_mem svm_buffers;               /* All svm object currently allocated */
   cl_sampler samplers;              /* All sampler object currently allocated */
   cl_event   events;                /* All event object currently allocated */
   pthread_mutex_t queue_lock;       /* To allocate and deallocate queues */
   pthread_mutex_t program_lock;     /* To allocate and deallocate programs */
   pthread_mutex_t buffer_lock;      /* To allocate and deallocate buffers */
+  pthread_mutex_t svm_lock;         /* To allocate and deallocate SVM */
   pthread_mutex_t sampler_lock;     /* To allocate and deallocate samplers */
   pthread_mutex_t event_lock;       /* To allocate and deallocate events */
   cl_program internal_prgs[CL_INTERNAL_KERNEL_MAX];
@@ -168,5 +170,7 @@ extern cl_buffer_mgr cl_context_get_bufmgr(cl_context ctx);
 extern cl_kernel cl_context_get_static_kernel_from_bin(cl_context ctx, cl_int index,
                   const char * str_kernel, size_t size, const char * str_option);
 
+/* Get the SVM from pointer, return NULL if pointer is not from SVM */
+extern cl_mem cl_context_get_svm_from_ptr(cl_context ctx, void *p);
 #endif /* __CL_CONTEXT_H__ */
 

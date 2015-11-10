@@ -70,6 +70,7 @@ typedef struct _cl_mem_dstr_cb {
 enum cl_mem_type {
   CL_MEM_BUFFER_TYPE,
   CL_MEM_SUBBUFFER_TYPE,
+  CL_MEM_SVM_TYPE,
   CL_MEM_IMAGE_TYPE,
   CL_MEM_GL_IMAGE_TYPE,
   CL_MEM_BUFFER1D_IMAGE_TYPE
@@ -93,9 +94,15 @@ typedef  struct _cl_mem {
   int map_ref;              /* The mapped count. */
   uint8_t mapped_gtt;       /* This object has mapped gtt, for unmap. */
   cl_mem_dstr_cb *dstr_cb;  /* The destroy callback. */
-  uint8_t is_userptr;       /* CL_MEM_USE_HOST_PTR is enabled*/
+  uint8_t is_userptr;       /* CL_MEM_USE_HOST_PTR is enabled */
+  cl_bool is_svm;           /* This object  is svm */
   size_t offset;            /* offset of host_ptr to the page beginning, only for CL_MEM_USE_HOST_PTR*/
 } _cl_mem;
+
+typedef struct _cl_mem_svm {
+  _cl_mem base;
+  cl_svm_mem_flags flags;                 /* Flags specified at the creation time */
+} _cl_mem_svm;
 
 struct _cl_mem_image {
   _cl_mem base;
@@ -194,6 +201,10 @@ extern cl_mem cl_mem_new_buffer(cl_context, cl_mem_flags, size_t, void*, cl_int*
 
 /* Create a new sub memory object */
 extern cl_mem cl_mem_new_sub_buffer(cl_mem, cl_mem_flags, cl_buffer_create_type, const void *, cl_int *);
+
+void* cl_mem_svm_allocate(cl_context, cl_svm_mem_flags, size_t, unsigned int);
+void cl_mem_svm_delete(cl_context, void *svm_pointer);
+
 
 /* Idem but this is an image */
 extern cl_mem

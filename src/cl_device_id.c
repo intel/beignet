@@ -836,6 +836,7 @@ cl_get_device_info(cl_device_id     device,
     DECL_FIELD(REFERENCE_COUNT, device_reference_count)
     DECL_FIELD(IMAGE_PITCH_ALIGNMENT, image_pitch_alignment)
     DECL_FIELD(IMAGE_BASE_ADDRESS_ALIGNMENT, image_base_address_alignment)
+    DECL_FIELD(SVM_CAPABILITIES, svm_capabilities)
 
     case CL_DRIVER_VERSION:
       if (param_value_size_ret) {
