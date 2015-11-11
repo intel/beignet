@@ -3180,11 +3180,21 @@ namespace gbe
         // We use a select (0,1) not a convert when the destination is a boolean
         if (srcType == ir::TYPE_BOOL) {
           const ir::RegisterFamily family = getFamily(dstType);
-          const ir::ImmediateIndex zero = ctx.newIntegerImmediate(0, dstType);
+          ir::ImmediateIndex zero;
+          if(dstType == ir::TYPE_FLOAT)
+            zero = ctx.newFloatImmediate(0);
+          else if(dstType == ir::TYPE_DOUBLE)
+            zero = ctx.newDoubleImmediate(0);
+	  else
+            zero = ctx.newIntegerImmediate(0, dstType);
           ir::ImmediateIndex one;
           if (I.getOpcode() == Instruction::SExt
               && (dstType == ir::TYPE_S8 || dstType == ir::TYPE_S16 || dstType == ir::TYPE_S32 || dstType == ir::TYPE_S64))
             one = ctx.newIntegerImmediate(-1, dstType);
+          else if(dstType == ir::TYPE_FLOAT)
+            one = ctx.newFloatImmediate(1);
+          else if(dstType == ir::TYPE_DOUBLE)
+            one = ctx.newDoubleImmediate(1);
           else
             one = ctx.newIntegerImmediate(1, dstType);
           const ir::Register zeroReg = ctx.reg(family);
