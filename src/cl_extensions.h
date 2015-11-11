@@ -1,3 +1,5 @@
+#ifndef __CL_EXTENSIONS_H__
+#define __CL_EXTENSIONS_H__
 /* The following approved Khronos extension
  * names must be returned by all device that
  * support OpenCL C 1.2. */
@@ -87,9 +89,10 @@ typedef union {
   #undef DECL_EXT
 } extension_union;
 
+#include "cl_device_id.h"
 typedef struct cl_extensions {
   extension_union extensions[cl_khr_extension_id_max];
-  char ext_str[256];
+  char ext_str[EXTENSTION_LENGTH];
 } cl_extensions_t;
 
 extern void
@@ -98,3 +101,4 @@ extern void
 cl_intel_platform_enable_extension(cl_device_id device, uint32_t name);
 extern void
 cl_intel_platform_get_default_extension(cl_device_id device);
+#endif /* __CL_EXTENSIONS_H__ */

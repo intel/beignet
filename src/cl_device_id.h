@@ -20,6 +20,9 @@
 #ifndef __CL_DEVICE_ID_H__
 #define __CL_DEVICE_ID_H__
 
+#define EXTENSTION_LENGTH 512
+
+#include "cl_khr_icd.h"
 /* Store complete information about the device */
 struct _cl_device_id {
   DEFINE_ICD(dispatch)
@@ -108,7 +111,7 @@ struct _cl_device_id {
   const char *version;
   const char *profile;
   const char *opencl_c_version;
-  const char extensions[256];
+  const char extensions[EXTENSTION_LENGTH];
   const char *driver_version;
   const char *spir_versions;
   const char *built_in_kernels;

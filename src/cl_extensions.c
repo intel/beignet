@@ -140,7 +140,7 @@ cl_intel_platform_enable_extension(cl_device_id device, uint32_t ext)
       memcpy((char*)device->extensions, ext_str, strlen(ext_str));
       device->extensions_sz = strlen(ext_str) + 1;
     } else {
-      assert(device->extensions_sz + 1 + strlen(ext_str) < 256);
+      assert(device->extensions_sz + 1 + strlen(ext_str) < EXTENSTION_LENGTH);
       *(char*)(device->extensions + device->extensions_sz - 1) = ' ';
       memcpy((char*)device->extensions + device->extensions_sz, ext_str, strlen(ext_str));
       device->extensions_sz = device->extensions_sz + strlen(ext_str) + 1;
