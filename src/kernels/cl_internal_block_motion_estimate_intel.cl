@@ -59,23 +59,28 @@ void block_motion_estimate_intel(accelerator_intel_t accel,
   int lgid_x = get_group_id(0);
   int lgid_y = get_group_id(1);
 
+  int num_groups_x = get_num_groups(0);
+  int index = lgid_y * num_groups_x + lgid_x;
+
   uint2 srcCoord = 0;
+  short2 predict_mv = 0;
+  if(prediction_motion_vector_buffer != NULL){
+    predict_mv = prediction_motion_vector_buffer[index];
+    predict_mv.x = predict_mv.x / 4;
+    predict_mv.y = predict_mv.y / 4;
+  }
 
   srcCoord.x = lgid_x * 16;
   srcCoord.y = lgid_y * 16;
 
-  //TODO: This line of code is just to workaround a curbe related bug caused by commit 061d214a6fc2876a0e24e094f87f2a172984bc23
-  //After fix, this line should be removed.
-  src_grf0_dw5 = accel.mb_block_type;
-
   //CL_ME_SEARCH_PATH_RADIUS_2_2_INTEL
   if(accel.search_path_type == 0x0){
-    //src_grf0_dw5 = (Ref_Height << 24) | (Ref_Width << 16) | (Ignored << 8) | (Dispatch_Id?);
+    //src_grf0_dw5 = (Ref_Height << 24) | (Ref_Width << 16) | (Ignored << 8) | (Dispatch_Id);
     src_grf0_dw5 =   (20 << 24)         | (20 << 16)        | (0 << 8)       | (0);
     //src_grf0_dw1 = (Ref1Y << 16)  | (Ref1X);
-    src_grf0_dw1 =   0xfffefffe;
+    src_grf0_dw1 =   ((-2 + predict_mv.y) << 16 ) | ((-2 + predict_mv.x) & 0x0000ffff);
     //src_grf0_dw0 = (Ref0Y << 16)  | (Ref0X);
-    src_grf0_dw0 =   0xfffefffe;
+    src_grf0_dw0 =   ((-2 + predict_mv.y) << 16 ) | ((-2 + predict_mv.x) & 0x0000ffff);
     //src_grf1_dw2 = (Start1Y << 28)                  | (Start1X << 24)                | (Start0Y << 20)
     src_grf1_dw2 =   (0 << 28)                        | (0 << 24)                      | (0 << 20)
                    //| (Start0X << 16)               | (Max_Num_SU << 8)              | (LenSP);
@@ -84,19 +89,66 @@ void block_motion_estimate_intel(accelerator_intel_t accel,
   //CL_ME_SEARCH_PATH_RADIUS_4_4_INTEL
   else if(accel.search_path_type == 0x1){
     src_grf0_dw5 =   (24 << 24)         | (24 << 16)        | (0 << 8)       | (0);
-    src_grf0_dw1 =   0xfffcfffc;
-    src_grf0_dw0 =   0xfffcfffc;
+    src_grf0_dw1 =   ((-4 + predict_mv.y) << 16 ) | ((-4 + predict_mv.x) & 0x0000ffff);
+    src_grf0_dw0 =   ((-4 + predict_mv.y) << 16 ) | ((-4 + predict_mv.x) & 0x0000ffff);
     src_grf1_dw2 =   (0 << 28)                        | (0 << 24)                      | (0 << 20)
                      | (0 << 16)                     | (48 << 8)                       | (48);
   }
   //CL_ME_SEARCH_PATH_RADIUS_16_12_INTEL
   else if(accel.search_path_type == 0x5){
     src_grf0_dw5 =   (40 << 24)         | (48 << 16)        | (0 << 8)       | (0);
-    src_grf0_dw1 =   0xfff4fff0;
-    src_grf0_dw0 =   0xfff4fff0;
+    src_grf0_dw1 =   ((-12 + predict_mv.y) << 16 ) | ((-16 + predict_mv.x) & 0x0000ffff);
+    src_grf0_dw0 =   ((-12 + predict_mv.y) << 16 ) | ((-16 +  + predict_mv.x) & 0x0000ffff);
     src_grf1_dw2 =   (0 << 28)                        | (0 << 24)                      | (0 << 20)
                      | (0 << 16)                     | (48 << 8)                       | (48);
   }
+
+  /*Deal with mb_block_type & sad_adjust_mode & subpixel_mode*/
+  uchar sub_mb_part_mask = 0;
+  //CL_ME_MB_TYPE_16x16_INTEL
+  if(accel.mb_block_type == 0x0)
+    sub_mb_part_mask = 0x7e;
+  //CL_ME_MB_TYPE_8x8_INTEL
+  else if(accel.mb_block_type == 0x1)
+    sub_mb_part_mask = 0x77;
+  //CL_ME_MB_TYPE_4x4_INTEL
+  else if(accel.mb_block_type == 0x2)
+    sub_mb_part_mask = 0x3f;
+
+  uchar inter_sad = 0;
+  //CL_ME_SAD_ADJUST_MODE_NONE_INTEL
+  if(accel.sad_adjust_mode == 0x0)
+    inter_sad = 0;
+  //CL_ME_SAD_ADJUST_MODE_HAAR_INTEL
+  else if(accel.sad_adjust_mode == 0x1)
+    inter_sad = 2;
+
+  uchar sub_pel_mode = 0;
+  //CL_ME_SUBPIXEL_MODE_INTEGER_INTEL
+  if(accel.subpixel_mode == 0x0)
+    sub_pel_mode = 0;
+  //CL_ME_SUBPIXEL_MODE_HPEL_INTEL
+  else if(accel.subpixel_mode == 0x1)
+    sub_pel_mode = 1;
+  //CL_ME_SUBPIXEL_MODE_QPEL_INTEL
+  else if(accel.subpixel_mode == 0x2)
+    sub_pel_mode = 3;
+
+  //src_grf0_dw3 = (Reserved << 31)                | (Sub_Mb_Part_Mask << 24)       | (Intra_SAD << 22)
+  src_grf0_dw3 =   (0 << 31)                       | (sub_mb_part_mask << 24)       | (0 << 22)
+                 //| (Inter_SAD << 20)             | (BB_Skip_Enabled << 19)        | (Reserverd << 18)
+                   | (inter_sad << 20)             | (0 << 19)                      | (0 << 18)
+                 //| (Dis_Aligned_Src_Fetch << 17) | (Dis_Aligned_Ref_Fetch << 16)  | (Dis_Field_Cache_Alloc << 15)
+                   | (0 << 17)                     | (0 << 16)                      | (0 << 15)
+                 //| (Skip_Type << 14)             | (Sub_Pel_Mode << 12)           | (Dual_Search_Path_Opt << 11)
+                   | (0 << 14)                     | (sub_pel_mode << 12)           | (0 << 11)
+                 //| (Search_Ctrl << 8)            | (Ref_Access << 7)              | (SrcAccess << 6)
+                   | (0 << 8)                      | (0 << 7)                       | (0 << 6)
+                 //| (Mb_Type_Remap << 4)          | (Reserved_Workaround << 3)     | (Reserved_Workaround << 2)
+                   | (0 << 4)                      | (0 << 3)                       | (0 << 2)
+                 //| (Src_Size);
+                   | (0);
+
 
   //src_grf0_dw7 = Debug;
   src_grf0_dw7 = 0;
@@ -105,20 +157,6 @@ void block_motion_estimate_intel(accelerator_intel_t accel,
   //src_grf0_dw5 = (Ref_Height << 24) | (Ref_Width << 16) | (Ignored << 8) | (Dispatch_Id?);
   //src_grf0_dw4 = Ignored;
   src_grf0_dw4 = 0;
-  //src_grf0_dw3 = (Reserved << 31)                 | (Sub_Mb_Part_Mask << 24)       | (Intra_SAD << 22)
-  src_grf0_dw3 =   (0 << 31)                 | (0x7e << 24)                   | (0 << 22)
-                 //| (Inter_SAD << 20)             | (BB_Skip_Enabled << 19)        | (Reserverd << 18)
-                   | (0 << 20)                     | (0 << 19)                      | (0 << 18)
-                 //| (Dis_Aligned_Src_Fetch << 17) | (Dis_Aligned_Ref_Fetch << 16)  | (Dis_Field_Cache_Alloc << 15)
-                   | (0 << 17)                     | (0 << 16)                      | (0 << 15)
-                 //| (Skip_Type << 14)             | (Sub_Pel_Mode << 12)           | (Dual_Search_Path_Opt << 11)
-                   | (0 << 14)                     | (0 << 12)                      | (0 << 11)
-                 //| (Search_Ctrl << 8)            | (Ref_Access << 7)              | (SrcAccess << 6)
-                   | (0 << 8)                      | (0 << 7)                       | (0 << 6)
-                 //| (Mb_Type_Remap << 4)          | (Reserved_Workaround << 3)     | (Reserved_Workaround << 2)
-                   | (0 << 4)                      | (0 << 3)                       | (0 << 2)
-                 //| (Src_Size);
-                   | (0);
 
   //src_grf0_dw2 = (SrcY << 16) | (SrcX);
   src_grf0_dw2 = (srcCoord.y << 16)  | (srcCoord.x);
@@ -142,7 +180,8 @@ void block_motion_estimate_intel(accelerator_intel_t accel,
   /*src_grf1_dw1 = (RepartEn << 31)                 | (FBPrunEn << 30)               | (AdaptiveValidationControl << 29)
                  | (Uni_Mix_Disable << 28)       | (Bi_Sub_Mb_Part_Mask << 24)    | (Reserverd << 22)
                  | (Bi_Weight << 16)             | (Reserved << 6)                | (MaxNumMVs);*/
-  src_grf1_dw1 = (0 << 24) | (2);
+  //src_grf1_dw1 = (0 << 24) | (2);
+  src_grf1_dw1 = (0 << 24) | (16);
   /*src_grf1_dw0 = (Early_Ime_Stop << 24)           | (Early_Fme_Success << 16)      | (Skip_Success << 8)
                  | (T8x8_Flag_For_Inter_En << 7) | (Quit_Inter_En << 6)           | (Early_Ime_Success_En << 5)
                  | (Early_Success_En << 4)       | (Part_Candidate_En << 3)       | (Bi_Mix_Dis << 2)
@@ -201,6 +240,8 @@ void block_motion_estimate_intel(accelerator_intel_t accel,
   src_grf4_dw1 = 0;
   src_grf4_dw0 = 0;
 
+  int lid_x = get_local_id(0);
+
   vme_result = __gen_ocl_vme(src_image, ref_image,
                 src_grf0_dw7, src_grf0_dw6, src_grf0_dw5, src_grf0_dw4,
                 src_grf0_dw3, src_grf0_dw2, src_grf0_dw1, src_grf0_dw0,
@@ -217,17 +258,109 @@ void block_motion_estimate_intel(accelerator_intel_t accel,
 
   barrier(CLK_LOCAL_MEM_FENCE);
 
-  int lid_x = get_local_id(0);
+  short2 mv[16];
+  ushort res[16];
+
+  uint write_back_dwx;
   uint simd_width = get_sub_group_size();
-  uint write_back_grf1_dw0;
-  if(simd_width == 8)
-    write_back_grf1_dw0 = __gen_ocl_region(0, vme_result.s1);
-  else if(simd_width == 16)
-    write_back_grf1_dw0 = __gen_ocl_region(8, vme_result.s0);
-  short2 val = as_short2( write_back_grf1_dw0 );
-  int index = lgid_y * get_num_groups(0) + lgid_x;
-  if( lid_x == 0 ){
-    motion_vector_buffer[index] = val;
+
+  /* In simd 8 mode, one kernel variable 'uint' map to 8 dword.
+   * In simd 16 mode, one kernel variable 'uint' map to 16 dword.
+   * That's why we should treat simd8 and simd16 differently when
+   * use __gen_ocl_region.
+   * */
+  if(simd_width == 8){
+    write_back_dwx = __gen_ocl_region(0, vme_result.s1);
+    mv[0] = as_short2( write_back_dwx );
+
+    if(accel.mb_block_type > 0x0){
+      for(int i = 2, j = 1; j < 4; i += 2, j++){
+        write_back_dwx = __gen_ocl_region(i, vme_result.s1);
+        mv[j] = as_short2( write_back_dwx );
+      }
+      if(accel.mb_block_type > 0x1){
+        for(int i = 0, j = 4; j < 8; i += 2, j++){
+          write_back_dwx = __gen_ocl_region(i, vme_result.s2);
+          mv[j] = as_short2( write_back_dwx );
+        }
+        for(int i = 0, j = 8; j < 12; i += 2, j++){
+          write_back_dwx = __gen_ocl_region(i, vme_result.s3);
+          mv[j] = as_short2( write_back_dwx );
+        }
+        for(int i = 0, j = 12; j < 16; i += 2, j++){
+          write_back_dwx = __gen_ocl_region(i, vme_result.s4);
+          mv[j] = as_short2( write_back_dwx );
+        }
+      }
+    }
+    ushort2 temp_res;
+    for(int i = 0; i < 8; i++){
+      write_back_dwx = __gen_ocl_region(i, vme_result.s5);
+      temp_res = as_ushort2(write_back_dwx);
+      res[i*2] = temp_res.s0;
+      res[i*2+1] = temp_res.s1;
+    }
+  }
+  else if(simd_width == 16){
+    write_back_dwx = __gen_ocl_region(0 + 8, vme_result.s0);
+    mv[0] = as_short2( write_back_dwx );
+
+    if(accel.mb_block_type > 0x0){
+      for(int i = 2, j = 1; j < 4; i += 2, j++){
+        write_back_dwx = __gen_ocl_region(i + 8, vme_result.s0);
+        mv[j] = as_short2( write_back_dwx );
+      }
+      if(accel.mb_block_type > 0x1){
+        for(int i = 0, j = 4; j < 8; i += 2, j++){
+          write_back_dwx = __gen_ocl_region(i, vme_result.s1);
+          mv[j] = as_short2( write_back_dwx );
+        }
+        for(int i = 0, j = 8; j < 12; i += 2, j++){
+          write_back_dwx = __gen_ocl_region(i + 8, vme_result.s1);
+          mv[j] = as_short2( write_back_dwx );
+        }
+        for(int i = 0, j = 12; j < 16; i += 2, j++){
+          write_back_dwx = __gen_ocl_region(i, vme_result.s2);
+          mv[j] = as_short2( write_back_dwx );
+        }
+      }
+    }
+    ushort2 temp_res;
+    for(int i = 0; i < 8; i++){
+      write_back_dwx = __gen_ocl_region(i + 8, vme_result.s2);
+      temp_res = as_ushort2(write_back_dwx);
+      res[i*2] = temp_res.s0;
+      res[i*2+1] = temp_res.s1;
+    }
+  }
+
+  int mv_index;
+
+  //CL_ME_MB_TYPE_16x16_INTEL
+  if(accel.mb_block_type == 0x0){
+    mv_index = index * 1;
+    if( lid_x == 0 ){
+      motion_vector_buffer[mv_index] = mv[lid_x];
+      residuals[mv_index] = 2 * res[lid_x];
+    }
+  }
+  //CL_ME_MB_TYPE_8x8_INTEL
+  else if(accel.mb_block_type == 0x1){
+    if(lid_x < 4){
+      mv_index = lgid_y * num_groups_x * 4 + lgid_x * 2;
+      mv_index = mv_index + num_groups_x * 2 * (lid_x / 2) + (lid_x % 2);
+      motion_vector_buffer[mv_index] = mv[lid_x];
+      residuals[mv_index] = 2 * res[lid_x];
+    }
+  }
+  //CL_ME_MB_TYPE_4x4_INTEL
+  else if(accel.mb_block_type == 0x2){
+    if(lid_x < 16){
+      mv_index = lgid_y * num_groups_x * 16 + lgid_x * 4;
+      mv_index = mv_index + num_groups_x * 4 * (lid_x / 4) + (lid_x % 4);
+      motion_vector_buffer[mv_index] = mv[lid_x];
+      residuals[mv_index] = 2 * res[lid_x];
+    }
   }
 
 }

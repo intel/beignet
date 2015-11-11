@@ -1,21 +1,15 @@
 Video Motion Vector HowTo
 ==========================
 
-Beignet now supports cl_intel_accelerator and part of cl_intel_motion_estimation, which
-are Khronos official extensions. It provides a hardware acceleration of video motion
+Beignet now supports cl_intel_accelerator and cl_intel_motion_estimation, which are
+Khronos official extensions. It provides a hardware acceleration of video motion
 vector to users.
 
-Supported hardware platform and limitation
-------------------------------------------
+Supported hardware platform
+---------------------------
 
-Only 3rd Generation Intel Core Processors is supported for vme now. And now we just
-implement this part of cl_intel_motion_estimation for motion vector computation(residuals
-can not be returned yet) on 3rd Generation Intel Core Processors:
-  mb_block_type = CL_ME_MB_TYPE_16x16_INTEL
-  subpixel_mode = CL_ME_SUBPIXEL_MODE_INTEGER_INTEL
-  search_path_type = CL_ME_SEARCH_PATH_RADIUS_2_2_INTEL / CL_ME_SEARCH_PATH_RADIUS_4_4_INTEL
-                     / CL_ME_SEARCH_PATH_RADIUS_16_12_INTEL
-We will fully support cl_intel_motion_estimation in the future.
+Only 3rd Generation Intel Core Processors is supported for vme now. We will consider
+to support more platforms if necessary.
 
 Steps
 -----
@@ -23,15 +17,13 @@ Steps
 In order to use video motion estimation provided by Beignet in your program, please follow
 the steps as below:
 
-- Create a cl_accelerator_intel object using extension API clCreateAcceleratorINTEL, with
-  the following parameters:
+- Create a cl_accelerator_intel object using extension API clCreateAcceleratorINTEL, like
+  this:
   _accelerator_type_intel accelerator_type = CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL;
   cl_motion_estimation_desc_intel vmedesc = {CL_ME_MB_TYPE_16x16_INTEL,
                                              CL_ME_SUBPIXEL_MODE_INTEGER_INTEL,
                                              CL_ME_SAD_ADJUST_MODE_NONE_INTEL,
-                                             CL_ME_SEARCH_PATH_RADIUS_16_12_INTEL(
-                                             or CL_ME_SEARCH_PATH_RADIUS_2_2_INTEL
-                                             or CL_ME_SEARCH_PATH_RADIUS_4_4_INTEL)
+                                             CL_ME_SEARCH_PATH_RADIUS_16_12_INTEL
                                             };
 
 - Invoke clCreateProgramWithBuiltInKernels to create a program object with built-in kernels
