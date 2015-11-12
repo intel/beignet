@@ -111,8 +111,6 @@ struct _cl_device_id {
   size_t driver_version_sz;
   size_t spir_versions_sz;
   size_t built_in_kernels_sz;
-  /* Kernel specific info that we're assigning statically */
-  size_t preferred_wg_sz_mul;
   /* SubDevice specific info */
   cl_device_id parent_device;
   cl_uint      partition_max_sub_device;
