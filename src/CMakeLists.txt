@@ -144,6 +144,7 @@ add_library(cl SHARED ${OPENCL_SRC})
 ADD_DEPENDENCIES(cl ${GIT_SHA1})
 target_link_libraries(
                       cl
+                      rt
                       ${X11_LIBRARIES}
                       ${XEXT_LIBRARIES}
                       ${XFIXES_LIBRARIES}
