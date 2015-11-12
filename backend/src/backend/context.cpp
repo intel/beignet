@@ -38,7 +38,7 @@ namespace gbe
   class SimpleAllocator
   {
   public:
-    SimpleAllocator(int32_t startOffset, int32_t size, bool _assertFail);
+    SimpleAllocator(int32_t startOffset, int32_t size);
     ~SimpleAllocator(void);
 
     /*! Allocate some memory from the pool.
@@ -67,8 +67,6 @@ namespace gbe
     void coalesce(Block *left, Block *right);
     /*! the maximum offset */
     int32_t maxOffset;
-    /*! whether trigger an assertion on allocation failure */
-    bool assertFail;
     /*! Head and tail of the free list */
     Block *head;
     Block *tail;
@@ -90,7 +88,7 @@ namespace gbe
 
   class RegisterAllocator: public SimpleAllocator {
   public:
-    RegisterAllocator(int32_t offset, int32_t size): SimpleAllocator(offset, size, false) {}
+    RegisterAllocator(int32_t offset, int32_t size): SimpleAllocator(offset, size) {}
 
     GBE_CLASS(RegisterAllocator);
   };
@@ -102,17 +100,15 @@ namespace gbe
 
   class ScratchAllocator: public SimpleAllocator {
   public:
-    ScratchAllocator(int32_t size): SimpleAllocator(0, size, true) {}
+    ScratchAllocator(int32_t size): SimpleAllocator(0, size) {}
     int32_t getMaxScatchMemUsed() { return maxOffset; }
 
     GBE_CLASS(ScratchAllocator);
   };
 
   SimpleAllocator::SimpleAllocator(int32_t startOffset,
-                                   int32_t size,
-                                   bool _assertFail)
-                                  : maxOffset(0),
-                                  assertFail(_assertFail){
+                                   int32_t size)
+                                  : maxOffset(0) {
     tail = head = this->newBlock(startOffset, size);
   }
 
