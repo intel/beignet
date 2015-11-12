@@ -117,10 +117,12 @@ namespace gbe {
   BVAR(OCL_OUTPUT_GEN_IR, false);
   BVAR(OCL_STRICT_CONFORMANCE, true);
   IVAR(OCL_PROFILING_LOG, 0, 0, 1); // Int for different profiling types.
+  BVAR(OCL_OUTPUT_BUILD_LOG, false);
 
   bool Program::buildFromLLVMFile(const char *fileName, const void* module, std::string &error, int optLevel) {
     ir::Unit *unit = new ir::Unit();
     llvm::Module * cloned_module = NULL;
+    bool ret = true;
     if(module){
       cloned_module = llvm::CloneModule((llvm::Module*)module);
     }
@@ -144,12 +146,13 @@ namespace gbe {
       }
     }
     assert(unit->getValid());
-    this->buildFromUnit(*unit, error);
+    if (!this->buildFromUnit(*unit, error))
+      ret = false;
     delete unit;
     if(cloned_module){
       delete (llvm::Module*) cloned_module;
     }
-    return true;
+    return ret;
   }
 
   bool Program::buildFromUnit(const ir::Unit &unit, std::string &error) {
@@ -161,8 +164,15 @@ namespace gbe {
     for (const auto &pair : set) {
       const std::string &name = pair.first;
       Kernel *kernel = this->compileKernel(unit, name, !OCL_STRICT_CONFORMANCE, OCL_PROFILING_LOG);
-      kernel->setProfilingInfo(new ir::ProfilingInfo(*unit.getProfilingInfo()));
+      if (!kernel) {
+        error +=  name;
+        error += ":(GBE): error: failed in Gen backend.\n";
+        if (OCL_OUTPUT_BUILD_LOG)
+          llvm::errs() << error;
+        return false;
+      }
       kernel->setSamplerSet(pair.second->getSamplerSet());
+      kernel->setProfilingInfo(new ir::ProfilingInfo(*unit.getProfilingInfo()));
       kernel->setImageSet(pair.second->getImageSet());
       kernel->setPrintfSet(pair.second->getPrintfSet());
       kernel->setCompileWorkGroupSize(pair.second->getCompileWorkGroupSize());
@@ -520,8 +530,6 @@ namespace gbe {
   }
 
 #ifdef GBE_COMPILER_AVAILABLE
-  BVAR(OCL_OUTPUT_BUILD_LOG, false);
-
   static bool buildModuleFromSource(const char *source, llvm::Module** out_module, llvm::LLVMContext* llvm_ctx,
                                     std::string dumpLLVMFileName, std::vector<std::string>& options, size_t stringSize, char *err,
                                     size_t *errSize) {
@@ -831,10 +839,10 @@ namespace gbe {
                               stringSize, err, errSize)) {
     // Now build the program from llvm
       size_t clangErrSize = 0;
-      if (err != NULL) {
+      if (err != NULL && *errSize != 0) {
         GBE_ASSERT(errSize != NULL);
-        stringSize -= *errSize;
-        err += *errSize;
+        stringSize = stringSize - *errSize;
+        err = err + *errSize;
         clangErrSize = *errSize;
       }
 

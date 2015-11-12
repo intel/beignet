@@ -192,7 +192,7 @@ namespace gbe
     INLINE bool spillReg(GenRegInterval interval, bool isAllocated = false);
     INLINE bool spillReg(ir::Register reg, bool isAllocated = false);
     INLINE bool vectorCanSpill(SelectionVector *vector);
-    INLINE void allocateScratchForSpilled();
+    INLINE bool allocateScratchForSpilled();
     void allocateCurbePayload(void);
 
     /*! replace specified source/dst register with temporary register and update interval */
@@ -788,7 +788,10 @@ namespace gbe
           return false;
         }
       }
-      allocateScratchForSpilled();
+      if (!allocateScratchForSpilled()) {
+        ctx.errCode = REGISTER_SPILL_NO_SPACE;
+        return false;
+      }
       bool success = selection.spillRegs(spilledRegs, reservedReg);
       if (!success) {
         ctx.errCode = REGISTER_SPILL_FAIL;
@@ -799,7 +802,7 @@ namespace gbe
     return true;
   }
 
-  INLINE void GenRegAllocator::Opaque::allocateScratchForSpilled()
+  INLINE bool GenRegAllocator::Opaque::allocateScratchForSpilled()
   {
     const uint32_t regNum = spilledRegs.size();
     this->starting.resize(regNum);
@@ -833,7 +836,10 @@ namespace gbe
       ir::RegisterFamily family = ctx.sel->getRegisterFamily(cur->reg);
       it->second.addr = ctx.allocateScratchMem(getFamilySize(family)
                                              * ctx.getSimdWidth());
-      }
+      if (it->second.addr == -1)
+        return false;
+    }
+    return true;
   }
 
   INLINE bool GenRegAllocator::Opaque::expireReg(ir::Register reg)
@@ -1019,7 +1025,7 @@ namespace gbe
   INLINE uint32_t GenRegAllocator::Opaque::allocateReg(GenRegInterval interval,
                                                        uint32_t size,
                                                        uint32_t alignment) {
-    uint32_t grfOffset;
+    int32_t grfOffset;
     // Doing expireGRF too freqently will cause the post register allocation
     // scheduling very hard. As it will cause a very high register conflict rate.
     // The tradeoff here is to reduce the freqency here. And if we are under spilling
@@ -1032,7 +1038,7 @@ namespace gbe
     // and the source is a scalar Dword. If that is the case, the byte register
     // must get 4byte alignment register offset.
     alignment = (alignment + 3) & ~3;
-    while ((grfOffset = ctx.allocate(size, alignment)) == 0) {
+    while ((grfOffset = ctx.allocate(size, alignment)) == -1) {
       const bool success = this->expireGRF(interval);
       if (success == false) {
         if (spillAtInterval(interval, size, alignment) == false)

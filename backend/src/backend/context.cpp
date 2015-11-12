@@ -229,8 +229,7 @@ namespace gbe
       // We have a valid offset now
       return aligned;
     }
-    GBE_ASSERT( !assertFail );
-    return 0;
+    return -1;
   }
 
   void SimpleAllocator::deallocate(int32_t offset)
