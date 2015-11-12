@@ -85,11 +85,11 @@ namespace gbe
       return JIPs.find(insn) != JIPs.end();
     }
     /*! Allocate some memory in the register file */
-    int16_t allocate(int16_t size, int16_t alignment, bool bFwd = true);
+    int32_t allocate(int32_t size, int32_t alignment, bool bFwd = true);
     /*! Deallocate previously allocated memory */
-    void deallocate(int16_t offset);
+    void deallocate(int32_t offset);
     /*! Spilt a block into 2 blocks, for some registers allocate together but  deallocate seperate */
-    void splitBlock(int16_t offset, int16_t subOffset);
+    void splitBlock(int32_t offset, int32_t subOffset);
     /*! allocate size scratch memory and return start address */
     int32_t allocateScratchMem(uint32_t size);
     /*! deallocate scratch memory at offset */
