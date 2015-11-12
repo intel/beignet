@@ -989,7 +989,16 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
         return CL_SUCCESS;
       }
     }
-    DECL_FIELD(PREFERRED_WORK_GROUP_SIZE_MULTIPLE, device->preferred_wg_sz_mul)
+    case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
+    {
+      if (param_value && param_value_size < sizeof(size_t))
+        return CL_INVALID_VALUE;
+      if (param_value_size_ret != NULL)
+        *param_value_size_ret = sizeof(size_t);
+      if (param_value)
+        *(size_t*)param_value = interp_kernel_get_simd_width(kernel->opaque);
+      return CL_SUCCESS;
+    }
     case CL_KERNEL_LOCAL_MEM_SIZE:
     {
       size_t local_mem_sz =  interp_kernel_get_slm_size(kernel->opaque) + kernel->local_mem_sz;

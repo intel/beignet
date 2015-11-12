@@ -3000,6 +3000,7 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
     err = cl_command_queue_flush(command_queue);
   }
 
+error:
   if(b_output_kernel_perf)
   {
     if(kernel->program->build_opts != NULL)
@@ -3007,7 +3008,7 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
     else
       time_end(command_queue->ctx, cl_kernel_get_name(kernel), "", command_queue);
   }
-error:
+
   return err;
 }
 
