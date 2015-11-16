@@ -2674,6 +2674,173 @@ namespace gbe
   }
 
   void GenContext::emitStoreProfilingInstruction(const SelectionInstruction &insn) {
+    uint32_t simdType;
+    if (this->simdWidth == 16) {
+      simdType = ir::ProfilingInfo::ProfilingSimdType16;
+    } else if (this->simdWidth == 8) {
+      simdType = ir::ProfilingInfo::ProfilingSimdType8;
+    } else {
+      simdType = ir::ProfilingInfo::ProfilingSimdType1;
+      GBE_ASSERT(0);
+    }
+
+    p->NOP();
+    p->NOP();
+
+    GenRegister tmArf = GenRegister::tm0();
+    GenRegister profilingReg[5];
+    if (p->curr.execWidth == 16) {
+      profilingReg[0] = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_UD);
+      profilingReg[1] = GenRegister::offset(profilingReg[0], 1);
+      profilingReg[2] = GenRegister::retype(ra->genReg(insn.src(1)), GEN_TYPE_UD);
+      profilingReg[3] = GenRegister::offset(profilingReg[2], 1);
+      profilingReg[4] = GenRegister::retype(ra->genReg(insn.src(2)), GEN_TYPE_UD);
+    } else {
+      GBE_ASSERT(p->curr.execWidth == 8);
+      profilingReg[0] = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_UD);
+      profilingReg[1] = GenRegister::retype(ra->genReg(insn.src(1)), GEN_TYPE_UD);
+      profilingReg[2] = GenRegister::retype(ra->genReg(insn.src(2)), GEN_TYPE_UD);
+      profilingReg[3] = GenRegister::retype(ra->genReg(insn.src(3)), GEN_TYPE_UD);
+      profilingReg[4] = GenRegister::retype(ra->genReg(insn.src(4)), GEN_TYPE_UD);
+    }
+    GenRegister tmp = ra->genReg(insn.dst(0));
+    uint32_t profilingType = insn.extra.profilingType;
+    uint32_t bti = insn.extra.profilingBTI;
+    GBE_ASSERT(profilingType == 1);
+    GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
+    GenRegister lastTsReg = GenRegister::toUniform(profilingReg[3], GEN_TYPE_UL);
+    lastTsReg = GenRegister::offset(lastTsReg, 0, 2*sizeof(uint64_t));
+    GenRegister realClock = GenRegister::offset(lastTsReg, 0, sizeof(uint64_t));
+    GenRegister tmp0 = GenRegister::toUniform(profilingReg[3], GEN_TYPE_UL);
+
+    /* MOV(4)   tmp0<1>:UW	 arf_tm<4,4,1>:UW  */
+    p->push(); {
+      p->curr.execWidth = 4;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      GenRegister _tmp0 = tmp0;
+      _tmp0.type = GEN_TYPE_UW;
+      _tmp0.hstride = GEN_HORIZONTAL_STRIDE_1;
+      _tmp0.vstride = GEN_VERTICAL_STRIDE_4;
+      _tmp0.width = GEN_WIDTH_4;
+      p->MOV(_tmp0, tmArf);
+    } p->pop();
+
+    /* Calc the time elapsed. */
+    subTimestamps(tmp0, lastTsReg, tmp);
+    /* Update the real clock */
+    addTimestamps(realClock, tmp0, tmp);
+
+    //the epilog, record the last timestamp and return.
+    /* MOV(1)   epilog<1>:UL   realclock<0,1,0>:UL  */
+    /* ADD(1)   epilog<1>:UL   prolog<0,1,0>:UL  */
+    GenRegister prolog = GenRegister::toUniform(profilingReg[2], GEN_TYPE_UD);
+    prolog = GenRegister::offset(prolog, 0, 4*sizeof(uint32_t));
+    GenRegister epilog = GenRegister::offset(prolog, 0, 2*sizeof(uint32_t));
+    p->push(); {
+      p->curr.execWidth = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->MOV(epilog, GenRegister::retype(realClock, GEN_TYPE_UD));
+      p->MOV(GenRegister::offset(epilog, 0, sizeof(uint32_t)),
+          GenRegister::offset(GenRegister::retype(realClock, GEN_TYPE_UD), 0, sizeof(uint32_t)));
+      addTimestamps(epilog, prolog, tmp);
+    } p->pop();
+
+    /* Now, begin to write the results out. */
+    // Inc the log items number.
+    p->push(); {
+      //ptr[0] is the total count of the log items.
+      GenRegister sndMsg = GenRegister::retype(tmp, GEN_TYPE_UD);
+      sndMsg.width = GEN_WIDTH_8;
+      sndMsg.hstride = GEN_HORIZONTAL_STRIDE_1;
+      sndMsg.vstride = GEN_VERTICAL_STRIDE_8;
+      p->curr.execWidth = 8;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->MOV(sndMsg, GenRegister::immud(0x0));
+
+      GenRegister incRes = GenRegister::offset(sndMsg, 1);
+      p->push();
+      {
+        p->curr.execWidth = 1;
+        p->MOV(flagReg, GenRegister::immuw(0x01));
+      }
+      p->pop();
+      p->curr.useFlag(insn.state.flag, insn.state.subFlag);
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->ATOMIC(incRes, GEN_ATOMIC_OP_INC, sndMsg, GenRegister::immud(bti), 1);
+    } p->pop();
+
+    // Calculate the final addr
+    GenRegister addr = GenRegister::retype(tmp, GEN_TYPE_UD);
+    addr.width = GEN_WIDTH_8;
+    addr.hstride = GEN_HORIZONTAL_STRIDE_1;
+    addr.vstride = GEN_VERTICAL_STRIDE_8;
+    p->push(); {
+      GenRegister offset = GenRegister::offset(addr, 1);
+
+      p->curr.execWidth = 8;
+      p->curr.noMask = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->MUL(addr, GenRegister::toUniform(offset, GEN_TYPE_UD),
+          GenRegister::immud(sizeof(ir::ProfilingInfo::ProfilingReportItem)));
+      p->ADD(addr, addr, GenRegister::immud(4)); // for the counter
+      p->curr.execWidth = 1;
+      for (int i = 1; i < 8; i++) {
+        p->ADD(GenRegister::toUniform(GenRegister::offset(addr, 0, i*sizeof(uint32_t)), GEN_TYPE_UD),
+            GenRegister::toUniform(GenRegister::offset(addr, 0, i*sizeof(uint32_t)), GEN_TYPE_UD),
+            GenRegister::immud(i*sizeof(uint32_t)));
+      }
+    } p->pop();
+
+    GenRegister data = GenRegister::offset(addr, 1);
+    p->push(); {
+      p->curr.execWidth = 8;
+      p->curr.noMask = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->MOV(data, profilingReg[4]);
+    } p->pop();
+
+    // Write the result out
+    p->push(); {
+      GenRegister ffid = GenRegister::toUniform(data, GEN_TYPE_UD);
+      GenRegister tmp = GenRegister::toUniform(profilingReg[3], GEN_TYPE_UD);
+      GenRegister stateReg = GenRegister(GEN_ARCHITECTURE_REGISTER_FILE, GEN_ARF_STATE, 0,
+          GEN_TYPE_UD, GEN_VERTICAL_STRIDE_0, GEN_WIDTH_1, GEN_HORIZONTAL_STRIDE_1);
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->curr.execWidth = 1;
+      p->MOV(ffid, stateReg);
+      p->SHR(ffid, ffid, GenRegister::immud(24));
+      p->AND(ffid, ffid, GenRegister::immud(0x0ff));
+      p->OR(ffid, ffid, GenRegister::immud(simdType << 4));
+
+      GenRegister genInfo = GenRegister::offset(ffid, 0, 4);
+      p->MOV(genInfo, stateReg);
+      p->AND(genInfo, genInfo, GenRegister::immud(0x0ff07));
+      //The dispatch mask
+      stateReg = GenRegister(GEN_ARCHITECTURE_REGISTER_FILE, GEN_ARF_STATE, 2,
+          GEN_TYPE_UD, GEN_VERTICAL_STRIDE_0, GEN_WIDTH_1, GEN_HORIZONTAL_STRIDE_1);
+      p->MOV(tmp, stateReg);
+      p->AND(tmp, tmp, GenRegister::immud(0x0000ffff));
+      p->SHL(tmp, tmp, GenRegister::immud(16));
+      p->OR(genInfo, genInfo, tmp);
+
+      // Write it out.
+      p->curr.execWidth = 8;
+      p->curr.noMask = 1;
+      p->UNTYPED_WRITE(addr, GenRegister::immud(bti), 1);
+      p->ADD(addr, addr, GenRegister::immud(32));
+
+      // time stamps
+      for (int i = 0; i < 3; i++) {
+        p->curr.execWidth = 8;
+        p->MOV(data, GenRegister::retype(profilingReg[i], GEN_TYPE_UD));
+        p->UNTYPED_WRITE(addr, GenRegister::immud(bti), 1);
+        p->ADD(addr, addr, GenRegister::immud(32));
+      }
+    } p->pop();
   }
 
   void GenContext::setA0Content(uint16_t new_a0[16], uint16_t max_offset, int sz) {
