@@ -1089,7 +1089,7 @@ namespace gbe
     } else if (origin->getName().equals(StringRef("__gen_ocl_printf_index_buf"))) {
       new_bti = btiBase;
       incBtiBase();
-    } else if (origin->getName().equals(StringRef("__gen_ocl_timestamp_buf"))) {
+    } else if (origin->getName().equals(StringRef("__gen_ocl_profiling_buf"))) {
       new_bti = btiBase;
       incBtiBase();
     }
@@ -2566,10 +2566,12 @@ namespace gbe
       } else {
         if(v.getName().equals(StringRef("__gen_ocl_printf_buf"))) {
           ctx.getFunction().getPrintfSet()->setBufBTI(BtiMap.find(const_cast<GlobalVariable*>(&v))->second);
-          regTranslator.newScalarProxy(ir::ocl::printfbptr, const_cast<GlobalVariable*>(&v));
+          this->newRegister(const_cast<GlobalVariable*>(&v), NULL, true);
+          ctx.CVT(ir::TYPE_U32, ir::TYPE_U64, getRegister(const_cast<GlobalVariable*>(&v)), ir::ocl::printfbptr);
         } else if(v.getName().equals(StringRef("__gen_ocl_printf_index_buf"))) {
           ctx.getFunction().getPrintfSet()->setIndexBufBTI(BtiMap.find(const_cast<GlobalVariable*>(&v))->second);
-          regTranslator.newScalarProxy(ir::ocl::printfiptr, const_cast<GlobalVariable*>(&v));
+          this->newRegister(const_cast<GlobalVariable*>(&v), NULL, true);
+          ctx.CVT(ir::TYPE_U32, ir::TYPE_U64, getRegister(const_cast<GlobalVariable*>(&v)), ir::ocl::printfiptr);
         } else if(v.getName().equals(StringRef("__gen_ocl_profiling_buf"))) {
           ctx.getUnit().getProfilingInfo()->setBTI(BtiMap.find(const_cast<GlobalVariable*>(&v))->second);
           regTranslator.newScalarProxy(ir::ocl::profilingbptr, const_cast<GlobalVariable*>(&v));
