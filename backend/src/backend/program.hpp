@@ -128,6 +128,17 @@ namespace gbe {
     void setImageSet(ir::ImageSet * from) {
       imageSet = from;
     }
+    /*! Set profiling info. */
+    void setProfilingInfo(ir::ProfilingInfo * from) {
+      profilingInfo = from;
+    }
+    void * dupProfilingInfo() const {
+      void* ptr = profilingInfo ? (void *)(new ir::ProfilingInfo(*profilingInfo)) : NULL;
+      return ptr;
+    }
+    uint32_t getProfilingBTI(void) const {
+      return profilingInfo ? profilingInfo->getBTI() : 0;
+    }
     /*! Set printf set. */
     void setPrintfSet(ir::PrintfSet * from) {
       printfSet = from;
@@ -159,6 +170,16 @@ namespace gbe {
       if(printfSet)
         printfSet->outputPrintf(index_addr, buf_addr, global_wk_sz0,
                                 global_wk_sz1, global_wk_sz2, output_sz);
+    }
+
+    uint32_t getProfilingBufBTI() const {
+      GBE_ASSERT(profilingInfo);
+      return profilingInfo->getBTI();
+    }
+
+    void outputProfilingInfo(void* buf) {
+      if(profilingInfo)
+        profilingInfo->outputProfilingInfo(buf);
     }
 
     ir::FunctionArgument::InfoFromLLVM* getArgInfo(uint32_t id) const { return &args[id].info; }
@@ -231,6 +252,7 @@ namespace gbe {
     ir::SamplerSet *samplerSet;//!< Copy from the corresponding function.
     ir::ImageSet *imageSet;    //!< Copy from the corresponding function.
     ir::PrintfSet *printfSet;  //!< Copy from the corresponding function.
+    ir::ProfilingInfo *profilingInfo;  //!< Copy from the corresponding function.
     size_t compileWgSize[3];   //!< required work group size by kernel attribute.
     std::string functionAttributes; //!< function attribute qualifiers combined.
     GBE_CLASS(Kernel);         //!< Use custom allocators

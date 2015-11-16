@@ -138,6 +138,17 @@ extern gbe_kernel_get_image_size_cb *gbe_kernel_get_image_size;
 typedef void (gbe_kernel_get_image_data_cb)(gbe_kernel gbeKernel, ImageInfo *images);
 extern gbe_kernel_get_image_data_cb *gbe_kernel_get_image_data;
 
+/*! Get whether we are in the code profiling mode */
+typedef void (gbe_output_profiling_cb)(void* profiling_info, void* buf);
+extern gbe_output_profiling_cb *gbe_output_profiling;
+
+/*! Get the profiling bti */
+typedef uint32_t (gbe_get_profiling_bti_cb)(gbe_kernel gbeKernel);
+extern gbe_get_profiling_bti_cb *gbe_get_profiling_bti;
+
+typedef void* (gbe_dup_profiling_cb)(gbe_kernel gbeKernel);
+extern gbe_dup_profiling_cb *gbe_dup_profiling;
+
 /*! Get the printf number */
 typedef uint32_t (gbe_get_printf_num_cb)(void* printf_info);
 extern gbe_get_printf_num_cb *gbe_get_printf_num;

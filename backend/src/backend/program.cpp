@@ -88,12 +88,14 @@ namespace gbe {
 
   Kernel::Kernel(const std::string &name) :
     name(name), args(NULL), argNum(0), curbeSize(0), stackSize(0), useSLM(false),
-        slmSize(0), ctx(NULL), samplerSet(NULL), imageSet(NULL), printfSet(NULL) {}
+        slmSize(0), ctx(NULL), samplerSet(NULL), imageSet(NULL), printfSet(NULL),
+        profilingInfo(NULL) {}
   Kernel::~Kernel(void) {
     if(ctx) GBE_DELETE(ctx);
     if(samplerSet) GBE_DELETE(samplerSet);
     if(imageSet) GBE_DELETE(imageSet);
     if(printfSet) GBE_DELETE(printfSet);
+    if(profilingInfo) GBE_DELETE(profilingInfo);
     GBE_SAFE_DELETE_ARRAY(args);
   }
   int32_t Kernel::getCurbeOffset(gbe_curbe_type type, uint32_t subType) const {
@@ -159,6 +161,7 @@ namespace gbe {
     for (const auto &pair : set) {
       const std::string &name = pair.first;
       Kernel *kernel = this->compileKernel(unit, name, !OCL_STRICT_CONFORMANCE, OCL_PROFILING_LOG);
+      kernel->setProfilingInfo(new ir::ProfilingInfo(*unit.getProfilingInfo()));
       kernel->setSamplerSet(pair.second->getSamplerSet());
       kernel->setImageSet(pair.second->getImageSet());
       kernel->setPrintfSet(pair.second->getPrintfSet());
@@ -1125,6 +1128,21 @@ namespace gbe {
     kernel->getSamplerData(samplers);
   }
 
+  static void* kernelDupProfiling(gbe_kernel gbeKernel) {
+    if (gbeKernel == NULL) return NULL;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) gbeKernel;
+    return kernel->dupProfilingInfo();
+  }
+  static uint32_t kernelGetProfilingBTI(gbe_kernel gbeKernel) {
+    if (gbeKernel == NULL) return 0;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) gbeKernel;
+    return kernel->getProfilingBTI();
+  }
+  static void kernelOutputProfiling(void *profiling_info, void* buf) {
+    if (profiling_info == NULL) return;
+    ir::ProfilingInfo *pi = (ir::ProfilingInfo *)profiling_info;
+    return pi->outputProfilingInfo(buf);
+  }
   static uint32_t kernelGetPrintfNum(void * printf_info) {
     if (printf_info == NULL) return 0;
     const ir::PrintfSet *ps = (ir::PrintfSet *)printf_info;
@@ -1247,6 +1265,9 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_sampler_data_cb *gbe_kernel_get_sampler_data = 
 GBE_EXPORT_SYMBOL gbe_kernel_get_compile_wg_size_cb *gbe_kernel_get_compile_wg_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_image_size_cb *gbe_kernel_get_image_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_image_data_cb *gbe_kernel_get_image_data = NULL;
+GBE_EXPORT_SYMBOL gbe_output_profiling_cb *gbe_output_profiling = NULL;
+GBE_EXPORT_SYMBOL gbe_dup_profiling_cb *gbe_dup_profiling = NULL;
+GBE_EXPORT_SYMBOL gbe_get_profiling_bti_cb *gbe_get_profiling_bti = NULL;
 GBE_EXPORT_SYMBOL gbe_get_printf_num_cb *gbe_get_printf_num = NULL;
 GBE_EXPORT_SYMBOL gbe_dup_printfset_cb *gbe_dup_printfset = NULL;
 GBE_EXPORT_SYMBOL gbe_get_printf_buf_bti_cb *gbe_get_printf_buf_bti = NULL;
@@ -1296,7 +1317,10 @@ namespace gbe
       gbe_kernel_get_compile_wg_size = gbe::kernelGetCompileWorkGroupSize;
       gbe_kernel_get_image_size = gbe::kernelGetImageSize;
       gbe_kernel_get_image_data = gbe::kernelGetImageData;
+      gbe_get_profiling_bti = gbe::kernelGetProfilingBTI;
       gbe_get_printf_num = gbe::kernelGetPrintfNum;
+      gbe_dup_profiling = gbe::kernelDupProfiling;
+      gbe_output_profiling = gbe::kernelOutputProfiling;
       gbe_get_printf_buf_bti = gbe::kernelGetPrintfBufBTI;
       gbe_get_printf_indexbuf_bti = gbe::kernelGetPrintfIndexBufBTI;
       gbe_dup_printfset = gbe::kernelDupPrintfSet;
