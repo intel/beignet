@@ -66,6 +66,8 @@ set (GBE_SRC
     ir/value.hpp
     ir/lowering.cpp
     ir/lowering.hpp
+    ir/profiling.cpp
+    ir/profiling.hpp
     ir/printf.cpp
     ir/printf.hpp
     ir/immediate.hpp
