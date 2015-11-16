@@ -2451,8 +2451,9 @@ namespace gbe
     gc->p->FBL(tmp, tmp);
     gc->p->ADD(tmp, tmp, GenRegister::negate(GenRegister::immud(0x1)));
     gc->p->MUL(tmp, tmp, GenRegister::immud(4));
+    gc->p->ADD(tmp, tmp, GenRegister::immud(lid.nr*32));
     gc->p->MOV(GenRegister::addr1(0), GenRegister::retype(tmp, GEN_TYPE_UW));
-    GenRegister dimEnd = GenRegister::to_indirect1xN(lid, 0);
+    GenRegister dimEnd = GenRegister::to_indirect1xN(lid, 0, 0);
     gc->p->MOV(tmp, dimEnd);
     gc->p->MUL(gend, localsz, gid);
     gc->p->ADD(gend, gend, tmp);
@@ -2562,8 +2563,114 @@ namespace gbe
     } p->pop();
   }
 
-  void GenContext::emitCalcTimestampInstruction(const SelectionInstruction &insn) {
+  /* We will record at most 20 timestamps, each one is 16bits. We also will record the
+     prolog and epilog timestamps in 64 bits. So the format of the curbe timestamp reg is:
+     ---------------------------------------------------------
+     | ts0  | ts1  | ts2  | ts3  | ts4  | ts5  | ts6  | ts7	|  profilingReg0
+     | ts8  | ts9  | ts10 | ts11 | ts12 | ts13 | ts14 | ts15 |  profilingReg1
+     | ts16 | ts17 | ts18 | ts19 |	 prolog   |    epilog	|  profilingReg2
+     ---------------------------------------------------------
+     |    tmp0     |    tmp1     |lasttimestamp|  real clock |  profilingReg3
+     ---------------------------------------------------------
+     |	      | gX s | gX e | gY s | gY e | gZ s | gZ e |  profilingReg4
+     ---------------------------------------------------------
+     */
+  void GenContext::emitCalcTimestampInstruction(const SelectionInstruction &insn)
+  {
+    uint32_t pointNum = insn.extra.pointNum;
+    uint32_t tsType = insn.extra.timestampType;
+    GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
 
+    GBE_ASSERT(tsType == 1);
+    GenRegister tmArf = GenRegister::tm0();
+    GenRegister profilingReg[5];
+    GenRegister tmp;
+    if (p->curr.execWidth == 16) {
+      profilingReg[0] = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_UD);
+      profilingReg[1] = GenRegister::offset(profilingReg[0], 1);
+      profilingReg[2] = GenRegister::retype(ra->genReg(insn.src(1)), GEN_TYPE_UD);
+      profilingReg[3] = GenRegister::offset(profilingReg[2], 1);
+      profilingReg[4] = GenRegister::retype(ra->genReg(insn.src(2)), GEN_TYPE_UD);
+      if (insn.dstNum == 4) {
+        tmp = GenRegister::retype(ra->genReg(insn.dst(3)), GEN_TYPE_UD);
+      } else {
+        GBE_ASSERT(insn.dstNum == 3);
+        tmp = GenRegister::toUniform(profilingReg[4], GEN_TYPE_UL);
+      }
+    } else {
+      GBE_ASSERT(p->curr.execWidth == 8);
+      profilingReg[0] = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_UD);
+      profilingReg[1] = GenRegister::retype(ra->genReg(insn.src(1)), GEN_TYPE_UD);
+      profilingReg[2] = GenRegister::retype(ra->genReg(insn.src(2)), GEN_TYPE_UD);
+      profilingReg[3] = GenRegister::retype(ra->genReg(insn.src(3)), GEN_TYPE_UD);
+      profilingReg[4] = GenRegister::retype(ra->genReg(insn.src(4)), GEN_TYPE_UD);
+      if (insn.dstNum == 6) {
+        tmp = GenRegister::retype(ra->genReg(insn.dst(5)), GEN_TYPE_UD);
+      } else {
+        GBE_ASSERT(insn.dstNum == 5);
+        tmp = GenRegister::toUniform(profilingReg[4], GEN_TYPE_UL);
+      }
+    }
+    GenRegister tmp0 = GenRegister::toUniform(profilingReg[3], GEN_TYPE_UL);
+    GenRegister lastTsReg = GenRegister::toUniform(profilingReg[3], GEN_TYPE_UL);
+    lastTsReg = GenRegister::offset(lastTsReg, 0, 2*sizeof(uint64_t));
+    GenRegister realClock = GenRegister::offset(lastTsReg, 0, sizeof(uint64_t));
+
+    /* MOV(4)   tmp0<1>:UW	   arf_tm<4,4,1>:UW  */
+    p->push(); {
+      p->curr.execWidth = 4;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      GenRegister _tmp0 = tmp0;
+      _tmp0.type = GEN_TYPE_UW;
+      _tmp0.hstride = GEN_HORIZONTAL_STRIDE_1;
+      _tmp0.vstride = GEN_VERTICAL_STRIDE_4;
+      _tmp0.width = GEN_WIDTH_4;
+      p->MOV(_tmp0, tmArf);
+    } p->pop();
+
+    /* Calc the time elapsed. */
+    // SUB(1)  tmp0<1>:UL  tmp0<1>:UL   lastTS<0,1,0>
+    subTimestamps(tmp0, lastTsReg, tmp);
+
+    /* Update the real clock
+       ADD(1)   realclock<1>:UL  realclock<1>:UL  tmp0<1>:UL */
+    addTimestamps(realClock, tmp0, tmp);
+
+    /* We just record timestamp of the first time this point is reached. If the this point is
+       in loop, it can be reached many times. We will not record the later timestamps. The 32bits
+       timestamp can represent about 3.2s, one each kernel's execution time should never exceed
+       3s. So we just record the low 32 bits.
+       CMP.EQ(1)flag0.1	  NULL		tsReg_n<1>:UD  0x0
+       (+flag0.1) MOV(1)   tsReg_n<1>:UD  realclock<1>:UD  Just record the low 32bits
+       */
+    GenRegister tsReg = GenRegister::toUniform(profilingReg[pointNum/8], GEN_TYPE_UD);
+    tsReg = GenRegister::offset(tsReg, 0, (pointNum%8)*sizeof(uint32_t));
+
+    p->push(); {
+      p->curr.execWidth = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
+      p->CMP(GEN_CONDITIONAL_EQ, tsReg, GenRegister::immud(0));
+      p->curr.predicate = GEN_PREDICATE_NORMAL;
+      p->curr.inversePredicate = 0;
+      p->MOV(tsReg, GenRegister::retype(GenRegister::retype(realClock, GEN_TYPE_UD), GEN_TYPE_UD));
+    } p->pop();
+
+    /* Store the timestamp for next point use.
+       MOV(4)   lastTS<1>:UW     arf_tm<4,4,1>:UW  */
+    p->push(); {
+      p->curr.execWidth = 4;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      GenRegister _lastTsReg = lastTsReg;
+      _lastTsReg.type = GEN_TYPE_UW;
+      _lastTsReg.hstride = GEN_HORIZONTAL_STRIDE_1;
+      _lastTsReg.vstride = GEN_VERTICAL_STRIDE_4;
+      _lastTsReg.width = GEN_WIDTH_4;
+      p->MOV(_lastTsReg, tmArf);
+    } p->pop();
   }
 
   void GenContext::emitStoreProfilingInstruction(const SelectionInstruction &insn) {
