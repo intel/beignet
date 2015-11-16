@@ -142,6 +142,9 @@ namespace gbe
   /*! Passer the printf function call. */
   llvm::FunctionPass* createPrintfParserPass();
 
+  /*! Insert the time stamp for profiling. */
+  llvm::FunctionPass* createProfilingInserterPass(int profilingType, ir::Unit &unit);
+
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
   /* customized loop unrolling pass. */
   llvm::LoopPass *createCustomLoopUnrollPass();

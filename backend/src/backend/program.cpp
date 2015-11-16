@@ -114,6 +114,7 @@ namespace gbe {
 #ifdef GBE_COMPILER_AVAILABLE
   BVAR(OCL_OUTPUT_GEN_IR, false);
   BVAR(OCL_STRICT_CONFORMANCE, true);
+  IVAR(OCL_PROFILING_LOG, 0, 0, 1); // Int for different profiling types.
 
   bool Program::buildFromLLVMFile(const char *fileName, const void* module, std::string &error, int optLevel) {
     ir::Unit *unit = new ir::Unit();
@@ -121,7 +122,7 @@ namespace gbe {
     if(module){
       cloned_module = llvm::CloneModule((llvm::Module*)module);
     }
-    if (llvmToGen(*unit, fileName, module, optLevel, OCL_STRICT_CONFORMANCE) == false) {
+    if (llvmToGen(*unit, fileName, module, optLevel, OCL_STRICT_CONFORMANCE, OCL_PROFILING_LOG) == false) {
       if (fileName)
         error = std::string(fileName) + " not found";
       delete unit;
@@ -134,10 +135,10 @@ namespace gbe {
       unit = new ir::Unit();
       if(cloned_module){
         //suppose file exists and llvmToGen will not return false.
-        llvmToGen(*unit, fileName, cloned_module, 0, OCL_STRICT_CONFORMANCE);
+        llvmToGen(*unit, fileName, cloned_module, 0, OCL_STRICT_CONFORMANCE, OCL_PROFILING_LOG);
       }else{
         //suppose file exists and llvmToGen will not return false.
-        llvmToGen(*unit, fileName, module, 0, OCL_STRICT_CONFORMANCE);
+        llvmToGen(*unit, fileName, module, 0, OCL_STRICT_CONFORMANCE, OCL_PROFILING_LOG);
       }
     }
     assert(unit->getValid());
@@ -157,7 +158,7 @@ namespace gbe {
     if (kernelNum == 0) return true;
     for (const auto &pair : set) {
       const std::string &name = pair.first;
-      Kernel *kernel = this->compileKernel(unit, name, !OCL_STRICT_CONFORMANCE);
+      Kernel *kernel = this->compileKernel(unit, name, !OCL_STRICT_CONFORMANCE, OCL_PROFILING_LOG);
       kernel->setSamplerSet(pair.second->getSamplerSet());
       kernel->setImageSet(pair.second->getImageSet());
       kernel->setPrintfSet(pair.second->getPrintfSet());

@@ -206,7 +206,8 @@ namespace gbe
   BVAR(OCL_OUTPUT_LLVM_AFTER_LINK, false);
   BVAR(OCL_OUTPUT_LLVM_AFTER_GEN, false);
 
-  bool llvmToGen(ir::Unit &unit, const char *fileName,const void* module, int optLevel, bool strictMath)
+  bool llvmToGen(ir::Unit &unit, const char *fileName,const void* module,
+                 int optLevel, bool strictMath, int profiling)
   {
     std::string errInfo;
     std::unique_ptr<llvm::raw_fd_ostream> o = NULL;
@@ -286,6 +287,9 @@ namespace gbe
     passes.add(createDeadInstEliminationPass());   // Remove simplified instructions
     passes.add(createCFGSimplificationPass());     // Merge & remove BBs
     passes.add(createLowerSwitchPass());           // simplify cfg will generate switch-case instruction
+    if (profiling) {
+      passes.add(createProfilingInserterPass(profiling, unit));     // insert the time stamp for profiling.
+    }
     passes.add(createScalarizePass());             // Expand all vector ops
 
     if(OCL_OUTPUT_CFG)

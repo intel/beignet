@@ -61,6 +61,7 @@
 
 #include "llvm/llvm_gen_backend.hpp"
 #include "sys/map.hpp"
+#include "ir/unit.hpp"
 
 #include <iostream>
 #include <vector>
@@ -200,8 +201,9 @@ namespace gbe
     return changed;
   }
 
-  FunctionPass* createProfilingInserterPass(int profilingType)
+  FunctionPass* createProfilingInserterPass(int profilingType, ir::Unit &unit)
   {
+    unit.setInProfilingMode(true);
     return new ProfilingInserter(profilingType);
   }
   char ProfilingInserter::ID = 0;

@@ -302,7 +302,8 @@ namespace gbe {
 
   protected:
     /*! Compile a kernel */
-    virtual Kernel *compileKernel(const ir::Unit &unit, const std::string &name, bool relaxMath) = 0;
+    virtual Kernel *compileKernel(const ir::Unit &unit, const std::string &name,
+                                  bool relaxMath, int profiling) = 0;
     /*! Allocate an empty kernel. */
     virtual Kernel *allocateKernel(const std::string &name) = 0;
     /*! Kernels sorted by their name */

@@ -209,6 +209,8 @@ namespace gbe
     bool relaxMath;
     bool getIFENDIFFix(void) const { return ifEndifFix; }
     void setIFENDIFFix(bool fix) { ifEndifFix = fix; }
+    bool getProfilingMode(void) const { return inProfilingMode; }
+    void setProfilingMode(bool b) { inProfilingMode = b; }
     CompileErrorCode getErrCode() { return errCode; }
 
   protected:
@@ -223,6 +225,7 @@ namespace gbe
   private:
     CompileErrorCode errCode;
     bool ifEndifFix;
+    bool inProfilingMode;
     uint32_t regSpillTick;
     const char* asmFileName;
     /*! Build the curbe patch list for the given kernel */

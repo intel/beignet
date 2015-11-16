@@ -140,7 +140,8 @@ namespace gbe {
     {8, 16, false},
   };
 
-  Kernel *GenProgram::compileKernel(const ir::Unit &unit, const std::string &name, bool relaxMath) {
+  Kernel *GenProgram::compileKernel(const ir::Unit &unit, const std::string &name,
+                                    bool relaxMath, int profiling) {
 #ifdef GBE_COMPILER_AVAILABLE
     // Be careful when the simdWidth is forced by the programmer. We can see it
     // when the function already provides the simd width we need to use (i.e.
@@ -172,6 +173,12 @@ namespace gbe {
       ctx = GBE_NEW(Gen9Context, unit, name, deviceID, relaxMath);
     }
     GBE_ASSERTM(ctx != NULL, "Fail to create the gen context\n");
+
+    if (profiling) {
+      ctx->setProfilingMode(true);
+      unit.getProfilingInfo()->setDeviceID(deviceID);
+    }
+
     ctx->setASMFileName(this->asm_file_name);
 
     for (; codeGen < codeGenNum; ++codeGen) {
