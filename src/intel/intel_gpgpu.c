@@ -151,6 +151,8 @@ intel_gpgpu_delete_finished(intel_gpgpu_t *gpgpu)
     drm_intel_bo_unreference(gpgpu->stack_b.bo);
   if (gpgpu->scratch_b.bo)
     drm_intel_bo_unreference(gpgpu->scratch_b.bo);
+  if (gpgpu->profiling_b.bo)
+    drm_intel_bo_unreference(gpgpu->profiling_b.bo);
 
   if(gpgpu->constant_b.bo)
     drm_intel_bo_unreference(gpgpu->constant_b.bo);
@@ -904,6 +906,10 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   if (gpgpu->printf_b.bo)
     dri_bo_unreference(gpgpu->printf_b.bo);
   gpgpu->printf_b.bo = NULL;
+
+  if (gpgpu->profiling_b.bo)
+    dri_bo_unreference(gpgpu->profiling_b.bo);
+  gpgpu->profiling_b.bo = NULL;
 
   /* Set the profile buffer*/
   if(gpgpu->time_stamp_b.bo)
@@ -2281,6 +2287,35 @@ intel_gpgpu_event_get_exec_timestamp(intel_gpgpu_t* gpgpu, intel_event_t *event,
 }
 
 static int
+intel_gpgpu_set_profiling_buf(intel_gpgpu_t *gpgpu, uint32_t size, uint32_t offset, uint8_t bti)
+{
+  drm_intel_bo *bo = NULL;
+
+  gpgpu->profiling_b.bo = drm_intel_bo_alloc(gpgpu->drv->bufmgr, "Profiling buffer", size, 64);
+  bo = gpgpu->profiling_b.bo;
+  if (!bo || (drm_intel_bo_map(bo, 1) != 0)) {
+    fprintf(stderr, "%s:%d: %s.\n", __FILE__, __LINE__, strerror(errno));
+    return -1;
+  }
+  memset(bo->virtual, 0, size);
+  drm_intel_bo_unmap(bo);
+  cl_gpgpu_bind_buf((cl_gpgpu)gpgpu, (cl_buffer)bo, offset, 0, size, bti);
+  return 0;
+}
+
+static void
+intel_gpgpu_set_profiling_info(intel_gpgpu_t *gpgpu, void* profiling_info)
+{
+  gpgpu->profiling_info = profiling_info;
+}
+
+static void*
+intel_gpgpu_get_profiling_info(intel_gpgpu_t *gpgpu)
+{
+  return gpgpu->profiling_info;
+}
+
+static int
 intel_gpgpu_set_printf_buf(intel_gpgpu_t *gpgpu, uint32_t i, uint32_t size, uint32_t offset, uint8_t bti)
 {
   drm_intel_bo *bo = NULL;
@@ -2309,6 +2344,24 @@ intel_gpgpu_set_printf_buf(intel_gpgpu_t *gpgpu, uint32_t i, uint32_t size, uint
   cl_gpgpu_bind_buf((cl_gpgpu)gpgpu, (cl_buffer)bo, offset, 0, size, bti);
   return 0;
 }
+
+static void*
+intel_gpgpu_map_profiling_buf(intel_gpgpu_t *gpgpu)
+{
+  drm_intel_bo *bo = NULL;
+  bo = gpgpu->profiling_b.bo;
+  drm_intel_bo_map(bo, 1);
+  return bo->virtual;
+}
+
+static void
+intel_gpgpu_unmap_profiling_buf_addr(intel_gpgpu_t *gpgpu)
+{
+  drm_intel_bo *bo = NULL;
+  bo = gpgpu->profiling_b.bo;
+  drm_intel_bo_unmap(bo);
+}
+
 
 static void*
 intel_gpgpu_map_printf_buf(intel_gpgpu_t *gpgpu, uint32_t i)
@@ -2402,6 +2455,11 @@ intel_set_gpgpu_callbacks(int device_id)
   cl_gpgpu_event_get_gpu_cur_timestamp = (cl_gpgpu_event_get_gpu_cur_timestamp_cb *)intel_gpgpu_event_get_gpu_cur_timestamp;
   cl_gpgpu_ref_batch_buf = (cl_gpgpu_ref_batch_buf_cb *)intel_gpgpu_ref_batch_buf;
   cl_gpgpu_unref_batch_buf = (cl_gpgpu_unref_batch_buf_cb *)intel_gpgpu_unref_batch_buf;
+  cl_gpgpu_set_profiling_buffer = (cl_gpgpu_set_profiling_buffer_cb *)intel_gpgpu_set_profiling_buf;
+  cl_gpgpu_set_profiling_info = (cl_gpgpu_set_profiling_info_cb *)intel_gpgpu_set_profiling_info;
+  cl_gpgpu_get_profiling_info = (cl_gpgpu_get_profiling_info_cb *)intel_gpgpu_get_profiling_info;
+  cl_gpgpu_map_profiling_buffer = (cl_gpgpu_map_profiling_buffer_cb *)intel_gpgpu_map_profiling_buf;
+  cl_gpgpu_unmap_profiling_buffer = (cl_gpgpu_unmap_profiling_buffer_cb *)intel_gpgpu_unmap_profiling_buf_addr;
   cl_gpgpu_set_printf_buffer = (cl_gpgpu_set_printf_buffer_cb *)intel_gpgpu_set_printf_buf;
   cl_gpgpu_map_printf_buffer = (cl_gpgpu_map_printf_buffer_cb *)intel_gpgpu_map_printf_buf;
   cl_gpgpu_unmap_printf_buffer = (cl_gpgpu_unmap_printf_buffer_cb *)intel_gpgpu_unmap_printf_buf_addr;

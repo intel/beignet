@@ -229,6 +229,7 @@ cl_command_queue_flush_gpgpu(cl_command_queue queue, cl_gpgpu gpgpu)
   size_t global_wk_sz[3];
   size_t outbuf_sz = 0;
   void* printf_info = cl_gpgpu_get_printf_info(gpgpu, global_wk_sz, &outbuf_sz);
+  void* profiling_info;
 
   if (cl_gpgpu_flush(gpgpu) < 0)
     return CL_OUT_OF_RESOURCES;
@@ -251,6 +252,13 @@ cl_command_queue_flush_gpgpu(cl_command_queue queue, cl_gpgpu gpgpu)
     interp_release_printf_info(printf_info);
     global_wk_sz[0] = global_wk_sz[1] = global_wk_sz[2] = 0;
     cl_gpgpu_set_printf_info(gpgpu, NULL, global_wk_sz);
+  }
+
+  /* If have profiling info, output it. */
+  profiling_info = cl_gpgpu_get_profiling_info(gpgpu);
+  if (profiling_info) {
+    interp_output_profiling(profiling_info, cl_gpgpu_map_profiling_buffer(gpgpu));
+    cl_gpgpu_unmap_profiling_buffer(gpgpu);
   }
   return CL_SUCCESS;
 }

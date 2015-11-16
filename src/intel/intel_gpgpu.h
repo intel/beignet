@@ -46,6 +46,7 @@ struct intel_gpgpu
   void* ker_opaque;
   size_t global_wk_sz[3];
   void* printf_info;
+  void* profiling_info;
   struct intel_driver *drv;
   struct intel_batchbuffer *batch;
   cl_gpgpu_kernel *ker;
@@ -66,7 +67,7 @@ struct intel_gpgpu
   struct { drm_intel_bo *bo; } time_stamp_b;  /* time stamp buffer */
   struct { drm_intel_bo *bo;
            drm_intel_bo *ibo;} printf_b;      /* the printf buf and index buf*/
-
+  struct { drm_intel_bo *bo; } profiling_b;   /* the buf for profiling*/
   struct { drm_intel_bo *bo; } aux_buf;
   struct {
     uint32_t surface_heap_offset;

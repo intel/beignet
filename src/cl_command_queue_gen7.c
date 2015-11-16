@@ -270,6 +270,36 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
 }
 
 static int
+cl_bind_profiling(cl_gpgpu gpgpu, uint32_t simd_sz, cl_kernel ker, size_t global_sz, size_t local_sz, uint32_t bti) {
+  int32_t offset;
+  int i = 0;
+  int thread_num;
+  if (simd_sz == 16) {
+    for(i = 0; i < 3; i++) {
+      offset = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_PROFILING_TIMESTAMP0 + i, 0);
+      assert(offset >= 0);
+      memset(ker->curbe + offset, 0x0, sizeof(uint32_t)*8*2);
+      thread_num = (local_sz + 15)/16;
+    }
+  } else {
+    assert(simd_sz == 8);
+    for(i = 0; i < 5; i++) {
+      offset = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_PROFILING_TIMESTAMP0 + i, 0);
+      assert(offset >= 0);
+      memset(ker->curbe + offset, 0x0, sizeof(uint32_t)*8);
+      thread_num = (local_sz + 7)/8;
+    }
+  }
+
+  offset = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_PROFILING_BUF_POINTER, 0);
+  thread_num = thread_num*(global_sz/local_sz);
+  if (cl_gpgpu_set_profiling_buffer(gpgpu, thread_num*128 + 4, offset, bti))
+    return -1;
+
+  return 0;
+}
+
+static int
 cl_bind_printf(cl_gpgpu gpgpu, cl_kernel ker, void* printf_info, int printf_num, size_t global_sz) {
   int32_t value = GBE_CURBE_PRINTF_INDEX_POINTER;
   int32_t offset = interp_kernel_get_curbe_offset(ker->opaque, value, 0);
@@ -362,6 +392,13 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   if (printf_num) {
     if (cl_bind_printf(gpgpu, ker, printf_info, printf_num, global_size) != 0)
       goto error;
+  }
+  if (interp_get_profiling_bti(ker->opaque) != 0) {
+    if (cl_bind_profiling(gpgpu, simd_sz, ker, global_size, local_sz, interp_get_profiling_bti(ker->opaque)))
+      goto error;
+    cl_gpgpu_set_profiling_info(gpgpu, interp_dup_profiling(ker->opaque));
+  } else {
+	cl_gpgpu_set_profiling_info(gpgpu, NULL);
   }
 
   /* Bind user buffers */

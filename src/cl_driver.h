@@ -273,6 +273,22 @@ extern cl_gpgpu_ref_batch_buf_cb *cl_gpgpu_ref_batch_buf;
 typedef void (cl_gpgpu_unref_batch_buf_cb)(void*);
 extern cl_gpgpu_unref_batch_buf_cb *cl_gpgpu_unref_batch_buf;
 
+/* Set the profiling buffer */
+typedef int (cl_gpgpu_set_profiling_buffer_cb)(cl_gpgpu, uint32_t, uint32_t, uint8_t);
+extern cl_gpgpu_set_profiling_buffer_cb *cl_gpgpu_set_profiling_buffer;
+
+typedef int (cl_gpgpu_set_profiling_info_cb)(cl_gpgpu, void *);
+extern cl_gpgpu_set_profiling_info_cb *cl_gpgpu_set_profiling_info;
+
+typedef void* (cl_gpgpu_get_profiling_info_cb)(cl_gpgpu);
+extern cl_gpgpu_get_profiling_info_cb *cl_gpgpu_get_profiling_info;
+
+typedef void* (cl_gpgpu_map_profiling_buffer_cb)(cl_gpgpu);
+extern cl_gpgpu_map_profiling_buffer_cb *cl_gpgpu_map_profiling_buffer;
+
+typedef void (cl_gpgpu_unmap_profiling_buffer_cb)(cl_gpgpu);
+extern cl_gpgpu_unmap_profiling_buffer_cb *cl_gpgpu_unmap_profiling_buffer;
+
 /* Set the printf buffer */
 typedef int (cl_gpgpu_set_printf_buffer_cb)(cl_gpgpu, uint32_t, uint32_t, uint32_t, uint8_t);
 extern cl_gpgpu_set_printf_buffer_cb *cl_gpgpu_set_printf_buffer;
