@@ -2397,6 +2397,136 @@ namespace gbe
     p->TYPED_WRITE(header, true, bti);
   }
 
+  static void calcGID(GenRegister& reg, GenRegister& tmp, int flag, int subFlag, int dim, GenContext *gc)
+  {
+    GenRegister flagReg = GenRegister::flag(flag, subFlag);
+    GenRegister gstart = GenRegister::offset(reg, 0, 8 + dim*8);
+    GenRegister gend = GenRegister::offset(gstart, 0, 4);
+    GenRegister lid, localsz, gid, goffset;
+    if (dim == 0) {
+      lid = GenRegister::toUniform(gc->ra->genReg(GenRegister::ud16grf(ir::ocl::lid0)), GEN_TYPE_UD);
+      localsz = GenRegister::toUniform(gc->ra->genReg(GenRegister::ud1grf(ir::ocl::lsize0)), GEN_TYPE_UD);
+      gid = GenRegister::toUniform(gc->ra->genReg(GenRegister::ud1grf(ir::ocl::groupid0)), GEN_TYPE_UD);
+      goffset = GenRegister::toUniform(gc->ra->genReg(GenRegister::ud1grf(ir::ocl::goffset0)), GEN_TYPE_UD);
+    } else if (dim == 1) {
+      lid = GenRegister::toUniform(gc->ra->genReg(GenRegister::ud16grf(ir::ocl::lid1)), GEN_TYPE_UD);
+      localsz = GenRegister::toUniform(gc->ra->genReg(GenRegister::ud1grf(ir::ocl::lsize1)), GEN_TYPE_UD);
+      gid = GenRegister::toUniform(gc->ra->genReg(GenRegister::ud1grf(ir::ocl::groupid1)), GEN_TYPE_UD);
+      goffset = GenRegister::toUniform(gc->ra->genReg(GenRegister::ud1grf(ir::ocl::goffset1)), GEN_TYPE_UD);
+    } else {
+      lid = GenRegister::toUniform(gc->ra->genReg(GenRegister::ud16grf(ir::ocl::lid2)), GEN_TYPE_UD);
+      localsz = GenRegister::toUniform(gc->ra->genReg(GenRegister::ud1grf(ir::ocl::lsize2)), GEN_TYPE_UD);
+      gid = GenRegister::toUniform(gc->ra->genReg(GenRegister::ud1grf(ir::ocl::groupid2)), GEN_TYPE_UD);
+      goffset = GenRegister::toUniform(gc->ra->genReg(GenRegister::ud1grf(ir::ocl::goffset2)), GEN_TYPE_UD);
+    }
+
+    gc->p->MUL(gstart, localsz, gid);
+    gc->p->ADD(gstart, gstart, lid);
+    gc->p->ADD(gstart, gstart, goffset);
+
+    GenRegister ip;
+    gc->p->MOV(flagReg, GenRegister::immuw(0x0));
+    gc->p->curr.useFlag(flag, subFlag);
+    gc->p->curr.predicate = GEN_PREDICATE_NONE;
+    if (gc->getSimdWidth() == 16)
+      gc->p->curr.execWidth = 16;
+    else
+      gc->p->curr.execWidth = 8;
+
+    if (!gc->isDWLabel()) {
+      ip = gc->ra->genReg(GenRegister::uw16grf(ir::ocl::blockip));
+      gc->p->CMP(GEN_CONDITIONAL_EQ, ip, GenRegister::immuw(0xffff));
+    } else {
+      ip = gc->ra->genReg(GenRegister::ud16grf(ir::ocl::dwblockip));
+      gc->p->CMP(GEN_CONDITIONAL_EQ, ip, GenRegister::immud(0xffffffff));
+    }
+    gc->p->curr.execWidth = 1;
+    gc->p->MOV(GenRegister::retype(tmp, GEN_TYPE_UW), flagReg);
+
+    if (gc->getSimdWidth() == 16)
+      gc->p->OR(tmp, tmp, GenRegister::immud(0xffff0000));
+    else
+      gc->p->OR(tmp, tmp, GenRegister::immud(0xffffff00));
+
+    gc->p->FBL(tmp, tmp);
+    gc->p->ADD(tmp, tmp, GenRegister::negate(GenRegister::immud(0x1)));
+    gc->p->MUL(tmp, tmp, GenRegister::immud(4));
+    gc->p->MOV(GenRegister::addr1(0), GenRegister::retype(tmp, GEN_TYPE_UW));
+    GenRegister dimEnd = GenRegister::to_indirect1xN(lid, 0);
+    gc->p->MOV(tmp, dimEnd);
+    gc->p->MUL(gend, localsz, gid);
+    gc->p->ADD(gend, gend, tmp);
+    gc->p->ADD(gend, gend, goffset);
+  }
+
+  void GenContext::calcGlobalXYZRange(GenRegister& reg, GenRegister& tmp, int flag, int subFlag)
+  {
+    p->push(); {
+      p->curr.execWidth = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      calcGID(reg, tmp, flag, subFlag, 0, this);
+      calcGID(reg, tmp, flag, subFlag, 1, this);
+      calcGID(reg, tmp, flag, subFlag, 2, this);
+    } p->pop();
+  }
+
+  void GenContext::profilingProlog(void) {
+    // record the prolog, globalXYZ and lasttimestamp at the very beginning.
+    GenRegister profilingReg2, profilingReg3, profilingReg4;
+    GenRegister tmArf = GenRegister(GEN_ARCHITECTURE_REGISTER_FILE,
+        0xc0,
+        0,
+        GEN_TYPE_UW,
+        GEN_VERTICAL_STRIDE_4,
+        GEN_WIDTH_4,
+        GEN_HORIZONTAL_STRIDE_1);
+    if (this->simdWidth == 16) {
+      profilingReg2 = ra->genReg(GenRegister::ud16grf(ir::ocl::profilingts1));
+      profilingReg3 = GenRegister::offset(profilingReg2, 1);
+      profilingReg4 = ra->genReg(GenRegister::ud16grf(ir::ocl::profilingts2));
+    } else {
+      GBE_ASSERT(this->simdWidth == 8);
+      profilingReg2 = ra->genReg(GenRegister::ud8grf(ir::ocl::profilingts2));
+      profilingReg3 = ra->genReg(GenRegister::ud8grf(ir::ocl::profilingts3));
+      profilingReg4 = ra->genReg(GenRegister::ud8grf(ir::ocl::profilingts4));
+    }
+
+    /* MOV(4)   prolog<1>:UW   arf_tm<4,4,1>:UW  */
+    /* MOV(4)   lastTsReg<1>:UW  prolog<4,4,1>:UW  */
+    GenRegister prolog = profilingReg2;
+    prolog.type = GEN_TYPE_UW;
+    prolog.hstride = GEN_HORIZONTAL_STRIDE_1;
+    prolog.vstride = GEN_VERTICAL_STRIDE_4;
+    prolog.width = GEN_WIDTH_4;
+    prolog = GenRegister::offset(prolog, 0, 4*sizeof(uint32_t));
+
+    GenRegister lastTsReg = GenRegister::toUniform(profilingReg3, GEN_TYPE_UL);
+    lastTsReg = GenRegister::offset(lastTsReg, 0, 2*sizeof(uint64_t));
+    lastTsReg.type = GEN_TYPE_UW;
+    lastTsReg.hstride = GEN_HORIZONTAL_STRIDE_1;
+    lastTsReg.vstride = GEN_VERTICAL_STRIDE_4;
+    lastTsReg.width = GEN_WIDTH_4;
+
+    GenRegister gids = GenRegister::toUniform(profilingReg4, GEN_TYPE_UD);
+    GenRegister tmp = GenRegister::toUniform(profilingReg4, GEN_TYPE_UD);
+
+    // X Y and Z
+    this->calcGlobalXYZRange(gids, tmp, 0, 1);
+
+    p->push(); {
+      p->curr.execWidth = 4;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->MOV(prolog, tmArf);
+      p->MOV(lastTsReg, tmArf);
+    } p->pop();
+
+    p->NOP();
+    p->NOP();
+    return;
+  }
+
   void GenContext::emitCalcTimestampInstruction(const SelectionInstruction &insn) {
 
   }
@@ -2462,6 +2592,9 @@ namespace gbe
     schedulePostRegAllocation(*this, *this->sel);
     if (OCL_OUTPUT_REG_ALLOC)
       ra->outputAllocation();
+    if (inProfilingMode) { // add the profiling prolog before do anything.
+      this->profilingProlog();
+    }
     this->emitStackPointer();
     this->clearFlagRegister();
     this->emitSLMOffset();

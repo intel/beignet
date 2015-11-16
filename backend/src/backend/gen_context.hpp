@@ -86,6 +86,7 @@ namespace gbe
     /*! Simd width chosen for the current function */
     INLINE uint32_t getSimdWidth(void) const { return simdWidth; }
     void clearFlagRegister(void);
+    void profilingProlog(void);
     /*! check the flag reg, if is grf, use f0.1 instead */
     GenRegister checkFlagRegister(GenRegister flagReg);
     /*! Emit the per-lane stack pointer computation */
@@ -223,6 +224,7 @@ namespace gbe
     void allocCurbeReg(ir::Register reg);
 
     virtual void setA0Content(uint16_t new_a0[16], uint16_t max_offset = 0, int sz = 0);
+    void calcGlobalXYZRange(GenRegister& reg, GenRegister& tmp, int flag, int subFlag);
 
   private:
     CompileErrorCode errCode;
