@@ -52,6 +52,13 @@ namespace ir {
     const LabelIndex index = this->label();
     this->LABEL(index);
     const BasicBlock *lastBlock = this->bb;
+
+    /* Append the STORE_PROFILING just before return. */
+    if (unit.getInProfilingMode() == true) {
+      this->STORE_PROFILING(this->getUnit().getProfilingInfo()->getBTI(),
+                            this->getUnit().getProfilingInfo()->getProfilingType());
+    }
+
     this->RET();
 
     // Now traverse all instructions and replace all returns by GOTO index
