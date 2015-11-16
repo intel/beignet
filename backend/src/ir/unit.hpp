@@ -26,6 +26,7 @@
 
 #include "ir/constant.hpp"
 #include "ir/register.hpp"
+#include "ir/profiling.hpp"
 #include "sys/map.hpp"
 
 namespace gbe {
@@ -33,6 +34,7 @@ namespace ir {
 
   // A unit contains a set of functions
   class Function;
+  class ProfilingInfo;
 
   /*! Complete unit of compilation. It contains a set of functions and a set of
    *  constant the functions may refer to.
@@ -72,6 +74,12 @@ namespace ir {
     ConstantSet& getConstantSet(void) { return constantSet; }
     /*! Return the constant set */
     const ConstantSet& getConstantSet(void) const { return constantSet; }
+    /*! Get profiling info in this function */
+    ProfilingInfo* getProfilingInfo(void) const { return profilingInfo; }
+    /*! Set in profiling mode */
+    void setInProfilingMode(bool b) { inProfilingMode = b; }
+    /*! Get in profiling mode */
+    bool getInProfilingMode(void) const { return inProfilingMode; }
     void setValid(bool value) { valid = value; }
     bool getValid() { return valid; }
   private:
@@ -79,8 +87,10 @@ namespace ir {
     FunctionSet functions; //!< All the defined functions
     ConstantSet constantSet; //!< All the constants defined in the unit
     PointerSize pointerSize; //!< Size shared by all pointers
+    ProfilingInfo *profilingInfo; //!< profilingInfo store the information for profiling.
     GBE_CLASS(Unit);
     bool valid;
+    bool inProfilingMode;
   };
 
   /*! Output the unit string in the given stream */
