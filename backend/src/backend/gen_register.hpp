@@ -798,6 +798,16 @@ namespace gbe
       return reg;
     }
 
+    static INLINE GenRegister tm0(void) {
+      return GenRegister(GEN_ARCHITECTURE_REGISTER_FILE,
+                         0xc0,
+                         0,
+                         GEN_TYPE_UW,
+                         GEN_VERTICAL_STRIDE_4,
+                         GEN_WIDTH_4,
+                         GEN_HORIZONTAL_STRIDE_1);
+    }
+
     static INLINE GenRegister acc(void) {
       return GenRegister(GEN_ARCHITECTURE_REGISTER_FILE,
                          GEN_ARF_ACCUMULATOR,
