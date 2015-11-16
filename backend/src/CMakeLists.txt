@@ -87,6 +87,7 @@ set (GBE_SRC
     llvm/llvm_intrinsic_lowering.cpp
     llvm/llvm_barrier_nodup.cpp
     llvm/llvm_printf_parser.cpp
+    llvm/llvm_profiling.cpp
     llvm/ExpandConstantExpr.cpp
     llvm/ExpandUtils.cpp
     llvm/PromoteIntegers.cpp
