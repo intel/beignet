@@ -447,6 +447,28 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
+  /*! calculate the exec time and store it. */
+  class CalcTimestampInstruction : public Instruction {
+  public:
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+    /*! Get the point number of timestamp point */
+    uint32_t getPointNum(void) const;
+    /*! Get the timestamp type */
+    uint32_t getTimestamptType(void) const;
+  };
+
+  /*! store the profiling information. */
+  class StoreProfilingInstruction : public Instruction {
+  public:
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+    /*! Get the profiling info type */
+    uint32_t getProfilingType(void) const;
+    /*! Get the BTI index*/
+    uint32_t getBTI(void) const;
+  };
+
   /*! Branch instruction is the unified way to branch (with or without
    *  predicate)
    */
@@ -771,7 +793,10 @@ namespace ir {
   Instruction GET_IMAGE_INFO(int infoType, Register dst, uint8_t imageIndex, Register infoReg);
   /*! label labelIndex */
   Instruction LABEL(LabelIndex labelIndex);
-
+  /*! calculate the execute timestamp for profiling */
+  Instruction CALC_TIMESTAMP(uint32_t pointNum, uint32_t tsType);
+  /*! calculate the execute timestamp for profiling */
+  Instruction STORE_PROFILING(uint32_t bti, uint32_t Type);
 } /* namespace ir */
 } /* namespace gbe */
 

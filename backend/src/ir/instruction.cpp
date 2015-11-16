@@ -756,6 +756,58 @@ namespace ir {
       static const uint32_t dstNum = 1;
     };
 
+    class ALIGNED_INSTRUCTION CalcTimestampInstruction :
+      public BasePolicy,
+      public NSrcPolicy<CalcTimestampInstruction, 0>,
+      public NDstPolicy<CalcTimestampInstruction, 0>
+    {
+    public:
+      CalcTimestampInstruction(uint32_t pointNum, uint32_t timestampType) {
+        this->opcode = OP_CALC_TIMESTAMP;
+        this->timestampType = static_cast<uint8_t>(timestampType);
+        this->pointNum = static_cast<uint8_t>(pointNum);
+      }
+
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const {
+        this->outOpcode(out);
+        out << "TimeStamp pointer " << static_cast<uint32_t>(pointNum)
+          << " (Type " << static_cast<uint32_t>(timestampType) << ")";
+      }
+      uint32_t getPointNum(void) const { return this->pointNum; }
+      uint32_t getTimestamptType(void) const { return this->timestampType; }
+      uint8_t timestampType;       //!< Type of the time stamp, 16bits or 32bits, eg.
+      uint8_t pointNum;            //!< The insert point number.
+      Register dst[0], src[0];
+    };
+
+    class ALIGNED_INSTRUCTION StoreProfilingInstruction :
+      public BasePolicy,
+      public NSrcPolicy<StoreProfilingInstruction, 0>,
+      public NDstPolicy<StoreProfilingInstruction, 0>
+    {
+    public:
+      StoreProfilingInstruction(uint32_t bti, uint32_t profilingType) {
+        this->opcode = OP_STORE_PROFILING;
+        this->profilingType = static_cast<uint8_t>(profilingType);
+        this->bti = static_cast<uint8_t>(bti);
+      }
+
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const {
+        this->outOpcode(out);
+        out << " BTI " << static_cast<uint32_t>(this->bti)
+          << " (Type " << static_cast<uint32_t>(this->profilingType) << ")";
+      }
+
+      uint32_t getProfilingType(void) const { return this->profilingType; }
+      uint32_t getBTI(void) const { return this->bti; }
+      uint8_t profilingType;     //!< Type format of profiling, 16bits or 32bits, eg.
+      uint8_t bti;
+      Register src[0];
+      Register dst[0];
+    };
+
     class ALIGNED_INSTRUCTION LoadImmInstruction :
       public BasePolicy,
       public NSrcPolicy<LoadImmInstruction, 0>,
@@ -1306,6 +1358,26 @@ namespace ir {
       return true;
     }
 
+    INLINE bool CalcTimestampInstruction::wellFormed(const Function &fn, std::string &whyNot) const {
+      if (UNLIKELY(this->timestampType != 1)) {
+        whyNot = "Wrong time stamp type";
+        return false;
+      }
+      if (UNLIKELY(this->pointNum >= 20 && this->pointNum != 0xff && this->pointNum != 0xfe)) {
+        whyNot = "To much Insert pointer";
+        return false;
+      }
+      return true;
+    }
+
+    INLINE bool StoreProfilingInstruction::wellFormed(const Function &fn, std::string &whyNot) const {
+      if (UNLIKELY(this->profilingType != 1)) {
+        whyNot = "Wrong profiling format";
+        return false;
+      }
+      return true;
+    }
+
 #undef CHECK_TYPE
 
     /////////////////////////////////////////////////////////////////////////
@@ -1564,6 +1636,14 @@ START_INTROSPECTION(GetImageInfoInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(GetImageInfoInstruction)
 
+START_INTROSPECTION(CalcTimestampInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(CalcTimestampInstruction)
+
+START_INTROSPECTION(StoreProfilingInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(StoreProfilingInstruction)
+
 START_INTROSPECTION(LoadImmInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(LoadImmInstruction)
@@ -1747,7 +1827,9 @@ END_FUNCTION(Instruction, Register)
     return opcode == OP_STORE ||
            opcode == OP_TYPED_WRITE ||
            opcode == OP_SYNC ||
-           opcode == OP_ATOMIC;
+           opcode == OP_ATOMIC ||
+           opcode == OP_CALC_TIMESTAMP ||
+           opcode == OP_STORE_PROFILING;
   }
 
 #define DECL_MEM_FN(CLASS, RET, PROTOTYPE, CALL) \
@@ -1803,6 +1885,10 @@ DECL_MEM_FN(TypedWriteInstruction, Type, getCoordType(void), getCoordType())
 DECL_MEM_FN(TypedWriteInstruction, uint8_t, getImageIndex(void), getImageIndex())
 DECL_MEM_FN(GetImageInfoInstruction, uint32_t, getInfoType(void), getInfoType())
 DECL_MEM_FN(GetImageInfoInstruction, uint8_t, getImageIndex(void), getImageIndex())
+DECL_MEM_FN(CalcTimestampInstruction, uint32_t, getPointNum(void), getPointNum())
+DECL_MEM_FN(CalcTimestampInstruction, uint32_t, getTimestamptType(void), getTimestamptType())
+DECL_MEM_FN(StoreProfilingInstruction, uint32_t, getProfilingType(void), getProfilingType())
+DECL_MEM_FN(StoreProfilingInstruction, uint32_t, getBTI(void), getBTI())
 
 #undef DECL_MEM_FN
 
@@ -2078,6 +2164,14 @@ DECL_MEM_FN(MemInstruction, void,     setBtiReg(Register reg), setBtiReg(reg))
 
   Instruction GET_IMAGE_INFO(int infoType, Register dst, uint8_t imageIndex, Register infoReg) {
     return internal::GetImageInfoInstruction(infoType, dst, imageIndex, infoReg).convert();
+  }
+
+  Instruction CALC_TIMESTAMP(uint32_t pointNum, uint32_t tsType) {
+    return internal::CalcTimestampInstruction(pointNum, tsType).convert();
+  }
+
+  Instruction STORE_PROFILING(uint32_t bti, uint32_t profilingType) {
+    return internal::StoreProfilingInstruction(bti, profilingType).convert();
   }
 
   std::ostream &operator<< (std::ostream &out, const Instruction &insn) {
