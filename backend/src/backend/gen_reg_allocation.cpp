@@ -1168,6 +1168,53 @@ namespace gbe
         delete boolsMap;
     }
 
+    if (ctx.inProfilingMode) {
+      /* If we are in profiling mode, we always need xyz dim info and timestamp curbes.
+         xyz dim info related curbe registers just live for the first INSN, but timestamp
+         curbes will live the whole execution life. */
+#define ADD_CURB_REG_FOR_PROFILING(REG_NAME, LIFE_START, LIFE_END) \
+do { \
+  bool hasIt = false; \
+  for (auto& itv : this->intervals) { \
+    if (itv.reg == REG_NAME) { \
+      hasIt = true; \
+      if (itv.minID > LIFE_START) itv.minID = LIFE_START; \
+      if (itv.maxID < LIFE_END) itv.maxID = LIFE_END; \
+      break; \
+    } \
+  } \
+  if (!hasIt) { \
+    GenRegInterval regInv(REG_NAME);  \
+    regInv.minID = LIFE_START; \
+    regInv.maxID = LIFE_END; \
+    this->intervals.push_back(regInv); \
+  } \
+} while(0)
+
+      ADD_CURB_REG_FOR_PROFILING(ocl::lsize0, 0, 1);
+      ADD_CURB_REG_FOR_PROFILING(ocl::lsize1, 0, 1);
+      ADD_CURB_REG_FOR_PROFILING(ocl::lsize2, 0, 1);
+      ADD_CURB_REG_FOR_PROFILING(ocl::goffset0, 0, 1);
+      ADD_CURB_REG_FOR_PROFILING(ocl::goffset1, 0, 1);
+      ADD_CURB_REG_FOR_PROFILING(ocl::goffset2, 0, 1);
+      ADD_CURB_REG_FOR_PROFILING(ocl::groupid0, 0, 1);
+      ADD_CURB_REG_FOR_PROFILING(ocl::groupid1, 0, 1);
+      ADD_CURB_REG_FOR_PROFILING(ocl::groupid2, 0, 1);
+      ADD_CURB_REG_FOR_PROFILING(ocl::lid0, 0, 1);
+      ADD_CURB_REG_FOR_PROFILING(ocl::lid1, 0, 1);
+      ADD_CURB_REG_FOR_PROFILING(ocl::lid2, 0, 1);
+
+      ADD_CURB_REG_FOR_PROFILING(ocl::profilingbptr, 0, INT_MAX);
+      ADD_CURB_REG_FOR_PROFILING(ocl::profilingts0, 0, INT_MAX);
+      ADD_CURB_REG_FOR_PROFILING(ocl::profilingts1, 0, INT_MAX);
+      ADD_CURB_REG_FOR_PROFILING(ocl::profilingts2, 0, INT_MAX);
+      if (ctx.simdWidth == 8) {
+        ADD_CURB_REG_FOR_PROFILING(ocl::profilingts3, 0, INT_MAX);
+        ADD_CURB_REG_FOR_PROFILING(ocl::profilingts4, 0, INT_MAX);
+      }
+    }
+#undef ADD_CURB_REG_FOR_PROFILING
+
     this->intervals[ocl::retVal].minID = INT_MAX;
     this->intervals[ocl::retVal].maxID = -INT_MAX;
 
