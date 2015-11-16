@@ -33,6 +33,7 @@
 #include "backend/gen/gen_mesa_disasm.h"
 #include "ir/function.hpp"
 #include "ir/value.hpp"
+#include "ir/profiling.hpp"
 #include "sys/cvar.hpp"
 #include <cstring>
 #include <iostream>
@@ -53,6 +54,7 @@ namespace gbe
     this->asmFileName = NULL;
     this->ifEndifFix = false;
     this->regSpillTick = 0;
+    this->inProfilingMode = false;
   }
 
   GenContext::~GenContext(void) {
@@ -2393,6 +2395,13 @@ namespace gbe
     const GenRegister header = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_UD);
     const uint32_t bti = insn.getbti();
     p->TYPED_WRITE(header, true, bti);
+  }
+
+  void GenContext::emitCalcTimestampInstruction(const SelectionInstruction &insn) {
+
+  }
+
+  void GenContext::emitStoreProfilingInstruction(const SelectionInstruction &insn) {
   }
 
   void GenContext::setA0Content(uint16_t new_a0[16], uint16_t max_offset, int sz) {

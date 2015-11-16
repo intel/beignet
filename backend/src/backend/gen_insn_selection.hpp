@@ -138,6 +138,14 @@ namespace gbe
       uint32_t barrierType;
       bool longjmp;
       uint32_t indirect_offset;
+      struct {
+        uint32_t pointNum:16;
+        uint32_t timestampType:16;
+      };
+      struct {
+        uint32_t profilingType:16;
+        uint32_t profilingBTI:16;
+      };
     } extra;
     /*! Gen opcode */
     uint8_t opcode;

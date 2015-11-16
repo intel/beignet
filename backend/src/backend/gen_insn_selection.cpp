@@ -666,6 +666,10 @@ namespace gbe
     void TYPED_WRITE(GenRegister *msgs, uint32_t msgNum, uint32_t bti, bool is3D);
     /*! Get image information */
     void GET_IMAGE_INFO(uint32_t type, GenRegister *dst, uint32_t dst_num, uint32_t bti);
+    /*! Calculate the timestamp */
+    void CALC_TIMESTAMP(GenRegister ts[4], int tsN, GenRegister tmp, uint32_t pointNum, uint32_t tsType);
+    /*! Store the profiling info */
+    void STORE_PROFILING(uint32_t profilingType, uint32_t bti, GenRegister tmp0, GenRegister tmp1, GenRegister ts[4], int tsNum);
     /*! Multiply 64-bit integers */
     void I64MUL(Reg dst, Reg src0, Reg src1, GenRegister *tmp, bool native_long);
     /*! 64-bit integer division */
@@ -1835,6 +1839,55 @@ namespace gbe
     insn->src(1) = src1;
     for(int i = 0; i < 6; i ++)
       insn->dst(i + 1) = tmp[i];
+  }
+
+  void Selection::Opaque::CALC_TIMESTAMP(GenRegister ts[4], int tsN, GenRegister tmp, uint32_t pointNum, uint32_t tsType) {
+    SelectionInstruction *insn = NULL;
+    if (!this->hasLongType()) {
+      insn = this->appendInsn(SEL_OP_CALC_TIMESTAMP, tsN + 1, tsN);
+    } else {// No need for tmp
+      insn = this->appendInsn(SEL_OP_CALC_TIMESTAMP, tsN, tsN);
+    }
+
+    for (int i = 0; i < tsN; i++) {
+      insn->src(i) = ts[i];
+      insn->dst(i) = ts[i];
+    }
+
+    if (!this->hasLongType())
+      insn->dst(tsN) = tmp;
+
+    insn->extra.pointNum = static_cast<uint16_t>(pointNum);
+    insn->extra.timestampType = static_cast<uint16_t>(tsType);
+  }
+
+  void Selection::Opaque::STORE_PROFILING(uint32_t profilingType, uint32_t bti,
+                GenRegister tmp0, GenRegister tmp1, GenRegister ts[4], int tsNum) {
+    if (tsNum == 3) { // SIMD16 mode
+      SelectionInstruction *insn = this->appendInsn(SEL_OP_STORE_PROFILING, 1, 3);
+      for (int i = 0; i < 3; i++)
+        insn->src(i) = ts[i];
+      insn->dst(0) = tmp0;
+
+      insn->extra.profilingType = static_cast<uint16_t>(profilingType);
+      insn->extra.profilingBTI = static_cast<uint16_t>(bti);
+    } else { // SIMD8 mode
+      GBE_ASSERT(tsNum == 5);
+      SelectionInstruction *insn = this->appendInsn(SEL_OP_STORE_PROFILING, 2, 5);
+      SelectionVector *dstVector = this->appendVector();
+      for (int i = 0; i < 5; i++)
+        insn->src(i) = ts[i];
+      insn->dst(0) = tmp0;
+      insn->dst(1) = tmp1;
+
+      dstVector->regNum = 2;
+      dstVector->isSrc = 0;
+      dstVector->offsetID = 0;
+      dstVector->reg = &insn->dst(0);
+
+      insn->extra.profilingType = static_cast<uint16_t>(profilingType);
+      insn->extra.profilingBTI = static_cast<uint16_t>(bti);
+    }
   }
 
   // Boiler plate to initialize the selection library at c++ pre-main
@@ -5607,6 +5660,91 @@ namespace gbe
     }
   };
 
+  class CalcTimestampInstructionPattern : public SelectionPattern
+  {
+  public:
+    CalcTimestampInstructionPattern(void) : SelectionPattern(1,1) {
+      this->opcodes.push_back(ir::OP_CALC_TIMESTAMP);
+    }
+    INLINE bool emit(Selection::Opaque &sel, SelectionDAG &dag) const {
+      using namespace ir;
+      const ir::CalcTimestampInstruction &insn = cast<ir::CalcTimestampInstruction>(dag.insn);
+      uint32_t pointNum = insn.getPointNum();
+      uint32_t tsType = insn.getTimestamptType();
+      GBE_ASSERT(sel.ctx.getSimdWidth() == 16 || sel.ctx.getSimdWidth() == 8);
+      GenRegister tmp;
+      GenRegister ts[5];
+      int tsNum;
+      if (sel.ctx.getSimdWidth() == 16) {
+        if (!sel.hasLongType())
+          tmp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_WORD)), GEN_TYPE_UD);
+        ts[0] = GenRegister::retype(sel.selReg(ir::ocl::profilingts0, ir::TYPE_U32), GEN_TYPE_UD);
+        ts[1] = GenRegister::retype(sel.selReg(ir::ocl::profilingts1, ir::TYPE_U32), GEN_TYPE_UD);
+        ts[2] = GenRegister::retype(sel.selReg(ir::ocl::profilingts2, ir::TYPE_U32), GEN_TYPE_UW);
+        tsNum = 3;
+      } else {
+        if (!sel.hasLongType())
+          tmp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
+        ts[0] = GenRegister::retype(sel.selReg(ir::ocl::profilingts0, ir::TYPE_U32), GEN_TYPE_UD);
+        ts[1] = GenRegister::retype(sel.selReg(ir::ocl::profilingts1, ir::TYPE_U32), GEN_TYPE_UD);
+        ts[2] = GenRegister::retype(sel.selReg(ir::ocl::profilingts2, ir::TYPE_U32), GEN_TYPE_UD);
+        ts[3] = GenRegister::retype(sel.selReg(ir::ocl::profilingts3, ir::TYPE_U32), GEN_TYPE_UD);
+        ts[4] = GenRegister::retype(sel.selReg(ir::ocl::profilingts4, ir::TYPE_U32), GEN_TYPE_UD);
+        tsNum = 5;
+      }
+
+      sel.push(); {
+        sel.curr.flag = 0;
+        sel.curr.subFlag = 1;
+        sel.CALC_TIMESTAMP(ts, tsNum, tmp, pointNum, tsType);
+      } sel.pop();
+      markAllChildren(dag);
+      return true;
+    }
+  };
+
+  class StoreProfilingInstructionPattern : public SelectionPattern
+  {
+  public:
+    StoreProfilingInstructionPattern(void) : SelectionPattern(1,1) {
+      this->opcodes.push_back(ir::OP_STORE_PROFILING);
+    }
+    INLINE bool emit(Selection::Opaque &sel, SelectionDAG &dag) const {
+      using namespace ir;
+      const ir::StoreProfilingInstruction &insn = cast<ir::StoreProfilingInstruction>(dag.insn);
+      uint32_t profilingType = insn.getProfilingType();
+      uint32_t BTI = insn.getBTI();
+      GBE_ASSERT(sel.ctx.getSimdWidth() == 16 || sel.ctx.getSimdWidth() == 8);
+      GenRegister tmp0;
+      GenRegister tmp1;
+      GenRegister ts[5];
+      int tsNum;
+      if (sel.ctx.getSimdWidth() == 16) {
+        tmp0 = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
+        ts[0] = GenRegister::retype(sel.selReg(ir::ocl::profilingts0, ir::TYPE_U32), GEN_TYPE_UD);
+        ts[1] = GenRegister::retype(sel.selReg(ir::ocl::profilingts1, ir::TYPE_U32), GEN_TYPE_UD);
+        ts[2] = GenRegister::retype(sel.selReg(ir::ocl::profilingts2, ir::TYPE_U32), GEN_TYPE_UW);
+        tsNum = 3;
+      } else {
+        tmp0 = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
+        tmp1 = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
+        ts[0] = GenRegister::retype(sel.selReg(ir::ocl::profilingts0, ir::TYPE_U32), GEN_TYPE_UD);
+        ts[1] = GenRegister::retype(sel.selReg(ir::ocl::profilingts1, ir::TYPE_U32), GEN_TYPE_UD);
+        ts[2] = GenRegister::retype(sel.selReg(ir::ocl::profilingts2, ir::TYPE_U32), GEN_TYPE_UD);
+        ts[3] = GenRegister::retype(sel.selReg(ir::ocl::profilingts3, ir::TYPE_U32), GEN_TYPE_UD);
+        ts[4] = GenRegister::retype(sel.selReg(ir::ocl::profilingts4, ir::TYPE_U32), GEN_TYPE_UD);
+        tsNum = 5;
+      }
+      sel.push(); {
+        sel.curr.flag = 0;
+        sel.curr.subFlag = 1;
+        sel.STORE_PROFILING(profilingType, BTI, tmp0, tmp1, ts, tsNum);
+      } sel.pop();
+      markAllChildren(dag);
+      return true;
+    }
+  };
+
   /*! Branch instruction pattern */
   class BranchInstructionPattern : public SelectionPattern
   {
@@ -5837,6 +5975,8 @@ namespace gbe
     this->insert<RegionInstructionPattern>();
     this->insert<SimdShuffleInstructionPattern>();
     this->insert<IndirectMovInstructionPattern>();
+    this->insert<CalcTimestampInstructionPattern>();
+    this->insert<StoreProfilingInstructionPattern>();
     this->insert<NullaryInstructionPattern>();
 
     // Sort all the patterns with the number of instructions they output
