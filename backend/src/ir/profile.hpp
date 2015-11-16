@@ -71,7 +71,13 @@ namespace ir {
     static const Register printfbptr = Register(27); // printf buffer address .
     static const Register printfiptr = Register(28); // printf index buffer address.
     static const Register dwblockip = Register(29);  // blockip
-    static const uint32_t regNum = 30;             // number of special registers
+    static const Register profilingbptr = Register(30); // buffer addr for profiling.
+    static const Register profilingts0 = Register(31); // timestamp for profiling.
+    static const Register profilingts1 = Register(32); // timestamp for profiling.
+    static const Register profilingts2 = Register(33); // timestamp for profiling.
+    static const Register profilingts3 = Register(34); // timestamp for profiling.
+    static const Register profilingts4 = Register(35); // timestamp for profiling.
+    static const uint32_t regNum = 36;             // number of special registers
     extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 

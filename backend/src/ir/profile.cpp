@@ -43,7 +43,11 @@ namespace ir {
         "zero", "one",
         "retVal",
         "printf_buffer_pointer", "printf_index_buffer_pointer",
-        "dwblockip"
+        "dwblockip",
+        "profiling_buffer_pointer",
+        "profiling_timestamps0", "profiling_timestamps1",
+        "profiling_timestamps2", "profiling_timestamps3",
+        "profiling_timestamps4"
     };
 
 #if GBE_DEBUG
@@ -86,6 +90,12 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, printfbptr, 1, GBE_CURBE_PRINTF_BUF_POINTER);
       DECL_NEW_REG(FAMILY_DWORD, printfiptr, 1, GBE_CURBE_PRINTF_INDEX_POINTER);
       DECL_NEW_REG(FAMILY_DWORD, dwblockip, 0, GBE_CURBE_DW_BLOCK_IP);
+      DECL_NEW_REG(FAMILY_DWORD, profilingbptr, 1, GBE_CURBE_PROFILING_BUF_POINTER);
+      DECL_NEW_REG(FAMILY_DWORD, profilingts0, 0, GBE_CURBE_PROFILING_TIMESTAMP0);
+      DECL_NEW_REG(FAMILY_DWORD, profilingts1, 0, GBE_CURBE_PROFILING_TIMESTAMP1);
+      DECL_NEW_REG(FAMILY_DWORD, profilingts2, 0, GBE_CURBE_PROFILING_TIMESTAMP2);
+      DECL_NEW_REG(FAMILY_DWORD, profilingts3, 0, GBE_CURBE_PROFILING_TIMESTAMP3);
+      DECL_NEW_REG(FAMILY_DWORD, profilingts4, 0, GBE_CURBE_PROFILING_TIMESTAMP4);
     }
 #undef DECL_NEW_REG
 
