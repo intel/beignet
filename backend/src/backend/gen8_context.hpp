@@ -78,6 +78,8 @@ namespace gbe
 
   protected:
     virtual void setA0Content(uint16_t new_a0[16], uint16_t max_offset = 0, int sz = 0);
+    virtual void subTimestamps(GenRegister& t0, GenRegister& t1, GenRegister& tmp);
+    virtual void addTimestamps(GenRegister& t0, GenRegister& t1, GenRegister& tmp);
     virtual GenEncoder* generateEncoder(void) {
       return GBE_NEW(Gen8Encoder, this->simdWidth, 8, deviceID);
     }

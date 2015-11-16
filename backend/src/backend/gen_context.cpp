@@ -2474,13 +2474,7 @@ namespace gbe
   void GenContext::profilingProlog(void) {
     // record the prolog, globalXYZ and lasttimestamp at the very beginning.
     GenRegister profilingReg2, profilingReg3, profilingReg4;
-    GenRegister tmArf = GenRegister(GEN_ARCHITECTURE_REGISTER_FILE,
-        0xc0,
-        0,
-        GEN_TYPE_UW,
-        GEN_VERTICAL_STRIDE_4,
-        GEN_WIDTH_4,
-        GEN_HORIZONTAL_STRIDE_1);
+    GenRegister tmArf = GenRegister::tm0();
     if (this->simdWidth == 16) {
       profilingReg2 = ra->genReg(GenRegister::ud16grf(ir::ocl::profilingts1));
       profilingReg3 = GenRegister::offset(profilingReg2, 1);
@@ -2525,6 +2519,47 @@ namespace gbe
     p->NOP();
     p->NOP();
     return;
+  }
+
+  void GenContext::subTimestamps(GenRegister& t0, GenRegister& t1, GenRegister& tmp)
+  {
+    p->push(); {
+      p->curr.execWidth = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->SUBB(GenRegister::retype(t0, GEN_TYPE_UD),
+          GenRegister::retype(t0, GEN_TYPE_UD), GenRegister::retype(t1, GEN_TYPE_UD));
+      /* FIXME We can not get the acc register's value correctly by set simd = 1. */
+      p->curr.execWidth = 8;
+      p->MOV(tmp, GenRegister::retype(GenRegister::acc(), GEN_TYPE_UD));
+      p->curr.execWidth = 1;
+      p->ADD(GenRegister::retype(GenRegister::offset(t0, 0, sizeof(uint32_t)), GEN_TYPE_UD),
+          GenRegister::retype(GenRegister::offset(t0, 0, sizeof(uint32_t)), GEN_TYPE_UD),
+          GenRegister::negate(GenRegister::toUniform(tmp, GEN_TYPE_UD)));
+      p->ADD(GenRegister::retype(GenRegister::offset(t0, 0, sizeof(uint32_t)), GEN_TYPE_UD),
+          GenRegister::retype(GenRegister::offset(t0, 0, sizeof(uint32_t)), GEN_TYPE_UD),
+          GenRegister::negate(GenRegister::retype(GenRegister::offset(t1, 0, sizeof(uint32_t)), GEN_TYPE_UD)));
+    } p->pop();
+  }
+
+  void GenContext::addTimestamps(GenRegister& t0, GenRegister& t1, GenRegister& tmp)
+  {
+    p->push(); {
+      p->curr.execWidth = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->ADDC(GenRegister::retype(t0, GEN_TYPE_UD),
+          GenRegister::retype(t0, GEN_TYPE_UD), GenRegister::retype(t1, GEN_TYPE_UD));
+      p->curr.execWidth = 8;
+      p->MOV(tmp, GenRegister::retype(GenRegister::acc(), GEN_TYPE_UD));
+      p->curr.execWidth = 1;
+      p->ADD(GenRegister::retype(GenRegister::offset(t0, 0, sizeof(uint32_t)), GEN_TYPE_UD),
+          GenRegister::retype(GenRegister::offset(t0, 0, sizeof(uint32_t)), GEN_TYPE_UD),
+          GenRegister::offset(GenRegister::toUniform(tmp, GEN_TYPE_UD), 0, 6*sizeof(uint32_t)));
+      p->ADD(GenRegister::retype(GenRegister::offset(t0, 0, sizeof(uint32_t)), GEN_TYPE_UD),
+          GenRegister::retype(GenRegister::offset(t0, 0, sizeof(uint32_t)), GEN_TYPE_UD),
+          GenRegister::retype(GenRegister::offset(t1, 0, sizeof(uint32_t)), GEN_TYPE_UD));
+    } p->pop();
   }
 
   void GenContext::emitCalcTimestampInstruction(const SelectionInstruction &insn) {

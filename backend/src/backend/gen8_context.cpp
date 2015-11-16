@@ -1151,6 +1151,27 @@ namespace gbe
     p->pop();
   }
 
+  void Gen8Context::subTimestamps(GenRegister& t0, GenRegister& t1, GenRegister& tmp)
+  {
+    p->push(); {
+      p->curr.execWidth = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->ADD(GenRegister::retype(t0, GEN_TYPE_UL), GenRegister::retype(t0, GEN_TYPE_UL),
+          GenRegister::negate(GenRegister::retype(t1, GEN_TYPE_UL)));
+    } p->pop();
+  }
+
+  void Gen8Context::addTimestamps(GenRegister& t0, GenRegister& t1, GenRegister& tmp) {
+    p->push(); {
+      p->curr.execWidth = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->ADD(GenRegister::retype(t0, GEN_TYPE_UL), GenRegister::retype(t0, GEN_TYPE_UL),
+          GenRegister::retype(t1, GEN_TYPE_UL));
+    } p->pop();
+  }
+
   void ChvContext::newSelection(void) {
     this->sel = GBE_NEW(SelectionChv, *this);
   }
