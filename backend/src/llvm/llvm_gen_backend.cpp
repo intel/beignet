@@ -1089,6 +1089,9 @@ namespace gbe
     } else if (origin->getName().equals(StringRef("__gen_ocl_printf_index_buf"))) {
       new_bti = btiBase;
       incBtiBase();
+    } else if (origin->getName().equals(StringRef("__gen_ocl_timestamp_buf"))) {
+      new_bti = btiBase;
+      incBtiBase();
     }
     else if (isa<GlobalVariable>(origin)
         && dyn_cast<GlobalVariable>(origin)->isConstant()) {
@@ -2567,6 +2570,9 @@ namespace gbe
         } else if(v.getName().equals(StringRef("__gen_ocl_printf_index_buf"))) {
           ctx.getFunction().getPrintfSet()->setIndexBufBTI(BtiMap.find(const_cast<GlobalVariable*>(&v))->second);
           regTranslator.newScalarProxy(ir::ocl::printfiptr, const_cast<GlobalVariable*>(&v));
+        } else if(v.getName().equals(StringRef("__gen_ocl_profiling_buf"))) {
+          ctx.getUnit().getProfilingInfo()->setBTI(BtiMap.find(const_cast<GlobalVariable*>(&v))->second);
+          regTranslator.newScalarProxy(ir::ocl::profilingbptr, const_cast<GlobalVariable*>(&v));
         } else if(v.getName().str().substr(0, 4) == ".str") {
           /* When there are multi printf statements in multi kernel fucntions within the same
              translate unit, if they have the same sting parameter, such as
@@ -3591,6 +3597,8 @@ namespace gbe
         this->newRegister(&I);
         break;
       case GEN_OCL_PRINTF:
+      case GEN_OCL_CALC_TIMESTAMP:
+      case GEN_OCL_STORE_PROFILING:
         break;
       case GEN_OCL_NOT_FOUND:
       default:
@@ -4328,6 +4336,40 @@ namespace gbe
             ir::PrintfSet::PrintfFmt* fmt = (ir::PrintfSet::PrintfFmt*)getPrintfInfo(&I);
             ctx.getFunction().getPrintfSet()->append(fmt, unit);
             assert(fmt);
+            break;
+          }
+          case GEN_OCL_CALC_TIMESTAMP:
+          {
+            GBE_ASSERT(AI != AE);
+            ConstantInt *CI = dyn_cast<ConstantInt>(*AI);
+            GBE_ASSERT(CI);
+            uint32_t pointNum = CI->getZExtValue();
+            AI++;
+            GBE_ASSERT(AI != AE);
+            CI = dyn_cast<ConstantInt>(*AI);
+            GBE_ASSERT(CI);
+            uint32_t tsType = CI->getZExtValue();
+            ctx.CALC_TIMESTAMP(pointNum, tsType);
+            break;
+          }
+          case GEN_OCL_STORE_PROFILING:
+          {
+            /* The profiling log always begin at 0 offset, so we
+               never need the buffer ptr value and ptrBase, and
+               no need for SUB to calculate the real address, neither.
+               We just pass down the BTI value to the instruction. */
+            GBE_ASSERT(AI != AE);
+            Value* llvmPtr = *AI;
+            Value *bti = getBtiRegister(llvmPtr);
+            GBE_ASSERT(isa<ConstantInt>(bti)); //Should never be mixed pointer.
+            uint32_t index = cast<ConstantInt>(bti)->getZExtValue();
+            GBE_ASSERT(btiToGen(index) == ir::MEM_GLOBAL);
+            ++AI;
+            GBE_ASSERT(AI != AE);
+            ConstantInt *CI = dyn_cast<ConstantInt>(*AI);
+            GBE_ASSERT(CI);
+            uint32_t ptype = CI->getZExtValue();
+            ctx.getUnit().getProfilingInfo()->setProfilingType(ptype);
             break;
           }
           case GEN_OCL_SIMD_SIZE:
