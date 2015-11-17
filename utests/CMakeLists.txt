@@ -238,6 +238,12 @@ else()
   SET(UTESTS_REQUIRED_X11_LIB "")
 endif (X11_FOUND)
 
+if (CMRT_FOUND)
+  SET(utests_sources
+      ${utests_sources}
+      runtime_cmrt.cpp)
+endif (CMRT_FOUND)
+
 SET (kernel_bin ${CMAKE_CURRENT_SOURCE_DIR}/../kernels/compiler_ceil)
 
 list (GET GBE_BIN_GENERATER -1 GBE_BIN_FILE)
