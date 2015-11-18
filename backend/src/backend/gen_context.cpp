@@ -2923,6 +2923,9 @@ namespace gbe
     if (OCL_OUTPUT_ASM)
       outputAssembly(stdout, genKernel);
 
+    if (OCL_DEBUGINFO)
+      outputAssembly(stdout, genKernel);
+
     if (this->asmFileName) {
       FILE *asmDumpStream = fopen(this->asmFileName, "a");
       if (asmDumpStream) {
@@ -2954,6 +2957,10 @@ namespace gbe
           curLabel = (ir::LabelIndex)(curLabel + 1);
         }
       }
+
+      if (OCL_DEBUGINFO)
+        fprintf(file, "[%3i,%3i]", p->storedbg[insnID].line, p->storedbg[insnID].col);
+
       fprintf(file, "    (%8i)  ", insnID);
       pCom = (GenCompactInstruction*)&p->store[insnID];
       if(pCom->bits1.cmpt_control == 1) {
