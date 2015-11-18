@@ -95,6 +95,9 @@ typedef  struct _cl_mem {
   cl_mem_dstr_cb *dstr_cb;  /* The destroy callback. */
   uint8_t is_userptr;       /* CL_MEM_USE_HOST_PTR is enabled*/
   size_t offset;            /* offset of host_ptr to the page beginning, only for CL_MEM_USE_HOST_PTR*/
+
+  uint8_t cmrt_mem_type;    /* CmBuffer, CmSurface2D, ... */
+  void* cmrt_mem;
 } _cl_mem;
 
 struct _cl_mem_image {

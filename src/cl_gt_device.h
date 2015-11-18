@@ -130,3 +130,4 @@ DECL_INFO_STRING(spir_versions, "1.2")
 .device_reference_count = 1,
 .image_pitch_alignment = 1,
 .image_base_address_alignment = 4096,
+.cmrt_device = NULL

@@ -69,6 +69,8 @@ struct _cl_kernel {
   uint32_t arg_n:30;          /* Number of arguments */
   uint32_t ref_its_program:1; /* True only for the user kernel (created by clCreateKernel) */
   uint32_t vme:1;             /* True only if it is a built-in kernel for VME */
+
+  void* cmrt_kernel;          /* CmKernel* */
 };
 
 /* Allocate an empty kernel */

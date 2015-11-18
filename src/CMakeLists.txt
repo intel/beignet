@@ -101,6 +101,13 @@ if (X11_FOUND)
       x11/va_dri2.c)
 endif (X11_FOUND)
 
+if (CMRT_FOUND)
+  set(CMAKE_CXX_FLAGS "-DHAS_CMRT ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CXX_FLAGS "-DCMRT_PATH=${CMRT_LIBRARY_DIRS}/libcmrt.so ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_C_FLAGS "-DHAS_CMRT ${CMAKE_C_FLAGS}")
+  set(OPENCL_SRC ${OPENCL_SRC} cl_cmrt.cpp)
+endif (CMRT_FOUND)
+
 if (EGL_FOUND AND MESA_SOURCE_FOUND)
 set (OPENCL_SRC ${OPENCL_SRC} cl_mem_gl.c cl_gl_api.c x11/mesa_egl_extension.c x11/mesa_egl_res_share.c intel/intel_dri_resource_sharing.c)
 SET(CMAKE_CXX_FLAGS "-DHAS_EGL ${CMAKE_CXX_FLAGS}")

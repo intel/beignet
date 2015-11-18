@@ -121,6 +121,9 @@ struct _cl_device_id {
   uint32_t atomic_test_result;
   uint32_t image_pitch_alignment;
   uint32_t image_base_address_alignment;
+
+  //inited as NULL, created only when cmrt kernel is used
+  void* cmrt_device;  //realtype: CmDevice*
 };
 
 /* Get a device from the given platform */

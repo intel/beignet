@@ -34,14 +34,16 @@ enum {
   FROM_SOURCE = 0,
   FROM_LLVM = 1,
   FROM_BINARY = 2,
-  FROM_LLVM_SPIR = 3
+  FROM_LLVM_SPIR = 3,
+  FROM_CMRT = 4,
 };
 
 typedef enum _BINARY_HEADER_INDEX {
   BHI_SPIR = 0,
   BHI_COMPIRED_OBJECT = 1,
   BHI_LIBRARY = 2,
-  BHI_GEN_BINARY = 3, /*remember update BHI_MAX if add option.*/
+  BHI_GEN_BINARY = 3,
+  BHI_CMRT = 4,
   BHI_MAX,
 }BINARY_HEADER_INDEX;
 
@@ -61,13 +63,15 @@ struct _cl_program {
   size_t binary_sz;       /* The binary size. */
   uint32_t binary_type;   /* binary type: COMPILED_OBJECT(LLVM IR), LIBRARY(LLVM IR with option "-create-library"), or EXECUTABLE(GEN binary). */
   uint32_t ker_n;         /* Number of declared kernels */
-  uint32_t source_type:2; /* Built from binary, source or LLVM */
+  uint32_t source_type:3; /* Built from binary, source, CMRT or LLVM*/
   uint32_t is_built:1;    /* Did we call clBuildProgram on it? */
   int32_t build_status;   /* build status. */
   char *build_opts;       /* The build options for this program */
   size_t build_log_max_sz; /*build log maximum size in byte.*/
   char *build_log;         /* The build log for this program. */
   size_t build_log_sz;    /* The actual build log size.*/
+
+  void* cmrt_program;      /* real type: CmProgram* */
 };
 
 /* Create a empty program */

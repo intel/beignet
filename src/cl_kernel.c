@@ -28,6 +28,7 @@
 #include "CL/cl.h"
 #include "cl_sampler.h"
 #include "cl_accelerator_intel.h"
+#include "cl_cmrt.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -40,6 +41,15 @@ cl_kernel_delete(cl_kernel k)
 {
   uint32_t i;
   if (k == NULL) return;
+
+#ifdef HAS_CMRT
+  if (k->cmrt_kernel != NULL) {
+    cmrt_destroy_kernel(k);
+    k->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
+    cl_free(k);
+    return;
+  }
+#endif
 
   /* We are not done with the kernel */
   if (atomic_dec(&k->ref_n) > 1) return;
@@ -71,6 +81,7 @@ cl_kernel_new(cl_program p)
   k->ref_n = 1;
   k->magic = CL_MAGIC_KERNEL_HEADER;
   k->program = p;
+  k->cmrt_kernel = NULL;
 
 exit:
   return k;

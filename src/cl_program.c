@@ -25,6 +25,7 @@
 #include "cl_utils.h"
 #include "cl_khr_icd.h"
 #include "cl_gbe_loader.h"
+#include "cl_cmrt.h"
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
 
@@ -92,10 +93,17 @@ cl_program_delete(cl_program p)
       p->ctx->programs = p->next;
   pthread_mutex_unlock(&p->ctx->program_lock);
 
-  cl_free(p->bin);               /* Free the blob */
-  for (i = 0; i < p->ker_n; ++i) /* Free the kernels */
-    cl_kernel_delete(p->ker[i]);
-  cl_free(p->ker);
+#ifdef HAS_CMRT
+  if (p->cmrt_program != NULL)
+    cmrt_destroy_program(p);
+  else
+#endif
+  {
+    cl_free(p->bin);               /* Free the blob */
+    for (i = 0; i < p->ker_n; ++i) /* Free the kernels */
+      cl_kernel_delete(p->ker[i]);
+    cl_free(p->ker);
+  }
 
   /* Program belongs to their parent context */
   cl_context_delete(p->ctx);
@@ -123,6 +131,7 @@ cl_program_new(cl_context ctx)
   p->ref_n = 1;
   p->magic = CL_MAGIC_PROGRAM_HEADER;
   p->ctx = ctx;
+  p->cmrt_program = NULL;
   p->build_log = calloc(1000, sizeof(char));
   if (p->build_log)
     p->build_log_max_sz = 1000;
@@ -172,12 +181,14 @@ static const unsigned char binary_type_header[BHI_MAX][BINARY_HEADER_LENGTH]=  \
                                               {{'B','C', 0xC0, 0xDE},
                                                {1, 'B', 'C', 0xC0, 0xDE},
                                                {2, 'B', 'C', 0xC0, 0xDE},
-                                               {0, 'G','E', 'N', 'C'}};
+                                               {0, 'G','E', 'N', 'C'},
+                                               {'C','I', 'S', 'A'},
+                                               };
 
 LOCAL cl_bool headerCompare(const unsigned char *BufPtr, BINARY_HEADER_INDEX index)
 {
   bool matched = true;
-  int length = index == BHI_SPIR ? BINARY_HEADER_LENGTH -1 :BINARY_HEADER_LENGTH;
+  int length = (index == BHI_SPIR || index == BHI_CMRT) ? BINARY_HEADER_LENGTH -1 :BINARY_HEADER_LENGTH;
   int i = 0;
   for (i = 0; i < length; ++i)
   {
@@ -190,6 +201,7 @@ LOCAL cl_bool headerCompare(const unsigned char *BufPtr, BINARY_HEADER_INDEX ind
 #define isLLVM_C_O(BufPtr)  headerCompare(BufPtr, BHI_COMPIRED_OBJECT)
 #define isLLVM_LIB(BufPtr)  headerCompare(BufPtr, BHI_LIBRARY)
 #define isGenBinary(BufPtr) headerCompare(BufPtr, BHI_GEN_BINARY)
+#define isCMRT(BufPtr)      headerCompare(BufPtr, BHI_CMRT)
 
 LOCAL cl_program
 cl_program_create_from_binary(cl_context             ctx,
@@ -236,8 +248,9 @@ cl_program_create_from_binary(cl_context             ctx,
   program->binary_sz = lengths[0];
   program->source_type = FROM_BINARY;
 
-  if(isSPIR((unsigned char*)program->binary)) {
-
+  if (isCMRT((unsigned char*)program->binary)) {
+    program->source_type = FROM_CMRT;
+  }else if(isSPIR((unsigned char*)program->binary)) {
     char* typed_binary;
     TRY_ALLOC(typed_binary, cl_calloc(lengths[0]+1, sizeof(char)));
     memcpy(typed_binary+1, binaries[0], lengths[0]);
@@ -517,6 +530,20 @@ cl_program_build(cl_program p, const char *options)
     err = CL_INVALID_OPERATION;
     goto error;
   }
+
+#if HAS_CMRT
+  if (p->source_type == FROM_CMRT) {
+    //only here we begins to invoke cmrt
+    //break spec to return other errors such as CL_DEVICE_NOT_FOUND
+    err = cmrt_build_program(p, options);
+    if (err == CL_SUCCESS) {
+      p->build_status = CL_BUILD_SUCCESS;
+      p->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+      return CL_SUCCESS;
+    } else
+      goto error;
+  }
+#endif
 
   if (!check_cl_version_option(p, options)) {
     err = CL_BUILD_PROGRAM_FAILURE;
@@ -832,6 +859,20 @@ cl_program_create_kernel(cl_program p, const char *name, cl_int *errcode_ret)
   cl_kernel from = NULL, to = NULL;
   cl_int err = CL_SUCCESS;
   uint32_t i = 0;
+
+#ifdef HAS_CMRT
+  if (p->cmrt_program != NULL) {
+    void* cmrt_kernel = cmrt_create_kernel(p, name);
+    if (cmrt_kernel != NULL) {
+      to = cl_kernel_new(p);
+      to->cmrt_kernel = cmrt_kernel;
+      goto exit;
+    } else {
+      err = CL_INVALID_KERNEL_NAME;
+      goto error;
+    }
+  }
+#endif
 
   /* Find the program first */
   for (i = 0; i < p->ker_n; ++i) {

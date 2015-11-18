@@ -27,6 +27,7 @@
 #include "cl_khr_icd.h"
 #include "cl_kernel.h"
 #include "cl_command_queue.h"
+#include "cl_cmrt.h"
 
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
@@ -268,6 +269,7 @@ cl_mem_allocate(enum cl_mem_type type,
   mem->flags = flags;
   mem->is_userptr = 0;
   mem->offset = 0;
+  mem->cmrt_mem = NULL;
   if (mem->type == CL_MEM_IMAGE_TYPE) {
     cl_mem_image(mem)->is_image_from_buffer = 0;
   }
@@ -1173,6 +1175,11 @@ cl_mem_delete(cl_mem mem)
   if (UNLIKELY(IS_GL_IMAGE(mem))) {
      cl_mem_gl_delete(cl_mem_gl_image(mem));
   }
+#endif
+
+#ifdef HAS_CMRT
+  if (mem->cmrt_mem != NULL)
+    cmrt_destroy_memory(mem);
 #endif
 
   /* iff we are a image, delete the 1d buffer if has. */

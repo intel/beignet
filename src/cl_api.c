@@ -31,6 +31,7 @@
 #include "cl_accelerator_intel.h"
 #include "cl_alloc.h"
 #include "cl_utils.h"
+#include "cl_cmrt.h"
 
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
@@ -276,6 +277,10 @@ clRetainDevice(cl_device_id device)
 cl_int
 clReleaseDevice(cl_device_id device)
 {
+#ifdef HAS_CMRT
+  cmrt_destroy_device(device);
+#endif
+
   // XXX stub for C++ Bindings
   return CL_SUCCESS;
 }
@@ -941,11 +946,11 @@ clBuildProgram(cl_program            program,
     INVALID_DEVICE_IF (device_list[0] != program->ctx->device);
   }
 
-  /* TODO support create program from binary */
   assert(program->source_type == FROM_LLVM ||
          program->source_type == FROM_SOURCE ||
          program->source_type == FROM_LLVM_SPIR ||
-         program->source_type == FROM_BINARY);
+         program->source_type == FROM_BINARY ||
+         program->source_type == FROM_CMRT);
   if((err = cl_program_build(program, options)) != CL_SUCCESS) {
     goto error;
   }
@@ -1244,7 +1249,13 @@ clSetKernelArg(cl_kernel     kernel,
 {
   cl_int err = CL_SUCCESS;
   CHECK_KERNEL(kernel);
-  err = cl_kernel_set_arg(kernel, arg_index, arg_size, arg_value);
+
+#ifdef HAS_CMRT
+  if (kernel->cmrt_kernel != NULL)
+    err = cmrt_set_kernel_arg(kernel, arg_index, arg_size, arg_value);
+  else
+#endif
+    err = cl_kernel_set_arg(kernel, arg_index, arg_size, arg_value);
 error:
   return err;
 }
@@ -1532,6 +1543,12 @@ clFinish(cl_command_queue command_queue)
   cl_int err = CL_SUCCESS;
 
   CHECK_QUEUE (command_queue);
+
+#ifdef HAS_CMRT
+  if (command_queue->cmrt_event != NULL)
+    return cmrt_wait_for_task_finished(command_queue);
+#endif
+
   err = cl_command_queue_finish(command_queue);
 
 error:
@@ -2655,6 +2672,11 @@ clEnqueueMapBuffer(cl_command_queue  command_queue,
     goto error;
   }
 
+#ifdef HAS_CMRT
+  if (command_queue->cmrt_event != NULL)
+    cmrt_wait_for_task_finished(command_queue);
+#endif
+
   TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, buffer->ctx);
 
   data = &no_wait_data;
@@ -2742,6 +2764,11 @@ clEnqueueMapImage(cl_command_queue   command_queue,
     err = CL_INVALID_OPERATION;
     goto error;
   }
+
+#ifdef HAS_CMRT
+  if (command_queue->cmrt_event != NULL)
+    cmrt_wait_for_task_finished(command_queue);
+#endif
 
   TRY(cl_event_check_waitlist, num_events_in_wait_list, event_wait_list, event, mem->ctx);
 
@@ -2948,6 +2975,12 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
     goto error;
   }
 
+#ifdef HAS_CMRT
+  if (kernel->cmrt_kernel != NULL) {
+    err = cmrt_enqueue(command_queue, kernel, global_work_size, local_work_size);
+    goto error;
+  }
+#endif
 
   /* XXX No event right now */
   //FATAL_IF(num_events_in_wait_list > 0, "Events are not supported");

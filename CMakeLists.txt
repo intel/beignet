@@ -152,6 +152,12 @@ ELSE(DRM_INTEL_FOUND)
   MESSAGE(FATAL_ERROR "Looking for DRM Intel (>= 2.4.52) - not found")
 ENDIF(DRM_INTEL_FOUND)
 
+# CMRT
+pkg_check_modules(CMRT libcmrt)
+IF(CMRT_FOUND)
+INCLUDE_DIRECTORIES(${CMRT_INCLUDE_DIRS})
+ENDIF(CMRT_FOUND)
+
 # Threads
 Find_Package(Threads)
 

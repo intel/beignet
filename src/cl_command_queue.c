@@ -31,6 +31,7 @@
 #include "cl_khr_icd.h"
 #include "cl_event.h"
 #include "performance.h"
+#include "cl_cmrt.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -47,6 +48,7 @@ cl_command_queue_new(cl_context ctx)
   queue->magic = CL_MAGIC_QUEUE_HEADER;
   queue->ref_n = 1;
   queue->ctx = ctx;
+  queue->cmrt_event = NULL;
   if ((queue->thread_data = cl_thread_data_create()) == NULL) {
     goto error;
   }
@@ -75,6 +77,11 @@ cl_command_queue_delete(cl_command_queue queue)
 {
   assert(queue);
   if (atomic_dec(&queue->ref_n) != 1) return;
+
+#ifdef HAS_CMRT
+  if (queue->cmrt_event != NULL)
+    cmrt_destroy_event(queue);
+#endif
 
   // If there is a list of valid events, we need to give them
   // a chance to call the call-back function.
