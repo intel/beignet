@@ -279,7 +279,7 @@ namespace gbe
     /*! Instruction that needs to be matched */
     const ir::Instruction &insn;
     /*! When sources have been overwritten, a child insn cannot be merged */
-    uint32_t mergeable:ir::Instruction::MAX_SRC_NUM;
+    uint64_t mergeable:ir::Instruction::MAX_SRC_NUM;
     /*! Number of children we have in the pattern */
     uint32_t childNum:7;
     /*! A root must be generated, no matter what */
