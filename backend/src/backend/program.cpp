@@ -529,6 +529,7 @@ namespace gbe {
     program->CleanLlvmResource();
   }
 
+  BVAR(OCL_DEBUGINFO, false);
 #ifdef GBE_COMPILER_AVAILABLE
   static bool buildModuleFromSource(const char *source, llvm::Module** out_module, llvm::LLVMContext* llvm_ctx,
                                     std::string dumpLLVMFileName, std::vector<std::string>& options, size_t stringSize, char *err,
@@ -565,6 +566,7 @@ namespace gbe {
 #endif /* LLVM_VERSION_MINOR <= 2 */
     args.push_back("stringInput.cl");
     args.push_back("-ffp-contract=off");
+    if(OCL_DEBUGINFO) args.push_back("-g");
 
     // The compiler invocation needs a DiagnosticsEngine so it can report problems
     std::string ErrorString;

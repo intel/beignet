@@ -36,6 +36,11 @@
 extern "C" {
 #endif /* __cplusplus */
 
+typedef struct _DebugInfo {
+    uint32_t line;
+    uint32_t col;
+} DebugInfo;
+
 /*! Opaque structure that interfaces a GBE program */
 typedef struct _gbe_program *gbe_program;
 
