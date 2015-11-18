@@ -90,6 +90,8 @@ namespace gbe
     const GenRegister &dst(uint32_t dstID) const { return regs[dstID]; }
     /*! Damn C++ */
     const GenRegister &src(uint32_t srcID) const { return regs[dstNum+srcID]; }
+    /*! Set debug infomation to selection */
+    void setDBGInfo(DebugInfo in) { DBGInfo = in; }
     /*! No more than 40 sources (40 sources are used by vme for payload passing and setting) */
     enum { MAX_SRC_NUM = 40 };
     /*! No more than 16 destinations (15 used by I64DIV/I64REM) */
@@ -160,6 +162,7 @@ namespace gbe
     uint32_t index1;
     /*! instruction ID used for vector allocation. */
     uint32_t ID;
+    DebugInfo DBGInfo;
     /*! Variable sized. Destinations and sources go here */
     GenRegister regs[0];
     INLINE uint32_t getbti() const {

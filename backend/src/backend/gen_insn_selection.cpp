@@ -458,6 +458,8 @@ namespace gbe
     bool hasQWord(const ir::Instruction &insn);
     /*! A root instruction needs to be generated */
     bool isRoot(const ir::Instruction &insn) const;
+    /*! Set debug infomation to Selection */
+    void setDBGInfo_SEL(DebugInfo in) { DBGInfo = in; }
 
     /*! To handle selection block allocation */
     DECL_POOL(SelectionBlock, blockPool);
@@ -495,6 +497,7 @@ namespace gbe
     uint32_t vectorNum;
     /*! If true, generate code backward */
     bool bwdCodeGeneration;
+    DebugInfo DBGInfo;
     /*! To make function prototypes more readable */
     typedef const GenRegister &Reg;
 
@@ -867,6 +870,7 @@ namespace gbe
     GBE_ASSERT(dstNum <= SelectionInstruction::MAX_DST_NUM && srcNum <= SelectionInstruction::MAX_SRC_NUM);
     GBE_ASSERT(this->block != NULL);
     SelectionInstruction *insn = this->create(opcode, dstNum, srcNum);
+    insn->setDBGInfo(DBGInfo);
     if (this->bwdCodeGeneration)
       this->bwdList.push_back(insn);
     else
@@ -2062,6 +2066,11 @@ namespace gbe
     return insnNum;
   }
 
+extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
+#define SET_SEL_DBGINFO(I)  \
+	if(OCL_DEBUGINFO)	 \
+	  sel.setDBGInfo_SEL(I.DBGInfo)
+
   void Selection::Opaque::matchBasicBlock(const ir::BasicBlock &bb, uint32_t insnNum)
   {
     // Bottom up code generation
@@ -2081,6 +2090,7 @@ namespace gbe
     for (int32_t insnID = insnNum-1; insnID >= 0; --insnID) {
       // Process all possible patterns for this instruction
       SelectionDAG &dag = *insnDAG[insnID];
+      SET_SEL_DBGINFO(dag.insn);
       if (dag.isRoot) {
         const ir::Instruction &insn = dag.insn;
         const ir::Opcode opcode = insn.getOpcode();
@@ -2132,6 +2142,7 @@ namespace gbe
       }
     }
   }
+#undef SET_SEL_DBGINFO
 
   void Selection::Opaque::select(void)
   {
