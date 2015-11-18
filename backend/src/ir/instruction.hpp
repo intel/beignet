@@ -208,6 +208,7 @@ namespace ir {
     void remove(void);
     /* Insert the instruction after the previous one. */
     void insert(Instruction *prev, Instruction ** new_ins = NULL);
+    void setDBGInfo(DebugInfo in) { DBGInfo = in; }
     /*! Indicates if the instruction belongs to instruction type T. Typically, T
      *  can be BinaryInstruction, UnaryInstruction, LoadInstruction and so on
      */
@@ -217,6 +218,7 @@ namespace ir {
     /*! max_src used by vme for payload passing and setting */
     static const uint32_t MAX_SRC_NUM = 40;
     static const uint32_t MAX_DST_NUM = 32;
+    DebugInfo DBGInfo;
   protected:
     BasicBlock *parent;      //!< The basic block containing the instruction
     GBE_CLASS(Instruction);  //!< Use internal allocators

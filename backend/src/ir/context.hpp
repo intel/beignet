@@ -190,6 +190,7 @@ namespace ir {
     }
 
     void appendSurface(uint8_t bti, Register reg) { fn->appendSurface(bti, reg); }
+    void setDBGInfo(DebugInfo in) { DBGInfo = in; }
 
   protected:
     /*! A block must be started with a label */
@@ -214,6 +215,7 @@ namespace ir {
       vector<uint8_t> *usedLabels; //!< Store all labels that are defined
     };
     vector<StackElem> fnStack;     //!< Stack of functions still to finish
+    DebugInfo DBGInfo;
     GBE_CLASS(Context);
   };
 

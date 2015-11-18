@@ -162,6 +162,7 @@ namespace ir {
     // Append the instruction in the stream
     Instruction *insnPtr = fn->newInstruction(insn);
     bb->append(*insnPtr);
+    insnPtr->setDBGInfo(this->DBGInfo);
 #if GBE_DEBUG
     std::string whyNot;
     if(getUnit().getValid())

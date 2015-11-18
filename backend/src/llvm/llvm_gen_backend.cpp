@@ -83,6 +83,8 @@
 #include "sys/cvar.hpp"
 #include "backend/program.h"
 #include <sstream>
+#include "llvm/IR/DebugLoc.h"
+#include "llvm/IR/DebugInfo.h"
 
 /* Not defined for LLVM 3.0 */
 #if !defined(LLVM_VERSION_MAJOR)
@@ -101,6 +103,7 @@ using namespace llvm;
 
 namespace gbe
 {
+  extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
   /*! Gen IR manipulates only scalar types */
   static bool isScalarType(const Type *type)
   {
@@ -683,6 +686,7 @@ namespace gbe
       return NULL;
     }
     private:
+      void setDebugInfo_CTX(llvm::Instruction * insn); // store the debug infomation in context for subsequently passing to Gen insn
       ir::ImmediateIndex processConstantImmIndexImpl(Constant *CPV, int32_t index = 0u);
       template <typename T, typename P = T>
       ir::ImmediateIndex processSeqConstant(ConstantDataSequential *seq,
@@ -1794,7 +1798,13 @@ namespace gbe
   void GenWriter::emitBasicBlock(BasicBlock *BB) {
     GBE_ASSERT(labelMap.find(BB) != labelMap.end());
     ctx.LABEL(labelMap[BB]);
-    for (auto II = BB->begin(), E = BB->end(); II != E; ++II) visit(*II);
+    for (auto II = BB->begin(), E = BB->end(); II != E; ++II) {
+      if(OCL_DEBUGINFO) {
+        llvm::Instruction * It = dyn_cast<llvm::Instruction>(II);
+        setDebugInfo_CTX(It);
+      }
+      visit(*II);
+    }
   }
 
   void GenWriter::emitMovForPHI(BasicBlock *curr, BasicBlock *succ) {
@@ -1859,6 +1869,15 @@ namespace gbe
       imageArgsInfo.readImageArgs++;
       GBE_ASSERT(imageArgsInfo.readImageArgs <= BTI_MAX_READ_IMAGE_ARGS);
     }
+  }
+
+  void GenWriter::setDebugInfo_CTX(llvm::Instruction * insn)
+  {
+    llvm::DebugLoc dg = insn->getDebugLoc();
+    DebugInfo dbginfo;
+    dbginfo.line = dg.getLine();
+    dbginfo.col = dg.getCol();
+    ctx.setDBGInfo(dbginfo);
   }
 
   void GenWriter::emitFunctionPrototype(Function &F)
