@@ -98,7 +98,7 @@ bool StripAttributes::runOnFunction(Function &Func) {
        BB != E; ++BB) {
     for (BasicBlock::iterator Inst = BB->begin(), E = BB->end();
          Inst != E; ++Inst) {
-      CallSite Call(Inst);
+      CallSite Call(&*Inst);
       if (Call)
         Call.setCallingConv(CallingConv::C);
     }

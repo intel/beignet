@@ -1164,7 +1164,7 @@ namespace gbe
       llvmInfo.typeName= (cast<MDString>(typeNameNode->getOperand(1 + argID)))->getString();
       bool isImage = llvmInfo.isImageType();
       if (I->getType()->isPointerTy() || isImage) {
-        BtiMap.insert(std::make_pair(I, getNewBti(I, isImage)));
+        BtiMap.insert(std::make_pair(&*I, getNewBti(&*I, isImage)));
       }
     }
 
@@ -1278,7 +1278,7 @@ namespace gbe
     // function argument
     for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
       if (I->getType()->isPointerTy()) {
-        findPointerEscape(I, mixedPtr, true, revisit);
+        findPointerEscape(&*I, mixedPtr, true, revisit);
       }
     }
     // alloca
@@ -1327,7 +1327,7 @@ namespace gbe
       while (isa<AllocaInst>(bbIter)) ++bbIter;
 
       IRBuilder<> Builder(&entry);
-      Builder.SetInsertPoint(bbIter);
+      Builder.SetInsertPoint(&*bbIter);
 
       PointerType * AITy = cast<AllocaInst>(base)->getType();
       Value * btiArray = Builder.CreateAlloca(AITy->getElementType(), ArraySize, base->getName() + ".bti");
@@ -1752,7 +1752,7 @@ namespace gbe
   }
 
   void GenWriter::simplifyTerminator(BasicBlock *bb) {
-    Value *value = --bb->end();
+    Value *value = bb->getTerminator();
     BranchInst *I = NULL;
     if ((I = dyn_cast<BranchInst>(value)) != NULL) {
       if (I->isConditional() == false)
@@ -1982,12 +1982,12 @@ namespace gbe
         }
 
         // function arguments are uniform values.
-        this->newRegister(I, NULL, true);
+        this->newRegister(&*I, NULL, true);
 
         // add support for vector argument.
         if(type->isVectorTy()) {
           VectorType *vectorType = cast<VectorType>(type);
-          ir::Register reg = getRegister(I, 0);
+          ir::Register reg = getRegister(&*I, 0);
           Type *elemType = vectorType->getElementType();
           const uint32_t elemSize = getTypeByteSize(unit, elemType);
           const uint32_t elemNum = vectorType->getNumElements();
@@ -1997,7 +1997,7 @@ namespace gbe
           ir::Function& fn = ctx.getFunction();
           for(uint32_t i=1; i < elemNum; i++) {
             ir::PushLocation argLocation(fn, argID, elemSize*i);
-            reg = getRegister(I, i);
+            reg = getRegister(&*I, i);
             ctx.appendPushedConstant(reg, argLocation);  //add to push map for reg alloc
           }
           continue;
@@ -2005,10 +2005,10 @@ namespace gbe
 
         GBE_ASSERTM(isScalarType(type) == true,
                     "vector type in the function argument is not supported yet");
-        const ir::Register reg = getRegister(I);
+        const ir::Register reg = getRegister(&*I);
         if (llvmInfo.isImageType()) {
           ctx.input(argName, ir::FunctionArgument::IMAGE, reg, llvmInfo, 4, 4, 0);
-          ctx.getFunction().getImageSet()->append(reg, &ctx, BtiMap.find(I)->second);
+          ctx.getFunction().getImageSet()->append(reg, &ctx, BtiMap.find(&*I)->second);
           collectImageArgs(llvmInfo.accessQual, imageArgsInfo);
           continue;
         }
@@ -2041,7 +2041,7 @@ namespace gbe
             const uint32_t align = getAlignmentByte(unit, pointed);
               switch (addrSpace) {
               case ir::MEM_GLOBAL:
-                ctx.input(argName, ir::FunctionArgument::GLOBAL_POINTER, reg, llvmInfo, ptrSize, align, BtiMap.find(I)->second);
+                ctx.input(argName, ir::FunctionArgument::GLOBAL_POINTER, reg, llvmInfo, ptrSize, align, BtiMap.find(&*I)->second);
               break;
               case ir::MEM_LOCAL:
                 ctx.input(argName, ir::FunctionArgument::LOCAL_POINTER, reg,  llvmInfo, ptrSize, align, BTI_LOCAL);
@@ -2814,12 +2814,12 @@ namespace gbe
 
     // First create all the labels (one per block) ...
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-      this->newLabelIndex(BB);
+      this->newLabelIndex(&*BB);
 
     // Then, for all branch instructions that have conditions, see if we can
     // simplify the code by inverting condition code
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-      this->simplifyTerminator(BB);
+      this->simplifyTerminator(&*BB);
 
     // gather loop info, which is useful for liveness analysis
     gatherLoopInfo(fn);
@@ -2827,7 +2827,7 @@ namespace gbe
     // ... then, emit the instructions for all basic blocks
     pass = PASS_EMIT_INSTRUCTIONS;
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-      emitBasicBlock(BB);
+      emitBasicBlock(&*BB);
     ctx.endFunction();
 
     // Liveness can be shared when we optimized the immediates and the MOVs
@@ -3347,7 +3347,7 @@ namespace gbe
     Value *Callee = I.getCalledValue();
     GBE_ASSERT(ctx.getFunction().getProfile() == ir::PROFILE_OCL);
     GBE_ASSERT(isa<InlineAsm>(I.getCalledValue()) == false);
-    GBE_ASSERT(I.hasStructRetAttr() == false);
+    if(I.getNumArgOperands()) GBE_ASSERT(I.hasStructRetAttr() == false);
 
     // We only support a small number of intrinsics right now
     if (Function *F = I.getCalledFunction()) {

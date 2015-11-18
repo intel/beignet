@@ -197,7 +197,7 @@ namespace gbe {
     /* set to insert new instructions after the specified instruction.*/
     void setAppendPoint(Instruction *insn)  {
       BasicBlock::iterator next(insn);
-      builder->SetInsertPoint(++next);
+      builder->SetInsertPoint(&*++next);
     }
 
     DenseMap<Value*, VectorValues> vectorVals;
@@ -759,7 +759,7 @@ namespace gbe {
       return;
     ReversePostOrderTraversal<Function*> rpot(&F);
     BasicBlock::iterator instI = (*rpot.begin())->begin();
-    builder->SetInsertPoint(instI);
+    builder->SetInsertPoint(&*instI);
 
     Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
 
@@ -767,7 +767,7 @@ namespace gbe {
       Type *type = I->getType();
 
       if(type->isVectorTy())
-        extractFromVector(I);
+        extractFromVector(&*I);
     }
     return;
   }
@@ -804,11 +804,11 @@ namespace gbe {
     RPOTType rpot(&F);
     for (RPOTType::rpo_iterator bbI = rpot.begin(), bbE = rpot.end(); bbI != bbE; ++bbI) {
       for (BasicBlock::iterator instI = (*bbI)->begin(), instE = (*bbI)->end(); instI != instE; ++instI) {
-        bool scalarized = scalarize(instI);
+        bool scalarized = scalarize(&*instI);
         if (scalarized) {
           changed = true;
           // TODO: uncomment when done
-          deadList.push_back(instI);
+          deadList.push_back(&*instI);
         }
       }
     }

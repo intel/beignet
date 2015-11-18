@@ -35,13 +35,22 @@ namespace gbe {
     GenLoadStoreOptimization() : BasicBlockPass(ID) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
+#if LLVM_VERSION_MAJOR == 3 &&  LLVM_VERSION_MINOR >= 8
+      AU.addRequired<ScalarEvolutionWrapperPass>();
+      AU.addPreserved<ScalarEvolutionWrapperPass>();
+#else
       AU.addRequired<ScalarEvolution>();
       AU.addPreserved<ScalarEvolution>();
+#endif
       AU.setPreservesCFG();
     }
 
     virtual bool runOnBasicBlock(BasicBlock &BB) {
+#if LLVM_VERSION_MAJOR == 3 &&  LLVM_VERSION_MINOR >= 8
+      SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
+#else
       SE = &getAnalysis<ScalarEvolution>();
+#endif
       #if LLVM_VERSION_MINOR >= 7
         TD = &BB.getModule()->getDataLayout();
       #elif LLVM_VERSION_MINOR >= 5
@@ -159,9 +168,9 @@ namespace gbe {
                             bool isLoad) {
 
     BasicBlock::iterator stepForward = start;
-    if(!isSimpleLoadStore(start)) return stepForward;
+    if(!isSimpleLoadStore(&*start)) return stepForward;
 
-    merged.push_back(start);
+    merged.push_back(&*start);
 
     BasicBlock::iterator E = BB.end();
     BasicBlock::iterator J = ++start;
@@ -170,8 +179,8 @@ namespace gbe {
 
     for(unsigned ss = 0; J != E && ss <= maxLimit; ++ss, ++J) {
       if((isLoad && isa<LoadInst>(*J)) || (!isLoad && isa<StoreInst>(*J))) {
-        if(isLoadStoreCompatible(merged[merged.size()-1], J)) {
-          merged.push_back(J);
+        if(isLoadStoreCompatible(merged[merged.size()-1], &*J)) {
+          merged.push_back(&*J);
           stepForward = ++J;
         }
       } else if((isLoad && isa<StoreInst>(*J)) || (!isLoad && isa<LoadInst>(*J))) {
@@ -217,7 +226,7 @@ namespace gbe {
     for (BasicBlock::iterator BBI = BB.begin(), E = BB.end(); BBI != E;++BBI) {
       if(isa<LoadInst>(*BBI) || isa<StoreInst>(*BBI)) {
         bool isLoad = isa<LoadInst>(*BBI) ? true: false;
-        Type *ty = getValueType(BBI);
+        Type *ty = getValueType(&*BBI);
         if(ty->isVectorTy()) continue;
         // TODO Support DWORD/WORD/BYTE LOAD for store support DWORD only now.
         if (!(ty->isFloatTy() || ty->isIntegerTy(32) ||

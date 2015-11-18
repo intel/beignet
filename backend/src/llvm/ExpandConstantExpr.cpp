@@ -115,7 +115,7 @@ static Value *expandConstantVector(Instruction *InsertPt, ConstantVector *CV) {
   Type *IntTy = IntegerType::get(CV->getContext(), 32);
 
   BasicBlock::iterator InsertPos(InsertPt);
-  IRBuilder<> IRB(InsertPos);
+  IRBuilder<> IRB(&*InsertPos);
   Value *vec = UndefValue::get(CV->getType());
   for (int i = 0; i < elemNum; i++) {
     Value *idx = ConstantInt::get(IntTy, i);
@@ -177,7 +177,7 @@ bool ExpandConstantExpr::runOnFunction(Function &Func) {
     for (BasicBlock::InstListType::iterator Inst = BB->begin(), E = BB->end();
          Inst != E;
          ++Inst) {
-      Modified |= expandInstruction(Inst);
+      Modified |= expandInstruction(&*Inst);
     }
   }
   return Modified;

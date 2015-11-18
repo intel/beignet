@@ -626,7 +626,7 @@ error:
       Value* op0 = NULL;
       Value* val = NULL;
 
-      builder->SetInsertPoint(F.begin()->begin());// Insert the common var in the begin.
+      builder->SetInsertPoint(&*(F.begin()->begin()));// Insert the common var in the begin.
 
       /* FIXME: Because the OpenCL language do not support va macro, and we do not want
          to introduce the va_list, va_start and va_end into our code, we just simulate
