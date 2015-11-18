@@ -88,6 +88,9 @@ namespace gbe
     uint32_t deviceID;
     /*! simd width for this codegen */
     uint32_t simdWidth;
+    DebugInfo DBGInfo;
+    vector<DebugInfo> storedbg;
+    void setDBGInfo(DebugInfo in, bool hasHigh);
     ////////////////////////////////////////////////////////////////////////
     // Encoding functions
     ////////////////////////////////////////////////////////////////////////

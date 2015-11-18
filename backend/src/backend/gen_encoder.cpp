@@ -591,11 +591,23 @@ namespace gbe
       this->setSrc1(insn, bti);
     }
   }
+
+  extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
+  void GenEncoder::setDBGInfo(DebugInfo in, bool hasHigh)
+  {
+    if(OCL_DEBUGINFO)
+    {
+      storedbg.push_back(in);
+      if(hasHigh) storedbg.push_back(in);
+    }
+  }
+  
   GenCompactInstruction *GenEncoder::nextCompact(uint32_t opcode) {
     GenCompactInstruction insn;
     std::memset(&insn, 0, sizeof(GenCompactInstruction));
     insn.bits1.opcode = opcode;
     this->store.push_back(insn.low);
+    setDBGInfo(DBGInfo, false);
     return (GenCompactInstruction *)&this->store.back();
   }
 
@@ -605,6 +617,7 @@ namespace gbe
      insn.header.opcode = opcode;
      this->store.push_back(insn.low);
      this->store.push_back(insn.high);
+     setDBGInfo(DBGInfo, true);
      return (GenNativeInstruction *)(&this->store.back()-1);
   }
 

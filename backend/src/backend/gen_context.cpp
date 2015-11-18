@@ -94,6 +94,10 @@ namespace gbe
     return i;
   }
 
+  extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
+#define SET_GENINSN_DBGINFO(I) \
+  if(OCL_DEBUGINFO) p->DBGInfo = I.DBGInfo;
+      
   void GenContext::emitInstructionStream(void) {
     // Emit Gen ISA
     for (auto &block : *sel->blockList)
@@ -103,6 +107,7 @@ namespace gbe
       // no more virtual register here in that part of the code generation
       GBE_ASSERT(insn.state.physicalFlag);
       p->curr = insn.state;
+      SET_GENINSN_DBGINFO(insn);
       switch (opcode) {
 #define DECL_SELECTION_IR(OPCODE, FAMILY) \
   case SEL_OP_##OPCODE: this->emit##FAMILY(insn); break;
@@ -116,6 +121,7 @@ namespace gbe
     for(int i = 0; i < 8; i++)
 	p->NOP();
   }
+#undef SET_GENINSN_DBGINFO
 
   bool GenContext::patchBranches(void) {
     using namespace ir;

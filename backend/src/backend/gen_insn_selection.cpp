@@ -2069,7 +2069,7 @@ namespace gbe
 extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
 #define SET_SEL_DBGINFO(I)  \
 	if(OCL_DEBUGINFO)	 \
-	  sel.setDBGInfo_SEL(I.DBGInfo)
+	  this->setDBGInfo_SEL(I.DBGInfo)
 
   void Selection::Opaque::matchBasicBlock(const ir::BasicBlock &bb, uint32_t insnNum)
   {
