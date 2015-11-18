@@ -470,6 +470,7 @@ namespace gbe
     /*! legacyMode is for hardware before BDW,
      * which do not support stateless memory access */
     bool legacyMode;
+    int32_t wgBroadcastSLM;
   public:
     static char ID;
     explicit GenWriter(ir::Unit &unit)
@@ -480,7 +481,8 @@ namespace gbe
         LI(0),
         TheModule(0),
         btiBase(BTI_RESERVED_NUM),
-        legacyMode(true)
+        legacyMode(true),
+        wgBroadcastSLM(-1)
     {
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=7
       initializeLoopInfoWrapperPassPass(*PassRegistry::getPassRegistry());
@@ -644,6 +646,8 @@ namespace gbe
     void emitUnaryCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode, ir::Type = ir::TYPE_FLOAT);
     // Emit unary instructions from gen native function
     void emitAtomicInst(CallInst &I, CallSite &CS, ir::AtomicOps opcode);
+    // Emit workgroup instructions
+    void emitWorkGroupInst(CallInst &I, CallSite &CS, ir::WorkGroupOps opcode);
 
     uint8_t appendSampler(CallSite::arg_iterator AI);
     uint8_t getImageID(CallInst &I);
@@ -3577,6 +3581,18 @@ namespace gbe
       case GEN_OCL_REGION:
       case GEN_OCL_SIMD_ID:
       case GEN_OCL_SIMD_SHUFFLE:
+      case GEN_OCL_WORK_GROUP_ALL:
+      case GEN_OCL_WORK_GROUP_ANY:
+      case GEN_OCL_WORK_GROUP_BROADCAST:
+      case GEN_OCL_WORK_GROUP_REDUCE_ADD:
+      case GEN_OCL_WORK_GROUP_REDUCE_MAX:
+      case GEN_OCL_WORK_GROUP_REDUCE_MIN:
+      case GEN_OCL_WORK_GROUP_SCAN_EXCLUSIVE_ADD:
+      case GEN_OCL_WORK_GROUP_SCAN_EXCLUSIVE_MAX:
+      case GEN_OCL_WORK_GROUP_SCAN_EXCLUSIVE_MIN:
+      case GEN_OCL_WORK_GROUP_SCAN_INCLUSIVE_ADD:
+      case GEN_OCL_WORK_GROUP_SCAN_INCLUSIVE_MAX:
+      case GEN_OCL_WORK_GROUP_SCAN_INCLUSIVE_MIN:
         this->newRegister(&I);
         break;
       case GEN_OCL_PRINTF:
@@ -3655,6 +3671,45 @@ namespace gbe
     } else {
       ctx.ATOMIC(opcode, type, dst, addrSpace, ptr, payloadTuple, AM, SurfaceIndex);
     }
+  }
+
+  void GenWriter::emitWorkGroupInst(CallInst &I, CallSite &CS, ir::WorkGroupOps opcode) {
+    if (wgBroadcastSLM < 0 && opcode == ir::WORKGROUP_OP_BROADCAST) {
+      ir::Function &f = ctx.getFunction();
+      uint32_t mapSize = 8;
+      f.setUseSLM(true);
+      uint32_t oldSlm = f.getSLMSize();
+      f.setSLMSize(oldSlm + mapSize);
+      wgBroadcastSLM = oldSlm;
+      GBE_ASSERT(wgBroadcastSLM >= 0);
+    }
+
+    CallSite::arg_iterator AI = CS.arg_begin();
+    CallSite::arg_iterator AE = CS.arg_end();
+    GBE_ASSERT(AI != AE);
+
+    if (opcode == ir::WORKGROUP_OP_ALL || opcode == ir::WORKGROUP_OP_ANY) {
+      GBE_ASSERT(getType(ctx, (*AI)->getType()) == ir::TYPE_S32);
+      const ir::Register src = this->getRegister(*(AI++));
+      const ir::Tuple srcTuple = ctx.arrayTuple(&src, 1);
+      ctx.WORKGROUP(opcode, (uint32_t)0, getRegister(&I), srcTuple, 1, ir::TYPE_S32);
+    } else if (opcode == ir::WORKGROUP_OP_BROADCAST) {
+      int argNum = CS.arg_size();
+      ir::Register src[argNum];
+      for (int i = 0; i < argNum; i++) {
+        src[i] = this->getRegister(*(AI++));
+      }
+      const ir::Tuple srcTuple = ctx.arrayTuple(&src[0], argNum);
+      ctx.WORKGROUP(ir::WORKGROUP_OP_BROADCAST, (uint32_t)wgBroadcastSLM, getRegister(&I), srcTuple, argNum,
+          getType(ctx, (*CS.arg_begin())->getType()));
+    } else {
+      const ir::Register src = this->getRegister(*(AI++));
+      const ir::Tuple srcTuple = ctx.arrayTuple(&src, 1);
+      ctx.WORKGROUP(opcode, (uint32_t)0, getRegister(&I), srcTuple, 1,
+                    getType(ctx, (*CS.arg_begin())->getType()));
+    }
+
+    GBE_ASSERT(AI == AE);
   }
 
   /* append a new sampler. should be called before any reference to
@@ -4293,6 +4348,28 @@ namespace gbe
             ctx.SIMD_SHUFFLE(getType(ctx, I.getType()), dst, src0, src1);
             break;
           }
+          case GEN_OCL_WORK_GROUP_ALL: this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_ALL); break;
+          case GEN_OCL_WORK_GROUP_ANY: this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_ANY); break;
+          case GEN_OCL_WORK_GROUP_BROADCAST:
+            this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_BROADCAST); break;
+          case GEN_OCL_WORK_GROUP_REDUCE_ADD:
+            this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_REDUCE_ADD); break;
+          case GEN_OCL_WORK_GROUP_REDUCE_MAX:
+            this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_REDUCE_MAX); break;
+          case GEN_OCL_WORK_GROUP_REDUCE_MIN:
+            this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_REDUCE_MIN); break;
+          case GEN_OCL_WORK_GROUP_SCAN_EXCLUSIVE_ADD:
+            this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_EXCLUSIVE_ADD); break;
+          case GEN_OCL_WORK_GROUP_SCAN_EXCLUSIVE_MAX:
+            this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_EXCLUSIVE_MAX); break;
+          case GEN_OCL_WORK_GROUP_SCAN_EXCLUSIVE_MIN:
+            this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_EXCLUSIVE_MIN); break;
+          case GEN_OCL_WORK_GROUP_SCAN_INCLUSIVE_ADD:
+            this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_INCLUSIVE_ADD); break;
+          case GEN_OCL_WORK_GROUP_SCAN_INCLUSIVE_MAX:
+            this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_INCLUSIVE_MAX); break;
+          case GEN_OCL_WORK_GROUP_SCAN_INCLUSIVE_MIN:
+            this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_INCLUSIVE_MIN); break;
           default: break;
         }
       }
