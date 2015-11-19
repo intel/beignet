@@ -30,7 +30,7 @@ double benchmark_copy_buffer_ ##T(void) \
   locals[1] = 4; \
  \
   gettimeofday(&start,0); \
-  for (size_t i=0; i<100; i++) { \
+  for (size_t i=0; i<1000; i++) { \
     OCL_NDRANGE(2); \
   } \
   OCL_FINISH(); \
@@ -45,10 +45,10 @@ double benchmark_copy_buffer_ ##T(void) \
  \
   double elapsed = time_subtract(&stop, &start, 0); \
  \
-  return BANDWIDTH(sz * sizeof(M) * 2 * 100, elapsed); \
+  return (double)(1000 / (elapsed * 1e-3)); \
 } \
  \
-MAKE_BENCHMARK_FROM_FUNCTION_KEEP_PROGRAM(benchmark_copy_buffer_ ##T, true, "GB/S");
+MAKE_BENCHMARK_FROM_FUNCTION_KEEP_PROGRAM(benchmark_copy_buffer_ ##T, true, "FPS");
 
 BENCH_COPY_BUFFER(uchar,"bench_copy_buffer_uchar",unsigned char)
 BENCH_COPY_BUFFER(ushort,"bench_copy_buffer_ushort",unsigned short)
