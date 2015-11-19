@@ -173,8 +173,8 @@ struct _cl_icd_dispatch const cl_khr_icd_dispatch = {
 #endif
 #ifdef CL_VERSION_2_0
   clCreateCommandQueueWithProperties,
-  (void *) NULL /* clCreatePipe */,
-  (void *) NULL /* clGetPipeInfo */,
+  clCreatePipe,
+  clGetPipeInfo,
   clSVMAlloc,
   clSVMFree,
   clEnqueueSVMFree,

@@ -3018,6 +3018,76 @@ error:
   return err;
 }
 
+cl_mem clCreatePipe (cl_context context,
+                     cl_mem_flags flags,
+                     cl_uint pipe_packet_size,
+                     cl_uint pipe_max_packets,
+                     const cl_pipe_properties *properties,
+                     cl_int *errcode_ret)
+{
+  cl_mem mem = NULL;
+  cl_int err = CL_SUCCESS;
+  cl_uint device_max_size = 0;
+
+  CHECK_CONTEXT (context);
+
+  if(UNLIKELY((flags & ~(CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS)) != 0)) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if(UNLIKELY(properties != NULL)) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if(UNLIKELY(pipe_packet_size == 0 || pipe_max_packets == 0)) {
+    err = CL_INVALID_PIPE_SIZE;
+    goto error;
+  }
+  if ((err = cl_get_device_info(context->device,
+                                CL_DEVICE_PIPE_MAX_PACKET_SIZE,
+                                sizeof(device_max_size),
+                                &device_max_size,
+                                NULL)) != CL_SUCCESS) {
+    goto error;
+  }
+
+  if(UNLIKELY(pipe_packet_size > device_max_size)) {
+    err = CL_INVALID_PIPE_SIZE;
+    goto error;
+  }
+
+  if(flags == 0)
+    flags = CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS;
+
+  mem = cl_mem_new_pipe(context, flags, pipe_packet_size, pipe_max_packets, &err);
+
+error:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return mem;
+}
+
+cl_int clGetPipeInfo (cl_mem pipe,
+                      cl_pipe_info param_name,
+                      size_t param_value_size,
+                      void *param_value,
+                      size_t *param_value_size_ret)
+{
+  cl_int err = CL_SUCCESS;
+  CHECK_MEM(pipe);
+
+  err = cl_get_pipe_info(pipe,
+                         param_name,
+                         param_value_size,
+                         param_value,
+                         param_value_size_ret);
+
+error:
+  return err;
+}
+
 void *
 clEnqueueMapBuffer(cl_command_queue  command_queue,
                    cl_mem            buffer,
