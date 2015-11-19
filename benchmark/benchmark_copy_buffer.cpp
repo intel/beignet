@@ -1,8 +1,8 @@
 #include "utests/utest_helper.hpp"
 #include <sys/time.h>
 
-#define BENCH_COPY_BUFFER(T, K, M) \
-double benchmark_copy_buffer_ ##T(void) \
+#define BENCH_COPY_BUFFER(J, T, K, M) \
+double benchmark_ ##J ##_buffer_ ##T(void) \
 { \
   struct timeval start,stop; \
  \
@@ -48,8 +48,11 @@ double benchmark_copy_buffer_ ##T(void) \
   return (double)(1000 / (elapsed * 1e-3)); \
 } \
  \
-MAKE_BENCHMARK_FROM_FUNCTION_KEEP_PROGRAM(benchmark_copy_buffer_ ##T, true, "FPS");
+MAKE_BENCHMARK_FROM_FUNCTION_KEEP_PROGRAM(benchmark_ ##J ##_buffer_ ##T, true, "FPS");
 
-BENCH_COPY_BUFFER(uchar,"bench_copy_buffer_uchar",unsigned char)
-BENCH_COPY_BUFFER(ushort,"bench_copy_buffer_ushort",unsigned short)
-BENCH_COPY_BUFFER(uint,"bench_copy_buffer_uint",unsigned int)
+BENCH_COPY_BUFFER(copy, uchar, "bench_copy_buffer_uchar", unsigned char)
+BENCH_COPY_BUFFER(copy, ushort, "bench_copy_buffer_ushort", unsigned short)
+BENCH_COPY_BUFFER(copy, uint, "bench_copy_buffer_uint", unsigned int)
+BENCH_COPY_BUFFER(filter, uchar, "bench_filter_buffer_uchar", unsigned char)
+BENCH_COPY_BUFFER(filter, ushort, "bench_filter_buffer_ushort", unsigned short)
+BENCH_COPY_BUFFER(filter, uint, "bench_filter_buffer_uint", unsigned int)
