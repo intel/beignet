@@ -2,8 +2,8 @@
 #include "utests/utest_helper.hpp"
 #include <sys/time.h>
 
-#define BENCH_COPY_IMAGE(T, M, Q) \
-double benchmark_copy_image_ ##T(void) \
+#define BENCH_COPY_IMAGE(J, T, K, M, Q) \
+double benchmark_ ##J ##_image_ ##T(void) \
 { \
   struct timeval start,stop; \
 \
@@ -16,7 +16,7 @@ double benchmark_copy_image_ ##T(void) \
   memset(&desc, 0x0, sizeof(cl_image_desc)); \
   memset(&format, 0x0, sizeof(cl_image_format)); \
 \
-  OCL_CREATE_KERNEL("bench_copy_image"); \
+  OCL_CREATE_KERNEL_FROM_FILE("bench_copy_image",K); \
   buf_data[0] = (uint32_t*) malloc(sizeof(M) * sz); \
   for (uint32_t i = 0; i < sz; ++i) { \
     ((M*)buf_data[0])[i] = rand(); \
@@ -63,8 +63,11 @@ double benchmark_copy_image_ ##T(void) \
   return (double)(1000 / (elapsed * 1e-3)); \
 } \
 \
-MAKE_BENCHMARK_FROM_FUNCTION_KEEP_PROGRAM(benchmark_copy_image_ ##T, true, "FPS");
+MAKE_BENCHMARK_FROM_FUNCTION_KEEP_PROGRAM(benchmark_ ##J ##_image_ ##T, true, "FPS");
 
-BENCH_COPY_IMAGE(uchar,unsigned char,CL_UNSIGNED_INT8)
-BENCH_COPY_IMAGE(ushort,unsigned short,CL_UNSIGNED_INT16)
-BENCH_COPY_IMAGE(uint,unsigned int,CL_UNSIGNED_INT32)
+BENCH_COPY_IMAGE(copy,uchar, "bench_copy_image", unsigned char, CL_UNSIGNED_INT8)
+BENCH_COPY_IMAGE(copy,ushort, "bench_copy_image", unsigned short, CL_UNSIGNED_INT16)
+BENCH_COPY_IMAGE(copy,uint, "bench_copy_image", unsigned int,CL_UNSIGNED_INT32)
+BENCH_COPY_IMAGE(filter,uchar, "bench_filter_image", unsigned char,CL_UNSIGNED_INT8)
+BENCH_COPY_IMAGE(filter,ushort, "bench_filter_image", unsigned short,CL_UNSIGNED_INT16)
+BENCH_COPY_IMAGE(filter,uint, "bench_filter_image", unsigned int,CL_UNSIGNED_INT32)
