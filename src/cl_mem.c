@@ -141,6 +141,40 @@ cl_get_mem_object_info(cl_mem mem,
   return CL_SUCCESS;
 }
 
+LOCAL cl_int
+cl_get_pipe_info(cl_mem mem,
+                    cl_mem_info param_name,
+                    size_t param_value_size,
+                    void *param_value,
+                    size_t *param_value_size_ret)
+{
+  _cl_mem_pipe *pipe;
+  switch(param_name)
+  {
+    FIELD_SIZE(PIPE_PACKET_SIZE, cl_uint);
+    FIELD_SIZE(PIPE_MAX_PACKETS, cl_uint);
+  default:
+    return CL_INVALID_VALUE;
+  }
+
+  if(mem->type != CL_MEM_PIPE_TYPE)
+    return CL_INVALID_MEM_OBJECT;
+
+  pipe = cl_mem_pipe(mem);
+
+  switch(param_name)
+  {
+  case CL_PIPE_PACKET_SIZE:
+    *((cl_uint *)param_value) = pipe->packet_size;
+    break;
+  case CL_PIPE_MAX_PACKETS:
+    *((cl_uint *)param_value) = pipe->max_packets;
+    break;
+  }
+
+  return CL_SUCCESS;
+}
+
 #define IS_1D(image) (image->image_type == CL_MEM_OBJECT_IMAGE1D ||        \
                       image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY ||  \
                       image->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
@@ -261,6 +295,10 @@ cl_mem_allocate(enum cl_mem_type type,
     struct _cl_mem_buffer1d_image *buffer1d_image = NULL;
     TRY_ALLOC(buffer1d_image, CALLOC(struct _cl_mem_buffer1d_image));
     mem = &buffer1d_image->base.base;
+  } else if (type == CL_MEM_PIPE_TYPE) {
+    _cl_mem_pipe *pipe = NULL;
+    TRY_ALLOC(pipe, CALLOC(struct _cl_mem_pipe));
+    mem = &pipe->base;
   } else {
     struct _cl_mem_buffer *buffer = NULL;
     TRY_ALLOC (buffer, CALLOC(struct _cl_mem_buffer));
@@ -608,6 +646,68 @@ error:
   cl_mem_delete(mem);
   mem = NULL;
   goto exit;
+}
+
+cl_mem cl_mem_new_pipe(cl_context ctx,
+                             cl_mem_flags flags,
+                             cl_uint packet_size,
+                             cl_uint max_packets,
+                             cl_int *errcode_ret)
+{
+  _cl_mem_pipe* pipe = NULL;
+  cl_uint *ptr = NULL;
+  cl_mem mem = NULL;
+  cl_int err;
+  cl_uint sz;
+  if(UNLIKELY((pipe = CALLOC(_cl_mem_pipe)) == NULL)) {
+    err = CL_OUT_OF_RESOURCES;
+    goto error;
+  }
+
+  sz = packet_size * max_packets;
+  assert(sz != 0);
+
+  /* HSW: Byte scattered Read/Write has limitation that
+     the buffer size must be a multiple of 4 bytes. */
+  sz = ALIGN(sz, 4);
+
+  sz += 128;   //The head of pipe is for data struct, and alignment to 128 byte for max data type double16
+
+  mem = cl_mem_allocate(CL_MEM_PIPE_TYPE, ctx, flags, sz, CL_FALSE,NULL , NULL, &err);
+
+  if (mem == NULL || err != CL_SUCCESS)
+    goto error;
+
+  ptr = cl_mem_map_auto(mem, 1);
+  if(ptr == NULL){
+    err = CL_OUT_OF_RESOURCES;
+    goto error;
+  }
+  ptr[0] = max_packets;
+  ptr[1] = packet_size;
+  ptr[2] = 0;              //write ptr
+  ptr[3] = 0;              //read ptr
+  ptr[4] = 0;              //reservation read ptr
+  ptr[5] = 0;              //reservation write ptr
+  ptr[6] = 0;              //packet num
+  cl_mem_unmap(mem);
+
+  pipe = cl_mem_pipe(mem);
+  pipe->flags = flags;
+  pipe->packet_size = packet_size;
+  pipe->max_packets = max_packets;
+
+  return mem;
+
+exit:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return mem;
+error:
+  cl_mem_delete(mem);
+  mem = NULL;
+  goto exit;
+
 }
 
 void cl_mem_replace_buffer(cl_mem buffer, cl_buffer new_bo)

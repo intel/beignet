@@ -73,6 +73,7 @@ typedef struct _cl_mem_dstr_cb {
 enum cl_mem_type {
   CL_MEM_BUFFER_TYPE,
   CL_MEM_SUBBUFFER_TYPE,
+  CL_MEM_PIPE_TYPE,
   CL_MEM_SVM_TYPE,
   CL_MEM_IMAGE_TYPE,
   CL_MEM_GL_IMAGE_TYPE,
@@ -114,6 +115,13 @@ typedef  struct _cl_mem {
          ((cl_base_object)mem)->magic == CL_OBJECT_MEM_MAGIC &&    \
          CL_OBJECT_GET_REF(mem) >= 1 &&                            \
          mem->type < CL_MEM_IMAGE_TYPE))
+
+typedef struct _cl_mem_pipe {
+  _cl_mem base;
+  cl_svm_mem_flags flags;                 /* Flags specified at the creation time */
+  uint32_t packet_size;
+  uint32_t max_packets;
+} _cl_mem_pipe;
 
 typedef struct _cl_mem_svm {
   _cl_mem base;
@@ -197,11 +205,11 @@ cl_mem_gl_image(cl_mem mem)
   return (struct _cl_mem_gl_image*)mem;
 }
 
-inline static struct _cl_mem_buffer *
-cl_mem_buffer(cl_mem mem)
+inline static struct _cl_mem_pipe *
+cl_mem_pipe(cl_mem mem)
 {
-  assert(!IS_IMAGE(mem));
-  return (struct _cl_mem_buffer *)mem;
+  assert(mem->type == CL_MEM_PIPE_TYPE);
+  return (struct _cl_mem_pipe *)mem;
 }
 
 /* Query information about a memory object */
@@ -219,9 +227,12 @@ extern cl_mem cl_mem_new_buffer(cl_context, cl_mem_flags, size_t, void*, cl_int*
 /* Create a new sub memory object */
 extern cl_mem cl_mem_new_sub_buffer(cl_mem, cl_mem_flags, cl_buffer_create_type, const void *, cl_int *);
 
+extern cl_mem cl_mem_new_pipe(cl_context, cl_mem_flags, cl_uint, cl_uint, cl_int *);
+/* Query information about a pipe object */
+extern cl_int cl_get_pipe_info(cl_mem, cl_mem_info, size_t, void *, size_t *);
+
 void* cl_mem_svm_allocate(cl_context, cl_svm_mem_flags, size_t, unsigned int);
 void cl_mem_svm_delete(cl_context, void *svm_pointer);
-
 
 /* Idem but this is an image */
 extern cl_mem
