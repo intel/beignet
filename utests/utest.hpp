@@ -101,12 +101,12 @@ struct UTest
   static const UTest __##FN##__(__ANON__##FN##__, #FN, true);
 
 /*! Turn a function into a unit performance test */
-#define MAKE_BENCHMARK_FROM_FUNCTION_KEEP_PROGRAM(FN, KEEP_PROGRAM) \
-  static void __ANON__##FN##__(void) { BENCHMARK(FN()); } \
+#define MAKE_BENCHMARK_FROM_FUNCTION_KEEP_PROGRAM(FN, KEEP_PROGRAM, ...) \
+  static void __ANON__##FN##__(void) { BENCHMARK(FN(), __VA_ARGS__); } \
   static const UTest __##FN##__(__ANON__##FN##__, #FN, true, false, !(KEEP_PROGRAM));
 
-#define MAKE_BENCHMARK_FROM_FUNCTION(FN) \
-  static void __ANON__##FN##__(void) { BENCHMARK(FN()); } \
+#define MAKE_BENCHMARK_FROM_FUNCTION(FN, ...) \
+  static void __ANON__##FN##__(void) { BENCHMARK(FN(), __VA_ARGS__); } \
   static const UTest __##FN##__(__ANON__##FN##__, #FN, true);
 
 
@@ -138,12 +138,12 @@ struct UTest
     } \
   } while (0)
 
-#define BENCHMARK(EXPR) \
+#define BENCHMARK(EXPR, ...) \
  do { \
     double ret = 0;\
     try { \
       ret = EXPR; \
-      std::cout << "    [Result: " << std::fixed<< std::setprecision(3) << ret << " GB/S]    [SUCCESS]" << std::endl; \
+      std::cout << "    [Result: " << std::fixed<< std::setprecision(3) << ret << " " << __VA_ARGS__ << "]    [SUCCESS]" << std::endl; \
       UTest::retStatistics.passCount += 1; \
     } \
     catch (Exception e) { \

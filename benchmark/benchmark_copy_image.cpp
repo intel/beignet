@@ -63,7 +63,7 @@ double benchmark_copy_image_ ##T(void) \
   return BANDWIDTH(sz * sizeof(M)*2 * 100, elapsed); \
 } \
 \
-MAKE_BENCHMARK_FROM_FUNCTION_KEEP_PROGRAM(benchmark_copy_image_ ##T,true);
+MAKE_BENCHMARK_FROM_FUNCTION_KEEP_PROGRAM(benchmark_copy_image_ ##T, true, "GB/S");
 
 BENCH_COPY_IMAGE(uchar,unsigned char,CL_UNSIGNED_INT8)
 BENCH_COPY_IMAGE(ushort,unsigned short,CL_UNSIGNED_INT16)

@@ -63,4 +63,4 @@ double benchmark_copy_buffer_to_image(void)
   return BANDWIDTH(sz * 100, elapsed);
 }
 
-MAKE_BENCHMARK_FROM_FUNCTION(benchmark_copy_buffer_to_image);
+MAKE_BENCHMARK_FROM_FUNCTION(benchmark_copy_buffer_to_image, "GB/S");

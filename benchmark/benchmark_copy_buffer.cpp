@@ -48,7 +48,7 @@ double benchmark_copy_buffer_ ##T(void) \
   return BANDWIDTH(sz * sizeof(M) * 2 * 100, elapsed); \
 } \
  \
-MAKE_BENCHMARK_FROM_FUNCTION_KEEP_PROGRAM(benchmark_copy_buffer_ ##T,true);
+MAKE_BENCHMARK_FROM_FUNCTION_KEEP_PROGRAM(benchmark_copy_buffer_ ##T, true, "GB/S");
 
 BENCH_COPY_BUFFER(uchar,"bench_copy_buffer_uchar",unsigned char)
 BENCH_COPY_BUFFER(ushort,"bench_copy_buffer_ushort",unsigned short)

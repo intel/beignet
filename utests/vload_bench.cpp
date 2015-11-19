@@ -89,7 +89,7 @@ static double vload_bench_ ##kT(void) \
   } \
   return totBandwidth/j;\
 }\
-MAKE_BENCHMARK_FROM_FUNCTION_KEEP_PROGRAM(vload_bench_ ##kT, true)
+MAKE_BENCHMARK_FROM_FUNCTION_KEEP_PROGRAM(vload_bench_ ##kT, true, "GB/S")
 
 #ifdef BUILD_BENCHMARK
 VLOAD_BENCH(uint8_t, uchar)

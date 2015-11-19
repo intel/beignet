@@ -48,4 +48,4 @@ double benchmark_copy_buf(void)
   return BANDWIDTH(sz * sizeof(char) * 100, elapsed);
 }
 
-MAKE_BENCHMARK_FROM_FUNCTION(benchmark_copy_buf);
+MAKE_BENCHMARK_FROM_FUNCTION(benchmark_copy_buf, "GB/S");
