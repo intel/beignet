@@ -26,12 +26,12 @@
 #include <string.h>
 #include "sys/map.hpp"
 #include "sys/vector.hpp"
-#include "unit.hpp"
 
 namespace gbe
 {
   namespace ir
   {
+    class Unit;
 
     /* Things about printf info. */
     enum {

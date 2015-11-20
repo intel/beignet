@@ -319,7 +319,7 @@ namespace gbe
     passes.add(createPromoteMemoryToRegisterPass());
     if(optLevel > 0)
       passes.add(createGVNPass());                 // Remove redundancies
-    passes.add(createPrintfParserPass());
+    passes.add(createPrintfParserPass(unit));
     passes.add(createExpandConstantExprPass());    // expand ConstantExpr
     passes.add(createScalarizePass());             // Expand all vector ops
     passes.add(createExpandLargeIntegersPass());   // legalize large integer operation

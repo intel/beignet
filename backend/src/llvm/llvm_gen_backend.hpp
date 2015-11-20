@@ -140,7 +140,7 @@ namespace gbe
   llvm::BasicBlockPass *createIntrinsicLoweringPass();
 
   /*! Passer the printf function call. */
-  llvm::FunctionPass* createPrintfParserPass();
+  llvm::FunctionPass* createPrintfParserPass(ir::Unit &unit);
 
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
   /* customized loop unrolling pass. */

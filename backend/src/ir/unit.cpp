@@ -30,6 +30,7 @@ namespace ir {
   Unit::Unit(PointerSize pointerSize) : pointerSize(pointerSize), valid(true) {}
   Unit::~Unit(void) {
     for (const auto &pair : functions) GBE_DELETE(pair.second);
+    for (const auto &pair : printfs) GBE_DELETE(pair.second);
   }
   Function *Unit::getFunction(const std::string &name) const {
     auto it = functions.find(name);

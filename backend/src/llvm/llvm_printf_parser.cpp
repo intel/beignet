@@ -38,6 +38,7 @@
 #include "llvm/llvm_gen_backend.hpp"
 #include "sys/map.hpp"
 #include "ir/printf.hpp"
+#include "ir/unit.hpp"
 
 using namespace llvm;
 
@@ -301,7 +302,7 @@ error:
     Value* g1Xg2Xg3;
     Value* wg_offset;
     int out_buf_sizeof_offset;
-    static map<CallInst*, PrintfSet::PrintfFmt*> printfs;
+    ir::Unit &unit;
     int printf_num;
     int totalSizeofSize;
 
@@ -310,28 +311,19 @@ error:
       PrintfSet::PrintfFmt* printf_fmt;
     };
 
-    PrintfParser(void) : FunctionPass(ID)
+    PrintfParser(ir::Unit &unit) : FunctionPass(ID),
+    unit(unit)
     {
       module = NULL;
       builder = NULL;
       intTy = NULL;
       out_buf_sizeof_offset = 0;
-      printfs.clear();
       pbuf_ptr = NULL;
       index_buf_ptr = NULL;
       g1Xg2Xg3 = NULL;
       wg_offset = NULL;
       printf_num = 0;
       totalSizeofSize = 0;
-    }
-
-    ~PrintfParser(void)
-    {
-      for (auto &s : printfs) {
-        delete s.second;
-        s.second = NULL;
-      }
-      printfs.clear();
     }
 
     bool parseOnePrintfInstruction(CallInst * call, PrintfParserInfo& info, int& sizeof_size);
@@ -433,9 +425,9 @@ error:
     CallInst* printf_inst = builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
                               "__gen_ocl_printf", Type::getVoidTy(module->getContext()),
                               NULL)));
-    assert(printfs[printf_inst] == NULL);
-    printfs[printf_inst] = pInfo.printf_fmt;
-    printfs[printf_inst]->second = printf_num;
+    assert(unit.printfs[printf_inst] == NULL);
+    unit.printfs[printf_inst] = pInfo.printf_fmt;
+    unit.printfs[printf_inst]->second = printf_num;
     printf_num++;
     return true;
   }
@@ -983,18 +975,9 @@ error:
     return false;
   }
 
-  map<CallInst*, PrintfSet::PrintfFmt*> PrintfParser::printfs;
-
-  void* getPrintfInfo(CallInst* inst)
+  FunctionPass* createPrintfParserPass(ir::Unit &unit)
   {
-    if (PrintfParser::printfs[inst])
-      return (void*)PrintfParser::printfs[inst];
-    return NULL;
-  }
-
-  FunctionPass* createPrintfParserPass()
-  {
-    return new PrintfParser();
+    return new PrintfParser(unit);
   }
   char PrintfParser::ID = 0;
 

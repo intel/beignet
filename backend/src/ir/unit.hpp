@@ -26,8 +26,11 @@
 
 #include "ir/constant.hpp"
 #include "ir/register.hpp"
+#include "ir/printf.hpp"
 #include "sys/map.hpp"
 #include <string.h>
+
+#include "llvm/IR/Instructions.h"
 
 namespace gbe {
 namespace ir {
@@ -88,6 +91,8 @@ namespace ir {
   {
   public:
     typedef map<std::string, Function*> FunctionSet;
+    /*! Moved from printf pass */
+    map<llvm::CallInst*, PrintfSet::PrintfFmt*> printfs;
     /*! Create an empty unit */
     Unit(PointerSize pointerSize = POINTER_32_BITS);
     /*! Release everything (*including* the function pointers) */
