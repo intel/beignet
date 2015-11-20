@@ -140,7 +140,7 @@ namespace gbe
   llvm::BasicBlockPass *createIntrinsicLoweringPass();
 
   /*! Passer the printf function call. */
-  llvm::FunctionPass* createPrintfParserPass();
+  llvm::FunctionPass* createPrintfParserPass(ir::Unit &unit);
 
   /*! Insert the time stamp for profiling. */
   llvm::FunctionPass* createProfilingInserterPass(int profilingType, ir::Unit &unit);

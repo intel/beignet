@@ -23,6 +23,7 @@
 
 #include <stdarg.h>
 #include "printf.hpp"
+#include "ir/unit.hpp"
 
 namespace gbe
 {
