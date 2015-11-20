@@ -177,12 +177,13 @@ namespace gbe
       builder->SetInsertPoint(instI);
       /* Add the timestamp store function call. */
       // __gen_ocl_store_timestamp(int nth, int type);
-      builder->CreateCall2(cast<llvm::Function>(module->getOrInsertFunction(
+      Value *Args[2] = {ConstantInt::get(intTy, pointNum++), ConstantInt::get(intTy, profilingType)};
+      builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
               "__gen_ocl_calc_timestamp", Type::getVoidTy(module->getContext()),
               IntegerType::getInt32Ty(module->getContext()),
               IntegerType::getInt32Ty(module->getContext()),
               NULL)),
-          /* the args */ ConstantInt::get(intTy, pointNum++), ConstantInt::get(intTy, profilingType));
+              ArrayRef<Value*>(Args));
     }
     /* We insert one store_profiling at the end of the last block to hold the place. */
     llvm::Function::iterator BE = F.end();
@@ -190,12 +191,14 @@ namespace gbe
     BasicBlock::iterator retInst = BE->end();
     retInst--;
     builder->SetInsertPoint(retInst);
-    builder->CreateCall2(cast<llvm::Function>(module->getOrInsertFunction(
+    Value *Args2[2] = {profilingBuf, ConstantInt::get(intTy, profilingType)};
+
+    builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
             "__gen_ocl_store_profiling", Type::getVoidTy(module->getContext()),
             ptrTy,
             IntegerType::getInt32Ty(module->getContext()),
             NULL)),
-        /* the args */profilingBuf, ConstantInt::get(intTy, profilingType));
+            ArrayRef<Value*>(Args2));
 
     delete builder;
     return changed;
