@@ -177,3 +177,6 @@ DECL_LLVM_GEN_FUNCTION(PRINTF, __gen_ocl_printf)
 DECL_LLVM_GEN_FUNCTION(CALC_TIMESTAMP, __gen_ocl_calc_timestamp)
 // store profiling info to the mem.
 DECL_LLVM_GEN_FUNCTION(STORE_PROFILING, __gen_ocl_store_profiling)
+
+// debug wait function
+DECL_LLVM_GEN_FUNCTION(DEBUGWAIT, __gen_ocl_debugwait)

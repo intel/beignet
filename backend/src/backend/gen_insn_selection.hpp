@@ -136,6 +136,7 @@ namespace gbe
         uint16_t lut_sub:2;
       };
       uint32_t barrierType;
+      uint32_t waitType;
       bool longjmp;
       uint32_t indirect_offset;
       struct {

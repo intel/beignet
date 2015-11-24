@@ -591,7 +591,8 @@ namespace gbe
           || node->insn.opcode == SEL_OP_READ_ARF
           || node->insn.opcode == SEL_OP_BARRIER
           || node->insn.opcode == SEL_OP_CALC_TIMESTAMP
-          || node->insn.opcode == SEL_OP_STORE_PROFILING)
+          || node->insn.opcode == SEL_OP_STORE_PROFILING
+          || node->insn.opcode == SEL_OP_WAIT)
         tracker.makeBarrier(insnID, insnNum);
     }
 

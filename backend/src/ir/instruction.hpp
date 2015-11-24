@@ -576,6 +576,13 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
+  /*! Indirect Move instruction */
+  class WaitInstruction : public Instruction {
+  public:
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
   /*! Specialize the instruction. Also performs typechecking first based on the
    *  opcode. Crashes if it fails
    */
@@ -797,6 +804,9 @@ namespace ir {
   Instruction CALC_TIMESTAMP(uint32_t pointNum, uint32_t tsType);
   /*! calculate the execute timestamp for profiling */
   Instruction STORE_PROFILING(uint32_t bti, uint32_t Type);
+  /*! wait */
+  Instruction WAIT(void);
+
 } /* namespace ir */
 } /* namespace gbe */
 

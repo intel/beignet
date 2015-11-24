@@ -1804,7 +1804,7 @@ namespace gbe
   }
 
   void GenContext::emitWaitInstruction(const SelectionInstruction &insn) {
-    p->WAIT();
+    p->WAIT(insn.extra.waitType);
   }
 
   void GenContext::emitBarrierInstruction(const SelectionInstruction &insn) {
@@ -1829,6 +1829,7 @@ namespace gbe
       p->BARRIER(src);
       p->curr.execWidth = 1;
       // Now we wait for the other threads
+      p->curr.predicate = GEN_PREDICATE_NONE;
       p->WAIT();
     p->pop();
   }

@@ -3601,6 +3601,7 @@ namespace gbe
       case GEN_OCL_PRINTF:
       case GEN_OCL_CALC_TIMESTAMP:
       case GEN_OCL_STORE_PROFILING:
+      case GEN_OCL_DEBUGWAIT:
         break;
       case GEN_OCL_NOT_FOUND:
       default:
@@ -4392,6 +4393,11 @@ namespace gbe
             const ir::Register src1 = this->getRegister(*AI); ++AI;
             const ir::Register dst = this->getRegister(&I);
             ctx.SIMD_SHUFFLE(getType(ctx, I.getType()), dst, src0, src1);
+            break;
+          }
+          case GEN_OCL_DEBUGWAIT:
+          {
+            ctx.WAIT();
             break;
           }
           default: break;

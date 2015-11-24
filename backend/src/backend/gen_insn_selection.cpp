@@ -619,7 +619,7 @@ namespace gbe
     /*! No-op */
     void NOP(void);
     /*! Wait instruction (used for the barrier) */
-    void WAIT(void);
+    void WAIT(uint32_t n = 0);
     /*! Atomic instruction */
     void ATOMIC(Reg dst, uint32_t function, uint32_t srcNum, Reg src0, Reg src1, Reg src2, GenRegister bti, vector<GenRegister> temps);
     /*! Read 64 bits float/int array */
@@ -1293,7 +1293,11 @@ namespace gbe
 
   void Selection::Opaque::EOT(void) { this->appendInsn(SEL_OP_EOT, 0, 0); }
   void Selection::Opaque::NOP(void) { this->appendInsn(SEL_OP_NOP, 0, 0); }
-  void Selection::Opaque::WAIT(void) { this->appendInsn(SEL_OP_WAIT, 0, 0); }
+  void Selection::Opaque::WAIT(uint32_t n)
+  {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_WAIT, 0, 0);
+    insn->extra.waitType = n;
+  }
 
   void Selection::Opaque::READ64(Reg addr,
                                  const GenRegister *dst,
@@ -3463,6 +3467,25 @@ namespace gbe
     }
 
     DECL_CTOR(SyncInstruction, 1,1);
+  };
+
+  /*! Wait instruction */
+  DECL_PATTERN(WaitInstruction)
+  {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::WaitInstruction &insn, bool &markChildren) const
+    {
+      using namespace ir;
+      // Debugwait will use reg 1, which is different from barrier
+      sel.push();
+        sel.curr.noMask = 1;
+        sel.curr.execWidth = 1;
+        sel.curr.predicate = GEN_PREDICATE_NONE;
+        sel.WAIT(1);
+      sel.pop();
+      return true;
+    }
+
+    DECL_CTOR(WaitInstruction, 1,1);
   };
 
   INLINE uint32_t getByteScatterGatherSize(Selection::Opaque &sel, ir::Type type) {
@@ -5978,6 +6001,7 @@ namespace gbe
     this->insert<CalcTimestampInstructionPattern>();
     this->insert<StoreProfilingInstructionPattern>();
     this->insert<NullaryInstructionPattern>();
+    this->insert<WaitInstructionPattern>();
 
     // Sort all the patterns with the number of instructions they output
     for (uint32_t op = 0; op < ir::OP_INVALID; ++op)

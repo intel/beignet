@@ -12,6 +12,7 @@ declare i32 @_get_global_mem_fence() nounwind alwaysinline
 declare void @__gen_ocl_barrier_local() nounwind alwaysinline noduplicate
 declare void @__gen_ocl_barrier_global() nounwind alwaysinline noduplicate
 declare void @__gen_ocl_barrier_local_and_global() nounwind alwaysinline noduplicate
+declare void @__gen_ocl_debugwait() nounwind alwaysinline noduplicate
 
 define void @_Z7barrierj(i32 %flags) nounwind noduplicate alwaysinline {
   %1 = icmp eq i32 %flags, 3
@@ -38,5 +39,10 @@ barrier_global:
   br label %done
 
 done:
+  ret void
+}
+
+define void @_Z9debugwaitv() nounwind noduplicate alwaysinline {
+  call void @__gen_ocl_debugwait()
   ret void
 }

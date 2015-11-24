@@ -949,6 +949,21 @@ namespace ir {
       Register dst[0], src[0];
     };
 
+    /*! Wait instructions */
+    class ALIGNED_INSTRUCTION WaitInstruction :
+      public BasePolicy,
+      public NSrcPolicy<WaitInstruction, 0>,
+      public NDstPolicy<WaitInstruction, 0>
+    {
+    public:
+      INLINE WaitInstruction() {
+        this->opcode = OP_WAIT;
+      }
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const;
+      Register dst[0], src[0];
+    };
+
 #undef ALIGNED_INSTRUCTION
 
     /////////////////////////////////////////////////////////////////////////
@@ -1247,6 +1262,8 @@ namespace ir {
     { return true; }
     INLINE bool GetImageInfoInstruction::wellFormed(const Function &fn, std::string &why) const
     { return true; }
+    INLINE bool WaitInstruction::wellFormed(const Function &fn, std::string &why) const
+    { return true; }
 
 
     // Ensure that types and register family match
@@ -1531,6 +1548,9 @@ namespace ir {
           out << "." << syncStr[field];
     }
 
+    INLINE void WaitInstruction::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+    }
 
   } /* namespace internal */
 
@@ -1679,6 +1699,10 @@ END_INTROSPECTION(IndirectMovInstruction)
 START_INTROSPECTION(LabelInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(LabelInstruction)
+
+START_INTROSPECTION(WaitInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(WaitInstruction)
 
 START_INTROSPECTION(VmeInstruction)
 #include "ir/instruction.hxx"
@@ -1829,7 +1853,8 @@ END_FUNCTION(Instruction, Register)
            opcode == OP_SYNC ||
            opcode == OP_ATOMIC ||
            opcode == OP_CALC_TIMESTAMP ||
-           opcode == OP_STORE_PROFILING;
+           opcode == OP_STORE_PROFILING ||
+           opcode == OP_WAIT;
   }
 
 #define DECL_MEM_FN(CLASS, RET, PROTOTYPE, CALL) \
@@ -2172,6 +2197,11 @@ DECL_MEM_FN(MemInstruction, void,     setBtiReg(Register reg), setBtiReg(reg))
 
   Instruction STORE_PROFILING(uint32_t bti, uint32_t profilingType) {
     return internal::StoreProfilingInstruction(bti, profilingType).convert();
+  }
+
+  // WAIT
+  Instruction WAIT(void) {
+    return internal::WaitInstruction().convert();
   }
 
   std::ostream &operator<< (std::ostream &out, const Instruction &insn) {
