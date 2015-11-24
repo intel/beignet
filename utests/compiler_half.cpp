@@ -172,7 +172,7 @@ void compiler_half_basic(void)
   for (int32_t i = 0; i < (int32_t) n; ++i) {
     tmp_f = __half_to_float(((uint16_t *)buf_data[1])[i]);
     memcpy(&f, &tmp_f, sizeof(float));
-    printf("%f %f\n", f, fdst[i]);
+    //printf("%f %f\n", f, fdst[i]);
     OCL_ASSERT(fabs(f - fdst[i]) <= 0.01 * fabs(fdst[i]) || (fdst[i] == 0.0 && f == 0.0));
   }
   OCL_UNMAP_BUFFER(1);
@@ -180,11 +180,18 @@ void compiler_half_basic(void)
 
 MAKE_UTEST_FROM_FUNCTION(compiler_half_basic);
 
+static const int half_n = 16;
+static float half_test_src[half_n] = {
+  -0.23455f, 1.23413f, 2.3412, 8.234f,
+  -122.31f, -14.233f, 0.0023f, 99.322f,
+  0.0f, 0.332f, 123.12f, -0.003f,
+  16.0f, 19.22f, 128.006f, 25.032f
+};
 
-#define HALF_MATH_TEST_1ARG(NAME, CPPNAME, RANGE_L, RANGE_H)            \
+#define HALF_MATH_TEST_1ARG(NAME, CPPNAME)                              \
   void compiler_half_math_##NAME(void)                                  \
   {                                                                     \
-    const size_t n = 16;                                                \
+    const size_t n = half_n;                                            \
     uint16_t hsrc[n];                                                   \
     float fsrc[n], fdst[n];                                             \
     uint32_t tmp_f;                                                     \
@@ -202,7 +209,7 @@ MAKE_UTEST_FROM_FUNCTION(compiler_half_basic);
     locals[0] = 16;                                                     \
                                                                         \
     for (int32_t i = 0; i < (int32_t) n; ++i) {                         \
-      fsrc[i] = RANGE_L + ((rand()%1000) / 1000.0f ) * ((RANGE_H) - (RANGE_L)); \
+      fsrc[i] = half_test_src[i];                                       \
       memcpy(&tmp_f, &fsrc[i], sizeof(float));                          \
       hsrc[i] = __float_to_half(tmp_f);                                 \
     }                                                                   \
@@ -225,7 +232,7 @@ MAKE_UTEST_FROM_FUNCTION(compiler_half_basic);
       bool isInf, infSign;                                              \
       tmp_f = __half_to_float(((uint16_t *)buf_data[1])[i], &isInf, &infSign); \
       memcpy(&f, &tmp_f, sizeof(float));                                \
-      /*printf("%.15f %.15f, diff is %%%f\n", f, fdst[i], (fabs(f - fdst[i])/fabs(fdst[i]))); */ \
+      /* printf("%.15f %.15f, diff is %f\n", f, fdst[i], (fabs(f - fdst[i])/fabs(fdst[i]))); */ \
       OCL_ASSERT(((fabs(fdst[i]) < 6e-8f) && (fabs(f) < 6e-8f)) ||      \
                  (fabs(f - fdst[i]) <= 0.03 * fabs(fdst[i])) ||         \
                  (isInf && ((infSign && fdst[i] > 65504.0f) || (!infSign && fdst[i] < -65504.0f))) || \
@@ -235,17 +242,17 @@ MAKE_UTEST_FROM_FUNCTION(compiler_half_basic);
   }                                                                     \
   MAKE_UTEST_FROM_FUNCTION(compiler_half_math_##NAME);
 
-HALF_MATH_TEST_1ARG(sin, sinf, -10, 10);
-HALF_MATH_TEST_1ARG(cos, cosf, -10, 10);
-HALF_MATH_TEST_1ARG(sinh, sinh, -10, 10);
-HALF_MATH_TEST_1ARG(cosh, cosh, -10, 10);
-HALF_MATH_TEST_1ARG(tan, tanf, -3.14/2, 3.14/2);
-HALF_MATH_TEST_1ARG(log10, log10f, 0.1, 100);
-HALF_MATH_TEST_1ARG(log, logf, 0.01, 1000);
-HALF_MATH_TEST_1ARG(trunc, truncf, -1000, 1000);
-HALF_MATH_TEST_1ARG(exp, expf, -19.0, 20.0);
-HALF_MATH_TEST_1ARG(sqrt, sqrtf, -19.0, 10.0);
-HALF_MATH_TEST_1ARG(ceil, ceilf, -19.0, 20.0);
+HALF_MATH_TEST_1ARG(sin, sinf);
+HALF_MATH_TEST_1ARG(cos, cosf);
+HALF_MATH_TEST_1ARG(sinh, sinh);
+HALF_MATH_TEST_1ARG(cosh, cosh);
+HALF_MATH_TEST_1ARG(tan, tanf);
+HALF_MATH_TEST_1ARG(log10, log10f);
+HALF_MATH_TEST_1ARG(log, logf);
+HALF_MATH_TEST_1ARG(trunc, truncf);
+HALF_MATH_TEST_1ARG(exp, expf);
+HALF_MATH_TEST_1ARG(sqrt, sqrtf);
+HALF_MATH_TEST_1ARG(ceil, ceilf);
 
 #define HALF_MATH_TEST_2ARG(NAME, CPPNAME, RANGE_L, RANGE_H)            \
   void compiler_half_math_##NAME(void)                                  \
@@ -273,7 +280,7 @@ HALF_MATH_TEST_1ARG(ceil, ceilf, -19.0, 20.0);
       fsrc0[i] = RANGE_L + (((RANGE_H) - (RANGE_L))/n) * i;            \
       memcpy(&tmp_f, &fsrc0[i], sizeof(float));                         \
       hsrc0[i] = __float_to_half(tmp_f);                                \
-      fsrc1[i] = RANGE_L + ((rand()%1000) / 1000.0f ) * ((RANGE_H) - (RANGE_L));            \
+      fsrc1[i] = RANGE_L + (half_test_src[i/4] + 63) * ((RANGE_H) - (RANGE_L));            \
       memcpy(&tmp_f, &fsrc1[i], sizeof(float));                         \
       hsrc1[i] = __float_to_half(tmp_f);                                \
     }                                                                   \
