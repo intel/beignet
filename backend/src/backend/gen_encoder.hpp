@@ -162,7 +162,7 @@ namespace gbe
     /*! No-op */
     void NOP(void);
     /*! Wait instruction (used for the barrier) */
-    void WAIT(void);
+    void WAIT(uint32_t n = 0);
     /*! Atomic instructions */
     virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum);
     /*! Untyped read (upto 4 channels) */

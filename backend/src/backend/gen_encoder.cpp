@@ -994,9 +994,9 @@ namespace gbe
     this->setSrc1(insn, src1);
   }
 
-  void GenEncoder::WAIT(void) {
+  void GenEncoder::WAIT(uint32_t n) {
      GenNativeInstruction *insn = this->next(GEN_OPCODE_WAIT);
-     GenRegister src = GenRegister::notification1();
+     GenRegister src = GenRegister::notification0(n);
      this->setDst(insn, GenRegister::null());
      this->setSrc0(insn, src);
      this->setSrc1(insn, GenRegister::null());
