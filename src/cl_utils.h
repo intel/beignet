@@ -31,6 +31,12 @@
 #define JOIN(X, Y) _DO_JOIN(X, Y)
 #define _DO_JOIN(X, Y) _DO_JOIN2(X, Y)
 #define _DO_JOIN2(X, Y) X##Y
+#ifdef NDEBUG
+  #define DEBUGP(...)
+#else
+  #define DEBUGP(fmt, ...)        \
+  fprintf(stderr, fmt, ##__VA_ARGS__)
+#endif
 
 /* Check compile time errors */
 #define STATIC_ASSERT(value)                                        \
