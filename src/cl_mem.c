@@ -327,6 +327,15 @@ cl_mem_allocate(enum cl_mem_type type,
     }
 
     if(type == CL_MEM_IMAGE_TYPE && buffer != NULL) {
+      // if create image from USE_HOST_PTR buffer, the buffer's base address need be aligned.
+      if(buffer->is_userptr) {
+        int base_alignement = 0;
+        cl_get_device_info(ctx->device, CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT, sizeof(base_alignement), &base_alignement, NULL);
+        if(ALIGN((unsigned long)buffer->host_ptr, base_alignement) != (unsigned long)buffer->host_ptr) {
+          err = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+          goto error;
+        }
+      }
       // if the image if created from buffer, should use the bo directly to share same bo.
       mem->bo = buffer->bo;
       cl_mem_image(mem)->is_image_from_buffer = 1;
