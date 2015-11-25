@@ -51,6 +51,7 @@ namespace gbe
       p->BARRIER(src);
       p->curr.execWidth = 1;
       // Now we wait for the other threads
+      p->curr.predicate = GEN_PREDICATE_NONE;
       p->WAIT();
     p->pop();
   }
