@@ -3722,6 +3722,7 @@ namespace gbe
       case GEN_OCL_WORK_GROUP_SCAN_INCLUSIVE_ADD:
       case GEN_OCL_WORK_GROUP_SCAN_INCLUSIVE_MAX:
       case GEN_OCL_WORK_GROUP_SCAN_INCLUSIVE_MIN:
+      case GEN_OCL_LRP:
         this->newRegister(&I);
         break;
       case GEN_OCL_PRINTF:
@@ -4587,6 +4588,18 @@ namespace gbe
             this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_INCLUSIVE_MAX); break;
           case GEN_OCL_WORK_GROUP_SCAN_INCLUSIVE_MIN:
             this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_INCLUSIVE_MIN); break;
+          case GEN_OCL_LRP:
+          {
+            const ir::Register dst  = this->getRegister(&I);
+            GBE_ASSERT(AI != AE);
+            const ir::Register src0 = this->getRegister(*(AI++));
+            GBE_ASSERT(AI != AE);
+            const ir::Register src1 = this->getRegister(*(AI++));
+            GBE_ASSERT(AI != AE);
+            const ir::Register src2 = this->getRegister(*(AI++));
+            ctx.LRP(ir::TYPE_FLOAT, dst, src0, src1, src2);
+            break;
+          }
           default: break;
         }
       }

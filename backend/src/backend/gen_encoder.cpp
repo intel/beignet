@@ -780,6 +780,7 @@ namespace gbe
   ALU2(PLN)
   ALU2(MACH)
   ALU3(MAD)
+  ALU3(LRP)
  // ALU2(BRC)
  // ALU1(ENDIF)
  //  ALU1(IF)

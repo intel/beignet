@@ -24,6 +24,7 @@
 /////////////////////////////////////////////////////////////////////////////
 PURE CONST OVERLOADABLE float __gen_ocl_fmax(float a, float b);
 PURE CONST OVERLOADABLE float __gen_ocl_fmin(float a, float b);
+PURE CONST OVERLOADABLE float __gen_ocl_lrp(float a, float b, float c);
 
 OVERLOADABLE float step(float edge, float x) {
   return x < edge ? 0.0 : 1.0;
@@ -36,7 +37,7 @@ OVERLOADABLE float min(float a, float b) {
   return __gen_ocl_fmin(a, b);
 }
 OVERLOADABLE float mix(float x, float y, float a) {
-  return x + (y-x)*a;
+  return __gen_ocl_lrp(a,y,x); //The lrp using a different order with mix
 }
 OVERLOADABLE float clamp(float v, float l, float u) {
   return max(min(v, u), l);

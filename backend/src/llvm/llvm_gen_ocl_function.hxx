@@ -198,3 +198,6 @@ DECL_LLVM_GEN_FUNCTION(WORK_GROUP_SCAN_INCLUSIVE_MIN, __gen_ocl_work_group_scan_
 
 DECL_LLVM_GEN_FUNCTION(WORK_GROUP_ALL, __gen_ocl_work_group_all)
 DECL_LLVM_GEN_FUNCTION(WORK_GROUP_ANY, __gen_ocl_work_group_any)
+
+// common function
+DECL_LLVM_GEN_FUNCTION(LRP, __gen_ocl_lrp)

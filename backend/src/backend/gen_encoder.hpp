@@ -128,6 +128,7 @@ namespace gbe
     ALU2(LINE)
     ALU2(PLN)
     ALU3(MAD)
+    ALU3(LRP)
     ALU2(BRC)
     ALU1(BRD)
 #undef ALU1

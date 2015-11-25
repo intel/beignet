@@ -1801,6 +1801,7 @@ namespace gbe
     const GenRegister src2 = ra->genReg(insn.src(2));
     switch (insn.opcode) {
       case SEL_OP_MAD:  p->MAD(dst, src0, src1, src2); break;
+      case SEL_OP_LRP:  p->LRP(dst, src0, src1, src2); break;
       default: NOT_IMPLEMENTED;
     }
   }

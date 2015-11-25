@@ -550,6 +550,7 @@ namespace gbe
     ALU2(MACH)
     ALU1(LZD)
     ALU3(MAD)
+    ALU3(LRP)
     ALU2WithTemp(MUL_HI)
     ALU1(FBH)
     ALU1(FBL)
@@ -5223,6 +5224,11 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         case OP_MAD:
          {
           sel.MAD(dst, src2, src0, src1);
+          break;
+         }
+        case OP_LRP:
+         {
+          sel.LRP(dst, src0, src1, src2);
           break;
          }
         default:

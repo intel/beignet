@@ -77,6 +77,7 @@ static const struct {
   [GEN_OPCODE_LINE] = { .name = "line", .nsrc = 2, .ndst = 1 },
   [GEN_OPCODE_PLN] = { .name = "pln", .nsrc = 2, .ndst = 1 },
   [GEN_OPCODE_MAD] = { .name = "mad", .nsrc = 3, .ndst = 1 },
+  [GEN_OPCODE_LRP] = { .name = "lrp", .nsrc = 3, .ndst = 1 },
   [GEN_OPCODE_SAD2] = { .name = "sad2", .nsrc = 2, .ndst = 1 },
   [GEN_OPCODE_SADA2] = { .name = "sada2", .nsrc = 2, .ndst = 1 },
   [GEN_OPCODE_DP4] = { .name = "dp4", .nsrc = 2, .ndst = 1 },

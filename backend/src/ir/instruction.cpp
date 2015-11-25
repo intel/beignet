@@ -2181,6 +2181,10 @@ DECL_MEM_FN(MemInstruction, void,     setBtiReg(Register reg), setBtiReg(reg))
   Instruction MAD(Type type, Register dst, Tuple src) {
     return internal::TernaryInstruction(OP_MAD, type, dst, src).convert();
   }
+
+  Instruction LRP(Type type, Register dst, Tuple src) {
+    return internal::TernaryInstruction(OP_LRP, type, dst, src).convert();
+  }
   // All compare functions
 #define DECL_EMIT_FUNCTION(NAME) \
   Instruction NAME(Type type, Register dst,  Register src0, Register src1) { \

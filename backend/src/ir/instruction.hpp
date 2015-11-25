@@ -679,6 +679,8 @@ namespace ir {
   Instruction I64MADSAT(Type type, Register dst, Tuple src);
   /*! mad.type dst src */
   Instruction MAD(Type type, Register dst, Tuple src);
+  /*! lrp.type dst src */
+  Instruction LRP(Type type, Register dst, Tuple src);
   /*! upsample_short.type dst src */
   Instruction UPSAMPLE_SHORT(Type type, Register dst, Register src0, Register src1);
   /*! upsample_int.type dst src */
