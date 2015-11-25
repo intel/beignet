@@ -89,6 +89,22 @@ namespace ir {
     ATOMIC_OP_INVALID
   };
 
+  enum WorkGroupOps {
+    WORKGROUP_OP_ANY = 1,
+    WORKGROUP_OP_ALL = 2,
+    WORKGROUP_OP_BROADCAST = 3,
+    WORKGROUP_OP_REDUCE_ADD = 4,
+    WORKGROUP_OP_REDUCE_MIN = 5,
+    WORKGROUP_OP_REDUCE_MAX = 6,
+    WORKGROUP_OP_INCLUSIVE_ADD = 7,
+    WORKGROUP_OP_INCLUSIVE_MIN = 8,
+    WORKGROUP_OP_INCLUSIVE_MAX = 9,
+    WORKGROUP_OP_EXCLUSIVE_ADD = 10,
+    WORKGROUP_OP_EXCLUSIVE_MIN = 11,
+    WORKGROUP_OP_EXCLUSIVE_MAX = 12,
+    WORKGROUP_OP_INVALID
+  };
+
   /* Vote function per hardware thread */
   enum VotePredicate : uint8_t {
     VOTE_ALL = 0,
@@ -543,6 +559,16 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
   };
 
+  /*! Related to Work Group. */
+  class WorkGroupInstruction : public Instruction {
+  public:
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+    Type getType(void) const;
+    WorkGroupOps getWorkGroupOpcode(void) const;
+    uint32_t getSlmAddr(void) const;
+  };
+
   /*! Specialize the instruction. Also performs typechecking first based on the
    *  opcode. Crashes if it fails
    */
@@ -759,6 +785,8 @@ namespace ir {
   /*! label labelIndex */
   Instruction LABEL(LabelIndex labelIndex);
 
+  /*! work group */
+  Instruction WORKGROUP(WorkGroupOps opcode, uint32_t slmAddr, Register dst, Tuple srcTuple, uint8_t srcNum, Type type);
 } /* namespace ir */
 } /* namespace gbe */
 
