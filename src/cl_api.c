@@ -1349,6 +1349,7 @@ clCompileProgram(cl_program            program ,
   /* TODO support create program from binary */
   assert(program->source_type == FROM_LLVM ||
       program->source_type == FROM_SOURCE ||
+      program->source_type == FROM_LLVM_SPIR ||
       program->source_type == FROM_BINARY);
   if((err = cl_program_compile(program, num_input_headers, input_headers, header_include_names, options)) != CL_SUCCESS) {
     goto error;

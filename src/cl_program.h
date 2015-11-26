@@ -62,6 +62,7 @@ struct _cl_program {
   char *binary;           /* Program binary. */
   size_t binary_sz;       /* The binary size. */
   uint32_t binary_type;   /* binary type: COMPILED_OBJECT(LLVM IR), LIBRARY(LLVM IR with option "-create-library"), or EXECUTABLE(GEN binary). */
+                          /* ext binary type: BINARY_TYPE_INTERMIDIATE. */
   uint32_t ker_n;         /* Number of declared kernels */
   uint32_t source_type:2; /* Built from binary, source or LLVM */
   uint32_t is_built:1;    /* Did we call clBuildProgram on it? */

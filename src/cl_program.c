@@ -27,6 +27,7 @@
 #include "cl_gbe_loader.h"
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
+#include "CL/cl_ext.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -289,6 +290,7 @@ cl_program_create_from_binary(cl_context             ctx,
     }
 
     program->source_type = FROM_LLVM_SPIR;
+    program->binary_type = CL_PROGRAM_BINARY_TYPE_INTERMEDIATE;
   }else if(isLLVM_C_O((unsigned char*)program->binary) || isLLVM_LIB((unsigned char*)program->binary)) {
     if(*program->binary == BHI_COMPIRED_OBJECT){
       program->binary_type = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
@@ -569,17 +571,10 @@ cl_program_build(cl_program p, const char *options)
       }
       TRY_ALLOC (p->build_opts, cl_calloc(strlen(options) + 1, sizeof(char)));
       memcpy(p->build_opts, options, strlen(options));
-
-      p->source_type = p->source ? FROM_SOURCE : p->binary ? FROM_BINARY : FROM_LLVM;
-      if (strstr(options, "-x spir")) {
-        p->source_type = FROM_LLVM_SPIR;
-      }
     }
   }
 
   if (options == NULL && p->build_opts) {
-    p->source_type = p->source ? FROM_SOURCE : p->binary ? FROM_BINARY : FROM_LLVM;
-
     cl_free(p->build_opts);
     p->build_opts = NULL;
   }
@@ -675,7 +670,8 @@ cl_program_link(cl_context            context,
   for(i = 0; i < num_input_programs; i++) {
     //num_input_programs >0 and input_programs MUST not NULL, so compare with input_programs[0] directly.
     if(input_programs[i]->binary_type == CL_PROGRAM_BINARY_TYPE_LIBRARY ||
-       input_programs[i]->binary_type == CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT) {
+       input_programs[i]->binary_type == CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT ||
+       input_programs[i]->binary_type == CL_PROGRAM_BINARY_TYPE_INTERMEDIATE) {
       avialable_program++;
     }
   }
@@ -785,14 +781,10 @@ cl_program_compile(cl_program            p,
       }
       TRY_ALLOC (p->build_opts, cl_calloc(strlen(options) + 1, sizeof(char)));
       memcpy(p->build_opts, options, strlen(options));
-
-      p->source_type = p->source ? FROM_SOURCE : p->binary ? FROM_BINARY : FROM_LLVM;
     }
   }
 
   if (options == NULL && p->build_opts) {
-    p->source_type = p->source ? FROM_SOURCE : p->binary ? FROM_BINARY : FROM_LLVM;
-
     cl_free(p->build_opts);
     p->build_opts = NULL;
   }
@@ -856,7 +848,6 @@ cl_program_compile(cl_program            p,
     }
 
     /* Create all the kernels */
-    p->source_type = FROM_LLVM;
     p->binary_type = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
   }else if(p->source_type == FROM_BINARY){
     err = CL_INVALID_OPERATION;
