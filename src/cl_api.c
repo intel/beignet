@@ -687,6 +687,7 @@ clGetSupportedImageFormats(cl_context         ctx,
   }
   if (UNLIKELY(image_type != CL_MEM_OBJECT_IMAGE1D &&
                image_type != CL_MEM_OBJECT_IMAGE1D_ARRAY &&
+               image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER &&
                image_type != CL_MEM_OBJECT_IMAGE2D_ARRAY &&
                image_type != CL_MEM_OBJECT_IMAGE2D &&
                image_type != CL_MEM_OBJECT_IMAGE3D)) {
