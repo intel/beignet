@@ -188,22 +188,22 @@ namespace ir {
       // only llvm-3.6 or later has kernel_arg_base_type in metadata.
 #if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR <= 5)
       bool isImage1dT() const {
-        return typeName.compare("image1d_t") == 0;
+        return typeBaseName.compare("image1d_t") == 0;
       }
       bool isImage1dArrayT() const {
-        return typeName.compare("image1d_array_t") == 0;
+        return typeBaseName.compare("image1d_array_t") == 0;
       }
       bool isImage1dBufferT() const {
-        return typeName.compare("image1d_buffer_t") == 0;
+        return typeBaseName.compare("image1d_buffer_t") == 0;
       }
       bool isImage2dT() const {
-        return typeName.compare("image2d_t") == 0;
+        return typeBaseName.compare("image2d_t") == 0;
       }
       bool isImage2dArrayT() const {
-        return typeName.compare("image2d_array_t") == 0;
+        return typeBaseName.compare("image2d_array_t") == 0;
       }
       bool isImage3dT() const {
-        return typeName.compare("image3d_t") == 0;
+        return typeBaseName.compare("image3d_t") == 0;
       }
       bool isSamplerType() const {
         return typeName.compare("sampler_t") == 0;
