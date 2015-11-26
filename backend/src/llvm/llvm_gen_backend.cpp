@@ -1164,6 +1164,7 @@ namespace gbe
       BtiMap.insert(std::make_pair(&v, getNewBti(&v, false)));
     }
     MDNode *typeNameNode = NULL;
+    MDNode *typeBaseNameNode = NULL;
     MDNode *node = getKernelFunctionMetadata(&F);
     for(uint j = 0; j < node->getNumOperands() - 1; j++) {
       MDNode *attrNode = dyn_cast_or_null<MDNode>(node->getOperand(1 + j));
@@ -1173,12 +1174,18 @@ namespace gbe
       if (attrName->getString() == "kernel_arg_type") {
         typeNameNode = attrNode;
       }
+      if (attrName->getString() == "kernel_arg_base_type") {
+        typeBaseNameNode = attrNode;
+      }
     }
 
     unsigned argID = 0;
     ir::FunctionArgument::InfoFromLLVM llvmInfo;
     for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I, argID++) {
       llvmInfo.typeName= (cast<MDString>(typeNameNode->getOperand(1 + argID)))->getString();
+      if(typeBaseNameNode) {
+        llvmInfo.typeBaseName= (cast<MDString>(typeBaseNameNode->getOperand(1 + argID)))->getString();
+      }
       bool isImage = llvmInfo.isImageType();
       if (I->getType()->isPointerTy() || isImage) {
         BtiMap.insert(std::make_pair(I, getNewBti(I, isImage)));
@@ -1891,6 +1898,7 @@ namespace gbe
     ir::FunctionArgument::InfoFromLLVM llvmInfo;
     MDNode *addrSpaceNode = NULL;
     MDNode *typeNameNode = NULL;
+    MDNode *typeBaseNameNode = NULL;
     MDNode *accessQualNode = NULL;
     MDNode *typeQualNode = NULL;
     MDNode *argNameNode = NULL;
@@ -1946,6 +1954,8 @@ namespace gbe
         accessQualNode = attrNode;
       } else if (attrName->getString() == "kernel_arg_type") {
         typeNameNode = attrNode;
+      } else if (attrName->getString() == "kernel_arg_base_type") {
+        typeBaseNameNode = attrNode;
       } else if (attrName->getString() == "kernel_arg_type_qual") {
         typeQualNode = attrNode;
       } else if (attrName->getString() == "kernel_arg_name") {
@@ -2007,6 +2017,9 @@ namespace gbe
         llvmInfo.addrSpace = (mdconst::extract<ConstantInt>(addrSpaceNode->getOperand(1 + argID)))->getZExtValue();
 #endif
         llvmInfo.typeName = (cast<MDString>(typeNameNode->getOperand(1 + argID)))->getString();
+        if(typeBaseNameNode){
+          llvmInfo.typeBaseName = (cast<MDString>(typeBaseNameNode->getOperand(1 + argID)))->getString();
+        }
         llvmInfo.accessQual = (cast<MDString>(accessQualNode->getOperand(1 + argID)))->getString();
         llvmInfo.typeQual = (cast<MDString>(typeQualNode->getOperand(1 + argID)))->getString();
         if(argNameNode){
