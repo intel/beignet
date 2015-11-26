@@ -103,12 +103,17 @@ DECL_UNTYPED_RW_ALL(double)
 
 #define DECL_HALF_LD_SPACE(SPACE) \
 OVERLOADABLE float vload_half(size_t offset, const SPACE half *p);  \
+OVERLOADABLE float vloada_half(size_t offset, const SPACE half *p);  \
 OVERLOADABLE float2 vload_half2(size_t offset, const SPACE half *p); \
+OVERLOADABLE float2 vloada_half2(size_t offset, const SPACE half *p); \
 OVERLOADABLE float3 vload_half3(size_t offset, const SPACE half *p); \
 OVERLOADABLE float3 vloada_half3(size_t offset, const SPACE half *p); \
 OVERLOADABLE float4 vload_half4(size_t offset, const SPACE half *p);  \
+OVERLOADABLE float4 vloada_half4(size_t offset, const SPACE half *p);  \
 OVERLOADABLE float8 vload_half8(size_t offset, const SPACE half *p);  \
-OVERLOADABLE float16 vload_half16(size_t offset, const SPACE half *p);
+OVERLOADABLE float8 vloada_half8(size_t offset, const SPACE half *p);  \
+OVERLOADABLE float16 vload_half16(size_t offset, const SPACE half *p); \
+OVERLOADABLE float16 vloada_half16(size_t offset, const SPACE half *p); \
 
 #define DECL_HALF_ST_SPACE_ROUND(SPACE, ROUND, FUNC) \
 OVERLOADABLE void vstore_half##ROUND(float data, size_t offset, SPACE half *p);  \
@@ -140,11 +145,5 @@ DECL_HALF_ST_SPACE(__generic)
 #undef DECL_HALF_LD_SPACE
 #undef DECL_HALF_ST_SPACE
 #undef DECL_HALF_ST_SPACE_ROUND
-
-#define vloada_half vload_half
-#define vloada_half2 vload_half2
-#define vloada_half4 vload_half4
-#define vloada_half8 vload_half8
-#define vloada_half16 vload_half16
 
 #endif  /* __OCL_VLOAD_H__ */
