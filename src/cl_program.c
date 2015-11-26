@@ -667,12 +667,17 @@ cl_program_link(cl_context            context,
     err = CL_INVALID_LINKER_OPTIONS;
     goto error;
   }
+  const char kernel_arg_option[] = "-cl-kernel-arg-info";
+  cl_bool option_exist = CL_TRUE;
   for(i = 0; i < num_input_programs; i++) {
     //num_input_programs >0 and input_programs MUST not NULL, so compare with input_programs[0] directly.
     if(input_programs[i]->binary_type == CL_PROGRAM_BINARY_TYPE_LIBRARY ||
        input_programs[i]->binary_type == CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT ||
        input_programs[i]->binary_type == CL_PROGRAM_BINARY_TYPE_INTERMEDIATE) {
       avialable_program++;
+    }
+    if(input_programs[i]->build_opts == NULL || strstr(input_programs[i]->build_opts, kernel_arg_option) == NULL ) {
+      option_exist = CL_FALSE;
     }
   }
 
@@ -691,6 +696,11 @@ cl_program_link(cl_context            context,
   if (UNLIKELY(p == NULL)) {
       err = CL_OUT_OF_HOST_MEMORY;
       goto error;
+  }
+
+  if(option_exist) {
+      TRY_ALLOC (p->build_opts, cl_calloc(strlen(kernel_arg_option) + 1, sizeof(char)));
+      memcpy(p->build_opts, kernel_arg_option, strlen(kernel_arg_option));
   }
 
   if (!check_cl_version_option(p, options)) {
