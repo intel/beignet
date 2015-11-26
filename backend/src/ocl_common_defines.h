@@ -72,12 +72,19 @@ typedef enum clk_channel_type {
 }clk_channel_type;
 
 typedef enum clk_sampler_type {
+    __CLK_NORMALIZED_BASE          = 0,
+    CLK_NORMALIZED_COORDS_FALSE    = 0,
+    CLK_NORMALIZED_COORDS_TRUE     = (1 << __CLK_NORMALIZED_BASE),
+    __CLK_NORMALIZED_MASK          = (CLK_NORMALIZED_COORDS_FALSE |
+                                      CLK_NORMALIZED_COORDS_TRUE),
+    __CLK_NORMALIZED_BITS          = 1,        // number of bits required to
+                                               // represent normalization
     __CLK_ADDRESS_BASE             = 0,
     CLK_ADDRESS_NONE               = (0 << __CLK_ADDRESS_BASE),
-    CLK_ADDRESS_CLAMP              = (1 << __CLK_ADDRESS_BASE),
     CLK_ADDRESS_CLAMP_TO_EDGE      = (2 << __CLK_ADDRESS_BASE),
-    CLK_ADDRESS_REPEAT             = (3 << __CLK_ADDRESS_BASE),
-    CLK_ADDRESS_MIRROR             = (4 << __CLK_ADDRESS_BASE),
+    CLK_ADDRESS_CLAMP              = (4 << __CLK_ADDRESS_BASE),
+    CLK_ADDRESS_REPEAT             = (6 << __CLK_ADDRESS_BASE),
+    CLK_ADDRESS_MIRROR             = (8 << __CLK_ADDRESS_BASE),
 
 #if (__NV_CL_C_VERSION >= __NV_CL_C_VERSION_1_1)
     CLK_ADDRESS_MIRRORED_REPEAT    = CLK_ADDRESS_MIRROR,
@@ -85,20 +92,12 @@ typedef enum clk_sampler_type {
     __CLK_ADDRESS_MASK             = (CLK_ADDRESS_NONE | CLK_ADDRESS_CLAMP |
                                      CLK_ADDRESS_CLAMP_TO_EDGE |
                                      CLK_ADDRESS_REPEAT | CLK_ADDRESS_MIRROR),
-    __CLK_ADDRESS_BITS             = 3,        // number of bits required to
+    __CLK_ADDRESS_BITS             = 4,        // number of bits required to
                                                // represent address info
-
-    __CLK_NORMALIZED_BASE          = __CLK_ADDRESS_BITS,
-    CLK_NORMALIZED_COORDS_FALSE    = 0,
-    CLK_NORMALIZED_COORDS_TRUE     = (1 << __CLK_NORMALIZED_BASE),
-    __CLK_NORMALIZED_MASK          = (CLK_NORMALIZED_COORDS_FALSE |
-                                      CLK_NORMALIZED_COORDS_TRUE),
-    __CLK_NORMALIZED_BITS          = 1,        // number of bits required to
-                                               // represent normalization
-    __CLK_FILTER_BASE              = (__CLK_NORMALIZED_BASE +  __CLK_NORMALIZED_BITS),
-    CLK_FILTER_NEAREST             = (0 << __CLK_FILTER_BASE),
-    CLK_FILTER_LINEAR              = (1 << __CLK_FILTER_BASE),
-    CLK_FILTER_ANISOTROPIC         = (2 << __CLK_FILTER_BASE),
+    __CLK_FILTER_BASE              = (__CLK_ADDRESS_BASE +  __CLK_ADDRESS_BITS),
+    CLK_FILTER_ANISOTROPIC         = (0 << __CLK_FILTER_BASE),
+    CLK_FILTER_NEAREST             = (1 << __CLK_FILTER_BASE),
+    CLK_FILTER_LINEAR              = (2 << __CLK_FILTER_BASE),
     __CLK_FILTER_MASK              = (CLK_FILTER_NEAREST | CLK_FILTER_LINEAR |
                                      CLK_FILTER_ANISOTROPIC),
     __CLK_FILTER_BITS              = 2,        // number of bits required to
@@ -123,5 +122,4 @@ typedef enum clk_sampler_type {
     __CLK_SAMPLER_ARG_KEY_BITS     = 1,
 
 } clk_sampler_type;
-
 #endif   /* __OCL_COMMON_DEFINES__ */
