@@ -58,6 +58,7 @@ typedef intptr_t cl_device_partition_property;
 	  if (param_value && param_value_size < sizeof(TYPE)*ELT) \
 	      return CL_INVALID_VALUE;  \
 	  if (param_value) { \
+	      memset(param_value, 0, param_value_size); \
 	      memcpy(param_value, (VAL), sizeof(TYPE)*ELT); \
 	  } \
           \
