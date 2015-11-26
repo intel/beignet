@@ -3608,6 +3608,48 @@ OVERLOADABLE half acos(half x) {
   float _x = (float)x;
   return (half)acos(_x);
 }
+OVERLOADABLE float half_cos(float x) {
+  return (float)cos(x);
+}
+OVERLOADABLE float half_divide(float x, float y) {
+  return (float)native_divide(x, y);
+}
+OVERLOADABLE float half_exp(float x) {
+  return (float)native_exp(x);
+}
+OVERLOADABLE float half_exp2(float x){
+  return (float)native_exp2(x);
+}
+OVERLOADABLE float half_exp10(float x){
+  return (float)native_exp10(x);
+}
+OVERLOADABLE float half_log(float x){
+  return (float)native_log(x);
+}
+OVERLOADABLE float half_log2(float x){
+  return (float)native_log2(x);
+}
+OVERLOADABLE float half_log10(float x){
+  return (float)native_log10(x);
+}
+OVERLOADABLE float half_powr(float x, float y){
+  return (float)powr(x, y);
+}
+OVERLOADABLE float half_recip(float x){
+  return (float)native_recip(x);
+}
+OVERLOADABLE float half_rsqrt(float x){
+  return (float)native_rsqrt(x);
+}
+OVERLOADABLE float half_sin(float x){
+  return (float)sin(x);
+}
+OVERLOADABLE float half_sqrt(float x){
+  return (float)native_sqrt(x);
+}
+OVERLOADABLE float half_tan(float x){
+  return (float)tan(x);
+}
 OVERLOADABLE half acospi(half x) {
   float _x = (float)x;
   return (half)acospi(_x);
