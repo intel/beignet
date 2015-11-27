@@ -296,6 +296,12 @@ if (LLVM_VERSION_NODOT VERSION_GREATER 34)
       compiler_overflow.cpp)
 endif (LLVM_VERSION_NODOT VERSION_GREATER 34)
 
+if (ENABLE_OPENCL_20)
+  SET(utests_sources
+      ${utests_sources}
+      compiler_generic_pointer.cpp)
+endif (ENABLE_OPENCL_20)
+
 if (NOT_BUILD_STAND_ALONE_UTEST)
   if (X11_FOUND)
     SET(utests_sources
