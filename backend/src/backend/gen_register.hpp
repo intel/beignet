@@ -169,6 +169,12 @@ namespace gbe
           NOT_IMPLEMENTED;
       }
     }
+    void useVirtualFlag(ir::Register flag, unsigned pred) {
+      modFlag = 0;
+      physicalFlag = 0;
+      flagIndex = flag;
+      predicate = pred;
+    }
     void useFlag(int nr, int subnr) {
       flag = nr;
       subFlag = subnr;

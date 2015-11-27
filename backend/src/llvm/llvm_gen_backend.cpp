@@ -254,6 +254,7 @@ namespace gbe
       case 1: return ir::MEM_GLOBAL;
       case 2: return ir::MEM_CONSTANT;
       case 3: return ir::MEM_LOCAL;
+      case 4: return ir::MEM_GENERIC;
     }
     GBE_ASSERT(false);
     return ir::MEM_GLOBAL;
@@ -3334,7 +3335,10 @@ namespace gbe
       case Instruction::FPTrunc:
       case Instruction::Trunc:
         this->newRegister(&I);
-      break;
+        break;
+      case Instruction::AddrSpaceCast:
+        regTranslator.newValueProxy(srcValue, dstValue);
+        break;
       default: NOT_SUPPORTED;
     }
   }
@@ -3342,6 +3346,8 @@ namespace gbe
   void GenWriter::emitCastInst(CastInst &I) {
     switch (I.getOpcode())
     {
+      case Instruction::AddrSpaceCast:
+        break;
       case Instruction::PtrToInt:
       case Instruction::IntToPtr:
       {

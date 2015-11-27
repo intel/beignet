@@ -62,6 +62,7 @@ namespace ir {
     MEM_CONSTANT,   //!< Immutable global memory
     MEM_PRIVATE,    //!< Per thread private memory
     MEM_MIXED,      //!< mixed address space pointer.
+    MEM_GENERIC,      //!< mixed address space pointer.
     MEM_INVALID
   };
 
