@@ -1050,6 +1050,7 @@ namespace gbe
 
   INLINE bool GenRegAllocator::Opaque::allocate(Selection &selection) {
     using namespace ir;
+    const Function::PushMap &pushMap = ctx.fn.getPushMap();
 
     if (ctx.reservedSpillRegs != 0) {
       reservedReg = ctx.allocate(ctx.reservedSpillRegs * GEN_REG_SIZE, GEN_REG_SIZE, false);
@@ -1172,6 +1173,15 @@ namespace gbe
         boolIntervalsMap.insert(std::make_pair(&block, boolsMap));
       else
         delete boolsMap;
+    }
+
+    for (auto &it : this->intervals) {
+      if (it.maxID == -INT_MAX)  continue;
+      if(pushMap.find(it.reg) != pushMap.end()) {
+        uint32_t argID = ctx.fn.getPushLocation(it.reg)->argID;
+        ir::Register argReg = ctx.fn.getArg(argID).reg;
+        intervals[argReg].maxID = std::max(intervals[argReg].maxID, 1);
+      }
     }
 
     if (ctx.inProfilingMode) {
