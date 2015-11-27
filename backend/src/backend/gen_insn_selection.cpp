@@ -3577,6 +3577,17 @@ namespace gbe
         return GEN_BYTE_SCATTER_BYTE;
     }
   }
+  ir::Register generateLocalMask(Selection::Opaque &sel, GenRegister addr) {
+    sel.push();
+      ir::Register localMask = sel.reg(ir::FAMILY_BOOL);
+      sel.curr.physicalFlag = 0;
+      sel.curr.modFlag = 1;
+      sel.curr.predicate = GEN_PREDICATE_NONE;
+      sel.curr.flagIndex = localMask;
+      sel.CMP(GEN_CONDITIONAL_L, addr, GenRegister::immud(64*1024));
+    sel.pop();
+    return localMask;
+  }
 
   class LoadInstructionPattern : public SelectionPattern
   {
@@ -3657,9 +3668,9 @@ namespace gbe
           sel.curr.noMask = 1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
         }
+        vector<GenRegister> btiTemp = sel.getBTITemps(AM);
 
         if (AM == AM_DynamicBti || AM == AM_StaticBti) {
-          vector<GenRegister> btiTemp = sel.getBTITemps(AM);
           if (AM == AM_DynamicBti) {
             Register btiReg = insn.getBtiReg();
             sel.UNTYPED_READ(addr, dst.data(), valueNum, sel.selReg(btiReg, TYPE_U32), btiTemp);
@@ -3673,8 +3684,20 @@ namespace gbe
           GenRegister addrDW = addr;
           if (addrBytes == 8)
             addrDW = convertU64ToU32(sel, addr);
-          vector<GenRegister> btiTemp;
           sel.UNTYPED_READ(addrDW, dst.data(), valueNum, GenRegister::immud(bti), btiTemp);
+        } else if (addrSpace == ir::MEM_GENERIC) {
+          Register localMask = generateLocalMask(sel, addr);
+          sel.push();
+            sel.curr.useVirtualFlag(localMask, GEN_PREDICATE_NORMAL);
+            GenRegister addrDW = addr;
+            if (addrBytes == 8)
+              addrDW = convertU64ToU32(sel, addr);
+            sel.UNTYPED_READ(addrDW, dst.data(), valueNum, GenRegister::immud(0xfe), btiTemp);
+
+            sel.curr.inversePredicate = 1;
+            untypedReadStateless(sel, addr, dst);
+          sel.pop();
+
         } else {
           untypedReadStateless(sel, addr, dst);
         }
@@ -3825,6 +3848,18 @@ namespace gbe
           if (addrBytes == 8)
             addrDW = convertU64ToU32(sel, addr);
           read64Legacy(sel, addrDW, dst, b, btiTemp);
+        } else if (addrSpace == ir::MEM_GENERIC) {
+          Register localMask = generateLocalMask(sel, addr);
+          sel.push();
+            sel.curr.useVirtualFlag(localMask, GEN_PREDICATE_NORMAL);
+            GenRegister addrDW = addr;
+            if (addrBytes == 8)
+              addrDW = convertU64ToU32(sel, addr);
+            read64Legacy(sel, addrDW, dst, GenRegister::immud(0xfe), btiTemp);
+
+            sel.curr.inversePredicate = 1;
+            read64Stateless(sel, addr, dst);
+          sel.pop();
         } else {
           read64Stateless(sel, addr, dst);
         }
@@ -4036,6 +4071,18 @@ namespace gbe
         }
 
         sel.BYTE_GATHER(dst, addrDW, elemSize, GenRegister::immud(bti), btiTemp);
+      } else if (addrSpace == ir::MEM_GENERIC) {
+        Register localMask = generateLocalMask(sel, addr);
+        sel.push();
+          sel.curr.useVirtualFlag(localMask, GEN_PREDICATE_NORMAL);
+          GenRegister addrDW = addr;
+          if (addrBytes == 8)
+            addrDW = convertU64ToU32(sel, addr);
+          sel.BYTE_GATHER(dst, addrDW, elemSize, GenRegister::immud(0xfe), btiTemp);
+
+          sel.curr.inversePredicate = 1;
+          byteGatherStateless(sel, addr, dst, elemSize);
+        sel.pop();
       } else {
         byteGatherStateless(sel, addr, dst, elemSize);
       }
@@ -4151,6 +4198,7 @@ namespace gbe
                  insn.getAddressSpace() == MEM_CONSTANT ||
                  insn.getAddressSpace() == MEM_PRIVATE ||
                  insn.getAddressSpace() == MEM_LOCAL ||
+                 insn.getAddressSpace() == MEM_GENERIC ||
                  insn.getAddressSpace() == MEM_MIXED);
       //GBE_ASSERT(sel.isScalarReg(insn.getValue(0)) == false);
 
@@ -4281,6 +4329,18 @@ namespace gbe
           addr = convertU64ToU32(sel, address);
         }
         sel.UNTYPED_WRITE(addr, value.data(), valueNum, GenRegister::immud(0xfe), btiTemp);
+      } else if (addrSpace == ir::MEM_GENERIC) {
+        Register localMask = generateLocalMask(sel, address);
+        sel.push();
+          sel.curr.useVirtualFlag(localMask, GEN_PREDICATE_NORMAL);
+          GenRegister addrDW = address;
+          if (addrBytes == 8)
+            addrDW = convertU64ToU32(sel, address);
+          sel.UNTYPED_WRITE(addrDW, value.data(), valueNum, GenRegister::immud(0xfe), btiTemp);
+
+          sel.curr.inversePredicate = 1;
+          untypedWriteStateless(sel, address, value);
+        sel.pop();
       } else {
         untypedWriteStateless(sel, address, value);
       }
@@ -4397,6 +4457,18 @@ namespace gbe
           addr = convertU64ToU32(sel, address);
         }
         write64Legacy(sel, addr, src, b, btiTemp);
+      } else if (addrSpace == ir::MEM_GENERIC) {
+        Register localMask = generateLocalMask(sel, address);
+        sel.push();
+          sel.curr.useVirtualFlag(localMask, GEN_PREDICATE_NORMAL);
+          GenRegister addrDW = address;
+          if (addrBytes == 8)
+            addrDW = convertU64ToU32(sel, address);
+          write64Legacy(sel, addrDW, src, GenRegister::immud(0xfe), btiTemp);
+
+          sel.curr.inversePredicate = 1;
+          write64Stateless(sel, address, src);
+        sel.pop();
       } else {
         GBE_ASSERT(sel.hasLongType());
         write64Stateless(sel, address, src);
@@ -4466,6 +4538,18 @@ namespace gbe
           addr = convertU64ToU32(sel, address);
         }
         sel.BYTE_SCATTER(addr, data, elemSize, GenRegister::immud(0xfe), btiTemp);
+      } else if (addrSpace == ir::MEM_GENERIC) {
+        Register localMask = generateLocalMask(sel, address);
+        sel.push();
+          sel.curr.useVirtualFlag(localMask, GEN_PREDICATE_NORMAL);
+          GenRegister addrDW = address;
+          if (addrBytes == 8)
+            addrDW = convertU64ToU32(sel, address);
+          sel.BYTE_SCATTER(addrDW, data, elemSize, GenRegister::immud(0xfe), btiTemp);
+
+          sel.curr.inversePredicate = 1;
+          byteScatterStateless(sel, address, data, elemSize);
+        sel.pop();
       } else {
         byteScatterStateless(sel, address, data, elemSize);
       }

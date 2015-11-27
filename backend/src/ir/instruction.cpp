@@ -1565,6 +1565,7 @@ namespace ir {
       case MEM_CONSTANT: return out << "constant";
       case MEM_PRIVATE: return out << "private";
       case MEM_MIXED: return out << "mixed";
+      case MEM_GENERIC: return out << "generic";
       case MEM_INVALID: return out << "invalid";
     };
     return out;
