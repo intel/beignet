@@ -26,3 +26,15 @@ kernel void compiler_workgroup_reduce_max_float(global float *src, global float 
    float max_val = work_group_reduce_max(val);
    dst[get_local_id(0)] = max_val;
 }
+
+kernel void compiler_workgroup_reduce_add_uint(global uint *src, global uint *dst) {
+   uint val = src[get_local_id(0)];
+   uint sum = work_group_reduce_add(val);
+   dst[get_local_id(0)] = sum;
+}
+
+kernel void compiler_workgroup_reduce_add_float(global float *src, global float *dst) {
+   float val = src[get_local_id(0)];
+   float sum = work_group_reduce_add(val);
+   dst[get_local_id(0)] = sum;
+}
