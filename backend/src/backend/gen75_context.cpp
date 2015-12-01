@@ -44,13 +44,7 @@ namespace gbe
     p->push();
       p->curr.execWidth = 1;
       p->curr.predicate = GEN_PREDICATE_NONE;
-      GenRegister sr0 = GenRegister(GEN_ARCHITECTURE_REGISTER_FILE,
-                                    GEN_ARF_STATE,
-                                    1,
-                                    GEN_TYPE_UD,
-                                    GEN_VERTICAL_STRIDE_8,
-                                    GEN_WIDTH_8,
-                                    GEN_HORIZONTAL_STRIDE_1);
+      GenRegister sr0 = GenRegister::sr(0, 1);
       p->SHR(sr0, slm_index, GenRegister::immud(16));
     p->pop();
   }
