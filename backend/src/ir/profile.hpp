@@ -77,7 +77,8 @@ namespace ir {
     static const Register profilingts2 = Register(33); // timestamp for profiling.
     static const Register profilingts3 = Register(34); // timestamp for profiling.
     static const Register profilingts4 = Register(35); // timestamp for profiling.
-    static const uint32_t regNum = 36;             // number of special registers
+    static const Register threadid = Register(36); // the thread id of this thread.
+    static const uint32_t regNum = 37;             // number of special registers
     extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 
