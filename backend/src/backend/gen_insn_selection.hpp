@@ -149,6 +149,7 @@ namespace gbe
         uint32_t profilingType:16;
         uint32_t profilingBTI:16;
       };
+      uint32_t workgroupOp;
     } extra;
     /*! Gen opcode */
     uint8_t opcode;

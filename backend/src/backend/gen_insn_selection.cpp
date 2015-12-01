@@ -684,6 +684,9 @@ namespace gbe
     void I64REM(Reg dst, Reg src0, Reg src1, GenRegister *tmp, int tmp_int);
     /*! double division */
     void F64DIV(Reg dst, Reg src0, Reg src1, GenRegister* tmp, int tmpNum);
+    /*! Work Group Operations */
+    void WORKGROUP_OP(uint32_t wg_op, Reg dst, GenRegister src, GenRegister nextThreadID,
+                     GenRegister threadID, GenRegister threadn, GenRegister tmp);
     /* common functions for both binary instruction and sel_cmp and compare instruction.
        It will handle the IMM or normal register assignment, and will try to avoid LOADI
        as much as possible. */
@@ -1900,6 +1903,20 @@ namespace gbe
       insn->extra.profilingType = static_cast<uint16_t>(profilingType);
       insn->extra.profilingBTI = static_cast<uint16_t>(bti);
     }
+  }
+
+  void Selection::Opaque::WORKGROUP_OP(uint32_t wg_op, Reg dst, GenRegister src, GenRegister nextThreadID,
+                      GenRegister threadID, GenRegister threadn, GenRegister tmp) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_WORKGROUP_OP, 3, 4);
+    insn->extra.workgroupOp = wg_op;
+    insn->dst(0) = dst;
+    insn->dst(1) = nextThreadID;
+    insn->dst(2) = tmp;
+
+    insn->src(0) = src;
+    insn->src(1) = nextThreadID;
+    insn->src(2) = threadID;
+    insn->src(3) = threadn;
   }
 
   // Boiler plate to initialize the selection library at c++ pre-main
@@ -6186,9 +6203,26 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
 
         /* Third, get the next thread ID which we will Forward MSG to. */
         GenRegister nextThreadID = getNextThreadID(sel, slmAddr);
+        GenRegister threadID = sel.selReg(ocl::threadid, ir::TYPE_U32);
+        GenRegister threadNum = sel.selReg(ocl::threadn, ir::TYPE_U32);
+        GenRegister tmp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
+
+        const Type type = insn.getType();
+        const GenRegister dst = sel.selReg(insn.getDst(0), type);
+        const uint32_t srcNum = insn.getSrcNum();
+        GBE_ASSERT(srcNum == 3);
+        GBE_ASSERT(insn.getSrc(0) == ir::ocl::threadn);
+        GBE_ASSERT(insn.getSrc(1) == ir::ocl::threadid);
+        GenRegister src = sel.selReg(insn.getSrc(2), type);
+        sel.push(); {
+          sel.curr.flag = 0;
+          sel.curr.subFlag = 1;
+          sel.WORKGROUP_OP(workGroupOp, dst, src, nextThreadID, threadID, threadNum, tmp);
+        } sel.pop();
       } else {
         GBE_ASSERT(0);
       }
+
       return true;
     }
     DECL_CTOR(WorkGroupInstruction, 1, 1);
