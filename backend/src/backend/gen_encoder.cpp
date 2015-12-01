@@ -863,6 +863,18 @@ namespace gbe
      insn->bits3.msg_gateway.sub_function_id = GEN_BARRIER_MSG;
      insn->bits3.msg_gateway.notify = 0x1;
   }
+
+  void GenEncoder::FWD_GATEWAY_MSG(GenRegister src, uint32_t notifyN) {
+     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+     this->setHeader(insn);
+     this->setDst(insn, GenRegister::null());
+     this->setSrc0(insn, src);
+     setMessageDescriptor(insn, GEN_SFID_MESSAGE_GATEWAY, 1, 0);
+     insn->bits3.msg_gateway.sub_function_id = GEN_FORWARD_MSG;
+     GBE_ASSERT(notifyN <= 2);
+     insn->bits3.msg_gateway.notify = notifyN;
+  }
+
   void GenEncoder::FENCE(GenRegister dst) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     this->setHeader(insn);
