@@ -55,3 +55,33 @@ DECL_PUBLIC_WORK_ITEM_FN(get_num_groups, 1)
 OVERLOADABLE uint get_global_id(uint dim) {
   return get_local_id(dim) + get_local_size(dim) * get_group_id(dim) + get_global_offset(dim);
 }
+
+OVERLOADABLE uint get_enqueued_local_size (uint dimindx)
+{
+  //TODO: should be different with get_local_size when support
+  //non-uniform work-group size
+  return get_local_size(dimindx);
+}
+
+OVERLOADABLE uint get_global_linear_id(void)
+{
+  uint dim = __gen_ocl_get_work_dim();
+  if (dim == 1) return get_global_id(0) - get_global_offset(0);
+  else if (dim == 2) return (get_global_id(1) - get_global_offset(1)) * get_global_size(0) +
+                             get_global_id(0) -get_global_offset(0);
+  else if (dim == 3) return ((get_global_id(2) - get_global_offset(2)) *
+                              get_global_size(1) * get_global_size(0)) +
+                            ((get_global_id(1) - get_global_offset(1)) * get_global_size (0)) +
+                             (get_global_id(0) - get_global_offset(0));
+  else return 0;
+}
+
+OVERLOADABLE uint get_local_linear_id(void)
+{
+  uint dim = __gen_ocl_get_work_dim();
+  if (dim == 1) return get_local_id(0);
+  else if (dim == 2) return get_local_id(1) * get_local_size (0) + get_local_id(0);
+  else if (dim == 3) return (get_local_id(2) * get_local_size(1) * get_local_size(0)) +
+                            (get_local_id(1) * get_local_size(0)) + get_local_id(0);
+  else return 0;
+}
