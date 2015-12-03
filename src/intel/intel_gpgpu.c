@@ -1208,7 +1208,8 @@ static uint32_t get_surface_type(intel_gpgpu_t *gpgpu, int index, cl_mem_object_
         IS_HASWELL(gpgpu->drv->device_id) ||
         IS_BROADWELL(gpgpu->drv->device_id) ||
         IS_CHERRYVIEW(gpgpu->drv->device_id) ||
-        IS_SKYLAKE(gpgpu->drv->device_id))) &&
+        IS_SKYLAKE(gpgpu->drv->device_id) ||
+        IS_BROXTON(gpgpu->drv->device_id))) &&
       index >= BTI_WORKAROUND_IMAGE_OFFSET + BTI_RESERVED_NUM &&
       type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
     surface_type = I965_SURFACE_2D;
@@ -2488,7 +2489,7 @@ intel_set_gpgpu_callbacks(int device_id)
 	intel_gpgpu_select_pipeline = intel_gpgpu_select_pipeline_gen7;
     return;
   }
-  if (IS_SKYLAKE(device_id)) {
+  if (IS_SKYLAKE(device_id) || IS_BROXTON(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen9;
     intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen8;
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen9;

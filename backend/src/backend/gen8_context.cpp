@@ -417,7 +417,7 @@ namespace gbe
     GBE_ASSERT(0);
   }
 
-  static GenRegister unpacked_ud(GenRegister reg, uint32_t offset = 0)
+  GenRegister Gen8Context::unpacked_ud(GenRegister reg, uint32_t offset)
   {
     if(reg.hstride == GEN_HORIZONTAL_STRIDE_0) {
       if(offset == 0)

@@ -171,6 +171,8 @@ namespace gbe {
       ctx = GBE_NEW(ChvContext, unit, name, deviceID, relaxMath);
     } else if (IS_SKYLAKE(deviceID)) {
       ctx = GBE_NEW(Gen9Context, unit, name, deviceID, relaxMath);
+    } else if (IS_BROXTON(deviceID)) {
+      ctx = GBE_NEW(BxtContext, unit, name, deviceID, relaxMath);
     }
     GBE_ASSERTM(ctx != NULL, "Fail to create the gen context\n");
 
@@ -219,7 +221,8 @@ namespace gbe {
     GBHI_HSW = 2,
     GBHI_CHV = 3,
     GBHI_BDW = 4,
-    GBHI_SKL = 5,//remember update GBHI_MAX if add option.
+    GBHI_SKL = 5,
+    GBHI_BXT = 6,
     GBHI_MAX,
   };
 
@@ -229,7 +232,9 @@ namespace gbe {
                                               {0, 'G','E', 'N', 'C', 'H', 'S', 'W'},
                                               {0, 'G','E', 'N', 'C', 'C', 'H', 'V'},
                                               {0, 'G','E', 'N', 'C', 'B', 'D', 'W'},
-                                              {0, 'G','E', 'N', 'C', 'S', 'K', 'L'}};
+                                              {0, 'G','E', 'N', 'C', 'S', 'K', 'L'},
+                                              {0, 'G','E', 'N', 'C', 'B', 'X', 'T'}
+                                              };
 
 #define FILL_GEN_HEADER(binary, index)  do {int i = 0; do {*(binary+i) = gen_binary_header[index][i]; i++; }while(i < GEN_BINARY_HEADER_LENGTH);}while(0)
 #define FILL_BYT_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_BYT)
@@ -238,6 +243,7 @@ namespace gbe {
 #define FILL_CHV_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_CHV)
 #define FILL_BDW_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_BDW)
 #define FILL_SKL_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_SKL)
+#define FILL_BXT_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_BXT)
 
   static bool genHeaderCompare(const unsigned char *BufPtr, GEN_BINARY_HEADER_INDEX index)
   {
@@ -255,6 +261,7 @@ namespace gbe {
 #define MATCH_CHV_HEADER(binary) genHeaderCompare(binary, GBHI_CHV)
 #define MATCH_BDW_HEADER(binary) genHeaderCompare(binary, GBHI_BDW)
 #define MATCH_SKL_HEADER(binary) genHeaderCompare(binary, GBHI_SKL)
+#define MATCH_BXT_HEADER(binary) genHeaderCompare(binary, GBHI_BXT)
 
 #define MATCH_DEVICE(deviceID, binary) ((IS_IVYBRIDGE(deviceID) && MATCH_IVB_HEADER(binary)) ||  \
                                       (IS_IVYBRIDGE(deviceID) && MATCH_IVB_HEADER(binary)) ||  \
@@ -262,7 +269,9 @@ namespace gbe {
                                       (IS_HASWELL(deviceID) && MATCH_HSW_HEADER(binary)) ||  \
                                       (IS_BROADWELL(deviceID) && MATCH_BDW_HEADER(binary)) ||  \
                                       (IS_CHERRYVIEW(deviceID) && MATCH_CHV_HEADER(binary)) ||  \
-                                      (IS_SKYLAKE(deviceID) && MATCH_SKL_HEADER(binary)) )
+                                      (IS_SKYLAKE(deviceID) && MATCH_SKL_HEADER(binary)) || \
+                                      (IS_BROXTON(deviceID) && MATCH_BXT_HEADER(binary)) \
+                                      )
 
   static gbe_program genProgramNewFromBinary(uint32_t deviceID, const char *binary, size_t size) {
     using namespace gbe;
@@ -359,6 +368,8 @@ namespace gbe {
         FILL_CHV_HEADER(*binary);
       }else if(IS_SKYLAKE(prog->deviceID)){
         FILL_SKL_HEADER(*binary);
+      }else if(IS_BROXTON(prog->deviceID)){
+        FILL_BXT_HEADER(*binary);
       }else {
         free(*binary);
         *binary = NULL;

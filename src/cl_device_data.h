@@ -287,7 +287,14 @@
    devid == PCI_CHIP_SKYLAKE_SRV_GT4)
 
 #define IS_SKYLAKE(devid) (IS_SKL_GT1(devid) || IS_SKL_GT2(devid) || IS_SKL_GT3(devid) || IS_SKL_GT4(devid))
-#define IS_GEN9(devid)      IS_SKYLAKE(devid)
+
+/* BXT */
+#define PCI_CHIP_BROXTON_P	0x5A84   /* Intel(R) BXT-P for mobile desktop */
+
+#define IS_BROXTON(devid)               \
+  (devid == PCI_CHIP_BROXTON_P)
+
+#define IS_GEN9(devid)      (IS_SKYLAKE(devid) || IS_BROXTON(devid))
 
 #endif /* __CL_DEVICE_DATA_H__ */
 

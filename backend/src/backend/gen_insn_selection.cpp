@@ -2268,6 +2268,17 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     opt_features = SIOF_LOGICAL_SRCMOD;
   }
 
+  SelectionBxt::SelectionBxt(GenContext &ctx) : Selection(ctx) {
+    this->opaque->setHas32X32Mul(true);
+    this->opaque->setHasLongType(true);
+    this->opaque->setLongRegRestrict(true);
+    this->opaque->setHasDoubleType(true);
+    this->opaque->setLdMsgOrder(LD_MSG_ORDER_SKL);
+    this->opaque->setSlowByteGather(true);
+    this->opaque->setHasHalfType(true);
+    opt_features = SIOF_LOGICAL_SRCMOD | SIOF_OP_MOV_LONG_REG_RESTRICT;
+  }
+
   void Selection::Opaque::TYPED_WRITE(GenRegister *msgs, uint32_t msgNum,
                                       uint32_t bti, bool is3D) {
     uint32_t elemID = 0;
