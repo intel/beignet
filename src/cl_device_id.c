@@ -198,6 +198,17 @@ static struct _cl_device_id intel_skl_gt4_device = {
 #include "cl_gen75_device.h"
 };
 
+static struct _cl_device_id intel_bxt_device = {
+  INIT_ICD(dispatch)
+  .max_compute_unit = 18,
+  .max_thread_per_unit = 6,
+  .sub_slice_count = 3,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+#include "cl_gen75_device.h"
+};
+
 LOCAL cl_device_id
 cl_get_gt_device(void)
 {
@@ -518,6 +529,15 @@ skl_gt4_break:
       cl_intel_platform_enable_fp16_extension(ret);
       break;
 
+    case PCI_CHIP_BROXTON_P:
+      DECL_INFO_STRING(bxt_break, intel_bxt_device, name, "Intel(R) HD Graphics Broxton-P");
+bxt_break:
+      intel_bxt_device.device_id = device_id;
+      intel_bxt_device.platform = cl_get_platform_default();
+      ret = &intel_bxt_device;
+      cl_intel_platform_enable_fp16_extension(ret);
+      break;
+
     case PCI_CHIP_SANDYBRIDGE_BRIDGE:
     case PCI_CHIP_SANDYBRIDGE_GT1:
     case PCI_CHIP_SANDYBRIDGE_GT2:
@@ -732,7 +752,8 @@ cl_get_device_info(cl_device_id     device,
                device != &intel_skl_gt1_device &&
                device != &intel_skl_gt2_device &&
                device != &intel_skl_gt3_device &&
-               device != &intel_skl_gt4_device
+               device != &intel_skl_gt4_device &&
+               device != &intel_bxt_device
                ))
     return CL_INVALID_DEVICE;
 
@@ -844,7 +865,9 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
                device != &intel_skl_gt1_device &&
                device != &intel_skl_gt2_device &&
                device != &intel_skl_gt3_device &&
-               device != &intel_skl_gt4_device))
+               device != &intel_skl_gt4_device &&
+               device != &intel_bxt_device
+               ))
     return CL_INVALID_DEVICE;
   if (ver == NULL)
     return CL_SUCCESS;
@@ -859,7 +882,8 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
         || device == &intel_brw_gt3_device || device == &intel_chv_device) {
     *ver = 8;
   } else if (device == &intel_skl_gt1_device || device == &intel_skl_gt2_device
-        || device == &intel_skl_gt3_device || device == &intel_skl_gt4_device) {
+        || device == &intel_skl_gt3_device || device == &intel_skl_gt4_device
+        || device == &intel_bxt_device) {
     *ver = 9;
   } else
     return CL_INVALID_VALUE;
@@ -947,7 +971,8 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
                device != &intel_skl_gt1_device &&
                device != &intel_skl_gt2_device &&
                device != &intel_skl_gt3_device &&
-               device != &intel_skl_gt4_device))
+               device != &intel_skl_gt4_device &&
+               device != &intel_bxt_device))
     return CL_INVALID_DEVICE;
 
   CHECK_KERNEL(kernel);

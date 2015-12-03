@@ -46,5 +46,27 @@ namespace gbe
   private:
     virtual void newSelection(void);
   };
+
+  //most code of BxtContext are copied from ChvContext, it results in two physical copy of the same code.
+  //there are two possible ways to resolve it: 1) virtual inheritance  2) class template
+  //but either way makes BxtContext and ChvContext tied closely, it might impact the flexibility of future changes
+  //so, choose the method of two physical copies.
+  class BxtContext : public Gen9Context
+  {
+  public:
+    virtual ~BxtContext(void) { }
+    BxtContext(const ir::Unit &unit, const std::string &name, uint32_t deviceID, bool relaxMath = false)
+            : Gen9Context(unit, name, deviceID, relaxMath) {
+    };
+    virtual void emitI64MULInstruction(const SelectionInstruction &insn);
+
+  protected:
+    virtual void setA0Content(uint16_t new_a0[16], uint16_t max_offset = 0, int sz = 0);
+
+  private:
+    virtual void newSelection(void);
+    virtual void calculateFullU64MUL(GenRegister src0, GenRegister src1, GenRegister dst_h,
+                                           GenRegister dst_l, GenRegister s0l_s1h, GenRegister s0h_s1l);
+  };
 }
 #endif /* __GBE_GEN9_CONTEXT_HPP__ */

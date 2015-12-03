@@ -298,6 +298,13 @@ namespace gbe
       Selection9(GenContext &ctx);
   };
 
+  class SelectionBxt: public Selection
+  {
+    public:
+      /*! Initialize internal structures used for the selection */
+      SelectionBxt(GenContext &ctx);
+  };
+
 } /* namespace gbe */
 
 #endif /*  __GEN_INSN_SELECTION_HPP__ */

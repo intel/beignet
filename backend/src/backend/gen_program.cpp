@@ -170,6 +170,8 @@ namespace gbe {
       ctx = GBE_NEW(ChvContext, unit, name, deviceID, relaxMath);
     } else if (IS_SKYLAKE(deviceID)) {
       ctx = GBE_NEW(Gen9Context, unit, name, deviceID, relaxMath);
+    } else if (IS_BROXTON(deviceID)) {
+      ctx = GBE_NEW(BxtContext, unit, name, deviceID, relaxMath);
     }
     GBE_ASSERTM(ctx != NULL, "Fail to create the gen context\n");
     ctx->setASMFileName(this->asm_file_name);
@@ -214,7 +216,8 @@ namespace gbe {
                                       (IS_HASWELL(typeA) && !strcmp(src_hw_info, "HSW")) ||  \
                                       (IS_BROADWELL(typeA) && !strcmp(src_hw_info, "BDW")) ||  \
                                       (IS_CHERRYVIEW(typeA) && !strcmp(src_hw_info, "CHV")) ||  \
-                                      (IS_SKYLAKE(typeA) && !strcmp(src_hw_info, "SKL")) )
+                                      (IS_SKYLAKE(typeA) && !strcmp(src_hw_info, "SKL")) || \
+                                      (IS_BROXTON(typeA) && !strcmp(src_hw_info, "BXT")) )
 
   static gbe_program genProgramNewFromBinary(uint32_t deviceID, const char *binary, size_t size) {
     using namespace gbe;
@@ -328,6 +331,14 @@ namespace gbe {
         src_hw_info[0]='S';
         src_hw_info[1]='K';
         src_hw_info[2]='L';
+      }else if(IS_BROXTON(prog->deviceID)){
+        src_hw_info[0]='B';
+        src_hw_info[1]='X';
+        src_hw_info[2]='T';
+      }else {
+        free(*binary);
+        *binary = NULL;
+        return 0;
       }
       FILL_DEVICE_ID(*binary, src_hw_info);
       memcpy(*binary+BINARY_HEADER_LENGTH, oss.str().c_str(), sz*sizeof(char));
