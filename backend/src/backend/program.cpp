@@ -116,7 +116,7 @@ namespace gbe {
   BVAR(OCL_STRICT_CONFORMANCE, true);
 
   bool Program::buildFromLLVMFile(const char *fileName, const void* module, std::string &error, int optLevel) {
-    ir::Unit *unit = new ir::Unit();
+    ir::Unit *unit = new ir::Unit(ir::POINTER_64_BITS);
     llvm::Module * cloned_module = NULL;
     if(module){
       cloned_module = llvm::CloneModule((llvm::Module*)module);
@@ -131,7 +131,7 @@ namespace gbe {
     //use optLevel 0 to try again.
     if(!unit->getValid()) {
       delete unit;   //clear unit
-      unit = new ir::Unit();
+      unit = new ir::Unit(ir::POINTER_64_BITS);
       if(cloned_module){
         //suppose file exists and llvmToGen will not return false.
         llvmToGen(*unit, fileName, cloned_module, 0, OCL_STRICT_CONFORMANCE);
@@ -549,7 +549,7 @@ namespace gbe {
     args.push_back("-x");
     args.push_back("cl");
     args.push_back("-triple");
-    args.push_back("spir");
+    args.push_back("spir64");
 #endif /* LLVM_VERSION_MINOR <= 2 */
     args.push_back("stringInput.cl");
     args.push_back("-ffp-contract=off");

@@ -481,7 +481,7 @@ namespace gbe
         LI(0),
         TheModule(0),
         btiBase(BTI_RESERVED_NUM),
-        legacyMode(true),
+        legacyMode(false),
         wgBroadcastSLM(-1)
     {
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=7

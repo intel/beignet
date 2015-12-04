@@ -302,8 +302,8 @@ namespace gbe {
 #endif
     // if load 32 bit spir binary, the triple should be spir-unknown-unknown.
     llvm::Triple triple(module->getTargetTriple());
-    if(triple.getArchName() == "spir" && triple.getVendorName() == "unknown" && triple.getOSName() == "unknown"){
-      module->setTargetTriple("spir");
+    if(triple.getArchName() == "spir64" && triple.getVendorName() == "unknown" && triple.getOSName() == "unknown"){
+      module->setTargetTriple("spir64");
     }
     releaseLLVMContextLock();
     if(module == NULL){

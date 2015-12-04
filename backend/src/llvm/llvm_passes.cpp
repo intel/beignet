@@ -253,7 +253,7 @@ namespace gbe
           ConstantInt::get(IntegerType::get(GEPInst->getContext(), ptrSize), size);
 
         Value *operand = GEPInst->getOperand(op); 
-
+#if 0
         //HACK TODO: Inserted by type replacement.. this code could break something????
         if(getTypeByteSize(unit, operand->getType())>4)
         {
@@ -277,7 +277,7 @@ namespace gbe
                   "", GEPInst);
           }
         }
-
+#endif
         Value* tmpMul = operand;
         if (size != 1) {
           tmpMul = BinaryOperator::Create(Instruction::Mul, newConstSize, operand,
