@@ -87,6 +87,8 @@ namespace ir {
     bool getInProfilingMode(void) const { return inProfilingMode; }
     void setValid(bool value) { valid = value; }
     bool getValid() { return valid; }
+    void setOclVersoin(uint32_t version) { oclVersion = version; }
+    uint32_t getOclVersion() const { return oclVersion; }
   private:
     friend class ContextInterface; //!< Can free modify the unit
     FunctionSet functions; //!< All the defined functions
@@ -94,6 +96,7 @@ namespace ir {
     PointerSize pointerSize; //!< Size shared by all pointers
     ProfilingInfo *profilingInfo; //!< profilingInfo store the information for profiling.
     GBE_CLASS(Unit);
+    uint32_t oclVersion;
     bool valid;
     bool inProfilingMode;
   };

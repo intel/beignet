@@ -551,6 +551,7 @@ namespace ir {
     }
     /*! Output the control flow graph to .dot file */
     void outputCFG();
+    uint32_t getOclVersion(void) const;
   private:
     friend class Context;           //!< Can freely modify a function
     std::string name;               //!< Function name

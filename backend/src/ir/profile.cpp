@@ -78,7 +78,11 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, goffset0, 1, GBE_CURBE_GLOBAL_OFFSET_X);
       DECL_NEW_REG(FAMILY_DWORD, goffset1, 1, GBE_CURBE_GLOBAL_OFFSET_Y);
       DECL_NEW_REG(FAMILY_DWORD, goffset2, 1, GBE_CURBE_GLOBAL_OFFSET_Z);
-      DECL_NEW_REG(FAMILY_DWORD, stackptr, 0);
+      if(fn.getOclVersion() >= 200) {
+        DECL_NEW_REG(FAMILY_QWORD, stackptr, 0);
+      } else {
+        DECL_NEW_REG(FAMILY_DWORD, stackptr, 0);
+      }
       DECL_NEW_REG(FAMILY_QWORD, stackbuffer, 1, GBE_CURBE_EXTRA_ARGUMENT, GBE_STACK_BUFFER);
       DECL_NEW_REG(FAMILY_WORD,  blockip, 0, GBE_CURBE_BLOCK_IP);
       DECL_NEW_REG(FAMILY_DWORD, barrierid, 1);

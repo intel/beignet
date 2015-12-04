@@ -62,6 +62,10 @@ namespace ir {
     return unit.getPointerFamily();
   }
 
+  uint32_t Function::getOclVersion(void) const {
+    return unit.getOclVersion();
+  }
+
   void Function::addLoop(LabelIndex preheader,
                         int parent,
                         const vector<LabelIndex> &bbs,

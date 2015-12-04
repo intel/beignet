@@ -379,8 +379,14 @@ namespace ir {
         const uint32_t offset = valueID * size;
 
         const Register reg = load->getValue(valueID);
-
-        Instruction mov = ir::INDIRECT_MOV(type, reg, arg, load->getAddressRegister(), offset);
+        Register addressReg = load->getAddressRegister();
+        if (fn->getPointerFamily() == FAMILY_QWORD) {
+          Register tmp = fn->newRegister(FAMILY_DWORD);
+          Instruction cvt = ir::CVT(ir::TYPE_U32, ir::TYPE_U64, tmp, load->getAddressRegister());
+          cvt.insert(ins_after, &ins_after);
+          addressReg = tmp;
+        }
+        Instruction mov = ir::INDIRECT_MOV(type, reg, arg, addressReg, offset);
         mov.insert(ins_after, &ins_after);
         replaced = true;
       }

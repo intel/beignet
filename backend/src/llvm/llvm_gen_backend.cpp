@@ -1319,12 +1319,12 @@ namespace gbe
           }
           Builder.SetInsertPoint(cast<Instruction>(theUser));
 
-          Type *int32Ty = Type::getInt32Ty(ptr->getContext());
-          Value *v1 = Builder.CreatePtrToInt(pointerOp, int32Ty);
+          Type *ptyTy = IntegerType::get(ptr->getContext(), ptr->getType()->getIntegerBitWidth());
+          Value *v1 = Builder.CreatePtrToInt(pointerOp, ptyTy);
 
-          Value *v2 = Builder.CreatePtrToInt(getSinglePointerOrigin(pointerOp), int32Ty);
-          Value *v3 = Builder.CreatePtrToInt(base, int32Ty);
-          Value *v4 = Builder.CreatePtrToInt(bti, int32Ty);
+          Value *v2 = Builder.CreatePtrToInt(getSinglePointerOrigin(pointerOp), ptyTy);
+          Value *v3 = Builder.CreatePtrToInt(base, ptyTy);
+          Value *v4 = Builder.CreatePtrToInt(bti, ptyTy);
           // newLocBase = (pointer - origin) + base_start
           Value *diff = Builder.CreateSub(v1, v2);
           Value *newLocBase = Builder.CreateAdd(v3, diff);
@@ -1703,7 +1703,10 @@ namespace gbe
 
       // NULL pointers
       if(isa<ConstantPointerNull>(CPV)) {
-        return ctx.newImmediate(uint32_t(0));
+        if (ctx.getPointerFamily() == ir::FAMILY_QWORD)
+          return ctx.newImmediate(uint64_t(0));
+        else
+          return ctx.newImmediate(uint32_t(0));
       }
 
       const Type::TypeID typeID = CPV->getType()->getTypeID();
@@ -2814,13 +2817,13 @@ namespace gbe
 
         this->newRegister(const_cast<GlobalVariable*>(&v));
         ir::Register reg = regTranslator.getScalar(const_cast<GlobalVariable*>(&v), 0);
-        ctx.LOADI(ir::TYPE_S32, reg, ctx.newIntegerImmediate(oldSlm + padding/8, ir::TYPE_S32));
+        ctx.LOADI(getType(ctx, v.getType()), reg, ctx.newIntegerImmediate(oldSlm + padding/8, getType(ctx, v.getType())));
       } else if(addrSpace == ir::MEM_CONSTANT || v.isConstant()) {
         GBE_ASSERT(v.hasInitializer());
         this->newRegister(const_cast<GlobalVariable*>(&v));
         ir::Register reg = regTranslator.getScalar(const_cast<GlobalVariable*>(&v), 0);
         ir::Constant &con = unit.getConstantSet().getConstant(v.getName());
-        ctx.LOADI(ir::TYPE_S32, reg, ctx.newIntegerImmediate(con.getOffset(), ir::TYPE_S32));
+        ctx.LOADI(getType(ctx, v.getType()), reg, ctx.newIntegerImmediate(con.getOffset(), getType(ctx, v.getType())));
       } else {
         if(v.getName().equals(StringRef("__gen_ocl_profiling_buf"))) {
           ctx.getUnit().getProfilingInfo()->setBTI(BtiMap.find(const_cast<GlobalVariable*>(&v))->second);
@@ -5121,15 +5124,23 @@ namespace gbe
       uint32_t prevStackPtr = ctx.getFunction().getStackSize();
       uint32_t step = ((prevStackPtr + (align - 1)) & ~(align - 1)) - prevStackPtr;
       if (step != 0) {
-        ir::ImmediateIndex stepImm = ctx.newIntegerImmediate(step, ir::TYPE_U32);
+        ir::ImmediateIndex stepImm;
+        ir::Type pointerTy = getType(pointerFamily);
+        if (ctx.getPointerSize() == ir::POINTER_32_BITS)
+          stepImm = ctx.newImmediate(uint32_t(step));
+        else
+          stepImm = ctx.newImmediate(uint64_t(step));
         ir::Register stepReg = ctx.reg(ctx.getPointerFamily());
-        ctx.LOADI(ir::TYPE_U32, stepReg, stepImm);
-        ctx.ADD(ir::TYPE_U32, stack, stack, stepReg);
+        ctx.LOADI(pointerTy, stepReg, stepImm);
+        ctx.ADD(pointerTy, stack, stack, stepReg);
         ctx.getFunction().pushStackSize(step);
       }
     }
     // Set the destination register properly
-    ctx.MOV(imm.getType(), dst, stack);
+    if (legacyMode)
+      ctx.MOV(imm.getType(), dst, stack);
+    else
+      ctx.ADD(imm.getType(), dst, stack, ir::ocl::stackbuffer);
 
     ctx.LOADI(imm.getType(), reg, immIndex);
     ctx.ADD(imm.getType(), stack, stack, reg);
@@ -5297,7 +5308,7 @@ namespace gbe
       // but later ArgumentLower pass need to match exact load/addImm pattern
       // so, I avoid subtracting zero base to satisfy ArgumentLower pass.
       if (!zeroBase)
-        ctx.SUB(ir::TYPE_U32, mPtr, pointer, baseReg);
+        ctx.SUB(getType(ctx, llvmPtr->getType()), mPtr, pointer, baseReg);
       else
         mPtr = pointer;
     } else {

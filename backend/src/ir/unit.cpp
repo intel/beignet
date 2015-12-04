@@ -30,6 +30,7 @@ namespace ir {
   Unit::Unit(PointerSize pointerSize) : pointerSize(pointerSize), valid(true) {
     profilingInfo = GBE_NEW(ProfilingInfo);
     inProfilingMode = false;
+    oclVersion = 120;
   }
   Unit::~Unit(void) {
     for (const auto &pair : functions) GBE_DELETE(pair.second);
