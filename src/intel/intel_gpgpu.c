@@ -282,9 +282,9 @@ intel_gpgpu_get_cache_ctrl_gen8()
 static uint32_t
 intel_gpgpu_get_cache_ctrl_gen9()
 {
-  //Pre-defined cache control registers 9:
+  //Kernel-defined cache control registers 2:
   //L3CC: WB; LeCC: WB; TC: LLC/eLLC;
-  return (0x9 << 1);
+  return (0x2 << 1);
 }
 
 static void
