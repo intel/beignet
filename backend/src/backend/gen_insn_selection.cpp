@@ -4107,7 +4107,13 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         if (sel.isScalarReg(addr.reg())) {
           sel.curr.noMask = 1;
         }
-        sel.SHR(addrDW, GenRegister::retype(addr, GEN_TYPE_UD), GenRegister::immud(2));
+        if (sel.getRegisterFamily(addr.reg()) == FAMILY_QWORD) {
+          // as we still use offset instead of absolut graphics address,
+          // it is safe to convert from u64 to u32
+          GenRegister t = convertU64ToU32(sel, addr);
+          sel.SHR(addrDW, t, GenRegister::immud(2));
+        } else
+          sel.SHR(addrDW, GenRegister::retype(addr, GEN_TYPE_UD), GenRegister::immud(2));
       sel.pop();
 
       sel.DWORD_GATHER(dst, addrDW, BTI_CONSTANT);
@@ -4184,6 +4190,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         dst[dstID] = sel.selReg(insn.getValue(dstID), ir::TYPE_U64);
 
       bool isUniform = sel.isScalarReg(insn.getValue(0));
+      unsigned addrBytes = typeSize(addr.type);
       AddressMode AM = insn.getAddressMode();
       vector<GenRegister> btiTemp = sel.getBTITemps(AM);
       sel.push();
@@ -4201,7 +4208,10 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           read64Legacy(sel, addr, dst, b, btiTemp);
         } else if (addrSpace == MEM_LOCAL || addrSpace == MEM_CONSTANT) {
           GenRegister b = GenRegister::immud(addrSpace == MEM_LOCAL? 0xfe : BTI_CONSTANT);
-          read64Legacy(sel, addr, dst, b, btiTemp);
+          GenRegister addrDW = addr;
+          if (addrBytes == 8)
+            addrDW = convertU64ToU32(sel, addr);
+          read64Legacy(sel, addrDW, dst, b, btiTemp);
         } else {
           read64Stateless(sel, addr, dst);
         }
@@ -4217,9 +4227,12 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
                         ir::AddressSpace addrSpace) const
     {
       using namespace ir;
-        Register tmpReg = sel.reg(FAMILY_DWORD);
-        GenRegister tmpAddr = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
+        RegisterFamily addrFamily = sel.getRegisterFamily(address.reg());
+        Type addrType = getType(addrFamily);
+        Register tmpReg = sel.reg(FAMILY_DWORD, isUniform);
+        GenRegister tmpAddr = sel.selReg(sel.reg(addrFamily, isUniform), addrType);
         GenRegister tmpData = sel.selReg(tmpReg, ir::TYPE_U32);
+        GenRegister addrOffset = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
 
         // Get dword aligned addr
         sel.push();
@@ -4227,7 +4240,11 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
             sel.curr.noMask = 1;
             sel.curr.execWidth = 1;
           }
-          sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UD), GenRegister::immud(0xfffffffc));
+          if (addrFamily == FAMILY_DWORD)
+            sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UD), GenRegister::immud(0xfffffffc));
+          else
+            sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UL), GenRegister::immuint64(0xfffffffffffffffc));
+
         sel.pop();
         sel.push();
           vector<GenRegister> tmp;
@@ -4239,9 +4256,13 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           if (isUniform)
             sel.curr.execWidth = 1;
           // Get the remaining offset from aligned addr
-          sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UD), GenRegister::immud(0x3));
-          sel.SHL(tmpAddr, tmpAddr, GenRegister::immud(0x3));
-          sel.SHR(tmpData, tmpData, tmpAddr);
+          if (addrFamily == FAMILY_QWORD) {
+            sel.AND(addrOffset, sel.unpacked_ud(address.reg()), GenRegister::immud(0x3));
+          } else {
+            sel.AND(addrOffset, GenRegister::retype(address,GEN_TYPE_UD), GenRegister::immud(0x3));
+          }
+          sel.SHL(addrOffset, addrOffset, GenRegister::immud(0x3));
+          sel.SHR(tmpData, tmpData, addrOffset);
 
           if (elemSize == GEN_BYTE_SCATTER_WORD)
             sel.MOV(GenRegister::retype(dst, GEN_TYPE_UW), GenRegister::unpacked_uw(tmpReg, isUniform, sel.isLongReg(tmpReg)));
@@ -4295,6 +4316,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       using namespace ir;
       GBE_ASSERT(effectData.size() == effectDataNum);
       GBE_ASSERT(tmp.size() == effectDataNum + 1);
+      RegisterFamily addrFamily = sel.getRegisterFamily(address.reg());
       sel.push();
         Register alignedFlag = sel.reg(FAMILY_BOOL, isUniform);
         GenRegister shiftL = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
@@ -4303,7 +4325,12 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         sel.push();
           if (isUniform)
             sel.curr.noMask = 1;
-          sel.AND(shiftL, GenRegister::retype(address, GEN_TYPE_UD), GenRegister::immud(0x3));
+          if (addrFamily == FAMILY_QWORD) {
+            GenRegister t = convertU64ToU32(sel, address);
+            sel.AND(shiftL, t, GenRegister::immud(0x3));
+          } else {
+            sel.AND(shiftL, GenRegister::retype(address,GEN_TYPE_UD), GenRegister::immud(0x3));
+          }
           sel.SHL(shiftL, shiftL, GenRegister::immud(0x3));
           sel.ADD(shiftH, GenRegister::negate(shiftL), GenRegister::immud(32));
           sel.curr.physicalFlag = 0;
@@ -4413,6 +4440,8 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
                                  1 : sel.ctx.getSimdWidth();
       const bool isUniform = simdWidth == 1;
       RegisterFamily family = getFamily(insn.getValueType());
+      RegisterFamily addrFamily = sel.getRegisterFamily(address.reg());
+      Type addrType = getType(addrFamily);
 
       if(valueNum > 1) {
         GBE_ASSERT(!isUniform && "vector load should not be uniform. Something went wrong.");
@@ -4433,11 +4462,14 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           for(uint32_t i = 0; i < effectDataNum + 1; i++)
             tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
 
-          GenRegister alignedAddr = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
+          GenRegister alignedAddr = sel.selReg(sel.reg(addrFamily, isUniform), addrType);
           sel.push();
             if (isUniform)
               sel.curr.noMask = 1;
-            sel.AND(alignedAddr, GenRegister::retype(address, GEN_TYPE_UD), GenRegister::immud(~0x3));
+            if (addrFamily == FAMILY_DWORD)
+              sel.AND(alignedAddr, GenRegister::retype(address, GEN_TYPE_UD), GenRegister::immud(~0x3));
+            else
+              sel.AND(alignedAddr, GenRegister::retype(address, GEN_TYPE_UL), GenRegister::immuint64(~0x3ul));
           sel.pop();
 
           uint32_t remainedReg = effectDataNum + 1;
@@ -4449,7 +4481,10 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
               sel.push();
               if (isUniform)
                 sel.curr.noMask = 1;
-              sel.ADD(alignedAddr, alignedAddr, GenRegister::immud(pos * 4));
+              if (addrFamily == FAMILY_DWORD)
+                sel.ADD(alignedAddr, alignedAddr, GenRegister::immud(pos * 4));
+              else
+                sel.ADD(alignedAddr, alignedAddr, GenRegister::immuint64(pos * 4));
               sel.pop();
             }
             shootUntypedReadMsg(sel, insn, t1, alignedAddr, width, addrSpace);
@@ -4571,7 +4606,8 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     {
       using namespace ir;
       const ir::LoadInstruction &insn = cast<ir::LoadInstruction>(dag.insn);
-      GenRegister address = sel.selReg(insn.getAddressRegister(), ir::TYPE_U32);
+      Register reg = insn.getAddressRegister();
+      GenRegister address = sel.selReg(reg, getType(sel.getRegisterFamily(reg)));
       GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL ||
                  insn.getAddressSpace() == MEM_CONSTANT ||
                  insn.getAddressSpace() == MEM_PRIVATE ||
@@ -4807,6 +4843,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         src[valueID] = sel.selReg(insn.getValue(valueID), ir::TYPE_U64);
 
       AddressMode AM = insn.getAddressMode();
+      unsigned int addrBytes = typeSize(address.type);
       vector<GenRegister> btiTemp = sel.getBTITemps(AM);
       if (AM != AM_Stateless) {
         GenRegister b;
@@ -4816,9 +4853,13 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           b = GenRegister::immud(insn.getSurfaceIndex());
         }
         write64Legacy(sel, address, src, b, btiTemp);
-      } else if (addrSpace == MEM_CONSTANT || addrSpace == MEM_LOCAL) {
-        GenRegister b = GenRegister::immud(addrSpace == MEM_CONSTANT ? BTI_CONSTANT : 0xfe);
-        write64Legacy(sel, address, src, b, btiTemp);
+      } else if (addrSpace == MEM_LOCAL) {
+        GenRegister b = GenRegister::immud(0xfe);
+        GenRegister addr = address;
+        if (addrBytes == 8) {
+          addr = convertU64ToU32(sel, address);
+        }
+        write64Legacy(sel, addr, src, b, btiTemp);
       } else {
         GBE_ASSERT(sel.hasLongType());
         write64Stateless(sel, address, src);
@@ -4966,7 +5007,8 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     {
       using namespace ir;
       const ir::StoreInstruction &insn = cast<ir::StoreInstruction>(dag.insn);
-      GenRegister address = sel.selReg(insn.getAddressRegister(), ir::TYPE_U32);
+      Register reg = insn.getAddressRegister();
+      GenRegister address = sel.selReg(reg, getType(sel.getRegisterFamily(reg)));
       AddressSpace addrSpace = insn.getAddressSpace();
       const Type type = insn.getValueType();
       const uint32_t elemSize = getByteScatterGatherSize(sel, type);
