@@ -350,17 +350,19 @@ error:
   {
     Value* op0 = NULL;
     Value* val = NULL;
+    const DataLayout &DL = module->getDataLayout();
+    Type *ptrIntTy = IntegerType::get(module->getContext(), DL.getPointerSizeInBits());
 
     /////////////////////////////////////////////////////
     /* calculate index address.
        index_addr = (index_offset + wg_offset )* sizeof(int) * 2 + index_buf_ptr
        index_offset = global_size2 * global_size1 * global_size0 * printf_num */
 
-    Value* index_offset = builder->CreateMul(g1Xg2Xg3, ConstantInt::get(intTy, printf_num));
+    Value* index_offset = builder->CreateMul(g1Xg2Xg3, ConstantInt::get(ptrIntTy, printf_num));
     // index_offset + offset
     op0 = builder->CreateAdd(index_offset, wg_offset);
     // (index_offset + offset)* sizeof(int) * 2
-    op0 = builder->CreateMul(op0, ConstantInt::get(intTy, sizeof(int)*2));
+    op0 = builder->CreateMul(op0, ConstantInt::get(ptrIntTy, sizeof(int)*2));
     // Final index address = index_buf_ptr + (index_offset + offset)* sizeof(int)
     op0 = builder->CreateAdd(index_buf_ptr, op0);
     Value* index_addr = builder->CreateIntToPtr(op0, Type::getInt32PtrTy(module->getContext(), 1));
@@ -369,9 +371,12 @@ error:
     val = builder->CreateAdd(loop_num, ConstantInt::get(intTy, 1));
     builder->CreateStore(val, index_addr);// The loop number.
 
-    op0 = builder->CreateAdd(op0, ConstantInt::get(intTy, sizeof(int)));
+    op0 = builder->CreateAdd(op0, ConstantInt::get(ptrIntTy, sizeof(int)));
     index_addr = builder->CreateIntToPtr(op0, Type::getInt32PtrTy(module->getContext(), 1));
     builder->CreateStore(ConstantInt::get(intTy, printf_num), index_addr);// The printf number.
+
+    if(DL.getPointerSizeInBits() == 64)
+      loop_num = builder->CreateZExt(loop_num, ptrIntTy);
 
     int i = 1;
     Value* data_addr = NULL;
@@ -406,14 +411,14 @@ error:
       data_offset = global_size2 * global_size1 * global_size0 * out_buf_sizeof_offset
 
       //global_size2 * global_size1 * global_size0 * out_buf_sizeof_offset */
-      op0 = builder->CreateMul(g1Xg2Xg3, ConstantInt::get(intTy, out_buf_sizeof_offset));
+      op0 = builder->CreateMul(g1Xg2Xg3, ConstantInt::get(ptrIntTy, out_buf_sizeof_offset));
       //offset * sizeof(specify)
-      val = builder->CreateMul(wg_offset, ConstantInt::get(intTy, sizeof_size));
+      val = builder->CreateMul(wg_offset, ConstantInt::get(ptrIntTy, sizeof_size));
       //data_offset + pbuf_ptr
       op0 = builder->CreateAdd(pbuf_ptr, op0);
       op0 = builder->CreateAdd(op0, val);
       //totalSizeofSize * global_size2 * global_size1 * global_size0
-      val = builder->CreateMul(g1Xg2Xg3, ConstantInt::get(intTy, totalSizeofSize));
+      val = builder->CreateMul(g1Xg2Xg3, ConstantInt::get(ptrIntTy, totalSizeofSize));
       //totalSizeofSize * global_size2 * global_size1 * global_size0 * loop_num
       val = builder->CreateMul(val, loop_num);
       //final
@@ -543,6 +548,8 @@ error:
     totalSizeofSize = 0;
     module = F.getParent();
     intTy = IntegerType::get(module->getContext(), 32);
+    const DataLayout &DL = module->getDataLayout();
+    Type *ptrIntTy = IntegerType::get(module->getContext(), DL.getPointerSizeInBits());
 
     // As we inline all function calls, so skip non-kernel functions
     bool bKernel = isKernelFunction(F);
@@ -608,7 +615,7 @@ error:
                                 nullptr,
                                 GlobalVariable::NotThreadLocal,
                                 1);
-      pbuf_ptr = builder->CreatePtrToInt(pBuf, Type::getInt32Ty(module->getContext()));
+      pbuf_ptr = builder->CreatePtrToInt(pBuf, ptrIntTy);
     }
     if (!index_buf_ptr) {
       Type *ptrTy = Type::getInt32PtrTy(module->getContext(), 1);
@@ -619,7 +626,7 @@ error:
                                 nullptr,
                                 GlobalVariable::NotThreadLocal,
                                 1);
-      index_buf_ptr = builder->CreatePtrToInt(pBuf, Type::getInt32Ty(module->getContext()));
+      index_buf_ptr = builder->CreatePtrToInt(pBuf, ptrIntTy);
     }
 
     if (!wg_offset || !g1Xg2Xg3) {
@@ -683,6 +690,10 @@ error:
       op0 = builder->CreateMul(global_size2, global_size1);
       // global_size2 * global_size1 * global_size0
       g1Xg2Xg3 = builder->CreateMul(op0, global_size0);
+      if(DL.getPointerSizeInBits() == 64) {
+        wg_offset = builder->CreateZExt(wg_offset, ptrIntTy);
+        g1Xg2Xg3 = builder->CreateZExt(g1Xg2Xg3, ptrIntTy);
+      }
     }
 
 

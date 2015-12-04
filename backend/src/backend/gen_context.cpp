@@ -242,6 +242,23 @@ namespace gbe
         p->MUL(tmpReg, tmpReg, GenRegister::immuw(perThreadSize));
       p->curr.execWidth = this->simdWidth;
       p->ADD(stackptr, stackptr, tmpReg);
+      if (fn.getPointerFamily() == ir::FAMILY_QWORD) {
+        const GenRegister selStatckPtr2 = this->simdWidth == 8 ?
+          GenRegister::ul8grf(ir::ocl::stackptr) :
+          GenRegister::ul16grf(ir::ocl::stackptr);
+        const GenRegister stackptr2 = ra->genReg(selStatckPtr2);
+        int simdWidth = p->curr.execWidth;
+        if (simdWidth == 16) {
+          // we need do second quarter first, because the dst type is QW,
+          // while the src is DW. If we do first quater first, the 1st
+          // quarter's dst would contain the 2nd quarter's src.
+          p->curr.execWidth = 8;
+          p->curr.quarterControl = GEN_COMPRESSION_Q2;
+          p->MOV(GenRegister::Qn(stackptr2, 1), GenRegister::Qn(stackptr,1));
+        }
+        p->curr.quarterControl = GEN_COMPRESSION_Q1;
+        p->MOV(stackptr2, stackptr);
+      }
     p->pop();
   }
 
