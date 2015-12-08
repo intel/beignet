@@ -32,11 +32,11 @@ namespace ir {
       case TYPE_S8: return out << "int8";
       case TYPE_U8: return out << "uint8";
       case TYPE_S16: return out << "int16";
-      case TYPE_U16: return out << "uin16";
+      case TYPE_U16: return out << "uint16";
       case TYPE_S32: return out << "int32";
-      case TYPE_U32: return out << "uin32";
+      case TYPE_U32: return out << "uint32";
       case TYPE_S64: return out << "int64";
-      case TYPE_U64: return out << "uin64";
+      case TYPE_U64: return out << "uint64";
       case TYPE_HALF: return out << "half";
       case TYPE_FLOAT: return out << "float";
       case TYPE_DOUBLE: return out << "double";
