@@ -67,7 +67,7 @@ typedef intptr_t cl_device_partition_property;
 	  return RET; \
 	} while(0)
 
-inline cl_int
+static inline cl_int
 handle_events(cl_command_queue queue, cl_int num, const cl_event *wait_list,
               cl_event* event, enqueue_data* data, cl_command_type type)
 {
