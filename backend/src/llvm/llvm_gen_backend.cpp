@@ -111,6 +111,46 @@ namespace gbe
            type->isPointerTy();
   }
 
+  static std::string getTypeName(ir::Context &ctx, const Type *type, int sign)
+  {
+    GBE_ASSERT(isScalarType(type));
+    if (type->isFloatTy() == true)
+      return "float";
+    if (type->isHalfTy() == true)
+      return "half";
+    if (type->isDoubleTy() == true)
+      return "double";
+
+    GBE_ASSERT(type->isIntegerTy() == true);
+    if(sign) {
+      if (type == Type::getInt1Ty(type->getContext()))
+        return "char";
+      if (type == Type::getInt8Ty(type->getContext()))
+        return "char";
+      if (type == Type::getInt16Ty(type->getContext()))
+        return "short";
+      if (type == Type::getInt32Ty(type->getContext()))
+        return "int";
+      if (type == Type::getInt64Ty(type->getContext()))
+        return "long";
+    }
+    else
+    {
+      if (type == Type::getInt1Ty(type->getContext()))
+        return "uchar";
+      if (type == Type::getInt8Ty(type->getContext()))
+        return "uchar";
+      if (type == Type::getInt16Ty(type->getContext()))
+        return "ushort";
+      if (type == Type::getInt32Ty(type->getContext()))
+        return "uint";
+      if (type == Type::getInt64Ty(type->getContext()))
+        return "ulong";
+    }
+    GBE_ASSERTM(false, "Unsupported type.");
+    return "";
+  }
+
   /*! LLVM IR Type to Gen IR type translation */
   static ir::Type getType(ir::Context &ctx, const Type *type)
   {
@@ -2002,6 +2042,38 @@ namespace gbe
       } else if (attrName->getString() == "vec_type_hint") {
         GBE_ASSERT(attrNode->getNumOperands() == 3);
         functionAttributes += attrName->getString();
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+        Value* V = attrNode->getOperand(1);
+#else
+        auto *Op1 = cast<ValueAsMetadata>(attrNode->getOperand(1));
+        Value *V = Op1 ? Op1->getValue() : NULL;
+#endif
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+        ConstantInt *sign = dyn_cast<ConstantInt>(attrNode->getOperand(2));
+#else
+        ConstantInt *sign = mdconst::extract<ConstantInt>(attrNode->getOperand(2));
+#endif
+        size_t signValue = sign->getZExtValue();
+        Type* vtype = V->getType();
+        Type* stype = vtype;
+        uint32_t elemNum = 0;
+        if(vtype->isVectorTy()) {
+          VectorType *vectorType = cast<VectorType>(vtype);
+          stype = vectorType->getElementType();
+          elemNum = vectorType->getNumElements();
+        }
+
+        std::string typeName = getTypeName(ctx, stype, signValue);
+
+        std::stringstream param;
+        char buffer[100];
+        param <<"(";
+        param << typeName;
+        if(vtype->isVectorTy())
+          param << elemNum;
+        param <<")";
+        param >> buffer;
+        functionAttributes += buffer;
         functionAttributes += " ";
       } else if (attrName->getString() == "work_group_size_hint") {
         GBE_ASSERT(attrNode->getNumOperands() == 4);
