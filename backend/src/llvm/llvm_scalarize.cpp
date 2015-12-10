@@ -227,6 +227,9 @@ namespace gbe {
     // of their operands hadn't before been visited (i.e. loop variant
     // variables)
     SmallVector<PHINode*, 16> incompletePhis;
+
+    // Map for alloca vec uesd for Extractelememt < vec, alloca >
+    std::map<Value*, Value*> vectorAlloca;
   };
 
   Value* Scalarize::getComponent(int component, Value* v)
@@ -723,17 +726,45 @@ namespace gbe {
     if (! isa<Constant>(extr->getOperand(1))) {
         // TODO: Variably referenced components. Probably handle/emulate through
         // a series of selects.
-        NOT_IMPLEMENTED; //gla::UnsupportedFunctionality("Variably referenced vector components");
+        //NOT_IMPLEMENTED; //gla::UnsupportedFunctionality("Variably referenced vector components");
+        //TODO: This is a implement for the non-constant index, we use an allocated new vector
+        //to store the need vector elements.
+        Value* foo = extr->getOperand(0);
+        Type* fooTy = foo->getType();
+
+        Instruction* Alloc;
+        if(vectorAlloca.find(foo) == vectorAlloca.end())
+        {
+          Alloc = new AllocaInst(fooTy,0,"",extr->getParent()->begin());
+          for (int i = 0; i < GetComponentCount(foo); ++i)
+          {
+            Value* foo_i = getComponent(i, foo);
+            assert(foo_i && "There is unhandled vector component");
+            Value* idxs_i[] = {ConstantInt::get(intTy,0), ConstantInt::get(intTy,i)};
+            Instruction* storePtr_i = GetElementPtrInst::Create(Alloc, idxs_i, "", extr);
+            new StoreInst(foo_i, storePtr_i, extr);
+          }
+          vectorAlloca[foo] = Alloc;
+        }
+        else Alloc = dyn_cast<Instruction>(vectorAlloca[foo]);
+
+        Value* Idxs[] = {ConstantInt::get(intTy,0), extr->getOperand(1)};
+        Instruction* getPtr = GetElementPtrInst::Create(Alloc, Idxs, "", extr);
+        Instruction* loadComp = new LoadInst(getPtr,"",extr);
+        extr->replaceAllUsesWith(loadComp);
+        return true;
     }
     //if (isa<Argument>(extr->getOperand(0)))
     //  return false;
-    int component = GetConstantInt(extr->getOperand(1));
-    Value* v = getComponent(component, extr->getOperand(0));
-    if(extr == v)
-      return false;
-    replaceAllUsesOfWith(dyn_cast<Instruction>(extr), dyn_cast<Instruction>(v));
+    else{
+      int component = GetConstantInt(extr->getOperand(1));
+      Value* v = getComponent(component, extr->getOperand(0));
+      if(extr == v)
+        return false;
+      replaceAllUsesOfWith(dyn_cast<Instruction>(extr), dyn_cast<Instruction>(v));
 
-    return true;
+      return true;
+    }
   }
 
   bool Scalarize::scalarizeInsert(InsertElementInst* ins)
@@ -840,6 +871,7 @@ namespace gbe {
     incompletePhis.clear();
     vectorVals.clear();
     usedVecVals.clear();
+    vectorAlloca.clear();
 
     delete builder;
     builder = 0;
