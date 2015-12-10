@@ -199,8 +199,10 @@ namespace gbe
     static const uint32_t MAX_ACC_REGISTER = 1u;
     /*! Maximum number of *physical* tm registers */
     static const uint32_t MAX_TM_REGISTER = 1u;
+    /*! Maximum number of state registers */
+    static const uint32_t MAX_ST_REGISTER = 2u;
     /*! Maximum number of *physical* arf registers */
-    static const uint32_t MAX_ARF_REGISTER = MAX_FLAG_REGISTER + MAX_ACC_REGISTER + MAX_TM_REGISTER;
+    static const uint32_t MAX_ARF_REGISTER = MAX_FLAG_REGISTER + MAX_ACC_REGISTER + MAX_TM_REGISTER + MAX_ST_REGISTER;
     /*! Stores the last node that wrote to a register / memory ... */
     vector<ScheduleDAGNode*> nodes;
     /*! store nodes each node depends on */
@@ -343,6 +345,9 @@ namespace gbe
           return grfNum + MAX_FLAG_REGISTER + nr;
         } else if (file == GEN_ARF_TM) {
           return grfNum + MAX_FLAG_REGISTER + MAX_ACC_REGISTER;
+        } else if (file == GEN_ARF_STATE) {
+          GBE_ASSERT(nr < MAX_ST_REGISTER);
+          return grfNum + MAX_FLAG_REGISTER + MAX_ACC_REGISTER + MAX_TM_REGISTER + nr;
         } else {
           NOT_SUPPORTED;
           return 0;
@@ -510,7 +515,8 @@ namespace gbe
       // Consider barriers and wait are reading memory (local and global)
     if (insn.opcode == SEL_OP_BARRIER ||
         insn.opcode == SEL_OP_FENCE ||
-        insn.opcode == SEL_OP_WAIT) {
+        insn.opcode == SEL_OP_WAIT ||
+        insn.opcode == SEL_OP_WORKGROUP_OP) {
         const uint32_t memIndex = tracker.getMemoryIndex();
         tracker.addDependency(node, memIndex, READ_AFTER_WRITE);
       }
@@ -572,7 +578,8 @@ namespace gbe
       // Consider barriers and wait are reading memory (local and global)
       if (insn.opcode == SEL_OP_BARRIER ||
           insn.opcode == SEL_OP_FENCE ||
-          insn.opcode == SEL_OP_WAIT) {
+          insn.opcode == SEL_OP_WAIT ||
+          insn.opcode == SEL_OP_WORKGROUP_OP) {
         const uint32_t memIndex = tracker.getMemoryIndex();
         tracker.addDependency(memIndex, node, WRITE_AFTER_READ);
       }
@@ -602,7 +609,8 @@ namespace gbe
           || node->insn.opcode == SEL_OP_BARRIER
           || node->insn.opcode == SEL_OP_CALC_TIMESTAMP
           || node->insn.opcode == SEL_OP_STORE_PROFILING
-          || node->insn.opcode == SEL_OP_WAIT)
+          || node->insn.opcode == SEL_OP_WAIT
+          || node->insn.opcode == SEL_OP_WORKGROUP_OP)
         tracker.makeBarrier(insnID, insnNum);
     }
 
