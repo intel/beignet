@@ -667,6 +667,20 @@ namespace gbe {
         (*out_module)->print(ostream, 0);
       } //Otherwise, you'll have to make do without the dump.
     }
+
+    if (!dumpSPIRBinaryName.empty()) {
+      std::string err;
+      llvm::raw_fd_ostream ostream (dumpSPIRBinaryName.c_str(),
+                                    err,
+      #if LLVM_VERSION_MINOR == 3
+                                    0
+      #else
+                                    llvm::sys::fs::F_None
+      #endif
+                                    );
+      if (err.empty())
+        llvm::WriteBitcodeToFile(*out_module, ostream);
+    }
 #else
     if (!dumpLLVMFileName.empty()) {
       std::error_code err;
