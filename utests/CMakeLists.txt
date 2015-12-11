@@ -225,7 +225,8 @@ set (utests_sources
   compiler_sub_group_shuffle.cpp
   builtin_global_linear_id.cpp
   builtin_local_linear_id.cpp
-  compiler_mix.cpp)
+  compiler_mix.cpp
+  compiler_bsort.cpp)
 
 if (LLVM_VERSION_NODOT VERSION_GREATER 34)
   SET(utests_sources
