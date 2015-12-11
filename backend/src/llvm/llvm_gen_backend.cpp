@@ -3877,7 +3877,6 @@ namespace gbe
           break;
           case Intrinsic::sqrt: this->emitUnaryCallInst(I,CS,ir::OP_SQR); break;
           case Intrinsic::ceil: this->emitUnaryCallInst(I,CS,ir::OP_RNDU); break;
-          case Intrinsic::fabs: this->emitUnaryCallInst(I,CS,ir::OP_ABS); break;
           case Intrinsic::trunc: this->emitUnaryCallInst(I,CS,ir::OP_RNDZ); break;
           case Intrinsic::rint: this->emitUnaryCallInst(I,CS,ir::OP_RNDE); break;
           case Intrinsic::floor: this->emitUnaryCallInst(I,CS,ir::OP_RNDD); break;
@@ -3893,6 +3892,13 @@ namespace gbe
             const ir::Register src1 = this->getRegister(*AI);
             const ir::Register dst = this->getRegister(&I);
             ctx.POW(ir::TYPE_FLOAT, dst, src0, src1);
+            break;
+          }
+          case Intrinsic::fabs:
+          {
+            const ir::Register src = this->getRegister(*AI);
+            const ir::Register dst = this->getRegister(&I);
+            ctx.ALU1(ir::OP_ABS, getType(ctx, (*AI)->getType()), dst, src);
             break;
           }
           default: NOT_IMPLEMENTED;
