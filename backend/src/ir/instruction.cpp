@@ -1457,7 +1457,7 @@ namespace ir {
             whyNot = "Wrong number of source.";
             return false;
           } else {
-            const RegisterFamily fam = FAMILY_DWORD;
+            const RegisterFamily fam = fn.getPointerFamily();
             for (uint32_t srcID = 1; srcID < this->srcNum; ++srcID) {
               const Register regID = fn.getRegister(src, srcID);
               if (UNLIKELY(checkRegisterData(fam, regID, fn, whyNot) == false))
