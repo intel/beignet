@@ -57,7 +57,7 @@ namespace ir {
     Instruction* p_new_insn = pbb->getParent().newInstruction(insn);
     pbb->insertAt(it, *p_new_insn);
     pbb->whileLabel = whileLabel;
-    pbb->erase(it);
+    it->remove();
   }
 
   /* recursive mark the bbs' variable needEndif*/
@@ -122,7 +122,7 @@ namespace ir {
     /* since this block is an if block, so we remove the BRA instruction at the bottom of the exit BB of 'block',
      * and insert IF instead
      */
-    pbb->erase(it);
+    it->remove();
     Instruction insn = IF(matchingElseLabel, reg, block->inversePredicate);
     Instruction* p_new_insn = pbb->getParent().newInstruction(insn);
     pbb->append(*p_new_insn);
@@ -160,7 +160,7 @@ namespace ir {
     BasicBlock::iterator it = pbb->end();
     it--;
     if((*it).getOpcode() == OP_BRA)
-      pbb->erase(it);
+      it->remove();
 
     if(block->getExit()->getNextBlock() == elseblock->getEntry())
       return;
@@ -321,8 +321,7 @@ namespace ir {
         {
           BasicBlock::iterator it= bbs[i]->end();
           it--;
-
-          bbs[i]->erase(it);
+          it->remove();
 
           if (bbs[i]->hasExtraBra)
             bbs[i]->hasExtraBra = false;
