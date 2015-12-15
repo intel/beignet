@@ -408,7 +408,7 @@ cl_program_create_from_llvm(cl_context ctx,
       goto error;
   }
 
-  program->opaque = compiler_program_new_from_llvm(ctx->device->device_id, file_name, NULL, NULL, NULL, program->build_log_max_sz, program->build_log, &program->build_log_sz, 1);
+  program->opaque = compiler_program_new_from_llvm(ctx->device->device_id, file_name, NULL, NULL, NULL, program->build_log_max_sz, program->build_log, &program->build_log_sz, 1, NULL);
   if (UNLIKELY(program->opaque == NULL)) {
     err = CL_INVALID_PROGRAM;
     goto error;

@@ -240,7 +240,8 @@ typedef gbe_program (gbe_program_new_from_llvm_cb)(uint32_t deviceID,
                                                    size_t string_size,
                                                    char *err,
                                                    size_t *err_size,
-                                                   int optLevel);
+                                                   int optLevel,
+                                                   const char* options);
 extern gbe_program_new_from_llvm_cb *gbe_program_new_from_llvm;
 
 /*! link the programs from llvm level. */

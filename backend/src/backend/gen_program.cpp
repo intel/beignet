@@ -405,10 +405,16 @@ namespace gbe {
                                            size_t stringSize,
                                            char *err,
                                            size_t *errSize,
-                                           int optLevel)
+                                           int optLevel,
+                                           const char* options)
   {
     using namespace gbe;
-    GenProgram *program = GBE_NEW(GenProgram, deviceID, module, llvm_ctx, asm_file_name);
+    uint32_t fast_relaxed_math = 0;
+    if (options != NULL)
+      if (strstr(options, "-cl-fast-relaxed-math") != NULL)
+        fast_relaxed_math = 1;
+
+    GenProgram *program = GBE_NEW(GenProgram, deviceID, module, llvm_ctx, asm_file_name, fast_relaxed_math);
 #ifdef GBE_COMPILER_AVAILABLE
     std::string error;
     // Try to compile the program
@@ -480,12 +486,17 @@ namespace gbe {
     int optLevel = 1;
     std::string dumpASMFileName;
     size_t start = 0, end = 0;
+    uint32_t fast_relaxed_math = 0;
 
     if(options) {
       char *p;
       p = strstr(const_cast<char *>(options), "-cl-opt-disable");
       if (p)
         optLevel = 0;
+
+      if (options != NULL)
+        if (strstr(options, "-cl-fast-relaxed-math") != NULL)
+          fast_relaxed_math = 1;
 
     char *options_str = (char *)malloc(sizeof(char) * (strlen(options) + 1));
       memcpy(options_str, options, strlen(options) + 1);
@@ -506,6 +517,7 @@ namespace gbe {
     }
 
     GenProgram* p = (GenProgram*) program;
+    p->fast_relaxed_math = fast_relaxed_math;
     if (!dumpASMFileName.empty()) {
         p->asm_file_name = dumpASMFileName.c_str();
         FILE *asmDumpStream = fopen(dumpASMFileName.c_str(), "w");

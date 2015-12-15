@@ -263,7 +263,7 @@ namespace gbe {
   {
   public:
     /*! Create an empty program */
-    Program(void);
+    Program(uint32_t fast_relaxed_math);
     /*! Destroy the program */
     virtual ~Program(void);
     /*! Clean LLVM resource of the program */
@@ -321,6 +321,7 @@ namespace gbe {
     virtual size_t serializeToBin(std::ostream& outs);
     virtual size_t deserializeFromBin(std::istream& ins);
     virtual void printStatus(int indent, std::ostream& outs);
+    uint32_t fast_relaxed_math : 1;
 
   protected:
     /*! Compile a kernel */

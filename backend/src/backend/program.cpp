@@ -106,7 +106,7 @@ namespace gbe {
     return it->offset; // we found it!
   }
 
-  Program::Program(void) : constantSet(NULL) {}
+  Program::Program(uint32_t fast_relaxed_math) : fast_relaxed_math(fast_relaxed_math), constantSet(NULL) {}
   Program::~Program(void) {
     for (map<std::string, Kernel*>::iterator it = kernels.begin(); it != kernels.end(); ++it)
       GBE_DELETE(it->second);
@@ -126,7 +126,10 @@ namespace gbe {
     if(module){
       cloned_module = llvm::CloneModule((llvm::Module*)module);
     }
-    if (llvmToGen(*unit, fileName, module, optLevel, OCL_STRICT_CONFORMANCE, OCL_PROFILING_LOG) == false) {
+    bool strictMath = true;
+    if (fast_relaxed_math || !OCL_STRICT_CONFORMANCE)
+      strictMath = false;
+    if (llvmToGen(*unit, fileName, module, optLevel, strictMath, OCL_PROFILING_LOG) == false) {
       if (fileName)
         error = std::string(fileName) + " not found";
       delete unit;
@@ -139,10 +142,10 @@ namespace gbe {
       unit = new ir::Unit();
       if(cloned_module){
         //suppose file exists and llvmToGen will not return false.
-        llvmToGen(*unit, fileName, cloned_module, 0, OCL_STRICT_CONFORMANCE, OCL_PROFILING_LOG);
+        llvmToGen(*unit, fileName, cloned_module, 0, strictMath, OCL_PROFILING_LOG);
       }else{
         //suppose file exists and llvmToGen will not return false.
-        llvmToGen(*unit, fileName, module, 0, OCL_STRICT_CONFORMANCE, OCL_PROFILING_LOG);
+        llvmToGen(*unit, fileName, module, 0, strictMath, OCL_PROFILING_LOG);
       }
     }
     assert(unit->getValid());
@@ -161,9 +164,14 @@ namespace gbe {
     const uint32_t kernelNum = set.size();
     if (OCL_OUTPUT_GEN_IR) std::cout << unit;
     if (kernelNum == 0) return true;
+
+    bool strictMath = true;
+    if (fast_relaxed_math || !OCL_STRICT_CONFORMANCE)
+      strictMath = false;
+
     for (const auto &pair : set) {
       const std::string &name = pair.first;
-      Kernel *kernel = this->compileKernel(unit, name, !OCL_STRICT_CONFORMANCE, OCL_PROFILING_LOG);
+      Kernel *kernel = this->compileKernel(unit, name, !strictMath, OCL_PROFILING_LOG);
       if (!kernel) {
         error +=  name;
         error += ":(GBE): error: failed in Gen backend.\n";
@@ -885,7 +893,7 @@ namespace gbe {
 
       p = gbe_program_new_from_llvm(deviceID, NULL, out_module, llvm_ctx,
                                     dumpASMFileName.empty() ? NULL : dumpASMFileName.c_str(),
-                                    stringSize, err, errSize, optLevel);
+                                    stringSize, err, errSize, optLevel, options);
       if (err != NULL)
         *errSize += clangErrSize;
       if (OCL_OUTPUT_BUILD_LOG && options)

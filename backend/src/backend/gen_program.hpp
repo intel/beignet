@@ -60,8 +60,8 @@ namespace gbe
   {
   public:
     /*! Create an empty program */
-    GenProgram(uint32_t deviceID, const void* mod = NULL, const void* ctx = NULL, const char* asm_fname = NULL) :
-      deviceID(deviceID),module((void*)mod), llvm_ctx((void*)ctx), asm_file_name(asm_fname) {}
+    GenProgram(uint32_t deviceID, const void* mod = NULL, const void* ctx = NULL, const char* asm_fname = NULL, uint32_t fast_relaxed_math = 0) :
+      Program(fast_relaxed_math), deviceID(deviceID),module((void*)mod), llvm_ctx((void*)ctx), asm_file_name(asm_fname) {}
     /*! Current device ID*/
     uint32_t deviceID;
     /*! Destroy the program */
