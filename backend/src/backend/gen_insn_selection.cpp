@@ -5659,23 +5659,27 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       }
 
       sel.push();
-      if (sel.isScalarReg(insn.getDst(0))) {
-        sel.curr.execWidth = 1;
-        sel.curr.predicate = GEN_PREDICATE_NONE;
-        sel.curr.noMask = 1;
-      }
-      if (src1.file == GEN_IMMEDIATE_VALUE) {
-        uint32_t offset = src1.value.ud % sel.curr.execWidth;
-        GenRegister reg = GenRegister::subphysicaloffset(src0, offset);
-        reg.vstride = GEN_VERTICAL_STRIDE_0;
-        reg.hstride = GEN_HORIZONTAL_STRIDE_0;
-        reg.width = GEN_WIDTH_1;
-        sel.MOV(dst, reg);
-      }
-      else {
-        GenRegister shiftL = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-        sel.SHL(shiftL, src1, GenRegister::immud(0x2));
-        sel.SIMD_SHUFFLE(dst, src0, shiftL);
+      if (sel.isScalarReg(insn.getSrc(0))) {
+        if (sel.isScalarReg(insn.getDst(0))) {
+          sel.curr.execWidth = 1;
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+        }
+        sel.MOV(dst, src0);     //no matter what src1 is
+      } else {
+        if (src1.file == GEN_IMMEDIATE_VALUE) {
+          uint32_t offset = src1.value.ud % sel.curr.execWidth;
+          GenRegister reg = GenRegister::subphysicaloffset(src0, offset);
+          reg.vstride = GEN_VERTICAL_STRIDE_0;
+          reg.hstride = GEN_HORIZONTAL_STRIDE_0;
+          reg.width = GEN_WIDTH_1;
+          sel.MOV(dst, reg);
+        }
+        else {
+          GenRegister shiftL = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+          sel.SHL(shiftL, src1, GenRegister::immud(0x2));
+          sel.SIMD_SHUFFLE(dst, src0, shiftL);
+        }
       }
       sel.pop();
       return true;
