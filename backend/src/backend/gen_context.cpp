@@ -1925,7 +1925,7 @@ namespace gbe
     if(sel->isScalarReg(offset.reg()))
       offset = GenRegister::retype(offset, GEN_TYPE_UW);
     else
-      offset = GenRegister::unpacked_uw(offset.nr, offset.subnr / typeSize(GEN_TYPE_UW));
+      offset = GenRegister::unpacked_uw(offset);
     uint32_t baseRegOffset = GenRegister::grfOffset(baseReg);
     //There is a restrict that: lower 5 bits indirect reg SubRegNum and
     //the lower 5 bits of indirect imm SubRegNum cannot exceed 5 bits.

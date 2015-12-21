@@ -952,6 +952,16 @@ namespace gbe
                     GEN_HORIZONTAL_STRIDE_0);
     }
 
+    static INLINE uint32_t hstrideFromSize(int size) {
+      switch (size) {
+        case 0: return GEN_HORIZONTAL_STRIDE_0;
+        case 1: return GEN_HORIZONTAL_STRIDE_1;
+        case 2: return GEN_HORIZONTAL_STRIDE_2;
+        case 4: return GEN_HORIZONTAL_STRIDE_4;
+        default: NOT_IMPLEMENTED; return GEN_HORIZONTAL_STRIDE_0;
+      }
+    }
+
     static INLINE int hstride_size(GenRegister reg) {
       switch (reg.hstride) {
         case GEN_HORIZONTAL_STRIDE_0: return 0;
@@ -1187,6 +1197,22 @@ namespace gbe
                          GEN_VERTICAL_STRIDE_16,
                          GEN_WIDTH_8,
                          GEN_HORIZONTAL_STRIDE_2);
+    }
+
+    static INLINE GenRegister unpacked_uw(const GenRegister& reg) {
+      uint32_t nr = reg.nr;
+      uint32_t subnr = reg.subnr / typeSize(GEN_TYPE_UW);
+      uint32_t width = reg.width;
+      int hstrideSize = GenRegister::hstride_size(reg) * typeSize(reg.type) / typeSize(GEN_TYPE_UW);
+      uint32_t hstride = GenRegister::hstrideFromSize(hstrideSize);
+
+      return GenRegister(GEN_GENERAL_REGISTER_FILE,
+                         nr,
+                         subnr,
+                         GEN_TYPE_UW,
+                         GEN_VERTICAL_STRIDE_16,
+                         width,
+                         hstride);
     }
 
     static INLINE GenRegister packed_ud(uint32_t nr, uint32_t subnr) {
