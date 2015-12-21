@@ -369,21 +369,21 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
 
   /* Compute the number of HW threads we need */
   if(UNLIKELY(err = cl_kernel_work_group_sz(ker, local_wk_sz, 3, &local_sz) != CL_SUCCESS)) {
-    DEBUGP("Beignet: Work group size exceed Kernel's work group size.\n");
+    DEBUGP(DL_ERROR, "Work group size exceed Kernel's work group size.");
     return err;
   }
   kernel.thread_n = thread_n = (local_sz + simd_sz - 1) / simd_sz;
   kernel.curbe_sz = cst_sz;
 
   if (scratch_sz > ker->program->ctx->device->scratch_mem_size) {
-    DEBUGP("Beignet: Out of scratch memory %d.\n", scratch_sz);
+    DEBUGP(DL_ERROR, "Out of scratch memory %d.", scratch_sz);
     return CL_OUT_OF_RESOURCES;
   }
   /* Curbe step 1: fill the constant urb buffer data shared by all threads */
   if (ker->curbe) {
     kernel.slm_sz = cl_curbe_fill(ker, work_dim, global_wk_off, global_wk_sz, local_wk_sz, thread_n);
     if (kernel.slm_sz > ker->program->ctx->device->local_mem_size) {
-      DEBUGP("Beignet: Out of shared local memory %d.\n", kernel.slm_sz);
+      DEBUGP(DL_ERROR, "Out of shared local memory %d.", kernel.slm_sz);
       return CL_OUT_OF_RESOURCES;
     }
   }

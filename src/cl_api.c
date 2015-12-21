@@ -2999,6 +2999,7 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
         fixed_local_sz[1] = 1;
     } else {
       uint j, maxDimSize = 64 /* from 64? */, maxGroupSize = 256; //MAX_WORK_GROUP_SIZE may too large
+      size_t realGroupSize = 1;
       for (i = 0; i< work_dim; i++) {
         for (j = maxDimSize; j > 1; j--) {
           if (global_work_size[i] % j == 0 && j <= maxGroupSize) {
@@ -3008,7 +3009,10 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
             break;  //choose next work_dim
           }
         }
+        realGroupSize *= fixed_local_sz[i];
       }
+      if (realGroupSize % 8 != 0)
+        DEBUGP(DL_WARNING, "unable to find good values for local_work_size[i], please provide local_work_size[] explicitly, you can find good values with trial-and-error method.");
     }
   }
 

@@ -31,11 +31,19 @@
 #define JOIN(X, Y) _DO_JOIN(X, Y)
 #define _DO_JOIN(X, Y) _DO_JOIN2(X, Y)
 #define _DO_JOIN2(X, Y) X##Y
+enum DEBUGP_LEVEL
+{
+    DL_INFO,
+    DL_WARNING,
+    DL_ERROR
+};
 #ifdef NDEBUG
   #define DEBUGP(...)
 #else
-  #define DEBUGP(fmt, ...)        \
-  fprintf(stderr, fmt, ##__VA_ARGS__)
+  //TODO: decide print or not with the value of level from environment
+  #define DEBUGP(level, fmt, ...)        \
+  fprintf(stderr, "Beignet: "#fmt, ##__VA_ARGS__);  \
+  fprintf(stderr, "\n");
 #endif
 
 /* Check compile time errors */
