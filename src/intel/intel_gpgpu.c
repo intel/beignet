@@ -190,7 +190,7 @@ intel_gpgpu_delete(intel_gpgpu_t *gpgpu)
     node = p->next;
     while(node) {
       if(node->gpgpu->batch && node->gpgpu->batch->buffer &&
-         drm_intel_bo_busy(node->gpgpu->batch->buffer)) {
+         !drm_intel_bo_busy(node->gpgpu->batch->buffer)) {
         p->next = node->next;
         intel_gpgpu_delete_finished(node->gpgpu);
         cl_free(node);
@@ -213,7 +213,7 @@ intel_gpgpu_delete(intel_gpgpu_t *gpgpu)
     return;
 
   if(gpgpu->batch && gpgpu->batch->buffer &&
-     !drm_intel_bo_busy(gpgpu->batch->buffer)) {
+     drm_intel_bo_busy(gpgpu->batch->buffer)) {
     TRY_ALLOC_NO_ERR (node, CALLOC(struct intel_gpgpu_node));
     node->gpgpu = gpgpu;
     node->next = NULL;
