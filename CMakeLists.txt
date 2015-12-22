@@ -219,11 +219,17 @@ ENDIF(OCLIcd_FOUND)
 
 Find_Package(PythonInterp)
 
+OPTION(EXPERIMENTAL_DOUBLE "Enable experimental double support" OFF)
+IF(EXPERIMENTAL_DOUBLE)
+  ADD_DEFINITIONS(-DENABLE_FP64)
+ENDIF(EXPERIMENTAL_DOUBLE)
+
 OPTION(BUILD_EXAMPLES "Build examples" OFF)
 IF(BUILD_EXAMPLES)
 IF(NOT X11_FOUND)
   MESSAGE(FATAL_ERROR "XLib is necessary for examples - not found")
 ENDIF(NOT X11_FOUND)
+
 # libva & libva-x11
 #pkg_check_modules(LIBVA REQUIRED libva>=0.36.0)
 pkg_check_modules(LIBVA REQUIRED libva)
