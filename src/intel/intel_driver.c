@@ -139,11 +139,22 @@ intel_driver_context_init(intel_driver_t *driver)
 {
   driver->ctx = drm_intel_gem_context_create(driver->bufmgr);
   assert(driver->ctx);
+  driver->null_bo = NULL;
+#ifdef HAS_BO_SET_SOFTPIN
+  drm_intel_bo *bo = dri_bo_alloc(driver->bufmgr, "null_bo", 64*1024, 4096);
+  drm_intel_bo_set_softpin_offset(bo, 0);
+  // don't reuse it, that would make two bo trying to bind to same address,
+  // which is un-reasonable.
+  drm_intel_bo_disable_reuse(bo);
+  driver->null_bo = bo;
+#endif
 }
 
 static void
 intel_driver_context_destroy(intel_driver_t *driver)
 {
+  if (driver->null_bo)
+    drm_intel_bo_unreference(driver->null_bo);
   if(driver->ctx)
     drm_intel_gem_context_destroy(driver->ctx);
   driver->ctx = NULL;

@@ -79,6 +79,7 @@ typedef struct intel_driver
 {
   dri_bufmgr *bufmgr;
   drm_intel_context *ctx;
+  drm_intel_bo *null_bo;
   int fd;
   int device_id;
   int gen_ver;

@@ -975,6 +975,7 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   size_aux = ALIGN(size_aux, 4096);
 
   bo = dri_bo_alloc(gpgpu->drv->bufmgr, "AUX_BUFFER", size_aux, 4096);
+
   if (!bo || dri_bo_map(bo, 1) != 0) {
     fprintf(stderr, "%s:%d: %s.\n", __FILE__, __LINE__, strerror(errno));
     if (bo)
@@ -2050,6 +2051,9 @@ static void
 intel_gpgpu_states_setup(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
 {
   gpgpu->ker = kernel;
+  if (gpgpu->drv->null_bo)
+    intel_gpgpu_setup_bti(gpgpu, gpgpu->drv->null_bo, 0, 64*1024, 0xfe, I965_SURFACEFORMAT_RAW);
+
   intel_gpgpu_build_idrt(gpgpu, kernel);
   dri_bo_unmap(gpgpu->aux_buf.bo);
 }
