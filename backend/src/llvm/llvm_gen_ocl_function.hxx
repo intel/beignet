@@ -162,7 +162,7 @@ DECL_LLVM_GEN_FUNCTION(SAT_CONV_F16_TO_U32, _Z16convert_uint_satDh)
 DECL_LLVM_GEN_FUNCTION(SIMD_ANY, sub_group_any)
 DECL_LLVM_GEN_FUNCTION(SIMD_ALL, sub_group_all)
 DECL_LLVM_GEN_FUNCTION(SIMD_SIZE, get_max_sub_group_size)
-DECL_LLVM_GEN_FUNCTION(SIMD_ID, get_sub_group_id)
+DECL_LLVM_GEN_FUNCTION(SIMD_ID, get_sub_group_local_id)
 DECL_LLVM_GEN_FUNCTION(SIMD_SHUFFLE, intel_sub_group_shuffle)
 
 DECL_LLVM_GEN_FUNCTION(READ_TM, __gen_ocl_read_tm)

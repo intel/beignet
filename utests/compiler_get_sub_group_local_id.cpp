@@ -1,11 +1,11 @@
 #include "utest_helper.hpp"
 
-void compiler_get_sub_group_id(void)
+void compiler_get_sub_group_local_id(void)
 {
   const size_t n = 256;
 
   // Setup kernel and buffers
-  OCL_CREATE_KERNEL("compiler_get_sub_group_id");
+  OCL_CREATE_KERNEL("compiler_get_sub_group_local_id");
   OCL_CREATE_BUFFER(buf[0], 0, (n+1) * sizeof(int), NULL);
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
 
@@ -30,4 +30,4 @@ void compiler_get_sub_group_id(void)
   OCL_UNMAP_BUFFER(0);
 }
 
-MAKE_UTEST_FROM_FUNCTION(compiler_get_sub_group_id);
+MAKE_UTEST_FROM_FUNCTION(compiler_get_sub_group_local_id);
