@@ -2,11 +2,11 @@ __kernel void compiler_sub_group_shuffle(global int *dst, int c)
 {
   int i = get_global_id(0);
   if (i == 0)
-    dst[0] = get_sub_group_size();
+    dst[0] = get_max_sub_group_size();
   dst++;
 
   int from = i;
-  int j = get_sub_group_size() - get_sub_group_id() - 1;
+  int j = get_max_sub_group_size() - get_sub_group_id() - 1;
   int o0 = get_sub_group_id();
   int o1 = intel_sub_group_shuffle(from, c);
   int o2 = intel_sub_group_shuffle(from, 5);

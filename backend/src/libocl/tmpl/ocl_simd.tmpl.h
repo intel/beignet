@@ -26,7 +26,7 @@
 int sub_group_any(int);
 int sub_group_all(int);
 
-uint get_sub_group_size(void);
+uint get_max_sub_group_size(void);
 uint get_sub_group_id(void);
 
 OVERLOADABLE float intel_sub_group_shuffle(float x, uint c);

@@ -262,7 +262,7 @@ void block_motion_estimate_intel(accelerator_intel_t accel,
   ushort res[16];
 
   uint write_back_dwx;
-  uint simd_width = get_sub_group_size();
+  uint simd_width = get_max_sub_group_size();
 
   /* In simd 8 mode, one kernel variable 'uint' map to 8 dword.
    * In simd 16 mode, one kernel variable 'uint' map to 16 dword.
