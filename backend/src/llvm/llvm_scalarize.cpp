@@ -732,25 +732,32 @@ namespace gbe {
         Value* foo = extr->getOperand(0);
         Type* fooTy = foo->getType();
 
-        Instruction* Alloc;
+        Value* Alloc;
         if(vectorAlloca.find(foo) == vectorAlloca.end())
         {
-          Alloc = new AllocaInst(fooTy,0,"",extr->getParent()->begin());
+          BasicBlock &entry = extr->getParent()->getParent()->getEntryBlock();
+          BasicBlock::iterator bbIter = entry.begin();
+          while (isa<AllocaInst>(bbIter)) ++bbIter;
+
+          IRBuilder<> allocBuilder(&entry);
+          allocBuilder.SetInsertPoint(bbIter);
+
+          Alloc = allocBuilder.CreateAlloca(fooTy, nullptr, "");
           for (int i = 0; i < GetComponentCount(foo); ++i)
           {
             Value* foo_i = getComponent(i, foo);
             assert(foo_i && "There is unhandled vector component");
             Value* idxs_i[] = {ConstantInt::get(intTy,0), ConstantInt::get(intTy,i)};
-            Instruction* storePtr_i = GetElementPtrInst::Create(Alloc, idxs_i, "", extr);
-            new StoreInst(foo_i, storePtr_i, extr);
+            Value* storePtr_i = builder->CreateGEP(Alloc, idxs_i);
+            builder->CreateStore(foo_i, storePtr_i);
           }
           vectorAlloca[foo] = Alloc;
         }
-        else Alloc = dyn_cast<Instruction>(vectorAlloca[foo]);
+        else Alloc = vectorAlloca[foo];
 
         Value* Idxs[] = {ConstantInt::get(intTy,0), extr->getOperand(1)};
-        Instruction* getPtr = GetElementPtrInst::Create(Alloc, Idxs, "", extr);
-        Instruction* loadComp = new LoadInst(getPtr,"",extr);
+        Value* getPtr = builder->CreateGEP(Alloc, Idxs);
+        Value* loadComp = builder->CreateLoad(getPtr);
         extr->replaceAllUsesWith(loadComp);
         return true;
     }
