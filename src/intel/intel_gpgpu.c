@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 #include <fcntl.h>
 #include <stddef.h>
 #include <errno.h>
@@ -287,7 +288,20 @@ intel_gpgpu_get_cache_ctrl_gen9()
 {
   //Kernel-defined cache control registers 2:
   //L3CC: WB; LeCC: WB; TC: LLC/eLLC;
-  return (0x2 << 1);
+  int major = 0, minor = 0;
+  int mocs_index = 0x2;
+
+  struct utsname buf;
+  uname(&buf);
+  sscanf(buf.release, "%d.%d", &major, &minor);
+  //From linux 4.3, kernel redefined the mocs table's value,
+  //But before 4.3, still used the hw defautl value.
+  if(strcmp(buf.sysname, "Linux") == 0 &&
+     major == 4 && minor < 3) { /* linux kernel support skl from  4.x, so check from 4 */
+    mocs_index = 0x9;
+  }
+
+  return (mocs_index << 1);
 }
 
 static void
