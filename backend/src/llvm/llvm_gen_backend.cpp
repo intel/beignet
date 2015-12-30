@@ -1508,7 +1508,7 @@ namespace gbe
       const GlobalVariable &v = *i;
       if(!v.isConstantUsed()) continue;
       const char *name = v.getName().data();
-      unsigned addrSpace = v.getType()->getAddressSpace();
+      ir::AddressSpace addrSpace = addressSpaceLLVMToGen(v.getType()->getAddressSpace());
       if(addrSpace == ir::AddressSpace::MEM_CONSTANT || v.isConstant()) {
         GBE_ASSERT(v.hasInitializer());
         const Constant *c = v.getInitializer();
