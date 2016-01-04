@@ -48,7 +48,10 @@ cl_int cl_enqueue_read_buffer(enqueue_data* data)
     if (src_ptr == NULL)
       err = CL_MAP_FAILURE;
     else {
-      memcpy(data->ptr, (char*)src_ptr + data->offset + buffer->sub_offset, data->size);
+      //sometimes, application invokes read buffer, instead of map buffer, even if userptr is enabled
+      //memcpy is not necessary for this case
+      if (data->ptr != (char*)src_ptr + data->offset + buffer->sub_offset)
+        memcpy(data->ptr, (char*)src_ptr + data->offset + buffer->sub_offset, data->size);
       cl_mem_unmap_auto(mem);
     }
   }
