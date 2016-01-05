@@ -1719,6 +1719,31 @@ namespace ir {
     INLINE void AtomicInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
       out << "." << AS;
+
+#define OUT_ATOMIC_OP(TYPE)     \
+      case ATOMIC_OP_##TYPE:    \
+      {    out << "." << #TYPE; \
+          break; \
+      }
+      switch(atomicOp)
+      {
+        OUT_ATOMIC_OP(AND)
+        OUT_ATOMIC_OP(OR)
+        OUT_ATOMIC_OP(XOR)
+        OUT_ATOMIC_OP(XCHG)
+        OUT_ATOMIC_OP(INC)
+        OUT_ATOMIC_OP(DEC)
+        OUT_ATOMIC_OP(ADD)
+        OUT_ATOMIC_OP(SUB)
+        OUT_ATOMIC_OP(IMAX)
+        OUT_ATOMIC_OP(IMIN)
+        OUT_ATOMIC_OP(UMAX)
+        OUT_ATOMIC_OP(UMIN)
+        OUT_ATOMIC_OP(CMPXCHG)
+        default:
+          out << "." << "INVALID";
+          assert(0);
+      };
       out << " %" << this->getDst(fn, 0);
       out << " {" << "%" << this->getSrc(fn, 0) << "}";
       for (uint32_t i = 1; i < srcNum; ++i)
