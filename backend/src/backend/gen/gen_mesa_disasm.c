@@ -591,7 +591,7 @@ static int gen_version;
 #define UNTYPED_RW_MSG_TYPE(inst)  GEN_BITS_FIELD(inst, bits3.gen7_untyped_rw.msg_type)
 #define BYTE_RW_SIMD_MODE(inst)    GEN_BITS_FIELD(inst, bits3.gen7_byte_rw.simd_mode)
 #define BYTE_RW_DATA_SIZE(inst)    GEN_BITS_FIELD(inst, bits3.gen7_byte_rw.data_size)
-#define UNTYPED_RW_AOP_TYPE(inst)  GEN_BITS_FIELD(inst, bits3.gen7_atomic_op.aop_type)
+#define UNTYPED_RW_AOP_TYPE(inst)  GEN_BITS_FIELD2(inst, bits3.gen7_atomic_op.aop_type, bits3.gen8_atomic_a64.aop_type)
 #define SCRATCH_RW_OFFSET(inst)    GEN_BITS_FIELD(inst, bits3.gen7_scratch_rw.offset)
 #define SCRATCH_RW_BLOCK_SIZE(inst) GEN_BITS_FIELD(inst, bits3.gen7_scratch_rw.block_size)
 #define SCRATCH_RW_INVALIDATE_AFTER_READ(inst) GEN_BITS_FIELD(inst, bits3.gen7_scratch_rw.invalidate_after_read)

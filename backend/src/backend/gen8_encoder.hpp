@@ -44,6 +44,7 @@ namespace gbe
     virtual void F32TO16(GenRegister dest, GenRegister src0);
     virtual void LOAD_INT64_IMM(GenRegister dest, GenRegister value);
     virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum);
+    virtual void ATOMICA64(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum);
     virtual void UNTYPED_READ(GenRegister dst, GenRegister src, GenRegister bti, uint32_t elemNum);
     virtual void UNTYPED_WRITE(GenRegister src, GenRegister bti, uint32_t elemNum);
     virtual void UNTYPED_READA64(GenRegister dst, GenRegister src, uint32_t elemNum);
@@ -66,6 +67,7 @@ namespace gbe
                             GenRegister src1 = GenRegister::null());
     virtual void handleDouble(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src0, GenRegister src1 = GenRegister::null());
     virtual unsigned setAtomicMessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum);
+    virtual unsigned setAtomicA64MessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum);
     virtual unsigned setUntypedReadMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
     virtual unsigned setUntypedWriteMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
     void setSrc0WithAcc(GenNativeInstruction *insn, GenRegister reg, uint32_t accN);

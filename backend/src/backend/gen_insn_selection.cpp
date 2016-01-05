@@ -187,6 +187,7 @@ namespace gbe
            this->opcode == SEL_OP_READ64       ||
            this->opcode == SEL_OP_READ64A64       ||
            this->opcode == SEL_OP_ATOMIC       ||
+           this->opcode == SEL_OP_ATOMICA64       ||
            this->opcode == SEL_OP_BYTE_GATHER  ||
            this->opcode == SEL_OP_BYTE_GATHERA64  ||
            this->opcode == SEL_OP_SAMPLE ||
@@ -216,6 +217,7 @@ namespace gbe
            this->opcode == SEL_OP_WRITE64       ||
            this->opcode == SEL_OP_WRITE64A64       ||
            this->opcode == SEL_OP_ATOMIC        ||
+           this->opcode == SEL_OP_ATOMICA64        ||
            this->opcode == SEL_OP_BYTE_SCATTER  ||
            this->opcode == SEL_OP_BYTE_SCATTERA64  ||
            this->opcode == SEL_OP_TYPED_WRITE ||
@@ -638,6 +640,8 @@ namespace gbe
     void WAIT(uint32_t n = 0);
     /*! Atomic instruction */
     void ATOMIC(Reg dst, uint32_t function, uint32_t srcNum, Reg src0, Reg src1, Reg src2, GenRegister bti, vector<GenRegister> temps);
+    /*! AtomicA64 instruction */
+    void ATOMICA64(Reg dst, uint32_t function, uint32_t srcNum, vector<GenRegister> src, GenRegister bti, vector<GenRegister> temps);
     /*! Read 64 bits float/int array */
     void READ64(Reg addr, const GenRegister *dst, const GenRegister *tmp, uint32_t elemNum, const GenRegister bti, bool native_long, vector<GenRegister> temps);
     /*! Write 64 bits float/int array */
@@ -1331,6 +1335,33 @@ namespace gbe
     insn->src(0) = src0;
     if(msgPayload > 1) insn->src(1) = src1;
     if(msgPayload > 2) insn->src(2) = src2;
+    insn->src(msgPayload) = bti;
+
+    insn->extra.function = function;
+    insn->extra.elem = msgPayload;
+
+    SelectionVector *vector = this->appendVector();
+    vector->regNum = msgPayload; //bti not included in SelectionVector
+    vector->offsetID = 0;
+    vector->reg = &insn->src(0);
+    vector->isSrc = 1;
+  }
+
+  void Selection::Opaque::ATOMICA64(Reg dst, uint32_t function,
+                                 uint32_t msgPayload, vector<GenRegister> src,
+                                 GenRegister bti,
+                                 vector<GenRegister> temps) {
+    unsigned dstNum = 1 + temps.size();
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_ATOMICA64, dstNum, msgPayload + 1);
+
+    insn->dst(0) = dst;
+    if(temps.size()) {
+      insn->dst(1) = temps[0];
+      insn->dst(2) = temps[1];
+    }
+
+    for (uint32_t elemID = 0; elemID < msgPayload; ++elemID)
+      insn->src(elemID) = src[elemID];
     insn->src(msgPayload) = bti;
 
     insn->extra.function = function;
@@ -6179,34 +6210,124 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           this->opcodes.push_back(ir::Opcode(op));
     }
 
+    /* Used to transform address from 64bit to 32bit, note as dataport messages
+     * cannot accept scalar register, so here to convert to non-uniform
+     * register here. */
+    GenRegister convertU64ToU32(Selection::Opaque &sel,
+                                GenRegister addr) const {
+      GenRegister unpacked = GenRegister::retype(sel.unpacked_ud(addr.reg()), GEN_TYPE_UD);
+      GenRegister dst = sel.selReg(sel.reg(ir::FAMILY_DWORD), ir::TYPE_U32);
+      sel.MOV(dst, unpacked);
+      return dst;
+    }
+
+    void untypedAtomicA64Stateless(Selection::Opaque &sel,
+                              const ir::AtomicInstruction &insn,
+                              unsigned msgPayload,
+                              GenRegister dst,
+                              GenRegister addr,
+                              GenRegister src1,
+                              GenRegister src2,
+                              GenRegister bti) const {
+      using namespace ir;
+      GenRegister addrQ;
+      const AtomicOps atomicOp = insn.getAtomicOpcode();
+      GenAtomicOpCode genAtomicOp = (GenAtomicOpCode)atomicOp;
+      unsigned addrBytes = typeSize(addr.type);
+      GBE_ASSERT(msgPayload <= 3);
+
+      unsigned simdWidth = sel.curr.execWidth;
+      AddressMode AM = insn.getAddressMode();
+      if (addrBytes == 4) {
+        addrQ = sel.selReg(sel.reg(ir::FAMILY_QWORD), ir::TYPE_U64);
+        sel.MOV(addrQ, addr);
+      } else {
+        addrQ = addr;
+      }
+
+      if (simdWidth == 8) {
+        vector<GenRegister> msgs;
+        msgs.push_back(addr);
+        msgs.push_back(src1);
+        msgs.push_back(src2);
+        sel.ATOMICA64(dst, genAtomicOp, msgPayload, msgs, bti, sel.getBTITemps(AM));
+      } else if (simdWidth == 16) {
+        vector<GenRegister> msgs;
+        for (unsigned k = 0; k < msgPayload; k++) {
+          msgs.push_back(sel.selReg(sel.reg(ir::FAMILY_DWORD), ir::TYPE_U32));
+        }
+        sel.push();
+        /* first quarter */
+        sel.curr.execWidth = 8;
+        sel.curr.quarterControl = GEN_COMPRESSION_Q1;
+        sel.MOV(GenRegister::retype(msgs[0], GEN_TYPE_UL), GenRegister::Qn(addrQ, 0));
+        if(msgPayload > 1)
+          sel.MOV(GenRegister::Qn(msgs[1], 0), GenRegister::Qn(src1, 0));
+        if(msgPayload > 2)
+          sel.MOV(GenRegister::Qn(msgs[1], 1), GenRegister::Qn(src2, 0));
+        sel.ATOMICA64(GenRegister::Qn(dst, 0), genAtomicOp, msgPayload, msgs, bti, sel.getBTITemps(AM));
+
+        /* second quarter */
+        sel.curr.execWidth = 8;
+        sel.curr.quarterControl = GEN_COMPRESSION_Q2;
+        sel.MOV(GenRegister::retype(msgs[0], GEN_TYPE_UL), GenRegister::Qn(addrQ, 1));
+        if(msgPayload > 1)
+          sel.MOV(GenRegister::Qn(msgs[1], 0), GenRegister::Qn(src1, 1));
+        if(msgPayload > 2)
+          sel.MOV(GenRegister::Qn(msgs[1], 1), GenRegister::Qn(src2, 1));
+        sel.ATOMICA64(GenRegister::Qn(dst, 1), genAtomicOp, msgPayload, msgs, bti, sel.getBTITemps(AM));
+        sel.pop();
+      }
+    }
+
     INLINE bool emit(Selection::Opaque &sel, SelectionDAG &dag) const {
       using namespace ir;
       const ir::AtomicInstruction &insn = cast<ir::AtomicInstruction>(dag.insn);
 
-      ir::BTI b;
       const AtomicOps atomicOp = insn.getAtomicOpcode();
       unsigned srcNum = insn.getSrcNum();
       unsigned msgPayload;
+      Register reg = insn.getAddressRegister();
+      GenRegister address = sel.selReg(reg, getType(sel.getRegisterFamily(reg)));
+      AddressSpace addrSpace = insn.getAddressSpace();
+      GBE_ASSERT(insn.getAddressSpace() == MEM_GLOBAL ||
+                 insn.getAddressSpace() == MEM_PRIVATE ||
+                 insn.getAddressSpace() == MEM_LOCAL ||
+                 insn.getAddressSpace() == MEM_GENERIC ||
+                 insn.getAddressSpace() == MEM_MIXED);
+      unsigned addrBytes = typeSize(address.type);
 
       AddressMode AM = insn.getAddressMode();
       if (AM == AM_DynamicBti) {
-        b.reg = insn.getBtiReg();
         msgPayload = srcNum - 1;
       } else {
-        b.imm = insn.getSurfaceIndex();
-        b.isConst = 1;
         msgPayload = srcNum;
       }
 
       GenRegister dst  = sel.selReg(insn.getDst(0), TYPE_U32);
-      GenRegister bti =  b.isConst ? GenRegister::immud(b.imm) : sel.selReg(b.reg, ir::TYPE_U32);
       GenRegister src0 = sel.selReg(insn.getAddressRegister(), TYPE_U32);
       GenRegister src1 = src0, src2 = src0;
       if(msgPayload > 1) src1 = sel.selReg(insn.getSrc(1), TYPE_U32);
       if(msgPayload > 2) src2 = sel.selReg(insn.getSrc(2), TYPE_U32);
 
       GenAtomicOpCode genAtomicOp = (GenAtomicOpCode)atomicOp;
-      sel.ATOMIC(dst, genAtomicOp, msgPayload, src0, src1, src2, bti, sel.getBTITemps(AM));
+      if (AM == AM_DynamicBti || AM == AM_StaticBti) {
+        if (AM == AM_DynamicBti) {
+          Register btiReg = insn.getBtiReg();
+          sel.ATOMIC(dst, genAtomicOp, msgPayload, address, src1, src2, sel.selReg(btiReg, TYPE_U32), sel.getBTITemps(AM));
+        } else {
+          unsigned SI = insn.getSurfaceIndex();
+          sel.ATOMIC(dst, genAtomicOp, msgPayload, address, src1, src2, GenRegister::immud(SI), sel.getBTITemps(AM));
+        }
+      } else if (addrSpace == ir::MEM_LOCAL) {
+        // stateless mode, local still use bti access
+        GenRegister addrDW = address;
+        if (addrBytes == 8)
+          addrDW = convertU64ToU32(sel, address);
+        sel.ATOMIC(dst, genAtomicOp, msgPayload, addrDW, src1, src2, GenRegister::immud(0xfe), sel.getBTITemps(AM));
+      }
+      else
+        untypedAtomicA64Stateless(sel, insn, msgPayload, dst, address, src1, src2, GenRegister::immud(0xff));
 
       markAllChildren(dag);
       return true;

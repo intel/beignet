@@ -171,6 +171,8 @@ namespace gbe
     void WAIT(uint32_t n = 0);
     /*! Atomic instructions */
     virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum);
+    /*! AtomicA64 instructions */
+    virtual void ATOMICA64(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum);
     /*! Untyped read (upto 4 channels) */
     virtual void UNTYPED_READ(GenRegister dst, GenRegister src, GenRegister bti, uint32_t elemNum);
     /*! Untyped write (upto 4 channels) */
@@ -253,6 +255,7 @@ namespace gbe
                               unsigned msg_length, unsigned response_length,
                               bool header_present = false, bool end_of_thread = false);
     virtual unsigned setAtomicMessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum);
+    virtual unsigned setAtomicA64MessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum);
     virtual unsigned setUntypedReadMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
     virtual unsigned setUntypedWriteMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
     unsigned setByteGatherMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemSize);

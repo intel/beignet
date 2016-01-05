@@ -1029,6 +1029,17 @@ namespace gbe
 
     p->UNTYPED_WRITEA64(addr, elemNum*2);
   }
+  void Gen8Context::emitAtomicA64Instruction(const SelectionInstruction &insn)
+  {
+    const GenRegister src = ra->genReg(insn.src(0));
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    const uint32_t function = insn.extra.function;
+    unsigned srcNum = insn.extra.elem;
+    const GenRegister bti = ra->genReg(insn.src(srcNum));
+    GBE_ASSERT(bti.value.ud == 0xff);
+    p->ATOMICA64(dst, function, src, bti, srcNum);
+  }
+
   void Gen8Context::emitPackLongInstruction(const SelectionInstruction &insn) {
     const GenRegister src = ra->genReg(insn.src(0));
     const GenRegister dst = ra->genReg(insn.dst(0));

@@ -169,6 +169,44 @@ namespace gbe
       this->setSrc1(insn, bti);
     }
   }
+
+  unsigned Gen8Encoder::setAtomicA64MessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum) {
+    Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
+    uint32_t msg_length = 0;
+    uint32_t response_length = 0;
+
+    if (this->curr.execWidth == 8) {
+      msg_length = srcNum + 1;
+      response_length = 1;
+    } else if (this->curr.execWidth == 16) {
+      msg_length = 2 * (srcNum + 1);
+      response_length = 2;
+    } else
+      NOT_IMPLEMENTED;
+
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA;
+    setMessageDescriptor(insn, sfid, msg_length, response_length);
+    gen8_insn->bits3.gen8_atomic_a64.msg_type = GEN8_P1_UNTYPED_ATOMIC_A64;
+    gen8_insn->bits3.gen8_atomic_a64.bti = bti;
+    gen8_insn->bits3.gen8_atomic_a64.return_data = 1;
+    gen8_insn->bits3.gen8_atomic_a64.aop_type = function;
+    gen8_insn->bits3.gen8_atomic_a64.data_size = 0;
+
+    return gen8_insn->bits3.ud;
+  }
+
+  void Gen8Encoder::ATOMICA64(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum) {
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+
+    this->setHeader(insn);
+    insn->header.destreg_or_condmod = GEN_SFID_DATAPORT_DATA;
+
+    this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
+    this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
+    this->setSrc1(insn, GenRegister::immud(0));
+    setAtomicA64MessageDesc(insn, function, bti.value.ud, srcNum);
+  }
+
   unsigned Gen8Encoder::setUntypedReadMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum) {
     uint32_t msg_length = 0;
     uint32_t response_length = 0;

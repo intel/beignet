@@ -2252,6 +2252,9 @@ namespace gbe
   void GenContext::emitWrite64A64Instruction(const SelectionInstruction &insn) {
     assert(0);
   }
+  void GenContext::emitAtomicA64Instruction(const SelectionInstruction &insn) {
+    assert(0);
+  }
 
   void GenContext::emitUnpackByteInstruction(const SelectionInstruction &insn) {
     const GenRegister src = ra->genReg(insn.src(0));

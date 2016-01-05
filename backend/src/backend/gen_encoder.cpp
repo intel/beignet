@@ -419,6 +419,10 @@ namespace gbe
     assert(0);
   }
 
+  void GenEncoder::ATOMICA64(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum) {
+    assert(0);
+  }
+
   void GenEncoder::UNTYPED_WRITE(GenRegister msg, GenRegister bti, uint32_t elemNum) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     assert(elemNum >= 1 || elemNum <= 4);
@@ -603,6 +607,10 @@ namespace gbe
     else
       NOT_SUPPORTED;
     return insn->bits3.ud;
+  }
+  unsigned GenEncoder::setAtomicA64MessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum) {
+    GBE_ASSERT(0);
+    return 0;
   }
 
   void GenEncoder::ATOMIC(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum) {
