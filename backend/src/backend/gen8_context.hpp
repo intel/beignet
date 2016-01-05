@@ -74,6 +74,7 @@ namespace gbe
     virtual void emitRead64Instruction(const SelectionInstruction &insn);
     virtual void emitWrite64A64Instruction(const SelectionInstruction &insn);
     virtual void emitRead64A64Instruction(const SelectionInstruction &insn);
+    virtual void emitAtomicA64Instruction(const SelectionInstruction &insn);
     virtual void emitI64MULInstruction(const SelectionInstruction &insn);
     virtual void emitI64DIVREMInstruction(const SelectionInstruction &insn);
 

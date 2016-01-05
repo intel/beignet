@@ -359,6 +359,7 @@ enum GenMessageTarget {
 
 #define GEN8_P1_BYTE_GATHER_A64       16 //10000
 #define GEN8_P1_UNTYPED_READ_A64      17 //10001
+#define GEN8_P1_UNTYPED_ATOMIC_A64    18 //10010
 #define GEN8_P1_UNTYPED_WRITE_A64     25 //11001
 #define GEN8_P1_BYTE_SCATTER_A64      26 //11010
 
