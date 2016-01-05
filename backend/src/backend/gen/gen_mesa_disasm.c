@@ -472,6 +472,24 @@ static const char *data_port1_data_cache_msg_type[] = {
   [13] = "Typed Surface Write",
 };
 
+static const char *atomic_opration_type[] = {
+  [1] = "and",
+  [2] = "or",
+  [3] = "xor",
+  [4] = "xchg",
+  [5] = "inc",
+  [6] = "dec",
+  [7] = "add",
+  [8] = "sub",
+  [9] = "rsub",
+  [10] = "imax",
+  [11] = "imin",
+  [12] = "umax",
+  [13] = "umin",
+  [14] = "cmpxchg",
+  [15] = "invalid"
+};
+
 static int column;
 
 static int gen_version;
@@ -539,6 +557,7 @@ static int gen_version;
 #define UNTYPED_RW_SIMD_MODE(inst) GEN_BITS_FIELD(inst, bits3.gen7_untyped_rw.simd_mode)
 #define UNTYPED_RW_CATEGORY(inst)  GEN_BITS_FIELD(inst, bits3.gen7_untyped_rw.category)
 #define UNTYPED_RW_MSG_TYPE(inst)  GEN_BITS_FIELD(inst, bits3.gen7_untyped_rw.msg_type)
+#define UNTYPED_RW_AOP_TYPE(inst)  GEN_BITS_FIELD(inst, bits3.gen7_atomic_op.aop_type)
 #define SCRATCH_RW_OFFSET(inst)    GEN_BITS_FIELD(inst, bits3.gen7_scratch_rw.offset)
 #define SCRATCH_RW_BLOCK_SIZE(inst) GEN_BITS_FIELD(inst, bits3.gen7_scratch_rw.block_size)
 #define SCRATCH_RW_INVALIDATE_AFTER_READ(inst) GEN_BITS_FIELD(inst, bits3.gen7_scratch_rw.invalidate_after_read)
@@ -1440,12 +1459,21 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
           break;
         case GEN_SFID_DATAPORT_DATA:
           if(UNTYPED_RW_CATEGORY(inst) == 0) {
-            format(file, " (bti: %d, rgba: %d, %s, %s, %s)",
-                   UNTYPED_RW_BTI(inst),
-                   UNTYPED_RW_RGBA(inst),
-                   data_port_data_cache_simd_mode[UNTYPED_RW_SIMD_MODE(inst)],
-                   data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
-                   data_port_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
+            if(UNTYPED_RW_MSG_TYPE(inst) == 6)
+              format(file, " (bti: %d, rgba: %d, %s, %s, %s, %s)",
+                  UNTYPED_RW_BTI(inst),
+                  UNTYPED_RW_RGBA(inst),
+                  data_port_data_cache_simd_mode[UNTYPED_RW_SIMD_MODE(inst)],
+                  data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
+                  data_port_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)],
+                  atomic_opration_type[UNTYPED_RW_AOP_TYPE(inst)]);
+            else
+              format(file, " (bti: %d, rgba: %d, %s, %s, %s)",
+                  UNTYPED_RW_BTI(inst),
+                  UNTYPED_RW_RGBA(inst),
+                  data_port_data_cache_simd_mode[UNTYPED_RW_SIMD_MODE(inst)],
+                  data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
+                  data_port_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
           } else {
             format(file, " (addr: %d, blocks: %s, %s, mode: %s, %s)",
                    SCRATCH_RW_OFFSET(inst),
@@ -1456,12 +1484,21 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
           }
           break;
         case GEN_SFID_DATAPORT1_DATA:
-          format(file, " (bti: %d, rgba: %d, %s, %s, %s)",
-                 UNTYPED_RW_BTI(inst),
-                 UNTYPED_RW_RGBA(inst),
-                 data_port_data_cache_simd_mode[UNTYPED_RW_SIMD_MODE(inst)],
-                 data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
-                 data_port1_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
+          if(UNTYPED_RW_MSG_TYPE(inst) == 2)
+              format(file, " (bti: %d, rgba: %d, %s, %s, %s, %s)",
+                  UNTYPED_RW_BTI(inst),
+                  UNTYPED_RW_RGBA(inst),
+                  data_port_data_cache_simd_mode[UNTYPED_RW_SIMD_MODE(inst)],
+                  data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
+                  data_port1_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)],
+                  atomic_opration_type[UNTYPED_RW_AOP_TYPE(inst)]);
+            else
+              format(file, " (bti: %d, rgba: %d, %s, %s, %s)",
+                  UNTYPED_RW_BTI(inst),
+                  UNTYPED_RW_RGBA(inst),
+                  data_port_data_cache_simd_mode[UNTYPED_RW_SIMD_MODE(inst)],
+                  data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
+                  data_port1_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
           break;
         case GEN_SFID_DATAPORT_CONSTANT:
           format(file, " (bti: %d, %s)",
