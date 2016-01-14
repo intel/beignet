@@ -2349,7 +2349,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     this->opaque->setHasLongType(true);
     this->opaque->setHasDoubleType(true);
     this->opaque->setLongRegRestrict(true);
-    this->opaque->setSlowByteGather(true);
+    this->opaque->setSlowByteGather(false);
     this->opaque->setHasHalfType(true);
     opt_features = SIOF_LOGICAL_SRCMOD | SIOF_OP_MOV_LONG_REG_RESTRICT;
   }
