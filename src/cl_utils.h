@@ -41,9 +41,11 @@ enum DEBUGP_LEVEL
   #define DEBUGP(...)
 #else
   //TODO: decide print or not with the value of level from environment
-  #define DEBUGP(level, fmt, ...)        \
-  fprintf(stderr, "Beignet: "#fmt, ##__VA_ARGS__);  \
-  fprintf(stderr, "\n");
+  #define DEBUGP(level, fmt, ...)                       \
+  do {                                                  \
+    fprintf(stderr, "Beignet: "#fmt, ##__VA_ARGS__);    \
+    fprintf(stderr, "\n");                              \
+  } while (0)
 #endif
 
 /* Check compile time errors */
