@@ -295,6 +295,24 @@ namespace gbe {
       OUT_UPDATE_SZ(arg.size);
       OUT_UPDATE_SZ(arg.align);
       OUT_UPDATE_SZ(arg.bti);
+
+      OUT_UPDATE_SZ(arg.info.addrSpace);
+
+      OUT_UPDATE_SZ(arg.info.typeName.size());
+      outs.write(arg.info.typeName.c_str(), arg.info.typeName.size());
+      ret_size += sizeof(char)*arg.info.typeName.size();
+
+      OUT_UPDATE_SZ(arg.info.accessQual.size());
+      outs.write(arg.info.accessQual.c_str(), arg.info.accessQual.size());
+      ret_size += sizeof(char)*arg.info.accessQual.size();
+
+      OUT_UPDATE_SZ(arg.info.typeQual.size());
+      outs.write(arg.info.typeQual.c_str(), arg.info.typeQual.size());
+      ret_size += sizeof(char)*arg.info.typeQual.size();
+
+      OUT_UPDATE_SZ(arg.info.argName.size());
+      outs.write(arg.info.argName.c_str(), arg.info.argName.size());
+      ret_size += sizeof(char)*arg.info.argName.size();
     }
 
     OUT_UPDATE_SZ(patches.size());
@@ -385,6 +403,43 @@ namespace gbe {
       IN_UPDATE_SZ(arg.size);
       IN_UPDATE_SZ(arg.align);
       IN_UPDATE_SZ(arg.bti);
+
+      IN_UPDATE_SZ(arg.info.addrSpace);
+
+      size_t len;
+      char* a_name = NULL;
+
+      IN_UPDATE_SZ(len);
+      a_name = new char[len+1];
+      ins.read(a_name, len*sizeof(char));
+      total_size += sizeof(char)*len;
+      a_name[len] = 0;
+      arg.info.typeName = a_name;
+      delete[] a_name;
+
+      IN_UPDATE_SZ(len);
+      a_name = new char[len+1];
+      ins.read(a_name, len*sizeof(char));
+      total_size += sizeof(char)*len;
+      a_name[len] = 0;
+      arg.info.accessQual = a_name;
+      delete[] a_name;
+
+      IN_UPDATE_SZ(len);
+      a_name = new char[len+1];
+      ins.read(a_name, len*sizeof(char));
+      total_size += sizeof(char)*len;
+      a_name[len] = 0;
+      arg.info.typeQual = a_name;
+      delete[] a_name;
+
+      IN_UPDATE_SZ(len);
+      a_name = new char[len+1];
+      ins.read(a_name, len*sizeof(char));
+      total_size += sizeof(char)*len;
+      a_name[len] = 0;
+      arg.info.argName = a_name;
+      delete[] a_name;
     }
 
     IN_UPDATE_SZ(patch_num);
