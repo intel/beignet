@@ -452,7 +452,11 @@ namespace gbe
       const auto &arg = fn.getArg(argID);
 
       kernel->args[argID].align = arg.align;
-      kernel->args[argID].info = arg.info;
+      kernel->args[argID].info.addrSpace = arg.info.addrSpace;
+      kernel->args[argID].info.typeName = arg.info.typeName;
+      kernel->args[argID].info.accessQual = arg.info.accessQual;
+      kernel->args[argID].info.typeQual = arg.info.typeQual;
+      kernel->args[argID].info.argName = arg.info.argName;
       switch (arg.type) {
         case ir::FunctionArgument::VALUE:
         case ir::FunctionArgument::STRUCTURE:
