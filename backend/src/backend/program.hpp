@@ -49,7 +49,16 @@ namespace gbe {
     uint32_t size;     //!< Size of the argument
     uint32_t align;    //!< addr alignment of the argument
     uint8_t bti;      //!< binding table index for __global buffer
-    ir::FunctionArgument::InfoFromLLVM info;
+
+    // Strings for arg info.
+    struct ArgInfo {
+      uint32_t addrSpace;
+      std::string typeName;
+      std::string accessQual;
+      std::string typeQual;
+      std::string argName;
+    };
+    ArgInfo info;
   };
 
   /*! Stores the offset where to patch where to patch */
@@ -182,7 +191,7 @@ namespace gbe {
         profilingInfo->outputProfilingInfo(buf);
     }
 
-    ir::FunctionArgument::InfoFromLLVM* getArgInfo(uint32_t id) const { return &args[id].info; }
+    KernelArgument::ArgInfo* getArgInfo(uint32_t id) const { return &args[id].info; }
 
     /*! Set compile work group size */
     void setCompileWorkGroupSize(const size_t wg_sz[3]) {

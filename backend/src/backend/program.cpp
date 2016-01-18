@@ -1080,7 +1080,7 @@ namespace gbe {
   static void *kernelGetArgInfo(gbe_kernel genKernel, uint32_t argID, uint32_t value) {
     if (genKernel == NULL) return NULL;
     const gbe::Kernel *kernel = (const gbe::Kernel*) genKernel;
-    ir::FunctionArgument::InfoFromLLVM* info = kernel->getArgInfo(argID);
+    KernelArgument::ArgInfo* info = kernel->getArgInfo(argID);
 
     switch (value) {
       case GBE_GET_ARG_INFO_ADDRSPACE:
