@@ -504,7 +504,7 @@ namespace gbe
 
     virtual bool doInitialization(Module &M);
     /*! helper function for parsing global constant data */
-    void getConstantData(const Constant * c, void* mem, uint32_t& offset) const;
+    void getConstantData(const Constant * c, void* mem, uint32_t& offset, vector<ir::RelocEntry> &) const;
     void collectGlobalConstant(void) const;
     ir::ImmediateIndex processConstantImmIndex(Constant *CPV, int32_t index = 0u);
     const ir::Immediate &processConstantImm(Constant *CPV, int32_t index = 0u);
@@ -1109,8 +1109,9 @@ namespace gbe
           break;
         }
         case 2:
-          new_bti = BTI_CONSTANT;
-
+          // ocl 2.0, constant pointer use separate bti
+          new_bti = btiBase;
+          incBtiBase();
           break;
         case 3:
           new_bti = BTI_LOCAL;
@@ -1347,22 +1348,34 @@ namespace gbe
     return;
   }
 
-  void GenWriter::getConstantData(const Constant * c, void* mem, uint32_t& offset) const {
+  void GenWriter::getConstantData(const Constant * c, void* mem, uint32_t& offset, vector<ir::RelocEntry> &relocs) const {
     Type * type = c->getType();
     Type::TypeID id = type->getTypeID();
 
     GBE_ASSERT(c);
-    if(isa<UndefValue>(c)) {
-      uint32_t size = getTypeByteSize(unit, type);
-      offset += size;
-      return;
-    } else if(isa<ConstantAggregateZero>(c)) {
+    if (isa<GlobalVariable>(c)) {
+      const GlobalVariable *GV = cast<GlobalVariable>(c);
+
+      unsigned valueAddrSpace = GV->getType()->getAddressSpace();
+      ir::Constant cc = unit.getConstantSet().getConstant(c->getName());
+      unsigned int defOffset = cc.getOffset();
+
+      relocs.push_back(ir::RelocEntry(offset, defOffset));
       uint32_t size = getTypeByteSize(unit, type);
       memset((char*)mem+offset, 0, size);
       offset += size;
       return;
     }
-
+    if(isa<UndefValue>(c)) {
+      uint32_t size = getTypeByteSize(unit, type);
+      offset += size;
+      return;
+    } else if(isa<ConstantAggregateZero>(c) || isa<ConstantPointerNull>(c)) {
+      uint32_t size = getTypeByteSize(unit, type);
+      memset((char*)mem+offset, 0, size);
+      offset += size;
+      return;
+    }
     switch(id) {
       case Type::TypeID::StructTyID:
         {
@@ -1380,7 +1393,7 @@ namespace gbe
             offset += padding/8;
             const Constant* sub = cast<Constant>(c->getOperand(op));
             GBE_ASSERT(sub);
-            getConstantData(sub, mem, offset);
+            getConstantData(sub, mem, offset, relocs);
           }
           break;
         }
@@ -1399,7 +1412,7 @@ namespace gbe
             uint32_t ops = c->getNumOperands();
             for(uint32_t op = 0; op < ops; ++op) {
               Constant * ca = dyn_cast<Constant>(c->getOperand(op));
-              getConstantData(ca, mem, offset);
+              getConstantData(ca, mem, offset, relocs);
               offset += padding;
             }
           }
@@ -1447,21 +1460,34 @@ namespace gbe
     const Module::GlobalListType &globalList = TheModule->getGlobalList();
     for(auto i = globalList.begin(); i != globalList.end(); i ++) {
       const GlobalVariable &v = *i;
-      if(!v.isConstantUsed()) continue;
       const char *name = v.getName().data();
       unsigned addrSpace = v.getType()->getAddressSpace();
-      if(addrSpace == ir::AddressSpace::MEM_CONSTANT || v.isConstant()) {
-        GBE_ASSERT(v.hasInitializer());
-        const Constant *c = v.getInitializer();
-        Type * type = c->getType();
+
+      vector<ir::RelocEntry> relocs;
+      if(addrSpace == 2 /* __constant */
+          || addrSpace == 1
+          || addrSpace == 0) {
+        Type * type = v.getValueType();
 
         uint32_t size = getTypeByteSize(unit, type);
         void* mem = malloc(size);
         uint32_t offset = 0;
-        getConstantData(c, mem, offset);
+        if (v.hasInitializer()) {
+          const Constant *c = v.getInitializer();
+          getConstantData(c, mem, offset, relocs);
+        } else {
+          memset(mem, 0, size);
+        }
         uint32_t alignment = getAlignmentByte(unit, type);
         unit.newConstant((char *)mem, name, size, alignment);
         free(mem);
+        uint32_t refOffset = unit.getConstantSet().getConstant(name).getOffset();
+        for (uint32_t k = 0; k < relocs.size(); k++) {
+          unit.getRelocTable().addEntry(
+                               refOffset + relocs[k].refOffset,
+                               relocs[k].defOffset
+                               );
+        }
       }
     }
   }
@@ -2560,33 +2586,23 @@ namespace gbe
         this->newRegister(const_cast<GlobalVariable*>(&v));
         ir::Register reg = regTranslator.getScalar(const_cast<GlobalVariable*>(&v), 0);
         ctx.LOADI(getType(ctx, v.getType()), reg, ctx.newIntegerImmediate(oldSlm + padding/8, getType(ctx, v.getType())));
-      } else if(addrSpace == ir::MEM_CONSTANT || v.isConstant()) {
-        GBE_ASSERT(v.hasInitializer());
-        this->newRegister(const_cast<GlobalVariable*>(&v));
-        ir::Register reg = regTranslator.getScalar(const_cast<GlobalVariable*>(&v), 0);
-        ir::Constant &con = unit.getConstantSet().getConstant(v.getName());
-        ctx.LOADI(getType(ctx, v.getType()), reg, ctx.newIntegerImmediate(con.getOffset(), getType(ctx, v.getType())));
-      } else {
+      } else if(addrSpace == ir::MEM_CONSTANT
+             || addrSpace == ir::MEM_GLOBAL
+             || v.isConstant()) {
         if(v.getName().equals(StringRef("__gen_ocl_printf_buf"))) {
           ctx.getFunction().getPrintfSet()->setBufBTI(BtiMap.find(const_cast<GlobalVariable*>(&v))->second);
           regTranslator.newScalarProxy(ir::ocl::printfbptr, const_cast<GlobalVariable*>(&v));
         } else if(v.getName().equals(StringRef("__gen_ocl_printf_index_buf"))) {
           ctx.getFunction().getPrintfSet()->setIndexBufBTI(BtiMap.find(const_cast<GlobalVariable*>(&v))->second);
           regTranslator.newScalarProxy(ir::ocl::printfiptr, const_cast<GlobalVariable*>(&v));
-        } else if(v.getName().str().substr(0, 4) == ".str") {
-          /* When there are multi printf statements in multi kernel fucntions within the same
-             translate unit, if they have the same sting parameter, such as
-             kernel_func1 () {
-               printf("Line is %d\n", line_num1);
-             }
-             kernel_func2 () {
-               printf("Line is %d\n", line_num2);
-             }
-             The Clang will just generate one global string named .strXXX to represent "Line is %d\n"
-             So when translating the kernel_func1, we can not unref that global var, so we will
-             get here. Just ignore it to avoid assert. */
         } else {
-          GBE_ASSERT(0 && "Unsupported private memory access pattern");
+          this->newRegister(const_cast<GlobalVariable*>(&v));
+          ir::Register reg = regTranslator.getScalar(const_cast<GlobalVariable*>(&v), 0);
+          ir::Constant &con = unit.getConstantSet().getConstant(v.getName());
+          ctx.LOADI(getType(ctx, v.getType()), reg, ctx.newIntegerImmediate(con.getOffset(), getType(ctx, v.getType())));
+          if (!legacyMode) {
+            ctx.ADD(getType(ctx, v.getType()), reg, ir::ocl::constant_addrspace, reg);
+          }
         }
       }
     }

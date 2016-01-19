@@ -3647,6 +3647,13 @@ namespace gbe
     LoadInstructionPattern(void) : SelectionPattern(1, 1) {
        this->opcodes.push_back(ir::OP_LOAD);
     }
+    bool isReadConstantLegacy(const ir::LoadInstruction &load) const {
+      ir::AddressMode AM = load.getAddressMode();
+      ir::AddressSpace AS = load.getAddressSpace();
+      if (AM != ir::AM_Stateless && AS == ir::MEM_CONSTANT)
+        return true;
+      return false;
+    }
     void untypedReadStateless(Selection::Opaque &sel,
                               GenRegister addr,
                               vector<GenRegister> &dst
@@ -3729,7 +3736,7 @@ namespace gbe
             unsigned SI = insn.getSurfaceIndex();
             sel.UNTYPED_READ(addr, dst.data(), valueNum, GenRegister::immud(SI), btiTemp);
           }
-        } else if (addrSpace == ir::MEM_LOCAL || addrSpace == ir::MEM_CONSTANT ) {
+        } else if (addrSpace == ir::MEM_LOCAL || isReadConstantLegacy(insn) ) {
           // stateless mode, local/constant still use bti access
           unsigned bti = addrSpace == ir::MEM_CONSTANT ? BTI_CONSTANT : 0xfe;
           GenRegister addrDW = addr;
@@ -3893,7 +3900,7 @@ namespace gbe
             b = GenRegister::immud(insn.getSurfaceIndex());
           }
           read64Legacy(sel, addr, dst, b, btiTemp);
-        } else if (addrSpace == MEM_LOCAL || addrSpace == MEM_CONSTANT) {
+        } else if (addrSpace == MEM_LOCAL || isReadConstantLegacy(insn)) {
           GenRegister b = GenRegister::immud(addrSpace == MEM_LOCAL? 0xfe : BTI_CONSTANT);
           GenRegister addrDW = addr;
           if (addrBytes == 8)
@@ -4114,7 +4121,7 @@ namespace gbe
           unsigned SI = insn.getSurfaceIndex();
           sel.BYTE_GATHER(dst, addr, elemSize, GenRegister::immud(SI), btiTemp);
         }
-      } else if (addrSpace == ir::MEM_LOCAL || addrSpace == ir::MEM_CONSTANT) {
+      } else if (addrSpace == ir::MEM_LOCAL || isReadConstantLegacy(insn)) {
         unsigned bti = addrSpace == ir::MEM_CONSTANT ? BTI_CONSTANT : 0xfe;
         GenRegister addrDW = addr;
         if (addrBytes == 8) {
@@ -4258,7 +4265,7 @@ namespace gbe
       const Type type = insn.getValueType();
       const uint32_t elemSize = getByteScatterGatherSize(sel, type);
 
-      if (addrSpace == MEM_CONSTANT) {
+      if (isReadConstantLegacy(insn)) {
         // XXX TODO read 64bit constant through constant cache
         // Per HW Spec, constant cache messages can read at least DWORD data.
         // So, byte/short data type, we have to read through data cache.

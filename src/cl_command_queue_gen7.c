@@ -29,6 +29,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #define MAX_GROUP_SIZE_IN_HALFSLICE   512
 static INLINE size_t cl_kernel_compute_batch_sz(cl_kernel k) { return 256+256; }
@@ -127,6 +128,11 @@ cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
    * we need raw_size & aligned_size
    */
   GET_QUEUE_THREAD_GPGPU(queue);
+  // TODO this is only valid for OpenCL 1.2,
+  // under ocl1.2 we gather all constant into one dedicated surface.
+  // but in 2.0 we put program global into one surface, but constants
+  // pass through kernel argument in each separate buffer
+#if 0
   int32_t arg;
   size_t offset = 0;
   uint32_t raw_size = 0, aligned_size =0;
@@ -195,6 +201,16 @@ cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
     }
   }
   cl_buffer_unmap(bo);
+#endif
+  // pass the starting of constant address space
+  int32_t constant_addrspace = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_CONSTANT_ADDRSPACE, 0);
+  if (constant_addrspace >= 0) {
+    size_t global_const_size = interp_program_get_global_constant_size(ker->program->opaque);
+    if (global_const_size > 0) {
+      *(uint64_t*)(ker->curbe + constant_addrspace) = (uint64_t)ker->program->global_data_ptr;
+      cl_gpgpu_bind_buf(gpgpu, ker->program->global_data, constant_addrspace, 0, ALIGN(global_const_size, getpagesize()), BTI_CONSTANT);
+    }
+  }
   return 0;
 }
 

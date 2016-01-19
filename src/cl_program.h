@@ -54,6 +54,8 @@ struct _cl_program {
   cl_kernel *ker;         /* All kernels included by the OCL file */
   cl_program prev, next;  /* We chain the programs together */
   cl_context ctx;         /* Its parent context */
+  cl_buffer  global_data;
+  char * global_data_ptr;
   char *bin;              /* The program copied verbatim */
   size_t bin_sz;          /* Its size in memory */
   char *source;           /* Program sources */

@@ -61,6 +61,8 @@ struct BinInterpCallBackInitializer
     gbe_program_get_global_constant_size = gbe::programGetGlobalConstantSize;
     gbe_program_delete = gbe::programDelete;
     gbe_program_get_global_constant_data = gbe::programGetGlobalConstantData;
+    gbe_program_get_global_reloc_count = gbe::programGetGlobalRelocCount;
+    gbe_program_get_global_reloc_table = gbe::programGetGlobalRelocTable;
     gbe_kernel_get_sampler_data = gbe::kernelGetSamplerData;
     gbe_kernel_get_image_data = gbe::kernelGetImageData;
     gbe_kernel_get_arg_info = gbe::kernelGetArgInfo;

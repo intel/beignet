@@ -192,6 +192,7 @@ set (utests_sources
   compiler_bool_cross_basic_block.cpp
   compiler_private_const.cpp
   compiler_private_data_overflow.cpp
+  compiler_program_global.cpp
   compiler_getelementptr_bitcast.cpp
   compiler_sub_group_any.cpp
   compiler_sub_group_all.cpp

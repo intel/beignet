@@ -44,7 +44,8 @@ namespace ir {
         "retVal",
         "printf_buffer_pointer", "printf_index_buffer_pointer",
         "dwblockip",
-        "threadid"
+        "threadid",
+        "constant_addrspace_start"
     };
 
 #if GBE_DEBUG
@@ -88,6 +89,7 @@ namespace ir {
       DECL_NEW_REG(FAMILY_QWORD, printfiptr, 1, GBE_CURBE_PRINTF_INDEX_POINTER);
       DECL_NEW_REG(FAMILY_DWORD, dwblockip, 0, GBE_CURBE_DW_BLOCK_IP);
       DECL_NEW_REG(FAMILY_DWORD, threadid, 1, GBE_CURBE_THREAD_ID);
+      DECL_NEW_REG(FAMILY_QWORD, constant_addrspace, 1, GBE_CURBE_CONSTANT_ADDRSPACE);
     }
 #undef DECL_NEW_REG
 

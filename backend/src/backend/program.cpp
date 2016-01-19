@@ -104,11 +104,13 @@ namespace gbe {
     return it->offset; // we found it!
   }
 
-  Program::Program(void) : constantSet(NULL) {}
+  Program::Program(void) : constantSet(NULL),
+                           relocTable(NULL) {}
   Program::~Program(void) {
     for (map<std::string, Kernel*>::iterator it = kernels.begin(); it != kernels.end(); ++it)
       GBE_DELETE(it->second);
     if (constantSet) delete constantSet;
+    if (relocTable) delete relocTable;
   }
 
 #ifdef GBE_COMPILER_AVAILABLE
@@ -155,6 +157,7 @@ namespace gbe {
 
   bool Program::buildFromUnit(const ir::Unit &unit, std::string &error) {
     constantSet = new ir::ConstantSet(unit.getConstantSet());
+    relocTable = new ir::RelocTable(unit.getRelocTable());
     const auto &set = unit.getFunctionSet();
     const uint32_t kernelNum = set.size();
     if (OCL_OUTPUT_GEN_IR) std::cout << unit;
@@ -982,6 +985,18 @@ namespace gbe {
     program->getGlobalConstantData(mem);
   }
 
+  static size_t programGetGlobalRelocCount(gbe_program gbeProgram) {
+    if (gbeProgram == NULL) return 0;
+    const gbe::Program *program = (const gbe::Program*) gbeProgram;
+    return program->getGlobalRelocCount();
+  }
+
+  static void programGetGlobalRelocTable(gbe_program gbeProgram, char *mem) {
+    if (gbeProgram == NULL) return;
+    const gbe::Program *program = (const gbe::Program*) gbeProgram;
+    program->getGlobalRelocTable(mem);
+  }
+
   static uint32_t programGetKernelNum(gbe_program gbeProgram) {
     if (gbeProgram == NULL) return 0;
     const gbe::Program *program = (const gbe::Program*) gbeProgram;
@@ -1224,6 +1239,8 @@ GBE_EXPORT_SYMBOL gbe_program_link_from_llvm_cb *gbe_program_link_from_llvm = NU
 GBE_EXPORT_SYMBOL gbe_program_build_from_llvm_cb *gbe_program_build_from_llvm = NULL;
 GBE_EXPORT_SYMBOL gbe_program_get_global_constant_size_cb *gbe_program_get_global_constant_size = NULL;
 GBE_EXPORT_SYMBOL gbe_program_get_global_constant_data_cb *gbe_program_get_global_constant_data = NULL;
+GBE_EXPORT_SYMBOL gbe_program_get_global_reloc_count_cb *gbe_program_get_global_reloc_count = NULL;
+GBE_EXPORT_SYMBOL gbe_program_get_global_reloc_table_cb *gbe_program_get_global_reloc_table = NULL;
 GBE_EXPORT_SYMBOL gbe_program_clean_llvm_resource_cb *gbe_program_clean_llvm_resource = NULL;
 GBE_EXPORT_SYMBOL gbe_program_delete_cb *gbe_program_delete = NULL;
 GBE_EXPORT_SYMBOL gbe_program_get_kernel_num_cb *gbe_program_get_kernel_num = NULL;
@@ -1273,6 +1290,8 @@ namespace gbe
       gbe_program_check_opt = gbe::programCheckOption;
       gbe_program_get_global_constant_size = gbe::programGetGlobalConstantSize;
       gbe_program_get_global_constant_data = gbe::programGetGlobalConstantData;
+      gbe_program_get_global_reloc_count = gbe::programGetGlobalRelocCount;
+      gbe_program_get_global_reloc_table = gbe::programGetGlobalRelocTable;
       gbe_program_clean_llvm_resource = gbe::programCleanLlvmResource;
       gbe_program_delete = gbe::programDelete;
       gbe_program_get_kernel_num = gbe::programGetKernelNum;

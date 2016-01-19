@@ -27,6 +27,7 @@
 #include "ir/constant.hpp"
 #include "ir/register.hpp"
 #include "sys/map.hpp"
+#include <string.h>
 
 namespace gbe {
 namespace ir {
@@ -37,6 +38,52 @@ namespace ir {
   /*! Complete unit of compilation. It contains a set of functions and a set of
    *  constant the functions may refer to.
    */
+  struct RelocEntry {
+    RelocEntry(unsigned int rO, unsigned int dO):
+      refOffset(rO),
+      defOffset(dO) {}
+
+    unsigned int refOffset;
+    unsigned int defOffset;
+  };
+
+  class RelocTable : public NonCopyable, public Serializable
+  {
+    public:
+      void addEntry(unsigned refOffset, unsigned defOffset) {
+        entries.push_back(RelocEntry(refOffset, defOffset));
+      }
+      RelocTable() {}
+      RelocTable(const RelocTable& other) : Serializable(other),
+                                            entries(other.entries) {}
+      uint32_t getCount() { return entries.size(); }
+      void getData(char *p) {
+        if (entries.size() > 1 && p)
+          memcpy(p, entries.data(), entries.size()*sizeof(RelocEntry));
+      }
+    static const uint32_t magic_begin = TO_MAGIC('R', 'E', 'L', 'C');
+    static const uint32_t magic_end = TO_MAGIC('C', 'L', 'E', 'R');
+
+    /* format:
+       magic_begin     |
+       const_data_size |
+       const_data      |
+       constant_1_size |
+       constant_1      |
+       ........        |
+       constant_n_size |
+       constant_n      |
+       magic_end       |
+       total_size
+    */
+
+    /*! Implements the serialization. */
+    virtual size_t serializeToBin(std::ostream& outs) { return 0;}
+    virtual size_t deserializeFromBin(std::istream& ins) { return 0; }
+    private:
+      vector<RelocEntry> entries;
+      GBE_CLASS(RelocTable);
+  };
   class Unit : public NonCopyable
   {
   public:
@@ -70,6 +117,8 @@ namespace ir {
     }
     /*! Return the constant set */
     ConstantSet& getConstantSet(void) { return constantSet; }
+    const RelocTable& getRelocTable(void) const  { return relocTable; }
+    RelocTable& getRelocTable(void)   { return relocTable; }
     /*! Return the constant set */
     const ConstantSet& getConstantSet(void) const { return constantSet; }
     void setValid(bool value) { valid = value; }
@@ -78,6 +127,7 @@ namespace ir {
     friend class ContextInterface; //!< Can free modify the unit
     FunctionSet functions; //!< All the defined functions
     ConstantSet constantSet; //!< All the constants defined in the unit
+    RelocTable relocTable;
     PointerSize pointerSize; //!< Size shared by all pointers
     GBE_CLASS(Unit);
     bool valid;

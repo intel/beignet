@@ -280,6 +280,8 @@ namespace gbe {
     /*! Get the content of global constant arrays */
     void getGlobalConstantData(char *mem) const { constantSet->getData(mem); }
 
+    uint32_t getGlobalRelocCount(void) const { return relocTable->getCount(); }
+    void getGlobalRelocTable(char *p) const { relocTable->getData(p); }
     static const uint32_t magic_begin = TO_MAGIC('P', 'R', 'O', 'G');
     static const uint32_t magic_end = TO_MAGIC('G', 'O', 'R', 'P');
 
@@ -309,6 +311,8 @@ namespace gbe {
     map<std::string, Kernel*> kernels;
     /*! Global (constants) outside any kernel */
     ir::ConstantSet *constantSet;
+    /*! relocation table */
+    ir::RelocTable *relocTable;
     /*! Use custom allocators */
     GBE_CLASS(Program);
   };
