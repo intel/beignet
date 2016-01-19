@@ -56,10 +56,8 @@ OVERLOADABLE TYPE##3 vload3(size_t offset, const SPACE TYPE *p);
   DECL_UNTYPED_RD_SPACE_N(TYPE, 16, SPACE)
 
 #define DECL_UNTYPED_RW_ALL(TYPE) \
-  DECL_UNTYPED_RW_ALL_SPACE(TYPE, __global) \
-  DECL_UNTYPED_RW_ALL_SPACE(TYPE, __local) \
   DECL_UNTYPED_RD_ALL_SPACE(TYPE, __constant) \
-  DECL_UNTYPED_RW_ALL_SPACE(TYPE, __private)
+  DECL_UNTYPED_RW_ALL_SPACE(TYPE, __generic)
 
 #define DECL_BYTE_RD_SPACE(TYPE, SPACE) \
 OVERLOADABLE TYPE##2 vload2(size_t offset, const SPACE TYPE *p);  \
@@ -76,13 +74,9 @@ OVERLOADABLE void vstore8(TYPE##8 v, size_t offset, SPACE TYPE *p); \
 OVERLOADABLE void vstore16(TYPE##16 v, size_t offset, SPACE TYPE *p);
 
 #define DECL_BYTE_RW_ALL(TYPE) \
-  DECL_BYTE_RD_SPACE(TYPE, __global) \
-  DECL_BYTE_RD_SPACE(TYPE, __local) \
-  DECL_BYTE_RD_SPACE(TYPE, __private) \
-  DECL_BYTE_RD_SPACE(TYPE, __constant) \
-  DECL_BYTE_WR_SPACE(TYPE, __global) \
-  DECL_BYTE_WR_SPACE(TYPE, __local) \
-  DECL_BYTE_WR_SPACE(TYPE, __private)
+  DECL_BYTE_RD_SPACE(TYPE, __generic) \
+  DECL_BYTE_WR_SPACE(TYPE, __generic) \
+  DECL_BYTE_RD_SPACE(TYPE, __constant)
 
 DECL_BYTE_RW_ALL(char)
 DECL_BYTE_RW_ALL(uchar)
@@ -137,14 +131,10 @@ OVERLOADABLE void vstorea_half16##ROUND(float16 data, size_t offset, SPACE half 
   DECL_HALF_ST_SPACE_ROUND(SPACE, _rtp, dummy) \
   DECL_HALF_ST_SPACE_ROUND(SPACE, _rtn, dummy) \
 
-DECL_HALF_LD_SPACE(__global)
-DECL_HALF_LD_SPACE(__local)
 DECL_HALF_LD_SPACE(__constant)
-DECL_HALF_LD_SPACE(__private)
+DECL_HALF_LD_SPACE(__generic)
 
-DECL_HALF_ST_SPACE(__global)
-DECL_HALF_ST_SPACE(__local)
-DECL_HALF_ST_SPACE(__private)
+DECL_HALF_ST_SPACE(__generic)
 
 //#undef DECL_UNTYPED_RW_ALL_SPACE
 #undef DECL_HALF_LD_SPACE
