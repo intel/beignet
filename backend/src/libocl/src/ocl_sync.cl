@@ -16,6 +16,7 @@
  *
  */
 #include "ocl_sync.h"
+#include "ocl_misc.h"
 
 void __gen_ocl_barrier_local(void);
 void __gen_ocl_barrier_global(void);
@@ -29,4 +30,8 @@ OVERLOADABLE void read_mem_fence(cl_mem_fence_flags flags) {
 }
 
 OVERLOADABLE void write_mem_fence(cl_mem_fence_flags flags) {
+}
+cl_mem_fence_flags get_fence(void *ptr) {
+  bool cond = __gen_ocl_in_local((size_t)ptr);
+  return cond ? CLK_LOCAL_MEM_FENCE : CLK_GLOBAL_MEM_FENCE;
 }
