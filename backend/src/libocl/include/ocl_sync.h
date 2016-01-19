@@ -31,5 +31,5 @@ OVERLOADABLE void barrier(cl_mem_fence_flags flags);
 void mem_fence(cl_mem_fence_flags flags);
 void read_mem_fence(cl_mem_fence_flags flags);
 void write_mem_fence(cl_mem_fence_flags flags);
-
+cl_mem_fence_flags get_fence(void *ptr);
 #endif  /* __OCL_SYNC_H__ */
