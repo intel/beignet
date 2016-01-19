@@ -137,4 +137,10 @@ struct time_stamp {
 };
 
 struct time_stamp __gen_ocl_get_timestamp(void);
+bool __gen_ocl_in_local(size_t p);
+bool __gen_ocl_in_private(size_t p);
+
+local void *to_local(generic void *p);
+global void *to_global(generic void *p);
+private void *to_private(generic void *p);
 #endif

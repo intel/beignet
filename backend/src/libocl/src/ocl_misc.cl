@@ -229,3 +229,24 @@ struct time_stamp __gen_ocl_get_timestamp(void) {
 
   return val;
 };
+bool __gen_ocl_in_local(size_t p) {
+  bool cond1 = p > 0;
+  bool cond2 = p < 64*1024;
+  return cond1 && cond2;
+}
+
+local void *to_local(generic void *p) {
+  bool cond = __gen_ocl_in_local((size_t)p);
+  return cond ? (local void*)p : NULL;
+}
+private void *to_private(generic void *p) {
+  bool cond = __gen_ocl_in_private((size_t)p);
+  return cond ? (private void*)p : NULL;
+}
+
+global void *to_global(generic void *p) {
+  bool cond1 = __gen_ocl_in_local((size_t)p);
+  bool cond2 = __gen_ocl_in_private((size_t)p);
+  bool cond = cond1 || cond2;
+  return !cond ? (global void*)p : NULL;
+}

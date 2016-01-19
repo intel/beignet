@@ -73,7 +73,8 @@ namespace ir {
     static const Register dwblockip = Register(29);  // blockip
     static const Register threadid = Register(30); // the thread id of this thread.
     static const Register constant_addrspace = Register(31);  // starting address of program-scope constant
-    static const uint32_t regNum = 32;             // number of special registers
+    static const Register stacksize = Register(32); // stack buffer total size
+    static const uint32_t regNum = 33;             // number of special registers
     extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 
