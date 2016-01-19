@@ -273,7 +273,7 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
   const int32_t per_lane_stack_sz = ker->stack_size;
   const int32_t value = GBE_CURBE_EXTRA_ARGUMENT;
   const int32_t sub_value = GBE_STACK_BUFFER;
-  const int32_t offset = interp_kernel_get_curbe_offset(ker->opaque, value, sub_value);
+  const int32_t offset_stack_buffer = interp_kernel_get_curbe_offset(ker->opaque, value, sub_value);
   int32_t stack_sz = per_lane_stack_sz;
 
   /* No stack required for this kernel */
@@ -283,7 +283,7 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
   /* The stack size is given for *each* SIMD lane. So, we accordingly compute
    * the size we need for the complete machine
    */
-  assert(offset >= 0);
+  assert(offset_stack_buffer >= 0);
   stack_sz *= interp_kernel_get_simd_width(ker->opaque);
   stack_sz *= device->max_compute_unit * ctx->device->max_thread_per_unit;
 
@@ -293,7 +293,12 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
    */
   cl_driver_enlarge_stack_size(ctx->drv, &stack_sz);
 
-  cl_gpgpu_set_stack(gpgpu, offset, stack_sz, BTI_PRIVATE);
+  const int32_t offset_stack_size = interp_kernel_get_curbe_offset(ker->opaque, GBE_CURBE_STACK_SIZE, 0);
+  if (offset_stack_size >= 0) {
+    *(uint64_t *)(ker->curbe + offset_stack_size) = stack_sz;
+  }
+
+  cl_gpgpu_set_stack(gpgpu, offset_stack_buffer, stack_sz, BTI_PRIVATE);
 }
 
 static int

@@ -152,4 +152,13 @@ uint8 __gen_ocl_vme(image2d_t, image2d_t,
                    uint, uint, uint, uint,
                    uint, uint, uint, uint,
                    int, int, int);
+
+bool __gen_ocl_in_local(size_t p);
+bool __gen_ocl_in_private(size_t p);
+
+#if (__OPENCL_C_VERSION__ >= 200)
+local void *__to_local(generic void *p);
+global void *__to_global(generic void *p);
+private void *__to_private(generic void *p);
+#endif
 #endif

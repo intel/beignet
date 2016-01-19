@@ -77,7 +77,8 @@ namespace ir {
     static const Register profilingts4 = Register(33); // timestamp for profiling.
     static const Register threadid = Register(34); // the thread id of this thread.
     static const Register constant_addrspace = Register(35);  // starting address of program-scope constant
-    static const uint32_t regNum = 36;             // number of special registers
+    static const Register stacksize = Register(36); // stack buffer total size
+    static const uint32_t regNum = 37;             // number of special registers
     extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 

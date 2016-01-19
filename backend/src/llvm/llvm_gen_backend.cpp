@@ -2840,6 +2840,8 @@ namespace gbe
         const Constant *c = v.getInitializer();
         Type *ty = c->getType();
         uint32_t oldSlm = f.getSLMSize();
+        // FIXME temporary reserve 4 bytes to avoid 0 address
+        if (oldSlm == 0) oldSlm = 4;
         uint32_t align = 8 * getAlignmentByte(unit, ty);
         uint32_t padding = getPadding(oldSlm*8, align);
 
@@ -3855,6 +3857,7 @@ namespace gbe
       case GEN_OCL_SIMD_SIZE:
       case GEN_OCL_READ_TM:
       case GEN_OCL_REGION:
+      case GEN_OCL_IN_PRIVATE:
       case GEN_OCL_SIMD_ID:
       case GEN_OCL_SIMD_SHUFFLE:
       case GEN_OCL_VME:
@@ -4477,7 +4480,25 @@ namespace gbe
             ctx.VME(imageID, dstTuple, srcTuple, dst_length, src_length,
                     msg_type, vme_search_path_lut_x.getIntegerValue(),
                     lut_sub_x.getIntegerValue());
+            break;
+          }
+          case GEN_OCL_IN_PRIVATE:
+          {
+            const ir::Register dst = this->getRegister(&I);
+            uint32_t stackSize = ctx.getFunction().getStackSize();
+            if (stackSize == 0) {
+              ctx.MOV(ir::TYPE_BOOL, dst, ir::ocl::zero);
+            } else {
+              ir::Register cmp0 = ctx.reg(ir::FAMILY_BOOL);
+              ir::Register cmp1 = ctx.reg(ir::FAMILY_BOOL);
+              const ir::Register src0 = this->getRegister(*AI);
+              ir::Register tmp = ctx.reg(ir::FAMILY_QWORD);
 
+              ctx.GE(ir::TYPE_U64, cmp0, src0, ir::ocl::stackbuffer);
+              ctx.ADD(ir::TYPE_U64, tmp, ir::ocl::stackbuffer, ir::ocl::stacksize);
+              ctx.LT(ir::TYPE_U64, cmp1, src0, tmp);
+              ctx.AND(ir::TYPE_BOOL, dst, cmp0, cmp1);
+            }
             break;
           }
           case GEN_OCL_REGION:

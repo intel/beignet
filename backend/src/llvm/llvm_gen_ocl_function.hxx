@@ -169,6 +169,7 @@ DECL_LLVM_GEN_FUNCTION(SIMD_SHUFFLE, intel_sub_group_shuffle)
 
 DECL_LLVM_GEN_FUNCTION(READ_TM, __gen_ocl_read_tm)
 DECL_LLVM_GEN_FUNCTION(REGION, __gen_ocl_region)
+DECL_LLVM_GEN_FUNCTION(IN_PRIVATE, __gen_ocl_in_private)
 
 DECL_LLVM_GEN_FUNCTION(VME, __gen_ocl_vme)
 
