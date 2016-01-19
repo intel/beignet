@@ -109,6 +109,7 @@ enum gbe_curbe_type {
   GBE_CURBE_PROFILING_TIMESTAMP3,
   GBE_CURBE_PROFILING_TIMESTAMP4,
   GBE_CURBE_THREAD_ID,
+  GBE_CURBE_CONSTANT_ADDRSPACE,
   GBE_GEN_REG,
 };
 
@@ -257,6 +258,11 @@ extern gbe_program_get_global_constant_size_cb *gbe_program_get_global_constant_
 typedef void (gbe_program_get_global_constant_data_cb)(gbe_program gbeProgram, char *mem);
 extern gbe_program_get_global_constant_data_cb *gbe_program_get_global_constant_data;
 
+typedef size_t (gbe_program_get_global_reloc_count_cb)(gbe_program gbeProgram);
+extern gbe_program_get_global_reloc_count_cb *gbe_program_get_global_reloc_count;
+
+typedef void (gbe_program_get_global_reloc_table_cb)(gbe_program gbeProgram, char *mem);
+extern gbe_program_get_global_reloc_table_cb *gbe_program_get_global_reloc_table;
 /*! Get the size of defined samplers */
 typedef size_t (gbe_kernel_get_sampler_size_cb)(gbe_kernel gbeKernel);
 extern gbe_kernel_get_sampler_size_cb *gbe_kernel_get_sampler_size;

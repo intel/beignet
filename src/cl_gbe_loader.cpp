@@ -38,6 +38,8 @@ gbe_program_clean_llvm_resource_cb *compiler_program_clean_llvm_resource = NULL;
 gbe_program_new_from_binary_cb *interp_program_new_from_binary = NULL;
 gbe_program_get_global_constant_size_cb *interp_program_get_global_constant_size = NULL;
 gbe_program_get_global_constant_data_cb *interp_program_get_global_constant_data = NULL;
+gbe_program_get_global_reloc_count_cb *interp_program_get_global_reloc_count = NULL;
+gbe_program_get_global_reloc_table_cb *interp_program_get_global_reloc_table = NULL;
 gbe_program_delete_cb *interp_program_delete = NULL;
 gbe_program_get_kernel_num_cb *interp_program_get_kernel_num = NULL;
 gbe_program_get_kernel_by_name_cb *interp_program_get_kernel_by_name = NULL;
@@ -109,6 +111,14 @@ struct GbeLoaderInitializer
 
     interp_program_get_global_constant_data = *(gbe_program_get_global_constant_data_cb**)dlsym(dlhInterp, "gbe_program_get_global_constant_data");
     if (interp_program_get_global_constant_data == NULL)
+      return false;
+
+    interp_program_get_global_reloc_count = *(gbe_program_get_global_reloc_count_cb**)dlsym(dlhInterp, "gbe_program_get_global_reloc_count");
+    if (interp_program_get_global_reloc_count == NULL)
+      return false;
+
+    interp_program_get_global_reloc_table = *(gbe_program_get_global_reloc_table_cb**)dlsym(dlhInterp, "gbe_program_get_global_reloc_table");
+    if (interp_program_get_global_reloc_table == NULL)
       return false;
 
     interp_program_delete = *(gbe_program_delete_cb**)dlsym(dlhInterp, "gbe_program_delete");

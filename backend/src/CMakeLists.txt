@@ -73,6 +73,8 @@ set (GBE_SRC
     ir/immediate.cpp
     ir/structurizer.hpp
     ir/structurizer.cpp
+    ir/reloc.hpp
+    ir/reloc.cpp
     backend/context.cpp
     backend/context.hpp
     backend/program.cpp

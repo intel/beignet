@@ -299,6 +299,7 @@ endif (LLVM_VERSION_NODOT VERSION_GREATER 34)
 if (ENABLE_OPENCL_20)
   SET(utests_sources
       ${utests_sources}
+      compiler_program_global.cpp
       compiler_generic_pointer.cpp)
 endif (ENABLE_OPENCL_20)
 

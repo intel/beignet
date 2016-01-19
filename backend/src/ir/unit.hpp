@@ -28,7 +28,9 @@
 #include "ir/register.hpp"
 #include "ir/profiling.hpp"
 #include "ir/printf.hpp"
+#include "ir/reloc.hpp"
 #include "sys/map.hpp"
+#include <string.h>
 
 #include "llvm/IR/Instructions.h"
 
@@ -39,9 +41,6 @@ namespace ir {
   class Function;
   class ProfilingInfo;
 
-  /*! Complete unit of compilation. It contains a set of functions and a set of
-   *  constant the functions may refer to.
-   */
   class Unit : public NonCopyable
   {
   public:
@@ -77,6 +76,8 @@ namespace ir {
     }
     /*! Return the constant set */
     ConstantSet& getConstantSet(void) { return constantSet; }
+    const RelocTable& getRelocTable(void) const  { return relocTable; }
+    RelocTable& getRelocTable(void)   { return relocTable; }
     /*! Return the constant set */
     const ConstantSet& getConstantSet(void) const { return constantSet; }
     /*! Get profiling info in this function */
@@ -93,6 +94,7 @@ namespace ir {
     friend class ContextInterface; //!< Can free modify the unit
     FunctionSet functions; //!< All the defined functions
     ConstantSet constantSet; //!< All the constants defined in the unit
+    RelocTable relocTable;
     PointerSize pointerSize; //!< Size shared by all pointers
     ProfilingInfo *profilingInfo; //!< profilingInfo store the information for profiling.
     GBE_CLASS(Unit);

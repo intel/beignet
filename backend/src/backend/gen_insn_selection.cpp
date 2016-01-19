@@ -4014,6 +4014,13 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     LoadInstructionPattern(void) : SelectionPattern(1, 1) {
        this->opcodes.push_back(ir::OP_LOAD);
     }
+    bool isReadConstantLegacy(const ir::LoadInstruction &load) const {
+      ir::AddressMode AM = load.getAddressMode();
+      ir::AddressSpace AS = load.getAddressSpace();
+      if (AM != ir::AM_Stateless && AS == ir::MEM_CONSTANT)
+        return true;
+      return false;
+    }
     void untypedReadStateless(Selection::Opaque &sel,
                               GenRegister addr,
                               vector<GenRegister> &dst
@@ -4096,7 +4103,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
             unsigned SI = insn.getSurfaceIndex();
             sel.UNTYPED_READ(addr, dst.data(), valueNum, GenRegister::immud(SI), btiTemp);
           }
-        } else if (addrSpace == ir::MEM_LOCAL || addrSpace == ir::MEM_CONSTANT ) {
+        } else if (addrSpace == ir::MEM_LOCAL || isReadConstantLegacy(insn) ) {
           // stateless mode, local/constant still use bti access
           unsigned bti = addrSpace == ir::MEM_CONSTANT ? BTI_CONSTANT : 0xfe;
           GenRegister addrDW = addr;
@@ -4260,7 +4267,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
             b = GenRegister::immud(insn.getSurfaceIndex());
           }
           read64Legacy(sel, addr, dst, b, btiTemp);
-        } else if (addrSpace == MEM_LOCAL || addrSpace == MEM_CONSTANT) {
+        } else if (addrSpace == MEM_LOCAL || isReadConstantLegacy(insn)) {
           GenRegister b = GenRegister::immud(addrSpace == MEM_LOCAL? 0xfe : BTI_CONSTANT);
           GenRegister addrDW = addr;
           if (addrBytes == 8)
@@ -4481,7 +4488,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           unsigned SI = insn.getSurfaceIndex();
           sel.BYTE_GATHER(dst, addr, elemSize, GenRegister::immud(SI), btiTemp);
         }
-      } else if (addrSpace == ir::MEM_LOCAL || addrSpace == ir::MEM_CONSTANT) {
+      } else if (addrSpace == ir::MEM_LOCAL || isReadConstantLegacy(insn)) {
         unsigned bti = addrSpace == ir::MEM_CONSTANT ? BTI_CONSTANT : 0xfe;
         GenRegister addrDW = addr;
         if (addrBytes == 8) {
@@ -4701,7 +4708,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
 
       if (insn.isBlock())
         this->emitOWordRead(sel, insn, address, addrSpace);
-      else if (addrSpace == MEM_CONSTANT) {
+      else if (isReadConstantLegacy(insn)) {
         // XXX TODO read 64bit constant through constant cache
         // Per HW Spec, constant cache messages can read at least DWORD data.
         // So, byte/short data type, we have to read through data cache.

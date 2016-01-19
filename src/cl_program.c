@@ -95,8 +95,13 @@ cl_program_delete(cl_program p)
     cl_free(p->ker);
   }
 
+  if (p->global_data_ptr)
+    cl_buffer_unreference(p->global_data);
+  cl_free(p->global_data_ptr);
+
   /* Remove it from the list */
   cl_context_remove_program(p->ctx, p);
+
   /* Free the program as allocated by the compiler */
   if (p->opaque) {
     if (CompilerSupported())
@@ -203,6 +208,45 @@ LOCAL cl_bool headerCompare(const unsigned char *BufPtr, BINARY_HEADER_INDEX ind
 #define isGenBinary(BufPtr) headerCompare(BufPtr, BHI_GEN_BINARY)
 #define isCMRT(BufPtr)      headerCompare(BufPtr, BHI_CMRT)
 
+static cl_int get_program_global_data(cl_program prog) {
+//OpenCL 1.2 would never call this function, and OpenCL 2.0 alwasy HAS_BO_SET_SOFTPIN.
+#ifdef HAS_BO_SET_SOFTPIN
+  cl_buffer_mgr bufmgr = NULL;
+  bufmgr = cl_context_get_bufmgr(prog->ctx);
+  assert(bufmgr);
+  size_t const_size = interp_program_get_global_constant_size(prog->opaque);
+  if (const_size == 0) return CL_SUCCESS;
+
+  int page_size = getpagesize();
+  size_t alignedSz = ALIGN(const_size, page_size);
+  char * p = (char*)cl_aligned_malloc(alignedSz, page_size);
+  prog->global_data_ptr = p;
+  interp_program_get_global_constant_data(prog->opaque, (char*)p);
+
+  prog->global_data = cl_buffer_alloc_userptr(bufmgr, "program global data", p, alignedSz, 0);
+  cl_buffer_set_softpin_offset(prog->global_data, (size_t)p);
+
+  uint32_t reloc_count = interp_program_get_global_reloc_count(prog->opaque);
+  if (reloc_count > 0) {
+    uint32_t x;
+    struct RelocEntry {int refOffset; int defOffset;};
+    char *temp = (char*) malloc(reloc_count *sizeof(int)*2);
+    interp_program_get_global_reloc_table(prog->opaque, temp);
+    for (x = 0; x < reloc_count; x++) {
+      int ref_offset = ((struct RelocEntry *)temp)[x].refOffset;
+      *(uint64_t*)&(p[ref_offset]) = ((struct RelocEntry *)temp)[x].defOffset + (uint64_t)p;
+    }
+    free(temp);
+  }
+#if 0
+  int x = 0;
+  for (x = 0; x < const_size; x++) {
+    printf("offset %d data: %x\n", x, (unsigned)p[x]);
+  }
+#endif
+#endif
+  return CL_SUCCESS;
+}
 LOCAL cl_program
 cl_program_create_from_binary(cl_context             ctx,
                               cl_uint                num_devices,
@@ -624,6 +668,9 @@ cl_program_build(cl_program p, const char *options)
     memcpy(p->bin + copyed, interp_kernel_get_code(opaque), sz);
     copyed += sz;
   }
+  if ((err = get_program_global_data(p)) != CL_SUCCESS)
+    goto error;
+
   p->is_built = 1;
   p->build_status = CL_BUILD_SUCCESS;
   return CL_SUCCESS;
@@ -729,6 +776,10 @@ cl_program_link(cl_context            context,
     memcpy(p->bin + copyed, interp_kernel_get_code(opaque), sz);
     copyed += sz;
   }
+
+  if ((err = get_program_global_data(p)) != CL_SUCCESS)
+    goto error;
+
 done:
   if(p) p->is_built = 1;
   if(p) p->build_status = CL_BUILD_SUCCESS;

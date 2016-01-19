@@ -47,7 +47,8 @@ namespace ir {
         "profiling_timestamps0", "profiling_timestamps1",
         "profiling_timestamps2", "profiling_timestamps3",
         "profiling_timestamps4",
-        "threadid"
+        "threadid",
+        "constant_addrspace_start"
     };
 
 #if GBE_DEBUG
@@ -99,6 +100,7 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, profilingts3, 0, GBE_CURBE_PROFILING_TIMESTAMP3);
       DECL_NEW_REG(FAMILY_DWORD, profilingts4, 0, GBE_CURBE_PROFILING_TIMESTAMP4);
       DECL_NEW_REG(FAMILY_DWORD, threadid, 1, GBE_CURBE_THREAD_ID);
+      DECL_NEW_REG(FAMILY_QWORD, constant_addrspace, 1, GBE_CURBE_CONSTANT_ADDRSPACE);
     }
 #undef DECL_NEW_REG
 

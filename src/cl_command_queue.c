@@ -150,11 +150,12 @@ cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k, cl_gpgpu gpgp
 {
   /* Bind all user buffers (given by clSetKernelArg) */
   uint32_t i;
+  uint32_t ocl_version = interp_kernel_get_ocl_version(k->opaque);
   enum gbe_arg_type arg_type; /* kind of argument */
   for (i = 0; i < k->arg_n; ++i) {
     int32_t offset; // location of the address in the curbe
     arg_type = interp_kernel_get_arg_type(k->opaque, i);
-    if (arg_type != GBE_ARG_GLOBAL_PTR || !k->args[i].mem)
+    if (!(arg_type == GBE_ARG_GLOBAL_PTR || (arg_type == GBE_ARG_CONSTANT_PTR && ocl_version >= 200)) || !k->args[i].mem)
       continue;
     offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, i);
     if (offset < 0)
