@@ -824,9 +824,9 @@ namespace gbe {
     bool useDefaultCLCVersion = true;
 
     if (options) {
-      char *str = (char *)malloc(sizeof(char) * (strlen(options) + 1));
-      memcpy(str, options, strlen(options) + 1);
-      std::string optionStr(str);
+      char *c_str = (char *)malloc(sizeof(char) * (strlen(options) + 1));
+      memcpy(c_str, options, strlen(options) + 1);
+      std::string optionStr(c_str);
       const std::string unsupportedOptions("-cl-denorms-are-zero, -cl-strict-aliasing, -cl-opt-disable,"
                        "-cl-no-signed-zeros, -cl-fp32-correctly-rounded-divide-sqrt");
 
@@ -835,11 +835,72 @@ namespace gbe {
       while (end != std::string::npos) {
         end = optionStr.find(' ', start);
         std::string str = optionStr.substr(start, end - start);
-        start = end + 1;
-        if(str.size() == 0)
+
+        if(str.size() == 0) {
+          start = end + 1;
           continue;
+        }
+
+EXTEND_QUOTE:
+        /* We need to find the ", if the there are odd number of " within this string,
+           we need to extend the string to the matched " of the last one. */
+        int quoteNum = 0;
+        for (size_t i = 0; i < str.size(); i++) {
+          if (str[i] == '"') {
+            quoteNum++;
+          }
+        }
+
+        if (quoteNum % 2) { // Odd number of ", need to extend the string.
+          /* find the second " */
+          while (end < optionStr.size() && optionStr[end] != '"')
+            end++;
+
+          if (end == optionStr.size()) {
+            printf("Warning: Unmatched \" number in build option\n");
+            free(c_str);
+            return false;
+          }
+
+          GBE_ASSERT(optionStr[end] == '"');
+          end++;
+
+          if (end < optionStr.size() && optionStr[end] != ' ') {
+            // "CC AAA"BBDDDD case, need to further extend.
+            end = optionStr.find(' ', end);
+            str = optionStr.substr(start, end - start);
+            goto EXTEND_QUOTE;
+          } else {
+            str = optionStr.substr(start, end - start);
+          }
+        }
+        start = end + 1;
 
         if(unsupportedOptions.find(str) != std::string::npos) {
+          continue;
+        }
+
+        /* if -I, we need to extract "path" to path, no " */
+        if (clOpt.back() == "-I") {
+          if (str[0] == '"') {
+            GBE_ASSERT(str[str.size() - 1] == '"');
+            if (str.size() > 2) {
+              clOpt.push_back(str.substr(1, str.size() - 2));
+            } else {
+              clOpt.push_back("");
+            }
+            continue;
+          }
+        }
+        // The -I"YYYY" like case.
+        if (str.size() > 4 && str[0] == '-' && str[1] == 'I' && str[2] == '"') {
+          GBE_ASSERT(str[str.size() - 1] == '"');
+          clOpt.push_back("-I");
+          if (str.size() > 4) {
+            clOpt.push_back(str.substr(3, str.size() - 4));
+          } else {
+            clOpt.push_back("");
+          }
           continue;
         }
 
@@ -881,7 +942,7 @@ namespace gbe {
 
         clOpt.push_back(str);
       }
-      free(str);
+      free(c_str);
     }
 
     if (useDefaultCLCVersion) {
