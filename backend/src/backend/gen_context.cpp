@@ -2345,6 +2345,9 @@ namespace gbe
     p->TYPED_WRITE(header, true, bti);
   }
 
+  void GenContext::emitWorkGroupOpInstruction(const SelectionInstruction &insn) {
+  }
+
   void GenContext::setA0Content(uint16_t new_a0[16], uint16_t max_offset, int sz) {
     if (sz == 0)
       sz = 8;
