@@ -140,6 +140,8 @@ namespace gbe
     virtual void LOAD_INT64_IMM(GenRegister dest, GenRegister value);
     /*! Barrier message (to synchronize threads of a workgroup) */
     void BARRIER(GenRegister src);
+    /*! Forward the gateway message. */
+    void FWD_GATEWAY_MSG(GenRegister src, uint32_t notifyN = 0);
     /*! Memory fence message (to order loads and stores between threads) */
     void FENCE(GenRegister dst);
     /*! Jump indexed instruction */
