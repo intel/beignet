@@ -471,7 +471,6 @@ namespace gbe
     /*! legacyMode is for hardware before BDW,
      * which do not support stateless memory access */
     bool legacyMode;
-    int32_t wgBroadcastSLM;
   public:
     static char ID;
     explicit GenWriter(ir::Unit &unit)
@@ -482,8 +481,7 @@ namespace gbe
         LI(0),
         TheModule(0),
         btiBase(BTI_RESERVED_NUM),
-        legacyMode(false),
-        wgBroadcastSLM(-1)
+        legacyMode(false)
     {
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=7
       initializeLoopInfoWrapperPassPass(*PassRegistry::getPassRegistry());
@@ -3683,15 +3681,17 @@ namespace gbe
   }
 
   void GenWriter::emitWorkGroupInst(CallInst &I, CallSite &CS, ir::WorkGroupOps opcode) {
-    if (wgBroadcastSLM < 0 && opcode == ir::WORKGROUP_OP_BROADCAST) {
-      ir::Function &f = ctx.getFunction();
+    ir::Function &f = ctx.getFunction();
+
+    if (f.getwgBroadcastSLM() < 0 && opcode == ir::WORKGROUP_OP_BROADCAST) {
       uint32_t mapSize = 8;
       f.setUseSLM(true);
       uint32_t oldSlm = f.getSLMSize();
       f.setSLMSize(oldSlm + mapSize);
-      wgBroadcastSLM = oldSlm;
-      GBE_ASSERT(wgBroadcastSLM >= 0);
+      f.setwgBroadcastSLM(oldSlm);
+      GBE_ASSERT(f.getwgBroadcastSLM() >= 0);
     }
+
 
     CallSite::arg_iterator AI = CS.arg_begin();
     CallSite::arg_iterator AE = CS.arg_end();
@@ -3709,7 +3709,7 @@ namespace gbe
         src[i] = this->getRegister(*(AI++));
       }
       const ir::Tuple srcTuple = ctx.arrayTuple(&src[0], argNum);
-      ctx.WORKGROUP(ir::WORKGROUP_OP_BROADCAST, (uint32_t)wgBroadcastSLM, getRegister(&I), srcTuple, argNum,
+      ctx.WORKGROUP(ir::WORKGROUP_OP_BROADCAST, (uint32_t)f.getwgBroadcastSLM(), getRegister(&I), srcTuple, argNum,
           getType(ctx, (*CS.arg_begin())->getType()));
     } else {
       const ir::Register src = this->getRegister(*(AI++));

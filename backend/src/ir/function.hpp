@@ -453,6 +453,14 @@ namespace ir {
         block->foreach(functor);
       }
     }
+    /*! Get wgBroadcastSLM in this function */
+    int32_t getwgBroadcastSLM(void) const { return wgBroadcastSLM; }
+    /*! Set wgBroadcastSLM for this function */
+    void setwgBroadcastSLM(int32_t v) { wgBroadcastSLM = v; }
+    /*! Get tidMapSLM in this function */
+    int32_t gettidMapSLM(void) const { return tidMapSLM; }
+    /*! Set tidMapSLM for this function */
+    void settidMapSLM(int32_t v) { tidMapSLM = v; }
     /*! Does it use SLM */
     INLINE bool getUseSLM(void) const { return this->useSLM; }
     /*! Change the SLM config for the function */
@@ -524,6 +532,8 @@ namespace ir {
     size_t compileWgSize[3];        //!< required work group size specified by
                                     //   __attribute__((reqd_work_group_size(X, Y, Z))).
     std::string functionAttributes; //!< function attribute qualifiers combined.
+    int32_t wgBroadcastSLM;         //!< Used for broadcast the workgroup value.
+    int32_t tidMapSLM;              //!< Used to store the map between groupid and hw thread.
     GBE_CLASS(Function);            //!< Use custom allocator
   };
 
