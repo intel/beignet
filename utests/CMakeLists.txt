@@ -121,6 +121,7 @@ set (utests_sources
   compiler_atomic_functions.cpp
   compiler_async_copy.cpp
   compiler_workgroup_broadcast.cpp
+  compiler_workgroup_reduce.cpp
   compiler_async_stride_copy.cpp
   compiler_insn_selection_min.cpp
   compiler_insn_selection_max.cpp
