@@ -97,6 +97,41 @@ void compiler_workgroup_reduce_max_uint(void)
 }
 MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_reduce_max_uint);
 
+void compiler_workgroup_reduce_add_uint(void)
+{
+  const size_t n = 50;
+  uint32_t* src = test_array_uint;
+
+  // Setup kernel and buffers
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_reduce", "compiler_workgroup_reduce_add_uint");
+  OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(uint32_t), NULL);
+  OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(uint32_t), NULL);
+  OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
+  OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
+  globals[0] = n;
+  locals[0] = n;
+
+  uint32_t cpu_res = 0;
+  for (size_t i = 0; i < n; i++)
+    cpu_res += src[i];
+
+  OCL_MAP_BUFFER(0);
+  memcpy(buf_data[0], src, n * sizeof(uint32_t));
+  OCL_UNMAP_BUFFER(0);
+
+  // Run the kernel on GPU
+  OCL_NDRANGE(1);
+
+  // Compare
+  OCL_MAP_BUFFER(1);
+  for (int32_t i = 0; i < (int32_t) n; ++i) {
+    //printf("%u ", ((uint32_t *)buf_data[1])[i]);
+    OCL_ASSERT(((uint32_t *)buf_data[1])[i] == cpu_res);
+  }
+  OCL_UNMAP_BUFFER(1);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_reduce_add_uint);
+
 static float test_array_float[64] =
   {1.0234f, 0.34e32f, -13441.4334f, 1893.21f, -9999.0f, -88.00f, 1.3f, 1.0f,
    2.33f, 134.44f, 263.0f, 1.0f, 0.0f, 344.900043f, 0.1e30f, 1.0e10f,
@@ -172,3 +207,37 @@ void compiler_workgroup_reduce_max_float(void)
 }
 MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_reduce_max_float);
 
+void compiler_workgroup_reduce_add_float(void)
+{
+  const size_t n = 42;
+  float* src = test_array_float;
+
+  // Setup kernel and buffers
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_reduce", "compiler_workgroup_reduce_add_float");
+  OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(float), NULL);
+  OCL_CREATE_BUFFER(buf[1], 0, n * sizeof(float), NULL);
+  OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
+  OCL_SET_ARG(1, sizeof(cl_mem), &buf[1]);
+  globals[0] = n;
+  locals[0] = n;
+
+  float cpu_res = 0;
+  for (size_t i = 0; i < n; i++)
+    cpu_res += src[i];
+
+  OCL_MAP_BUFFER(0);
+  memcpy(buf_data[0], src, n * sizeof(float));
+  OCL_UNMAP_BUFFER(0);
+
+  // Run the kernel on GPU
+  OCL_NDRANGE(1);
+
+  // Compare
+  OCL_MAP_BUFFER(1);
+  for (int32_t i = 0; i < (int32_t) n; ++i) {
+    //printf("%f ", ((float *)buf_data[1])[i]);
+    OCL_ASSERT(((float *)buf_data[1])[i] == cpu_res);
+  }
+  OCL_UNMAP_BUFFER(1);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_reduce_add_float);
