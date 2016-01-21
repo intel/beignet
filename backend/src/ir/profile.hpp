@@ -71,7 +71,8 @@ namespace ir {
     static const Register printfbptr = Register(27); // printf buffer address .
     static const Register printfiptr = Register(28); // printf index buffer address.
     static const Register dwblockip = Register(29);  // blockip
-    static const uint32_t regNum = 30;             // number of special registers
+    static const Register threadid = Register(30); // the thread id of this thread.
+    static const uint32_t regNum = 31;             // number of special registers
     extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 

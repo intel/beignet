@@ -99,6 +99,7 @@ enum gbe_curbe_type {
   GBE_CURBE_BLOCK_IP,
   GBE_CURBE_DW_BLOCK_IP,
   GBE_CURBE_THREAD_NUM,
+  GBE_CURBE_THREAD_ID,
   GBE_GEN_REG,
 };
 

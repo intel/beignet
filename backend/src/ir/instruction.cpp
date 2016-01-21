@@ -1304,7 +1304,7 @@ namespace ir {
         case WORKGROUP_OP_EXCLUSIVE_ADD:
         case WORKGROUP_OP_EXCLUSIVE_MIN:
         case WORKGROUP_OP_EXCLUSIVE_MAX:
-          if (this->srcNum != 1) {
+          if (this->srcNum != 3) {
             whyNot = "Wrong number of source.";
             return false;
           }
