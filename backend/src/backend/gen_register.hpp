@@ -280,6 +280,15 @@ namespace gbe
       return r;
     }
 
+    static INLINE GenRegister toUniform(GenRegister reg, uint32_t type) {
+      GenRegister r = reg;
+      r.type = type;
+      r.hstride = GEN_HORIZONTAL_STRIDE_0;
+      r.vstride = GEN_VERTICAL_STRIDE_0;
+      r.width = GEN_WIDTH_1;
+      return r;
+    }
+
     static INLINE uint32_t grfOffset(GenRegister reg) {
       return reg.nr * GEN_REG_SIZE + reg.subnr;
     }
