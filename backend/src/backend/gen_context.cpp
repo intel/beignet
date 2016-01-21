@@ -2360,7 +2360,10 @@ namespace gbe
         cond = GEN_CONDITIONAL_GE;
 
       p->SEL_CMP(cond, msgData, threadData, msgData);
+    } else if (wg_op == ir::WORKGROUP_OP_REDUCE_ADD) {
+      p->ADD(msgData, threadData, msgData);
     }
+
     p->pop();
   }
 
@@ -2371,7 +2374,8 @@ namespace gbe
         p->MOV(dataReg, GenRegister::immud(0xFFFFFFFF));
       } else {
         GBE_ASSERT(wg_op == ir::WORKGROUP_OP_REDUCE_MAX || wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX
-             || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX);
+             || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX || wg_op == ir::WORKGROUP_OP_REDUCE_ADD
+             || wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD);
         p->MOV(dataReg, GenRegister::immud(0));
       }
     } else if (dataReg.type == GEN_TYPE_F) {
@@ -2381,6 +2385,10 @@ namespace gbe
       } else if (wg_op == ir::WORKGROUP_OP_REDUCE_MAX || wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX
           || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX) {
         p->MOV(GenRegister::retype(dataReg, GEN_TYPE_UD), GenRegister::immud(0xFF800000)); // -inf
+      } else {
+        GBE_ASSERT(wg_op == ir::WORKGROUP_OP_REDUCE_ADD || wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD
+            || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD);
+        p->MOV(GenRegister::retype(dataReg, GEN_TYPE_UD), GenRegister::immud(0x0));
       }
     } else {
       GBE_ASSERT(0);
@@ -2430,6 +2438,17 @@ namespace gbe
             v.subnr = 0;
             v.nr++;
           }
+        }
+      }
+    } else if (wg_op == ir::WORKGROUP_OP_REDUCE_ADD) {
+      GBE_ASSERT(tmp.type == theVal.type);
+      GenRegister v = GenRegister::toUniform(tmp, theVal.type);
+      for (uint32_t i = 0; i < simd; i++) {
+        p->ADD(threadData, threadData, v);
+        v.subnr += typeSize(theVal.type);
+        if (v.subnr == 32) {
+          v.subnr = 0;
+          v.nr++;
         }
       }
     }
@@ -2586,7 +2605,8 @@ do { \
     } p->pop();
 
     /* Broadcast the result. */
-    if (wg_op == ir::WORKGROUP_OP_REDUCE_MIN || wg_op == ir::WORKGROUP_OP_REDUCE_MAX) {
+    if (wg_op == ir::WORKGROUP_OP_REDUCE_MIN || wg_op == ir::WORKGROUP_OP_REDUCE_MAX
+        || wg_op == ir::WORKGROUP_OP_REDUCE_ADD) {
       p->push(); {
         p->curr.predicate = GEN_PREDICATE_NORMAL;
         p->curr.noMask = 1;
