@@ -504,6 +504,8 @@ namespace gbe
     bool bwdCodeGeneration;
     /*! To make function prototypes more readable */
     typedef const GenRegister &Reg;
+    /*! If true, the thread map has already been stored */
+    bool storeThreadMap;
 
     /*! Check for destination register. Major purpose is to find
         out partially updated dst registers. These registers will
@@ -823,8 +825,9 @@ namespace gbe
     ctx(ctx), block(NULL),
     curr(ctx.getSimdWidth()), file(ctx.getFunction().getRegisterFile()),
     maxInsnNum(ctx.getFunction().getLargestBlockSize()), dagPool(maxInsnNum),
-    stateNum(0), vectorNum(0), bwdCodeGeneration(false), currAuxLabel(ctx.getFunction().labelNum()),
-    bHas32X32Mul(false), bHasLongType(false), bHasDoubleType(false), bHasHalfType(false), bLongRegRestrict(false),
+    stateNum(0), vectorNum(0), bwdCodeGeneration(false), storeThreadMap(false),
+    currAuxLabel(ctx.getFunction().labelNum()), bHas32X32Mul(false), bHasLongType(false),
+    bHasDoubleType(false), bHasHalfType(false), bLongRegRestrict(false),
     ldMsgOrder(LD_MSG_ORDER_IVB), slowByteGather(false)
   {
     const ir::Function &fn = ctx.getFunction();
@@ -6362,6 +6365,106 @@ namespace gbe
   /*! WorkGroup instruction pattern */
   DECL_PATTERN(WorkGroupInstruction)
   {
+    INLINE bool storeThreadID(Selection::Opaque &sel, uint32_t slmAddr) const
+    {
+      using namespace ir;
+      GenRegister sr0_0 = GenRegister::retype(GenRegister::sr(0), GEN_TYPE_UW);
+      const uint32_t simdWidth = sel.ctx.getSimdWidth();
+      GenRegister tmp;
+      GenRegister addr;
+      vector<GenRegister> fakeTemps;
+
+      if (simdWidth == 16) {
+        tmp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_WORD), ir::TYPE_U16), GEN_TYPE_UD);
+        addr = GenRegister::retype(sel.selReg(sel.reg(FAMILY_WORD), ir::TYPE_U16), GEN_TYPE_UD);
+      } else {
+        tmp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32), GEN_TYPE_UD);
+        addr = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32), GEN_TYPE_UD);
+      }
+
+      sr0_0 = GenRegister::vec1(sr0_0);
+      sel.push(); {
+        sel.curr.predicate = GEN_PREDICATE_NONE;
+        sel.curr.noMask = 1;
+        sel.curr.execWidth = 8;
+
+        sel.MOV(tmp, sr0_0);
+
+        sel.MUL(addr, sel.selReg(ocl::threadid, ir::TYPE_U32), GenRegister::immud(2));
+        sel.ADD(addr, addr, GenRegister::immud(slmAddr));
+
+        sel.push(); {
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+          sel.push(); {
+            sel.curr.execWidth = 1;
+            sel.MOV(GenRegister::flag(0, 1), GenRegister::immuw(0x01));
+          } sel.pop();
+          sel.curr.flag = 0;
+          sel.curr.subFlag = 1;
+          sel.curr.predicate = GEN_PREDICATE_NORMAL;
+          sel.BYTE_SCATTER(addr, tmp, 1, GenRegister::immw(0xfe), fakeTemps);
+        } sel.pop();
+      } sel.pop();
+      return true;
+    }
+
+    INLINE GenRegister getNextThreadID(Selection::Opaque &sel, uint32_t slmAddr) const
+    {
+      using namespace ir;
+      const uint32_t simdWidth = sel.ctx.getSimdWidth();
+      GenRegister addr;
+      GenRegister nextThread;
+      GenRegister tid;
+      vector<GenRegister> fakeTemps;
+
+      if (simdWidth == 16) {
+        addr = GenRegister::retype(sel.selReg(sel.reg(FAMILY_WORD), ir::TYPE_U16), GEN_TYPE_UD);
+        nextThread = GenRegister::retype(sel.selReg(sel.reg(FAMILY_WORD), ir::TYPE_U16), GEN_TYPE_UD);
+        tid = GenRegister::retype(sel.selReg(sel.reg(FAMILY_WORD), ir::TYPE_U16), GEN_TYPE_UD);
+      } else {
+        addr = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
+        nextThread = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
+        tid = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
+      }
+
+      sel.push(); {
+        sel.curr.execWidth = 8;
+        sel.curr.predicate = GEN_PREDICATE_NONE;
+        sel.curr.noMask = 1;
+        sel.ADD(nextThread, sel.selReg(ocl::threadid, ir::TYPE_U32), GenRegister::immud(1));
+
+        /* Wrap the next thread id. */
+        sel.push(); {
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+          sel.curr.flag = 0;
+          sel.curr.subFlag = 1;
+          sel.CMP(GEN_CONDITIONAL_EQ, nextThread, sel.selReg(ocl::threadn, ir::TYPE_U32), GenRegister::null());
+          sel.curr.predicate = GEN_PREDICATE_NORMAL;
+          sel.MOV(nextThread, GenRegister::immud(0));
+        } sel.pop();
+
+        sel.MUL(addr, nextThread, GenRegister::immud(2));
+        sel.ADD(addr, addr, GenRegister::immud(slmAddr));
+
+        sel.push(); {
+          sel.curr.predicate = GEN_PREDICATE_NONE;
+          sel.curr.noMask = 1;
+          sel.push(); {
+            sel.curr.execWidth = 1;
+            sel.MOV(GenRegister::flag(0, 1), GenRegister::immuw(0x010));
+          } sel.pop();
+          sel.curr.flag = 0;
+          sel.curr.subFlag = 1;
+          sel.curr.predicate = GEN_PREDICATE_NORMAL;
+          sel.BYTE_GATHER(tid, addr, 1, GenRegister::immw(0xfe), fakeTemps);
+        } sel.pop();
+
+      } sel.pop();
+      return tid;
+    }
+
     INLINE bool emitWGBroadcast(Selection::Opaque &sel, const ir::WorkGroupInstruction &insn) const {
       /*  1. BARRIER    Ensure all the threads have set the correct value for the var which will be broadcasted.
           2. CMP IDs    Compare the local IDs with the specified ones in the function call.
@@ -6377,8 +6480,6 @@ namespace gbe
       const uint32_t slmAddr = insn.getSlmAddr();
       GenRegister addr = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
       vector<GenRegister> fakeTemps;
-      fakeTemps.push_back(GenRegister::null());
-      fakeTemps.push_back(GenRegister::null());
 
       /* Then we insert a barrier to make sure all the var we are interested in
          have been assigned the final value. */
@@ -6437,6 +6538,21 @@ namespace gbe
 
       if (workGroupOp == WORKGROUP_OP_BROADCAST) {
         return emitWGBroadcast(sel, insn);
+      } else if (workGroupOp >= WORKGROUP_OP_REDUCE_ADD && workGroupOp <= WORKGROUP_OP_EXCLUSIVE_MAX) {
+        const uint32_t slmAddr = insn.getSlmAddr();
+        /* First, we create the TheadID/localID map, in order to get which thread hold the next 16 workitems. */
+
+        if (!sel.storeThreadMap) {
+          this->storeThreadID(sel, slmAddr);
+          sel.storeThreadMap = true;
+        }
+
+        /* Then we insert a barrier to make sure all the var we are interested in
+           have been assigned the final value. */
+        sel.BARRIER(GenRegister::ud8grf(sel.reg(FAMILY_DWORD)), sel.selReg(sel.reg(FAMILY_DWORD)), syncLocalBarrier);
+
+        /* Third, get the next thread ID which we will Forward MSG to. */
+        GenRegister nextThreadID = getNextThreadID(sel, slmAddr);
       } else {
         GBE_ASSERT(0);
       }

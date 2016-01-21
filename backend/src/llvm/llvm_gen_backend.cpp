@@ -3692,6 +3692,20 @@ namespace gbe
       GBE_ASSERT(f.getwgBroadcastSLM() >= 0);
     }
 
+    if (f.gettidMapSLM() < 0 && opcode >= ir::WORKGROUP_OP_REDUCE_ADD && opcode <= ir::WORKGROUP_OP_EXCLUSIVE_MAX) {
+      /* Because we can not know the thread ID and the EUID for every physical
+         thead which the work items execute on before the run time. We need to
+         sync the thread execution order when using work group functions. We
+         create the workitems/threadID map table in slm.
+         When we come to here, the global thread local vars should have all been
+         allocated, so it's safe for us to steal a piece of SLM for this usage. */
+      uint32_t mapSize = sizeof(uint16_t) * 64;// at most 64 thread for one subslice.
+      f.setUseSLM(true);
+      uint32_t oldSlm = f.getSLMSize();
+      f.setSLMSize(oldSlm + mapSize);
+      f.settidMapSLM(oldSlm);
+      GBE_ASSERT(f.gettidMapSLM() >= 0);
+    }
 
     CallSite::arg_iterator AI = CS.arg_begin();
     CallSite::arg_iterator AE = CS.arg_end();
@@ -3712,10 +3726,23 @@ namespace gbe
       ctx.WORKGROUP(ir::WORKGROUP_OP_BROADCAST, (uint32_t)f.getwgBroadcastSLM(), getRegister(&I), srcTuple, argNum,
           getType(ctx, (*CS.arg_begin())->getType()));
     } else {
-      const ir::Register src = this->getRegister(*(AI++));
-      const ir::Tuple srcTuple = ctx.arrayTuple(&src, 1);
-      ctx.WORKGROUP(opcode, (uint32_t)0, getRegister(&I), srcTuple, 1,
-                    getType(ctx, (*CS.arg_begin())->getType()));
+      ConstantInt *sign = dyn_cast<ConstantInt>(AI);
+      GBE_ASSERT(sign);
+      bool isSign = sign->getZExtValue();
+      AI++;
+      ir::Type ty;
+      if (isSign) {
+        ty = getType(ctx, (*AI)->getType());
+      } else {
+        ty = getUnsignedType(ctx, (*AI)->getType());
+      }
+
+      ir::Register src[3];
+      src[0] = ir::ocl::threadn;
+      src[1] = ir::ocl::threadid;
+      src[2] = this->getRegister(*(AI++));
+      const ir::Tuple srcTuple = ctx.arrayTuple(&src[0], 3);
+      ctx.WORKGROUP(opcode, (uint32_t)f.gettidMapSLM(), getRegister(&I), srcTuple, 3, ty);
     }
 
     GBE_ASSERT(AI == AE);
