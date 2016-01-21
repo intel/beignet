@@ -824,10 +824,10 @@ namespace gbe
                          GEN_HORIZONTAL_STRIDE_0);
     }
 
-    static INLINE GenRegister notification1(void) {
+    static INLINE GenRegister notification0(uint32_t subnr) {
       return GenRegister(GEN_ARCHITECTURE_REGISTER_FILE,
                          GEN_ARF_NOTIFICATION_COUNT,
-                         0,
+                         subnr,
                          GEN_TYPE_UD,
                          GEN_VERTICAL_STRIDE_0,
                          GEN_WIDTH_1,
