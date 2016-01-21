@@ -824,6 +824,16 @@ namespace gbe
                          GEN_HORIZONTAL_STRIDE_0);
     }
 
+    static INLINE GenRegister sr(uint32_t nr, uint32_t subnr = 0) {
+      return GenRegister(GEN_ARCHITECTURE_REGISTER_FILE,
+                         GEN_ARF_STATE | nr,
+                         subnr,
+                         GEN_TYPE_UD,
+                         GEN_VERTICAL_STRIDE_8,
+                         GEN_WIDTH_8,
+                         GEN_HORIZONTAL_STRIDE_1);
+    }
+
     static INLINE GenRegister notification0(uint32_t subnr) {
       return GenRegister(GEN_ARCHITECTURE_REGISTER_FILE,
                          GEN_ARF_NOTIFICATION_COUNT,
