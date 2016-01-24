@@ -9,7 +9,7 @@ static void compiler_cl_finish(void)
 {
   const size_t n = 16*1024*1024;
   struct timeval t1, t2;
-  float t_fin, t_map_w_fin,t_map_wo_fin;
+  float t_map_w_fin,t_map_wo_fin;
 
   // Setup kernel and buffers
   OCL_CREATE_KERNEL("test_cl_finish");
@@ -26,10 +26,7 @@ static void compiler_cl_finish(void)
 
   // 1st time map after clFinish
   OCL_NDRANGE(1);
-  T_GET(t1);
   OCL_FINISH();
-  T_GET(t2);
-  t_fin = T_LAPSE(t1, t2);
 
   T_GET(t1);
   OCL_MAP_BUFFER(0);
@@ -43,7 +40,7 @@ static void compiler_cl_finish(void)
   T_GET(t2);
   t_map_wo_fin = T_LAPSE(t1, t2);
 
-  OCL_ASSERT(t_fin > t_map_w_fin && t_map_wo_fin > t_map_w_fin);
+  OCL_ASSERT(t_map_wo_fin > t_map_w_fin);
   OCL_UNMAP_BUFFER(0);
 }
 
