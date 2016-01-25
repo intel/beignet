@@ -140,7 +140,11 @@ namespace gbe
     MPM.add(createBarrierNodupPass(false));   // remove noduplicate fnAttr before inlining.
     MPM.add(createFunctionInliningPass(20000));
     MPM.add(createBarrierNodupPass(true));    // restore noduplicate fnAttr after inlining.
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
+    MPM.add(createPostOrderFunctionAttrsPass());
+#else
     MPM.add(createFunctionAttrsPass());       // Set readonly/readnone attrs
+#endif
 
     //MPM.add(createScalarReplAggregatesPass(64, true, -1, -1, 64))
     if(optLevel > 0)

@@ -119,7 +119,11 @@ namespace gbe {
     ir::Unit *unit = new ir::Unit(ir::POINTER_64_BITS);
     llvm::Module * cloned_module = NULL;
     if(module){
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
+      cloned_module = llvm::CloneModule((llvm::Module*)module).release();
+#else
       cloned_module = llvm::CloneModule((llvm::Module*)module);
+#endif
     }
     if (llvmToGen(*unit, fileName, module, optLevel, OCL_STRICT_CONFORMANCE) == false) {
       if (fileName)

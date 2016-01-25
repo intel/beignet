@@ -163,6 +163,7 @@ namespace gbe {
         Loop *currL = L;
 #if LLVM_VERSION_MAJOR == 3 &&  LLVM_VERSION_MINOR >= 8
         ScalarEvolution *SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
+        LoopInfo &loopInfo = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
 #else
         ScalarEvolution *SE = &getAnalysis<ScalarEvolution>();
 #endif
@@ -192,7 +193,11 @@ namespace gbe {
               shouldUnroll = false;
             setUnrollID(currL, false);
             if (currL != L)
+#if LLVM_VERSION_MAJOR == 3 &&  LLVM_VERSION_MINOR >= 8
+              loopInfo.markAsRemoved(currL);
+#else
               LPM.deleteLoopFromQueue(currL);
+#endif
           }
           currL = parentL;
           currTripCount = parentTripCount;

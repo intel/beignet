@@ -68,7 +68,7 @@ namespace gbe
     return oclLib;
   }
 
-  static bool materializedFuncCall(Module& src, Module& lib, llvm::Function &KF, std::set<std::string>& MFS)
+  static bool materializedFuncCall(Module& src, Module& lib, llvm::Function &KF, std::set<std::string>& MFS, std::vector<GlobalValue *>& Gvs)
   {
     bool fromSrc = false;
     for (llvm::Function::iterator B = KF.begin(), BE = KF.end(); B != BE; B++) {
@@ -112,9 +112,10 @@ namespace gbe
             printf("Can not materialize the function: %s, because %s\n", fnName.c_str(), EC.message().c_str());
             return false;
           }
+          Gvs.push_back((GlobalValue *)newMF);
 #endif
         }
-        if (!materializedFuncCall(src, lib, *newMF, MFS))
+        if (!materializedFuncCall(src, lib, *newMF, MFS, Gvs))
           return false;
 
       }
@@ -128,6 +129,7 @@ namespace gbe
   {
     LLVMContext& ctx = mod->getContext();
     std::set<std::string> materializedFuncs;
+    std::vector<GlobalValue *> Gvs;
     Module* clonedLib = createOclBitCodeModule(ctx, strictMath);
     assert(clonedLib && "Can not create the beignet bitcode\n");
 
@@ -173,10 +175,11 @@ namespace gbe
       if (!isKernelFunction(*SF)) continue;
       kernels.push_back(SF->getName().data());
 
-      if (!materializedFuncCall(*mod, *clonedLib, *SF, materializedFuncs)) {
+      if (!materializedFuncCall(*mod, *clonedLib, *SF, materializedFuncs, Gvs)) {
         delete clonedLib;
         return NULL;
       }
+      Gvs.push_back((GlobalValue *)&*SF);
     }
 
     if (kernels.empty()) {
@@ -215,13 +218,29 @@ namespace gbe
       }
 #endif
 
-      if (!materializedFuncCall(*mod, *clonedLib, *newMF, materializedFuncs)) {
+      if (!materializedFuncCall(*mod, *clonedLib, *newMF, materializedFuncs, Gvs)) {
         delete clonedLib;
         return NULL;
       }
 
+      Gvs.push_back((GlobalValue *)newMF);
       kernels.push_back(f);
     }
+
+    /* The llvm check materialized for all value, get all the functions and
+     * global values we neeed */
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=8
+    Module::GlobalListType &GVlist = clonedLib->getGlobalList();
+    for(Module::global_iterator GVitr = GVlist.begin();GVitr != GVlist.end();++GVitr) {
+      GlobalValue * GV = &*GVitr;
+      clonedLib->materialize(GV);
+      Gvs.push_back(GV);
+    }
+    llvm::legacy::PassManager Extract;
+    Extract.add(createGVExtractionPass(Gvs, false));
+    Extract.run(*clonedLib);
+    clonedLib->materializeAll();
+#endif
 
     /* the SPIR binary datalayout maybe different with beignet's bitcode */
     if(clonedLib->getDataLayout() != mod->getDataLayout())

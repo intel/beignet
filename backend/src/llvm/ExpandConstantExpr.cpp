@@ -114,7 +114,7 @@ static Value *expandConstantVector(Instruction *InsertPt, ConstantVector *CV) {
   int elemNum = CV->getType()->getNumElements();
   Type *IntTy = IntegerType::get(CV->getContext(), 32);
 
-  BasicBlock::iterator InsertPos(InsertPt);
+  BasicBlock::iterator InsertPos(&*InsertPt);
   IRBuilder<> IRB(&*InsertPos);
   Value *vec = UndefValue::get(CV->getType());
   for (int i = 0; i < elemNum; i++) {
