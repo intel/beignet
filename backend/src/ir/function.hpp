@@ -181,6 +181,7 @@ namespace ir {
       std::string accessQual;
       std::string typeQual;
       std::string argName; // My different from arg->getName()
+      uint32_t typeSize;
 
       bool isImage1dT() const {
         return typeName.compare("image1d_t") == 0;
