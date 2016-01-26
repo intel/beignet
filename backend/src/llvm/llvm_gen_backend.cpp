@@ -281,6 +281,37 @@ namespace gbe
     return CPV;
   }
 
+#define TYPESIZE(TYPE,VECT,SZ) else if(name == std::string(#TYPE).append(#VECT)) return VECT*SZ;
+#define TYPESIZEVEC(TYPE,SZ)\
+  else if(name == #TYPE) return SZ;\
+  TYPESIZE(TYPE,2,SZ)\
+  TYPESIZE(TYPE,3,SZ)\
+  TYPESIZE(TYPE,4,SZ)\
+  TYPESIZE(TYPE,8,SZ)\
+  TYPESIZE(TYPE,16,SZ)
+
+  static uint32_t getTypeSize(Module* M, const ir::Unit &unit, std::string& name) {
+      if(name == "size_t") return sizeof(size_t);
+      TYPESIZEVEC(char,1)
+      TYPESIZEVEC(uchar,1)
+      TYPESIZEVEC(short,2)
+      TYPESIZEVEC(ushort,2)
+      TYPESIZEVEC(half,2)
+      TYPESIZEVEC(int,4)
+      TYPESIZEVEC(uint,4)
+      TYPESIZEVEC(float,4)
+      TYPESIZEVEC(double,8)
+      TYPESIZEVEC(long,8)
+      TYPESIZEVEC(ulong,8)
+      else{
+        StructType *StrTy = M->getTypeByName("struct."+name);
+        if(StrTy)
+          return getTypeByteSize(unit,StrTy);
+      }
+      return 0;
+  }
+#undef TYPESIZEVEC
+#undef TYPESIZE
   /*! Handle the LLVM IR Value to Gen IR register translation. This has 2 roles:
    *  - Split the LLVM vector into several scalar values
    *  - Handle the transparent copies (bitcast or use of intrincics functions
@@ -2317,6 +2348,7 @@ namespace gbe
           continue;
         }
         if(llvmInfo.isPipeType()) {
+          llvmInfo.typeSize = getTypeSize(F.getParent(),unit,llvmInfo.typeName);
           ctx.input(argName, ir::FunctionArgument::PIPE, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type), BtiMap.find(&*I)->second);
           continue;
         }

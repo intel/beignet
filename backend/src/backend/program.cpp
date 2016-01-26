@@ -1273,6 +1273,8 @@ EXTEND_QUOTE:
         return (void *)(info->typeQual.c_str());
       case GBE_GET_ARG_INFO_NAME:
         return (void *)(info->argName.c_str());
+      case GBE_GET_ARG_INFO_TYPESIZE:
+        return (void *)((size_t)info->typeSize);
       default:
         assert(0);
     }

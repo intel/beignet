@@ -182,6 +182,7 @@ namespace ir {
       std::string accessQual;
       std::string typeQual;
       std::string argName; // My different from arg->getName()
+      uint32_t typeSize;
 
 
       // only llvm-3.6 or later has kernel_arg_base_type in metadata.

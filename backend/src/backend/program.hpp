@@ -57,6 +57,7 @@ namespace gbe {
       std::string accessQual;
       std::string typeQual;
       std::string argName;
+      uint32_t typeSize;
     };
     ArgInfo info;
   };

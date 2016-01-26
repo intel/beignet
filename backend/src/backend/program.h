@@ -66,6 +66,7 @@ enum gbe_get_arg_info_value {
   GBE_GET_ARG_INFO_TYPE = 2,
   GBE_GET_ARG_INFO_TYPEQUAL = 3,
   GBE_GET_ARG_INFO_NAME = 4,
+  GBE_GET_ARG_INFO_TYPESIZE = 5,
   GBE_GET_ARG_INFO_INVALID = 0xffffffff
 };
 

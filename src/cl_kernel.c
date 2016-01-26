@@ -169,6 +169,12 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
       return CL_INVALID_ARG_VALUE;
     if(value != NULL)
       mem = *(cl_mem*)value;
+    if(arg_type == GBE_ARG_PIPE) {
+      _cl_mem_pipe* pipe= cl_mem_pipe(mem);
+      size_t type_size = (size_t)interp_kernel_get_arg_info(k->opaque, index,5);
+      if(pipe->packet_size != type_size)
+          return CL_INVALID_ARG_VALUE;
+    }
     if(value != NULL && mem) {
       if(CL_SUCCESS != cl_mem_is_valid(mem, ctx))
         return CL_INVALID_MEM_OBJECT;

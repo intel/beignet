@@ -471,6 +471,7 @@ namespace gbe
       kernel->args[argID].info.accessQual = arg.info.accessQual;
       kernel->args[argID].info.typeQual = arg.info.typeQual;
       kernel->args[argID].info.argName = arg.info.argName;
+      kernel->args[argID].info.typeSize = arg.info.typeSize;
       switch (arg.type) {
         case ir::FunctionArgument::VALUE:
         case ir::FunctionArgument::STRUCTURE:
