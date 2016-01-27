@@ -304,7 +304,9 @@ if (ENABLE_OPENCL_20)
       compiler_generic_atomic.cpp
       compiler_atomic_functions_20.cpp
       compiler_sampler.cpp
-      compiler_generic_pointer.cpp)
+      compiler_generic_pointer.cpp
+      runtime_pipe_query.cpp
+      compiler_pipe_builtin.cpp)
 endif (ENABLE_OPENCL_20)
 
 if (NOT_BUILD_STAND_ALONE_UTEST)
