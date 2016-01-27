@@ -124,7 +124,11 @@ namespace gbe {
     llvm::Module * cloned_module = NULL;
     bool ret = true;
     if(module){
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
+      cloned_module = llvm::CloneModule((llvm::Module*)module).release();
+#else
       cloned_module = llvm::CloneModule((llvm::Module*)module);
+#endif
     }
     bool strictMath = true;
     if (fast_relaxed_math || !OCL_STRICT_CONFORMANCE)

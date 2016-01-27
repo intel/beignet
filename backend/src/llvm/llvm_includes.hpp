@@ -122,4 +122,9 @@
 
 #include <clang/CodeGen/CodeGenAction.h>
 
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=8
+#include "llvm/Analysis/BasicAliasAnalysis.h"
+#include "llvm/Analysis/TypeBasedAliasAnalysis.h"
+#endif
+
 #endif /* __GBE_IR_LLVM_INCLUDES_HPP__ */

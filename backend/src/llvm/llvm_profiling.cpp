@@ -135,7 +135,7 @@ namespace gbe
     builder = new IRBuilder<>(module->getContext());
 
     /* alloc a new buffer ptr to collect the timestamps. */
-    builder->SetInsertPoint(F.begin()->begin());
+    builder->SetInsertPoint(&*F.begin()->begin());
     llvm::Constant *profilingBuf = module->getGlobalVariable("__gen_ocl_profiling_buf");
     if (!profilingBuf) {
       profilingBuf = new GlobalVariable(*module, intTy, false,
@@ -174,7 +174,7 @@ namespace gbe
         continue;
 
       // Insert the first one at beginning of not PHI.
-      builder->SetInsertPoint(instI);
+      builder->SetInsertPoint(&*instI);
       /* Add the timestamp store function call. */
       // __gen_ocl_store_timestamp(int nth, int type);
       Value *Args[2] = {ConstantInt::get(intTy, pointNum++), ConstantInt::get(intTy, profilingType)};
@@ -190,7 +190,7 @@ namespace gbe
     BE--;
     BasicBlock::iterator retInst = BE->end();
     retInst--;
-    builder->SetInsertPoint(retInst);
+    builder->SetInsertPoint(&*retInst);
     Value *Args2[2] = {profilingBuf, ConstantInt::get(intTy, profilingType)};
 
     builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(

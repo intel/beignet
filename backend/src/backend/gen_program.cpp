@@ -450,7 +450,11 @@ namespace gbe {
     using namespace gbe;
     char* errMsg;
     if(((GenProgram*)dst_program)->module == NULL){
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
+      ((GenProgram*)dst_program)->module = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module).release();
+#else
       ((GenProgram*)dst_program)->module = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module);
+#endif
       errSize = 0;
     }else{
       llvm::Module* src = (llvm::Module*)((GenProgram*)src_program)->module;

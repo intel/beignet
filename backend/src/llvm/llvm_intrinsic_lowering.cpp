@@ -73,7 +73,7 @@ namespace gbe {
         Constant* FCache = M->getOrInsertFunction(NewFn,
                                         FunctionType::get(RetTy, ParamTys, false));
 
-        IRBuilder<> Builder(CI->getParent(), CI);
+        IRBuilder<> Builder(CI->getParent(), BasicBlock::iterator(CI));
         SmallVector<Value *, 8> Args(ArgBegin, ArgEnd);
         CallInst *NewCI = Builder.CreateCall(FCache, Args);
         NewCI->setName(CI->getName());
@@ -90,12 +90,12 @@ namespace gbe {
         DataLayout TD(M);
         LLVMContext &Context = BB.getContext();
         for (BasicBlock::iterator DI = BB.begin(); DI != BB.end(); ) {
-          Instruction *Inst = DI++;
+          Instruction *Inst = &*DI++;
           CallInst* CI = dyn_cast<CallInst>(Inst);
           if(CI == NULL)
             continue;
 
-          IRBuilder<> Builder(&BB, CI);
+          IRBuilder<> Builder(&BB, BasicBlock::iterator(CI));
           // only support memcpy and memset
           if (Function *F = CI->getCalledFunction()) {
             const Intrinsic::ID intrinsicID = (Intrinsic::ID) F->getIntrinsicID();
