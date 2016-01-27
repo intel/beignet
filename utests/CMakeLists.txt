@@ -225,7 +225,9 @@ set (utests_sources
   runtime_use_host_ptr_image.cpp
   compiler_get_sub_group_size.cpp
   compiler_get_sub_group_id.cpp
-  compiler_sub_group_shuffle.cpp)
+  compiler_sub_group_shuffle.cpp
+  runtime_pipe_query.cpp
+  compiler_pipe_builtin.cpp)
 
 if (LLVM_VERSION_NODOT VERSION_GREATER 34)
   SET(utests_sources
