@@ -600,7 +600,7 @@ clCreateImage(cl_context context,
     goto error;
   }
   if (image_format->image_channel_order < CL_R ||
-          image_format->image_channel_order > CL_RGBx) {
+          image_format->image_channel_order > CL_sBGRA) {
     err = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
     goto error;
   }
