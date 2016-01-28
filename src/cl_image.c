@@ -91,6 +91,13 @@ cl_image_byte_per_pixel(const cl_image_format *fmt, uint32_t *bpp)
         return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
       *bpp *= 4;
     break;
+    case CL_sRGBA:
+    case CL_sBGRA:
+      if (type != CL_UNORM_INT8)
+        return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+      *bpp *= 4;
+    break;
+
     default: return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
   };
 
@@ -189,13 +196,23 @@ cl_image_get_intel_format(const cl_image_format *fmt)
         case CL_UNORM_INT8:     return I965_SURFACEFORMAT_B8G8R8A8_UNORM;
         default: return INTEL_UNSUPPORTED_FORMAT;
       };
+    case CL_sRGBA:
+      switch (type) {
+        case CL_UNORM_INT8:     return I965_SURFACEFORMAT_R8G8B8A8_UNORM_SRGB;
+        default: return INTEL_UNSUPPORTED_FORMAT;
+      };
+    case CL_sBGRA:
+      switch (type) {
+        case CL_UNORM_INT8:     return I965_SURFACEFORMAT_B8G8R8A8_UNORM_SRGB;
+        default: return INTEL_UNSUPPORTED_FORMAT;
+      };
     default: return INTEL_UNSUPPORTED_FORMAT;
   };
 }
 
 static const uint32_t cl_image_order[] = {
   CL_R, CL_A, CL_RG, CL_RA, CL_RGB, CL_RGBA, CL_BGRA, CL_ARGB,
-  CL_INTENSITY, CL_LUMINANCE, CL_Rx, CL_RGx, CL_RGBx
+  CL_INTENSITY, CL_LUMINANCE, CL_Rx, CL_RGx, CL_RGBx, CL_sRGBA, CL_sBGRA
 };
 
 static const uint32_t cl_image_type[] = {

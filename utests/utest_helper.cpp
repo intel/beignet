@@ -171,6 +171,8 @@ cl_test_channel_order_string(cl_channel_order order)
     DECL_ORDER(Rx);
     DECL_ORDER(RGx);
     DECL_ORDER(RGBx);
+    DECL_ORDER(sRGBA);
+    DECL_ORDER(sBGRA);
 #undef DECL_ORDER
     default: return "Unsupported image channel order";
   };

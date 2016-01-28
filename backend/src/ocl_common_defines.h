@@ -5,7 +5,7 @@
 //
 // Common defines for Image intrinsics
 // Channel order
-#define CLK_HAS_ALPHA(color) (color == CLK_A || color == CLK_RA || color == CLK_RGBA || color == CLK_BGRA || color == CLK_ARGB)
+#define CLK_HAS_ALPHA(color) (color == CLK_A || color == CLK_RA || color == CLK_RGBA || color == CLK_BGRA || color == CLK_ARGB || color == CLK_sRGBA || color == CLK_sBGRA)
 enum {
   CLK_R = 0x10B0,
   CLK_A = 0x10B1,
@@ -28,6 +28,11 @@ enum {
   CLK_Rx = 0x10BA,
   CLK_RGx = 0x10BB,
   CLK_RGBx = 0x10BC
+#endif
+#if (__NV_CL_C_VERSION >= __NV_CL_C_VERSION_2_0)
+  ,
+  CLK_sRGBA = 0x10C1,
+  CLK_sBGRA = 0x10C2
 #endif
 };
 
