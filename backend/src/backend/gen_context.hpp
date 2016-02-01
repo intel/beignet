@@ -231,6 +231,7 @@ namespace gbe
     void calcGlobalXYZRange(GenRegister& reg, GenRegister& tmp, int flag, int subFlag);
     virtual void subTimestamps(GenRegister& t0, GenRegister& t1, GenRegister& tmp);
     virtual void addTimestamps(GenRegister& t0, GenRegister& t1, GenRegister& tmp);
+    virtual void emitPrintfLongInstruction(GenRegister& addr, GenRegister& data, GenRegister& src, uint32_t bti);
 
   private:
     CompileErrorCode errCode;
