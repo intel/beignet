@@ -572,6 +572,17 @@ namespace ir {
     uint32_t getSlmAddr(void) const;
   };
 
+  /*! Printf instruction. */
+  class PrintfInstruction : public Instruction {
+  public:
+    uint32_t getNum(void) const;
+    uint32_t getBti(void) const;
+    Type getType(const Function& fn, uint32_t ID) const;
+    Type getType(uint32_t ID) const { return this->getType(this->getFunction(), ID); };
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
   /*! Specialize the instruction. Also performs typechecking first based on the
    *  opcode. Crashes if it fails
    */
@@ -792,6 +803,8 @@ namespace ir {
 
   /*! work group */
   Instruction WORKGROUP(WorkGroupOps opcode, uint32_t slmAddr, Register dst, Tuple srcTuple, uint8_t srcNum, Type type);
+  /*! printf */
+  Instruction PRINTF(Register dst, Tuple srcTuple, Tuple typeTuple, uint8_t srcNum, uint8_t bti, uint16_t num);
 } /* namespace ir */
 } /* namespace gbe */
 

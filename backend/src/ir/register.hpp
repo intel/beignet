@@ -179,6 +179,18 @@ namespace ir {
     }
     /*! To terminate variadic recursion */
     INLINE void appendTuple(void) {}
+    /*! Make a tuple from an array of Type */
+    Tuple appendArrayTypeTuple(const uint8_t *types, uint32_t num);
+    /*! Make a tuple and return the index to the first element of the tuple */
+    template <typename First, typename... Rest>
+    INLINE Tuple appendTypeTuple(First first, Rest... rest) {
+      const Tuple index = Tuple(typeTuples.size());
+      typeTuples.push_back(first);
+      appendTuple(rest...);
+      return index;
+    }
+    /*! To terminate variadic recursion */
+    INLINE void appendTypeTuple(void) {}
     /*! Return a copy of the register at index */
     INLINE RegisterData get(Register index) const { return regs[index]; }
     /*! Return true if the specified register is uniform type. */
@@ -205,6 +217,14 @@ namespace ir {
     INLINE void set(Tuple index, uint32_t which, Register reg) {
       regTuples[index.value() + which] = reg;
     }
+    /*! Get the type from the tuple */
+    INLINE uint8_t getType(Tuple index, uint32_t which) const {
+      return typeTuples[index.value() + which];
+    }
+    /*! Set the type to the tuple */
+    INLINE void setType(Tuple index, uint32_t which, uint8_t type) {
+      typeTuples[index.value() + which] = type;
+    }
     /*! Number of registers in the register file */
     INLINE uint32_t regNum(void) const { return regs.size(); }
     /*! Number of tuples in the register file */
@@ -214,6 +234,7 @@ namespace ir {
   private:
     vector<RegisterData> regs;   //!< All the registers together
     vector<Register> regTuples;  //!< Tuples are used for many src / dst
+    vector<uint8_t> typeTuples;  //!< Tuples are used for one instruction has multi src/dst types.
     GBE_CLASS(RegisterFile);
   };
 

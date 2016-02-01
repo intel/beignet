@@ -62,6 +62,14 @@ namespace ir {
     return index;
   }
 
+  Tuple RegisterFile::appendArrayTypeTuple(const uint8_t *types, uint32_t num) {
+    const Tuple index = Tuple(typeTuples.size());
+    for (uint32_t id = 0; id < num; id++) {
+      typeTuples.push_back(types[id]);
+    }
+    return index;
+  }
+
 } /* namespace ir */
 } /* namespace gbe */
 
