@@ -994,6 +994,40 @@ namespace ir {
         Register dst[1];
     };
 
+    class ALIGNED_INSTRUCTION PrintfInstruction :
+      public BasePolicy,
+      public TupleSrcPolicy<PrintfInstruction>,
+      public NDstPolicy<PrintfInstruction, 1>
+    {
+      public:
+        INLINE PrintfInstruction(Register dst, Tuple srcTuple, Tuple typeTuple,
+                                 uint8_t srcNum, uint8_t bti, uint16_t num) {
+          this->opcode = OP_PRINTF;
+          this->dst[0] = dst;
+          this->src = srcTuple;
+          this->type = typeTuple;
+          this->srcNum = srcNum;
+          this->bti = bti;
+          this->num = num;
+        }
+        INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
+        INLINE void out(std::ostream &out, const Function &fn) const;
+
+        uint32_t getNum(void) const { return this->num; }
+        uint32_t getBti(void) const { return this->bti; }
+        Type getType(const Function& fn, uint32_t ID) const {
+          GBE_ASSERTM(ID < this->srcNum, "Out-of-bound types");
+          return (Type)fn.getType(type, ID);
+        }
+
+        uint32_t srcNum:8;    //!< Source Number
+        uint32_t bti:8;       //!< The BTI
+        uint32_t num:16;      //!< The printf statement number of one kernel.
+        Tuple src;
+        Tuple type;
+        Register dst[1];
+    };
+
 #undef ALIGNED_INSTRUCTION
 
     /////////////////////////////////////////////////////////////////////////
@@ -1473,6 +1507,10 @@ namespace ir {
       return true;
     }
 
+    INLINE bool PrintfInstruction::wellFormed(const Function &fn, std::string &whyNot) const {
+      return true;
+    }
+
 #undef CHECK_TYPE
 
     /////////////////////////////////////////////////////////////////////////
@@ -1702,6 +1740,11 @@ namespace ir {
 
       out << "TheadID Map at SLM: " << this->slmAddr;
     }
+
+    INLINE void PrintfInstruction::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+    }
+
   } /* namespace internal */
 
   std::ostream &operator<< (std::ostream &out, AddressSpace addrSpace) {
@@ -1862,6 +1905,10 @@ START_INTROSPECTION(WorkGroupInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(WorkGroupInstruction)
 
+START_INTROSPECTION(PrintfInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(PrintfInstruction)
+
 #undef END_INTROSPECTION
 #undef START_INTROSPECTION
 #undef DECL_INSN
@@ -2008,7 +2055,8 @@ END_FUNCTION(Instruction, Register)
            opcode == OP_ATOMIC ||
            opcode == OP_CALC_TIMESTAMP ||
            opcode == OP_STORE_PROFILING ||
-           opcode == OP_WAIT;
+           opcode == OP_WAIT ||
+           opcode == OP_PRINTF;
   }
 
 #define DECL_MEM_FN(CLASS, RET, PROTOTYPE, CALL) \
@@ -2071,6 +2119,9 @@ DECL_MEM_FN(StoreProfilingInstruction, uint32_t, getBTI(void), getBTI())
 DECL_MEM_FN(WorkGroupInstruction, Type, getType(void), getType())
 DECL_MEM_FN(WorkGroupInstruction, WorkGroupOps, getWorkGroupOpcode(void), getWorkGroupOpcode())
 DECL_MEM_FN(WorkGroupInstruction, uint32_t, getSlmAddr(void), getSlmAddr())
+DECL_MEM_FN(PrintfInstruction, uint32_t, getNum(void), getNum())
+DECL_MEM_FN(PrintfInstruction, uint32_t, getBti(void), getBti())
+DECL_MEM_FN(PrintfInstruction, Type, getType(const Function& fn, uint32_t ID), getType(fn, ID))
 
 #undef DECL_MEM_FN
 
@@ -2367,6 +2418,10 @@ DECL_MEM_FN(MemInstruction, void,     setBtiReg(Register reg), setBtiReg(reg))
 
   Instruction WORKGROUP(WorkGroupOps opcode, uint32_t slmAddr, Register dst, Tuple srcTuple, uint8_t srcNum, Type type) {
     return internal::WorkGroupInstruction(opcode, slmAddr, dst, srcTuple, srcNum, type).convert();
+  }
+
+  Instruction PRINTF(Register dst, Tuple srcTuple, Tuple typeTuple, uint8_t srcNum, uint8_t bti, uint16_t num) {
+    return internal::PrintfInstruction(dst, srcTuple, typeTuple, srcNum, bti, num).convert();
   }
 
   std::ostream &operator<< (std::ostream &out, const Instruction &insn) {
