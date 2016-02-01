@@ -691,6 +691,9 @@ namespace gbe
     void TYPED_WRITE(GenRegister *msgs, uint32_t msgNum, uint32_t bti, bool is3D);
     /*! Get image information */
     void GET_IMAGE_INFO(uint32_t type, GenRegister *dst, uint32_t dst_num, uint32_t bti);
+    /*! Printf */
+    void PRINTF(GenRegister dst, uint8_t bti, GenRegister tmp0, GenRegister tmp1, GenRegister src[8],
+                int srcNum, uint16_t num, bool isContinue, uint32_t totalSize);
     /*! Multiply 64-bit integers */
     void I64MUL(Reg dst, Reg src0, Reg src1, GenRegister *tmp, bool native_long);
     /*! 64-bit integer division */
@@ -2045,6 +2048,53 @@ namespace gbe
       insn->dst(i + 1) = tmp[i];
   }
 
+  void Selection::Opaque::PRINTF(GenRegister dst, uint8_t bti, GenRegister tmp0, GenRegister tmp1,
+               GenRegister src[8], int srcNum, uint16_t num, bool isContinue, uint32_t totalSize) {
+    if (isContinue) {
+      SelectionInstruction *insn = this->appendInsn(SEL_OP_PRINTF, 3, srcNum + 1);
+      SelectionVector *vector = this->appendVector();
+
+      for (int i = 0; i < srcNum; i++)
+        insn->src(i) = src[i];
+
+      insn->src(srcNum) = tmp0;
+
+      insn->dst(0) = dst;
+      insn->dst(1) = tmp0;
+      insn->dst(2) = tmp1;
+
+      vector->regNum = 2;
+      vector->reg = &insn->dst(1);
+      vector->offsetID = 0;
+      vector->isSrc = 0;
+
+      insn->extra.printfSize = static_cast<uint16_t>(totalSize);
+      insn->extra.continueFlag = isContinue;
+      insn->extra.printfBTI = bti;
+      insn->extra.printfNum = num;
+    } else {
+      SelectionInstruction *insn = this->appendInsn(SEL_OP_PRINTF, 3, srcNum);
+      SelectionVector *vector = this->appendVector();
+
+      for (int i = 0; i < srcNum; i++)
+        insn->src(i) = src[i];
+
+      insn->dst(0) = dst;
+      insn->dst(1) = tmp0;
+      insn->dst(2) = tmp1;
+
+      vector->regNum = 2;
+      vector->reg = &insn->dst(1);
+      vector->offsetID = 0;
+      vector->isSrc = 0;
+
+      insn->extra.printfSize = static_cast<uint16_t>(totalSize);
+      insn->extra.continueFlag = isContinue;
+      insn->extra.printfBTI = bti;
+      insn->extra.printfNum = num;
+    }
+  }
+
   void Selection::Opaque::WORKGROUP_OP(uint32_t wg_op,
                                        Reg dst,
                                        GenRegister src,
@@ -2066,6 +2116,7 @@ namespace gbe
     vector->offsetID = 0;
     vector->reg = &insn->dst(2);
     vector->isSrc = 0;
+
     insn->extra.workgroupOp = wg_op;
 
     insn->dst(0) = dst;
@@ -6260,6 +6311,71 @@ namespace gbe
     }
   };
 
+  class PrintfInstructionPattern : public SelectionPattern
+  {
+  public:
+    PrintfInstructionPattern(void) : SelectionPattern(1,1) {
+      this->opcodes.push_back(ir::OP_PRINTF);
+    }
+    INLINE bool emit(Selection::Opaque &sel, SelectionDAG &dag) const {
+      using namespace ir;
+      const ir::PrintfInstruction &insn = cast<ir::PrintfInstruction>(dag.insn);
+      uint16_t num = insn.getNum();
+      uint8_t BTI = insn.getBti();
+      GenRegister tmp0, tmp1;
+      uint32_t srcNum = insn.getSrcNum();
+      GenRegister dst = sel.selReg(insn.getDst(0), TYPE_S32);
+      //GBE_ASSERT(srcNum);
+      uint32_t i = 0;
+      uint32_t totalSize = 0;
+      bool isContinue = false;
+      GBE_ASSERT(sel.ctx.getSimdWidth() == 16 || sel.ctx.getSimdWidth() == 8);
+      if (sel.ctx.getSimdWidth() == 16) {
+        tmp0 = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
+        tmp1 = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
+      } else {
+        tmp0 = GenRegister::retype(sel.selReg(sel.reg(FAMILY_QWORD)), GEN_TYPE_UD);
+        tmp1 = GenRegister::retype(sel.selReg(sel.reg(FAMILY_QWORD)), GEN_TYPE_UD);
+      }
+
+      /* Get the total size for one printf statement. */
+      for (i = 0; i < srcNum; i++) {
+        Type type = insn.getType(i);
+        if (type == TYPE_DOUBLE || type == TYPE_S64 || type == TYPE_U64) {
+          totalSize += 8;
+        } else {
+          totalSize += 4; // Make sure always align to 4.
+        }
+      }
+
+      i = 0;
+      GenRegister regs[8];
+      if (srcNum == 0) {
+          sel.PRINTF(dst, BTI, tmp0, tmp1, regs, srcNum, num, isContinue, totalSize);
+      } else {
+        do {
+          uint32_t s = srcNum < 8 ? srcNum : 8;
+          for (uint32_t j = 0; j < s; j++) {
+            regs[j] = sel.selReg(insn.getSrc(i + j), insn.getType(i + j));
+          }
+          sel.PRINTF(dst, BTI, tmp0, tmp1, regs, s, num, isContinue, totalSize);
+
+          if (srcNum > 8) {
+            srcNum -= 8;
+            i += 8;
+          } else {
+            srcNum = 0;
+          }
+
+          isContinue = true;
+        } while(srcNum);
+      }
+
+      markAllChildren(dag);
+      return true;
+    }
+  };
+
   /*! Branch instruction pattern */
   class BranchInstructionPattern : public SelectionPattern
   {
@@ -6687,6 +6803,7 @@ namespace gbe
     this->insert<IndirectMovInstructionPattern>();
     this->insert<WorkGroupInstructionPattern>();
     this->insert<NullaryInstructionPattern>();
+    this->insert<PrintfInstructionPattern>();
 
     // Sort all the patterns with the number of instructions they output
     for (uint32_t op = 0; op < ir::OP_INVALID; ++op)
