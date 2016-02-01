@@ -43,7 +43,6 @@ namespace ir {
         "barrier_id", "thread_number", "work_dimension",
         "zero", "one",
         "retVal",
-        "printf_buffer_pointer", "printf_index_buffer_pointer",
         "dwblockip",
         "threadid",
         "constant_addrspace_start",
@@ -90,8 +89,6 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, zero, 1);
       DECL_NEW_REG(FAMILY_DWORD, one, 1);
       DECL_NEW_REG(FAMILY_WORD, retVal, 1);
-      DECL_NEW_REG(FAMILY_QWORD, printfbptr, 1, GBE_CURBE_PRINTF_BUF_POINTER);
-      DECL_NEW_REG(FAMILY_QWORD, printfiptr, 1, GBE_CURBE_PRINTF_INDEX_POINTER);
       DECL_NEW_REG(FAMILY_DWORD, dwblockip, 0, GBE_CURBE_DW_BLOCK_IP);
       DECL_NEW_REG(FAMILY_DWORD, threadid, 1, GBE_CURBE_THREAD_ID);
       DECL_NEW_REG(FAMILY_QWORD, constant_addrspace, 1, GBE_CURBE_CONSTANT_ADDRSPACE);

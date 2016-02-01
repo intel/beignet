@@ -97,8 +97,6 @@ enum gbe_curbe_type {
   GBE_CURBE_GROUP_NUM_Z,
   GBE_CURBE_WORK_DIM,
   GBE_CURBE_IMAGE_INFO,
-  GBE_CURBE_PRINTF_BUF_POINTER,
-  GBE_CURBE_PRINTF_INDEX_POINTER,
   GBE_CURBE_KERNEL_ARGUMENT,
   GBE_CURBE_EXTRA_ARGUMENT,
   GBE_CURBE_BLOCK_IP,
@@ -148,9 +146,6 @@ extern gbe_get_printf_num_cb *gbe_get_printf_num;
 typedef uint8_t (gbe_get_printf_buf_bti_cb)(void* printf_info);
 extern gbe_get_printf_buf_bti_cb *gbe_get_printf_buf_bti;
 
-typedef uint8_t (gbe_get_printf_indexbuf_bti_cb)(void* printf_info);
-extern gbe_get_printf_indexbuf_bti_cb *gbe_get_printf_indexbuf_bti;
-
 /*! Release the printfset */
 typedef void (gbe_release_printf_info_cb)(void* printf_info);
 extern gbe_release_printf_info_cb *gbe_release_printf_info;
@@ -159,12 +154,7 @@ extern gbe_release_printf_info_cb *gbe_release_printf_info;
 typedef void* (gbe_dup_printfset_cb)(gbe_kernel gbeKernel);
 extern gbe_dup_printfset_cb *gbe_dup_printfset;
 
-/*! Get the printf buffer const offset */
-typedef uint32_t (gbe_get_printf_sizeof_size_cb)(void* printf_info);
-extern gbe_get_printf_sizeof_size_cb *gbe_get_printf_sizeof_size;
-
-typedef void (gbe_output_printf_cb) (void* printf_info, void* index_addr, void* buf_addr,
-              size_t global_wk_sz0, size_t global_wk_sz1, size_t global_wk_sz2, size_t outbuf_sz);
+typedef void (gbe_output_printf_cb) (void* printf_info, void* buf_addr);
 extern gbe_output_printf_cb* gbe_output_printf;
 
 /*! Create a new program from the given source code (zero terminated string) */

@@ -99,8 +99,7 @@ namespace gbe
     } while (0)
 
 
-    void PrintfSet::outputPrintf(void* index_addr, void* buf_addr, size_t global_wk_sz0,
-                                 size_t global_wk_sz1, size_t global_wk_sz2, size_t output_sz)
+    void PrintfSet::outputPrintf(void* index_addr)
     {
       LockOutput lock;
     }

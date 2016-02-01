@@ -243,8 +243,7 @@ namespace gbe
         return 0;
       }
 
-      void outputPrintf(void* index_addr, void* buf_addr, size_t global_wk_sz0,
-                        size_t global_wk_sz1, size_t global_wk_sz2, size_t output_sz);
+      void outputPrintf(void* index_addr);
 
     private:
       std::map<uint32_t, PrintfFmt> fmts;

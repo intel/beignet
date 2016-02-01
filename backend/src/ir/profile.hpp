@@ -71,13 +71,11 @@ namespace ir {
     static const Register zero = Register(27);     //  scalar register holds zero.
     static const Register one = Register(28);     //  scalar register holds one.
     static const Register retVal = Register(29);   // helper register to do data flow analysis.
-    static const Register printfbptr = Register(30); // printf buffer address .
-    static const Register printfiptr = Register(31); // printf index buffer address.
-    static const Register dwblockip = Register(32);  // blockip
-    static const Register threadid = Register(33); // the thread id of this thread.
-    static const Register constant_addrspace = Register(34);  // starting address of program-scope constant
-    static const Register stacksize = Register(35); // stack buffer total size
-    static const uint32_t regNum = 36;             // number of special registers
+    static const Register dwblockip = Register(30);  // blockip
+    static const Register threadid = Register(31); // the thread id of this thread.
+    static const Register constant_addrspace = Register(32);  // starting address of program-scope constant
+    static const Register stacksize = Register(33); // stack buffer total size
+    static const uint32_t regNum = 34;             // number of special registers
     extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 

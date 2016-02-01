@@ -305,31 +305,20 @@ error:
 LOCAL int
 cl_command_queue_flush_gpgpu(cl_command_queue queue, cl_gpgpu gpgpu)
 {
-  size_t global_wk_sz[3];
-  size_t outbuf_sz = 0;
-  void* printf_info = cl_gpgpu_get_printf_info(gpgpu, global_wk_sz, &outbuf_sz);
+  void* printf_info = cl_gpgpu_get_printf_info(gpgpu);
 
   if (cl_gpgpu_flush(gpgpu) < 0)
     return CL_OUT_OF_RESOURCES;
 
   if (printf_info && interp_get_printf_num(printf_info)) {
-    void *index_addr = cl_gpgpu_map_printf_buffer(gpgpu, 0);
-    void *buf_addr = NULL;
-    if (interp_get_printf_sizeof_size(printf_info))
-      buf_addr = cl_gpgpu_map_printf_buffer(gpgpu, 1);
-
-    interp_output_printf(printf_info, index_addr, buf_addr, global_wk_sz[0],
-                      global_wk_sz[1], global_wk_sz[2], outbuf_sz);
-
-    cl_gpgpu_unmap_printf_buffer(gpgpu, 0);
-    if (interp_get_printf_sizeof_size(printf_info))
-      cl_gpgpu_unmap_printf_buffer(gpgpu, 1);
+    void *addr = cl_gpgpu_map_printf_buffer(gpgpu);
+    interp_output_printf(printf_info, addr);
+    cl_gpgpu_unmap_printf_buffer(gpgpu);
   }
 
   if (printf_info) {
     interp_release_printf_info(printf_info);
-    global_wk_sz[0] = global_wk_sz[1] = global_wk_sz[2] = 0;
-    cl_gpgpu_set_printf_info(gpgpu, NULL, global_wk_sz);
+    cl_gpgpu_set_printf_info(gpgpu, NULL);
   }
   return CL_SUCCESS;
 }

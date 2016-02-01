@@ -1162,15 +1162,11 @@ if(sizeof(int*) == 8) {
     delete ps;
   }
 
-  static void kernelOutputPrintf(void * printf_info, void* index_addr,
-                                 void* buf_addr, size_t global_wk_sz0,
-                                 size_t global_wk_sz1, size_t global_wk_sz2,
-                                 size_t output_sz)
+  static void kernelOutputPrintf(void * printf_info, void* buf_addr)
   {
     if (printf_info == NULL) return;
     ir::PrintfSet *ps = (ir::PrintfSet *)printf_info;
-    ps->outputPrintf(index_addr, buf_addr, global_wk_sz0,
-                         global_wk_sz1, global_wk_sz2, output_sz);
+    ps->outputPrintf(buf_addr);
   }
 
   static void kernelGetCompileWorkGroupSize(gbe_kernel gbeKernel, size_t wg_size[3]) {
@@ -1253,9 +1249,7 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_image_data_cb *gbe_kernel_get_image_data = NULL
 GBE_EXPORT_SYMBOL gbe_get_printf_num_cb *gbe_get_printf_num = NULL;
 GBE_EXPORT_SYMBOL gbe_dup_printfset_cb *gbe_dup_printfset = NULL;
 GBE_EXPORT_SYMBOL gbe_get_printf_buf_bti_cb *gbe_get_printf_buf_bti = NULL;
-GBE_EXPORT_SYMBOL gbe_get_printf_indexbuf_bti_cb *gbe_get_printf_indexbuf_bti = NULL;
 GBE_EXPORT_SYMBOL gbe_release_printf_info_cb *gbe_release_printf_info = NULL;
-GBE_EXPORT_SYMBOL gbe_get_printf_sizeof_size_cb *gbe_get_printf_sizeof_size = NULL;
 GBE_EXPORT_SYMBOL gbe_output_printf_cb *gbe_output_printf = NULL;
 
 #ifdef GBE_COMPILER_AVAILABLE

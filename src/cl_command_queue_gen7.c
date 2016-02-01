@@ -305,31 +305,19 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
   cl_gpgpu_set_stack(gpgpu, offset_stack_buffer, stack_sz, BTI_PRIVATE);
 }
 
+
 static int
-cl_bind_printf(cl_gpgpu gpgpu, cl_kernel ker, void* printf_info, int printf_num, size_t global_sz) {
-  int32_t value = GBE_CURBE_PRINTF_INDEX_POINTER;
-  int32_t offset = interp_kernel_get_curbe_offset(ker->opaque, value, 0);
-  size_t buf_size = global_sz * sizeof(int) * printf_num;
-  if (offset > 0) {
-    if (cl_gpgpu_set_printf_buffer(gpgpu, 0, buf_size*2, offset, interp_get_printf_indexbuf_bti(printf_info)) != 0)
-      return -1;
-  }
-
-  value = GBE_CURBE_PRINTF_BUF_POINTER;
-  offset = interp_kernel_get_curbe_offset(ker->opaque, value, 0);
-  buf_size = interp_get_printf_sizeof_size(printf_info) * global_sz;
-  /* because of the printf may exist in a loop, which loop number can not be gotten by
-     static analysis. So we set the data buffer as big as we can. Out of bound printf
-     info will be discarded. */
-  if (buf_size < 1*1024)
+cl_alloc_printf(cl_gpgpu gpgpu, cl_kernel ker, void* printf_info, int printf_num, size_t global_sz) {
+  /* An guess size. */
+  size_t buf_size = global_sz * sizeof(int) * 16 * printf_num;
+  if (buf_size > 16*1024*1024) //at most.
+    buf_size = 16*1024*1024;
+  if (buf_size < 1*1024*1024) // at least.
     buf_size = 1*1024*1024;
-  else
-    buf_size = 16*1024*1024; //at most.
 
-  if (offset > 0) {
-    if (cl_gpgpu_set_printf_buffer(gpgpu, 1, buf_size, offset, interp_get_printf_buf_bti(printf_info)) != 0)
-      return -1;
-  }
+  if (cl_gpgpu_set_printf_buffer(gpgpu, buf_size, interp_get_printf_buf_bti(printf_info)) != 0)
+	return -1;
+
   return 0;
 }
 
@@ -389,7 +377,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   }
 
   printf_info = interp_dup_printfset(ker->opaque);
-  cl_gpgpu_set_printf_info(gpgpu, printf_info, (size_t *)global_wk_sz);
+  cl_gpgpu_set_printf_info(gpgpu, printf_info);
 
   /* Setup the kernel */
   if (queue->props & CL_QUEUE_PROFILING_ENABLE)
@@ -400,7 +388,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
     goto error;
   printf_num = interp_get_printf_num(printf_info);
   if (printf_num) {
-    if (cl_bind_printf(gpgpu, ker, printf_info, printf_num, global_size) != 0)
+    if (cl_alloc_printf(gpgpu, ker, printf_info, printf_num, global_size) != 0)
       goto error;
   }
 
