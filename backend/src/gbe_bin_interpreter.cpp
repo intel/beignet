@@ -68,9 +68,7 @@ struct BinInterpCallBackInitializer
     gbe_kernel_get_arg_info = gbe::kernelGetArgInfo;
     gbe_get_printf_num = gbe::kernelGetPrintfNum;
     gbe_get_printf_buf_bti = gbe::kernelGetPrintfBufBTI;
-    gbe_get_printf_indexbuf_bti = gbe::kernelGetPrintfIndexBufBTI;
     gbe_dup_printfset = gbe::kernelDupPrintfSet;
-    gbe_get_printf_sizeof_size = gbe::kernelGetPrintfSizeOfSize;
     gbe_release_printf_info = gbe::kernelReleasePrintfSet;
     gbe_output_printf = gbe::kernelOutputPrintf;
   }

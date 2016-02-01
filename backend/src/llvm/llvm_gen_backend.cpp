@@ -2779,13 +2779,7 @@ namespace gbe
       } else if(addrSpace == ir::MEM_CONSTANT
              || addrSpace == ir::MEM_GLOBAL
              || v.isConstant()) {
-        if(v.getName().equals(StringRef("__gen_ocl_printf_buf"))) {
-          ctx.getFunction().getPrintfSet()->setBufBTI(BtiMap.find(const_cast<GlobalVariable*>(&v))->second);
-          regTranslator.newScalarProxy(ir::ocl::printfbptr, const_cast<GlobalVariable*>(&v));
-        } else if(v.getName().equals(StringRef("__gen_ocl_printf_index_buf"))) {
-          ctx.getFunction().getPrintfSet()->setIndexBufBTI(BtiMap.find(const_cast<GlobalVariable*>(&v))->second);
-          regTranslator.newScalarProxy(ir::ocl::printfiptr, const_cast<GlobalVariable*>(&v));
-        } else {
+        {
           this->newRegister(const_cast<GlobalVariable*>(&v));
           ir::Register reg = regTranslator.getScalar(const_cast<GlobalVariable*>(&v), 0);
           ir::Constant &con = unit.getConstantSet().getConstant(v.getName());
@@ -4799,9 +4793,6 @@ namespace gbe
 
           case GEN_OCL_PRINTF:
           {
-            ir::PrintfSet::PrintfFmt* fmt = (ir::PrintfSet::PrintfFmt*)getPrintfInfo(&I);
-            ctx.getFunction().getPrintfSet()->append(fmt, unit);
-            assert(fmt);
             break;
           }
           case GEN_OCL_SIMD_SIZE:

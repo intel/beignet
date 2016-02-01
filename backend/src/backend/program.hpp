@@ -132,10 +132,7 @@ namespace gbe {
     void setPrintfSet(ir::PrintfSet * from) {
       printfSet = from;
     }
-    /* ! Return the offset in the sizeof(xxx). */
-    uint32_t getPrintfSizeOfSize(void) const {
-      return printfSet ? printfSet->getPrintfSizeOfSize() : 0;
-    }
+
     uint32_t getPrintfNum() const {
       return printfSet ? printfSet->getPrintfNum() : 0;
     }
@@ -147,11 +144,6 @@ namespace gbe {
     uint8_t getPrintfBufBTI() const {
       GBE_ASSERT(printfSet);
       return printfSet->getBufBTI();
-    }
-
-    uint8_t getPrintfIndexBufBTI() const {
-      GBE_ASSERT(printfSet);
-      return printfSet->getIndexBufBTI();
     }
 
     void outputPrintf(void* index_addr, void* buf_addr, size_t global_wk_sz0,
