@@ -149,6 +149,12 @@ namespace gbe
         uint32_t profilingType:16;
         uint32_t profilingBTI:16;
       };
+      struct {
+        uint32_t printfNum:16;
+        uint32_t printfBTI:8;
+        uint32_t continueFlag:8;
+        uint16_t printfSize;
+      };
       uint32_t workgroupOp;
     } extra;
     /*! Gen opcode */

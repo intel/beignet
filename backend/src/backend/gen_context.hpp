@@ -181,6 +181,7 @@ namespace gbe
     void emitCalcTimestampInstruction(const SelectionInstruction &insn);
     void emitStoreProfilingInstruction(const SelectionInstruction &insn);
     void emitWorkGroupOpInstruction(const SelectionInstruction &insn);
+    void emitPrintfInstruction(const SelectionInstruction &insn);
     void scratchWrite(const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode);
     void scratchRead(const GenRegister dst, const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode);
     unsigned beforeMessage(const SelectionInstruction &insn, GenRegister bti, GenRegister flagTemp, GenRegister btiTmp, unsigned desc);
