@@ -341,6 +341,14 @@ namespace ir {
     INLINE void setRegister(Tuple ID, uint32_t which, Register reg) {
       file.set(ID, which, reg);
     }
+    /*! Get the type from the tuple vector */
+    INLINE uint8_t getType(Tuple ID, uint32_t which) const {
+      return file.getType(ID, which);
+    }
+    /*! Set the type into the tuple vector */
+    INLINE void setType(Tuple ID, uint32_t which, uint8_t type) {
+      file.setType(ID, which, type);
+    }
     /*! Get the register file */
     INLINE const RegisterFile &getRegisterFile(void) const { return file; }
     /*! Get the given value ie immediate from the function */
