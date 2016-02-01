@@ -68,17 +68,15 @@ namespace ir {
     static const Register zero = Register(24);     //  scalar register holds zero.
     static const Register one = Register(25);     //  scalar register holds one. 
     static const Register retVal = Register(26);   // helper register to do data flow analysis.
-    static const Register printfbptr = Register(27); // printf buffer address .
-    static const Register printfiptr = Register(28); // printf index buffer address.
-    static const Register dwblockip = Register(29);  // blockip
-    static const Register profilingbptr = Register(30); // buffer addr for profiling.
-    static const Register profilingts0 = Register(31); // timestamp for profiling.
-    static const Register profilingts1 = Register(32); // timestamp for profiling.
-    static const Register profilingts2 = Register(33); // timestamp for profiling.
-    static const Register profilingts3 = Register(34); // timestamp for profiling.
-    static const Register profilingts4 = Register(35); // timestamp for profiling.
-    static const Register threadid = Register(36); // the thread id of this thread.
-    static const uint32_t regNum = 37;             // number of special registers
+    static const Register dwblockip = Register(27);  // blockip
+    static const Register profilingbptr = Register(28); // buffer addr for profiling.
+    static const Register profilingts0 = Register(29); // timestamp for profiling.
+    static const Register profilingts1 = Register(30); // timestamp for profiling.
+    static const Register profilingts2 = Register(31); // timestamp for profiling.
+    static const Register profilingts3 = Register(32); // timestamp for profiling.
+    static const Register profilingts4 = Register(33); // timestamp for profiling.
+    static const Register threadid = Register(34); // the thread id of this thread.
+    static const uint32_t regNum = 35;             // number of special registers
     extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 

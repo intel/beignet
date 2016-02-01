@@ -42,7 +42,6 @@ namespace ir {
         "barrier_id", "thread_number", "work_dimension",
         "zero", "one",
         "retVal",
-        "printf_buffer_pointer", "printf_index_buffer_pointer",
         "dwblockip",
         "profiling_buffer_pointer",
         "profiling_timestamps0", "profiling_timestamps1",
@@ -88,8 +87,6 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, zero, 1);
       DECL_NEW_REG(FAMILY_DWORD, one, 1);
       DECL_NEW_REG(FAMILY_WORD, retVal, 1);
-      DECL_NEW_REG(FAMILY_QWORD, printfbptr, 1, GBE_CURBE_PRINTF_BUF_POINTER);
-      DECL_NEW_REG(FAMILY_QWORD, printfiptr, 1, GBE_CURBE_PRINTF_INDEX_POINTER);
       DECL_NEW_REG(FAMILY_DWORD, dwblockip, 0, GBE_CURBE_DW_BLOCK_IP);
       DECL_NEW_REG(FAMILY_QWORD, profilingbptr, 1, GBE_CURBE_PROFILING_BUF_POINTER);
       DECL_NEW_REG(FAMILY_DWORD, profilingts0, 0, GBE_CURBE_PROFILING_TIMESTAMP0);

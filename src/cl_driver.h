@@ -290,7 +290,7 @@ typedef void (cl_gpgpu_unmap_profiling_buffer_cb)(cl_gpgpu);
 extern cl_gpgpu_unmap_profiling_buffer_cb *cl_gpgpu_unmap_profiling_buffer;
 
 /* Set the printf buffer */
-typedef int (cl_gpgpu_set_printf_buffer_cb)(cl_gpgpu, uint32_t, uint32_t, uint32_t, uint8_t);
+typedef int (cl_gpgpu_set_printf_buffer_cb)(cl_gpgpu, uint32_t, uint8_t);
 extern cl_gpgpu_set_printf_buffer_cb *cl_gpgpu_set_printf_buffer;
 
 /* get the printf buffer offset in the apeture*/
@@ -298,23 +298,23 @@ typedef unsigned long (cl_gpgpu_reloc_printf_buffer_cb)(cl_gpgpu, uint32_t, uint
 extern cl_gpgpu_reloc_printf_buffer_cb *cl_gpgpu_reloc_printf_buffer;
 
 /* map the printf buffer */
-typedef void* (cl_gpgpu_map_printf_buffer_cb)(cl_gpgpu, uint32_t);
+typedef void* (cl_gpgpu_map_printf_buffer_cb)(cl_gpgpu);
 extern cl_gpgpu_map_printf_buffer_cb *cl_gpgpu_map_printf_buffer;
 
 /* unmap the printf buffer */
-typedef void (cl_gpgpu_unmap_printf_buffer_cb)(cl_gpgpu, uint32_t);
+typedef void (cl_gpgpu_unmap_printf_buffer_cb)(cl_gpgpu);
 extern cl_gpgpu_unmap_printf_buffer_cb *cl_gpgpu_unmap_printf_buffer;
 
 /* release the printf buffer */
-typedef unsigned long (cl_gpgpu_release_printf_buffer_cb)(cl_gpgpu, uint32_t);
+typedef unsigned long (cl_gpgpu_release_printf_buffer_cb)(cl_gpgpu);
 extern cl_gpgpu_release_printf_buffer_cb *cl_gpgpu_release_printf_buffer;
 
 /* Set the last printfset pointer */
-typedef int (cl_gpgpu_set_printf_info_cb)(cl_gpgpu, void *, size_t*);
+typedef int (cl_gpgpu_set_printf_info_cb)(cl_gpgpu, void *);
 extern cl_gpgpu_set_printf_info_cb *cl_gpgpu_set_printf_info;
 
 /* Get the last printfset pointer */
-typedef void* (cl_gpgpu_get_printf_info_cb)(cl_gpgpu, size_t*, size_t*);
+typedef void* (cl_gpgpu_get_printf_info_cb)(cl_gpgpu);
 extern cl_gpgpu_get_printf_info_cb *cl_gpgpu_get_printf_info;
 
 /* Will spawn all threads */

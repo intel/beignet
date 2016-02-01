@@ -166,13 +166,6 @@ namespace gbe {
       return printfSet->getBufBTI();
     }
 
-    void outputPrintf(void* index_addr, void* buf_addr, size_t global_wk_sz0,
-                      size_t global_wk_sz1, size_t global_wk_sz2, size_t output_sz) {
-      if(printfSet)
-        printfSet->outputPrintf(index_addr, buf_addr, global_wk_sz0,
-                                global_wk_sz1, global_wk_sz2, output_sz);
-    }
-
     uint32_t getProfilingBufBTI() const {
       GBE_ASSERT(profilingInfo);
       return profilingInfo->getBTI();

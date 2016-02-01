@@ -142,8 +142,6 @@ intel_gpgpu_delete_finished(intel_gpgpu_t *gpgpu)
     drm_intel_bo_unreference(gpgpu->time_stamp_b.bo);
   if(gpgpu->printf_b.bo)
     drm_intel_bo_unreference(gpgpu->printf_b.bo);
-  if(gpgpu->printf_b.ibo)
-    drm_intel_bo_unreference(gpgpu->printf_b.ibo);
   if (gpgpu->aux_buf.bo)
     drm_intel_bo_unreference(gpgpu->aux_buf.bo);
   if (gpgpu->perf_b.bo)
@@ -914,9 +912,6 @@ intel_gpgpu_state_init(intel_gpgpu_t *gpgpu,
   gpgpu->curb.size_cs_entry = size_cs_entry;
   gpgpu->max_threads = max_threads;
 
-  if (gpgpu->printf_b.ibo)
-    dri_bo_unreference(gpgpu->printf_b.ibo);
-  gpgpu->printf_b.ibo = NULL;
   if (gpgpu->printf_b.bo)
     dri_bo_unreference(gpgpu->printf_b.bo);
   gpgpu->printf_b.bo = NULL;
@@ -2331,32 +2326,22 @@ intel_gpgpu_get_profiling_info(intel_gpgpu_t *gpgpu)
 }
 
 static int
-intel_gpgpu_set_printf_buf(intel_gpgpu_t *gpgpu, uint32_t i, uint32_t size, uint32_t offset, uint8_t bti)
+intel_gpgpu_set_printf_buf(intel_gpgpu_t *gpgpu, uint32_t size, uint8_t bti)
 {
-  drm_intel_bo *bo = NULL;
-  if (i == 0) { // the index buffer.
-    if (gpgpu->printf_b.ibo)
-      dri_bo_unreference(gpgpu->printf_b.ibo);
-    gpgpu->printf_b.ibo = dri_bo_alloc(gpgpu->drv->bufmgr, "Printf index buffer", size, 4096);
-    bo = gpgpu->printf_b.ibo;
-  } else if (i == 1) {
-    if (gpgpu->printf_b.bo)
-      dri_bo_unreference(gpgpu->printf_b.bo);
-    gpgpu->printf_b.bo = dri_bo_alloc(gpgpu->drv->bufmgr, "Printf output buffer", size, 4096);
-    bo = gpgpu->printf_b.bo;
-  } else
-    assert(0);
+  if (gpgpu->printf_b.bo)
+    dri_bo_unreference(gpgpu->printf_b.bo);
+  gpgpu->printf_b.bo = dri_bo_alloc(gpgpu->drv->bufmgr, "Printf buffer", size, 4096);
 
-  if (!bo || (drm_intel_bo_map(bo, 1) != 0)) {
-    if (gpgpu->printf_b.bo)
-      drm_intel_bo_unreference(gpgpu->printf_b.bo);
-    gpgpu->printf_b.bo = NULL;
+  if (!gpgpu->printf_b.bo || (drm_intel_bo_map(gpgpu->printf_b.bo, 1) != 0)) {
     fprintf(stderr, "%s:%d: %s.\n", __FILE__, __LINE__, strerror(errno));
     return -1;
   }
-  memset(bo->virtual, 0, size);
-  drm_intel_bo_unmap(bo);
-  cl_gpgpu_bind_buf((cl_gpgpu)gpgpu, (cl_buffer)bo, offset, 0, size, bti);
+
+  memset(gpgpu->printf_b.bo->virtual, 0, size);
+  *(uint32_t *)(gpgpu->printf_b.bo->virtual) = 4; // first four is for the length.
+  drm_intel_bo_unmap(gpgpu->printf_b.bo);
+  /* No need to bind, we do not need to emit reloc. */
+  intel_gpgpu_setup_bti(gpgpu, gpgpu->printf_b.bo, 0, size, bti, I965_SURFACEFORMAT_RAW);
   return 0;
 }
 
@@ -2379,65 +2364,38 @@ intel_gpgpu_unmap_profiling_buf_addr(intel_gpgpu_t *gpgpu)
 
 
 static void*
-intel_gpgpu_map_printf_buf(intel_gpgpu_t *gpgpu, uint32_t i)
+intel_gpgpu_map_printf_buf(intel_gpgpu_t *gpgpu)
 {
   drm_intel_bo *bo = NULL;
-  if (i == 0) {
-    bo = gpgpu->printf_b.ibo;
-  } else if (i == 1) {
-    bo = gpgpu->printf_b.bo;
-  } else
-    assert(0);
-
+  bo = gpgpu->printf_b.bo;
   drm_intel_bo_map(bo, 1);
   return bo->virtual;
 }
 
 static void
-intel_gpgpu_unmap_printf_buf_addr(intel_gpgpu_t *gpgpu, uint32_t i)
+intel_gpgpu_unmap_printf_buf_addr(intel_gpgpu_t *gpgpu)
 {
   drm_intel_bo *bo = NULL;
-  if (i == 0) {
-    bo = gpgpu->printf_b.ibo;
-  } else if (i == 1) {
-    bo = gpgpu->printf_b.bo;
-  } else
-  assert(0);
-
+  bo = gpgpu->printf_b.bo;
   drm_intel_bo_unmap(bo);
 }
 
 static void
-intel_gpgpu_release_printf_buf(intel_gpgpu_t *gpgpu, uint32_t i)
+intel_gpgpu_release_printf_buf(intel_gpgpu_t *gpgpu)
 {
-  if (i == 0) {
-    drm_intel_bo_unreference(gpgpu->printf_b.ibo);
-    gpgpu->printf_b.ibo = NULL;
-  } else if (i == 1) {
-    drm_intel_bo_unreference(gpgpu->printf_b.bo);
-    gpgpu->printf_b.bo = NULL;
-  } else
-    assert(0);
+  drm_intel_bo_unreference(gpgpu->printf_b.bo);
+  gpgpu->printf_b.bo = NULL;
 }
 
 static void
-intel_gpgpu_set_printf_info(intel_gpgpu_t *gpgpu, void* printf_info, size_t * global_sz)
+intel_gpgpu_set_printf_info(intel_gpgpu_t *gpgpu, void* printf_info)
 {
   gpgpu->printf_info = printf_info;
-  gpgpu->global_wk_sz[0] = global_sz[0];
-  gpgpu->global_wk_sz[1] = global_sz[1];
-  gpgpu->global_wk_sz[2] = global_sz[2];
 }
 
 static void*
-intel_gpgpu_get_printf_info(intel_gpgpu_t *gpgpu, size_t * global_sz, size_t *outbuf_sz)
+intel_gpgpu_get_printf_info(intel_gpgpu_t *gpgpu)
 {
-  global_sz[0] = gpgpu->global_wk_sz[0];
-  global_sz[1] = gpgpu->global_wk_sz[1];
-  global_sz[2] = gpgpu->global_wk_sz[2];
-
-  if (gpgpu->printf_b.bo)
-    *outbuf_sz = gpgpu->printf_b.bo->size;
   return gpgpu->printf_info;
 }
 
