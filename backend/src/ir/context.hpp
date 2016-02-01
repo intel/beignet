@@ -149,6 +149,11 @@ namespace ir {
       GBE_ASSERTM(fn != NULL, "No function currently defined");
       return fn->file.appendArrayTuple(reg, regNum);
     }
+    /*! Make a tuple from an array of types */
+    INLINE Tuple arrayTypeTuple(const ir::Type *type, uint32_t num) {
+      GBE_ASSERTM(fn != NULL, "No function currently defined");
+      return fn->file.appendArrayTypeTuple((uint8_t*)type, num);
+    }
     /*! We just use variadic templates to forward instruction functions */
 #define DECL_INSN(NAME, FAMILY) \
     template <typename... Args> INLINE void NAME(Args...args);
