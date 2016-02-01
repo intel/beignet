@@ -751,8 +751,8 @@ namespace gbe
     void emitAtomicInstHelper(const ir::AtomicOps opcode,const ir::Type type, const ir::Register dst, llvm::Value* llvmPtr, const ir::Tuple payloadTuple);
     void* getPrintfInfo(CallInst* inst)
     {
-      if (unit.printfs[inst])
-        return (void*)unit.printfs[inst];
+      if (&unit.printfs[inst])
+        return (void*)&unit.printfs[inst];
       return NULL;
     }
     private:

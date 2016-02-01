@@ -293,41 +293,21 @@ error:
   public:
     static char ID;
     typedef std::pair<Instruction*, bool> PrintfInst;
-    std::vector<PrintfInst> deadprintfs;
     Module* module;
     IRBuilder<>* builder;
     Type* intTy;
-    Value* pbuf_ptr;
-    Value* index_buf_ptr;
-    Value* g1Xg2Xg3;
-    Value* wg_offset;
-    int out_buf_sizeof_offset;
     ir::Unit &unit;
-    int printf_num;
-    int totalSizeofSize;
-
-    struct PrintfParserInfo {
-      llvm::CallInst* call;
-      PrintfSet::PrintfFmt* printf_fmt;
-    };
 
     PrintfParser(ir::Unit &unit) : FunctionPass(ID),
-    unit(unit)
+      unit(unit)
     {
       module = NULL;
       builder = NULL;
       intTy = NULL;
-      out_buf_sizeof_offset = 0;
-      pbuf_ptr = NULL;
-      index_buf_ptr = NULL;
-      g1Xg2Xg3 = NULL;
-      wg_offset = NULL;
-      printf_num = 0;
-      totalSizeofSize = 0;
     }
 
-    bool parseOnePrintfInstruction(CallInst * call, PrintfParserInfo& info, int& sizeof_size);
-    bool generateOneParameterInst(PrintfSlot& slot, Value*& arg, Type*& dst_type, int& sizeof_size);
+    bool parseOnePrintfInstruction(CallInst * call);
+    bool generateOneParameterInst(PrintfSlot& slot, Value* arg, Value*& new_arg);
 
     virtual const char *getPassName() const
     {
@@ -337,7 +317,7 @@ error:
     virtual bool runOnFunction(llvm::Function &F);
   };
 
-  bool PrintfParser::parseOnePrintfInstruction(CallInst * call, PrintfParserInfo& info, int& sizeof_size)
+  bool PrintfParser::parseOnePrintfInstruction(CallInst * call)
   {
     CallSite CS(call);
     CallSite::arg_iterator CI_FMT = CS.arg_begin();
@@ -355,20 +335,50 @@ error:
     }
 
     std::string fmt = fmt_arg->getAsCString();
+    if (fmt.size() == 0)
+      return false;
 
     PrintfSet::PrintfFmt* printf_fmt = NULL;
 
     if (!(printf_fmt = parser_printf_fmt((char *)fmt.c_str(), param_num))) {//at lease print something
+      printf("Warning: Parse the printf inst %s failed, no output for it\n", fmt.c_str());
       return false;
     }
 
     /* iff parameter more than %, error. */
     /* str_fmt arg0 arg1 ... NULL */
-    if (param_num + 2 < static_cast<int>(call->getNumOperands())) {
+    if (param_num + 2 != static_cast<int>(call->getNumOperands())) {
       delete printf_fmt;
+      printf("Warning: Parse the printf inst %s failed, parameters do not match the %% number, no output for it\n",
+             fmt.c_str());
       return false;
     }
 
+    /* Insert some conversion if types do not match. */
+    builder->SetInsertPoint(call);
+    int i = 1;
+    for (auto &s : *printf_fmt) {
+      if (s.type == PRINTF_SLOT_TYPE_STRING)
+        continue;
+
+      assert(i < static_cast<int>(call->getNumOperands()) - 1);
+      Value* new_arg = NULL;
+      Value *arg = call->getOperand(i);
+      if (generateOneParameterInst(s, arg, new_arg) == false) {
+        delete printf_fmt;
+        printf("Warning: Parse the printf inst %s failed, the %d parameter format is wrong, no output for it\n",
+               fmt.c_str(), i);
+        return false;
+      }
+
+      if (new_arg) { // replace the according argument.
+        call->setArgOperand(i, new_arg);
+      }
+      ++i;
+    }
+
+    GBE_ASSERT(unit.printfs.find(call) == unit.printfs.end());
+    unit.printfs.insert(std::pair<llvm::CallInst*, PrintfSet::PrintfFmt>(call, *printf_fmt));
     return true;
   }
 
@@ -429,14 +439,20 @@ error:
         if (fnName != "__gen_ocl_printf_stub" && fnName != "__gen_ocl_puts_stub")
           continue;
 
+        if (!parseOnePrintfInstruction(call)) {
+          // Just skip this printf instruction.
+          continue;
+        }
+
         hasPrintf = true;
       }
     }
 
+    delete builder;
     return hasPrintf;
   }
 
-  bool PrintfParser::generateOneParameterInst(PrintfSlot& slot, Value*& arg, Type*& dst_type, int& sizeof_size)
+  bool PrintfParser::generateOneParameterInst(PrintfSlot& slot, Value* arg, Value*& new_arg)
   {
     assert(slot.type == PRINTF_SLOT_TYPE_STATE);
     assert(builder);
@@ -456,27 +472,19 @@ error:
           case PRINTF_CONVERSION_X:
             if (slot.state.length_modifier == PRINTF_LM_L) { /* we would rather print long. */
               if (arg->getType() != Type::getInt64Ty(module->getContext())) {
-                arg = builder->CreateIntCast(arg, Type::getInt64Ty(module->getContext()), sign);
+                new_arg = builder->CreateIntCast(arg, Type::getInt64Ty(module->getContext()), sign);
               }
-              dst_type = Type::getInt64PtrTy(module->getContext(), 1);
-              sizeof_size = sizeof(int64_t);
             } else {
               /* If the bits change, we need to consider the signed. */
               if (arg->getType() != Type::getInt32Ty(module->getContext())) {
-                arg = builder->CreateIntCast(arg, Type::getInt32Ty(module->getContext()), sign);
+                new_arg = builder->CreateIntCast(arg, Type::getInt32Ty(module->getContext()), sign);
               }
-
-              /* Int to Int, just store. */
-              dst_type = Type::getInt32PtrTy(module->getContext(), 1);
-              sizeof_size = sizeof(int);
             }
             return true;
 
           case PRINTF_CONVERSION_C:
             /* Int to Char, add a conversion. */
-            arg = builder->CreateIntCast(arg, Type::getInt8Ty(module->getContext()), false);
-            dst_type = Type::getInt8PtrTy(module->getContext(), 1);
-            sizeof_size = sizeof(char);
+            new_arg = builder->CreateIntCast(arg, Type::getInt8Ty(module->getContext()), false);
             return true;
 
           case PRINTF_CONVERSION_F:
@@ -488,14 +496,11 @@ error:
           case PRINTF_CONVERSION_A:
           case PRINTF_CONVERSION_a:
             printf("Warning: Have a float parameter for %%d like specifier, take care of it\n");
-            arg = builder->CreateSIToFP(arg, Type::getFloatTy(module->getContext()));
-            dst_type = Type::getFloatPtrTy(module->getContext(), 1);
-            sizeof_size = sizeof(float);
+            new_arg = builder->CreateSIToFP(arg, Type::getFloatTy(module->getContext()));
             return true;
 
           case PRINTF_CONVERSION_S:
             /* Here, the case is printf("xxx%s", 0); we should output the null. */
-            sizeof_size = 0;
             slot.state.str = "(null)";
             return true;
 
@@ -511,7 +516,7 @@ error:
         /* llvm 3.6 will give a undef value for NAN. */
         if (dyn_cast<llvm::UndefValue>(arg)) {
           APFloat nan = APFloat::getNaN(APFloat::IEEEsingle, false);
-          arg = ConstantFP::get(module->getContext(), nan);
+          new_arg = ConstantFP::get(module->getContext(), nan);
         }
 
         /* Because the printf is a variable parameter function, it does not have the
@@ -522,9 +527,7 @@ error:
           case PRINTF_CONVERSION_D:
             /* Float to Int, add a conversion. */
             printf("Warning: Have a int parameter for %%f like specifier, take care of it\n");
-            arg = builder->CreateFPToSI(arg, Type::getInt32Ty(module->getContext()));
-            dst_type = Type::getInt32PtrTy(module->getContext(), 1);
-            sizeof_size = sizeof(int);
+            new_arg = builder->CreateFPToSI(arg, Type::getInt32Ty(module->getContext()));
             return true;
 
           case PRINTF_CONVERSION_O:
@@ -533,9 +536,7 @@ error:
           case PRINTF_CONVERSION_X:
             /* Float to uint, add a conversion. */
             printf("Warning: Have a uint parameter for %%f like specifier, take care of it\n");
-            arg = builder->CreateFPToUI(arg, Type::getInt32Ty(module->getContext()));
-            dst_type = Type::getInt32PtrTy(module->getContext(), 1);
-            sizeof_size = sizeof(int);
+            new_arg = builder->CreateFPToUI(arg, Type::getInt32Ty(module->getContext()));
             return true;
 
           case PRINTF_CONVERSION_F:
@@ -546,9 +547,7 @@ error:
           case PRINTF_CONVERSION_g:
           case PRINTF_CONVERSION_A:
           case PRINTF_CONVERSION_a:
-            arg = builder->CreateFPCast(arg, Type::getFloatTy(module->getContext()));
-            dst_type = Type::getFloatPtrTy(module->getContext(), 1);
-            sizeof_size = sizeof(float);
+            new_arg = builder->CreateFPCast(arg, Type::getFloatTy(module->getContext()));
             return true;
 
           default:
@@ -572,14 +571,11 @@ error:
             if (!fmt_arg || !fmt_arg->isCString()) {
               return false;
             }
-            sizeof_size = 0;
             slot.state.str = fmt_arg->getAsCString();
             return true;
           }
           case PRINTF_CONVERSION_P: {
-            arg = builder->CreatePtrToInt(arg, Type::getInt32Ty(module->getContext()));
-            dst_type = arg->getType()->getPointerTo(1);
-            sizeof_size = sizeof(int);
+            new_arg = builder->CreatePtrToInt(arg, Type::getInt32Ty(module->getContext()));
             return true;
           }
           default:
@@ -629,12 +625,9 @@ error:
                 Value *cvt = builder->CreateIntCast(org, elt_dst_type, sign);
                 II = builder->CreateInsertElement(vec, cvt, cv);
               }
-              arg = II;
+              new_arg = II;
             }
 
-            dst_type = arg->getType()->getPointerTo(1);
-            sizeof_size = (elt_dst_type == Type::getInt32Ty(elt_type->getContext()) ?
-                           sizeof(int) * vec_num  : sizeof(int64_t) * vec_num);
             return true;
           }
 
@@ -660,11 +653,9 @@ error:
                 Value* cvt  = builder->CreateFPCast(org, Type::getFloatTy(module->getContext()));
                 II = builder->CreateInsertElement(vec, cvt, cv);
               }
-              arg = II;
+              new_arg = II;
             }
 
-            dst_type = arg->getType()->getPointerTo(1);
-            sizeof_size = sizeof(int) * vec_num;
             return true;
 
           default:
