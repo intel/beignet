@@ -173,7 +173,8 @@ DECL_LLVM_GEN_FUNCTION(REGION, __gen_ocl_region)
 DECL_LLVM_GEN_FUNCTION(IN_PRIVATE, __gen_ocl_in_private)
 
 // printf function
-DECL_LLVM_GEN_FUNCTION(PRINTF, __gen_ocl_printf)
+DECL_LLVM_GEN_FUNCTION(PRINTF, __gen_ocl_printf_stub)
+DECL_LLVM_GEN_FUNCTION(PUTS, __gen_ocl_puts_stub)
 
 // work group function
 DECL_LLVM_GEN_FUNCTION(WORK_GROUP_BROADCAST, __gen_ocl_work_group_broadcast)
