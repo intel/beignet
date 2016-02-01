@@ -1256,22 +1256,10 @@ namespace gbe {
     return ps->getBufBTI();
   }
 
-  static uint8_t kernelGetPrintfIndexBufBTI(void * printf_info) {
-    if (printf_info == NULL) return 0;
-    const ir::PrintfSet *ps = (ir::PrintfSet *)printf_info;
-    return ps->getIndexBufBTI();
-  }
-
   static void kernelReleasePrintfSet(void * printf_info) {
     if (printf_info == NULL) return;
     ir::PrintfSet *ps = (ir::PrintfSet *)printf_info;
     delete ps;
-  }
-
-  static uint32_t kernelGetPrintfSizeOfSize(void * printf_info) {
-    if (printf_info == NULL) return 0;
-    const ir::PrintfSet *ps = (ir::PrintfSet *)printf_info;
-    return ps->getPrintfSizeOfSize();
   }
 
   static void kernelOutputPrintf(void * printf_info, void* index_addr,
@@ -1417,9 +1405,7 @@ namespace gbe
       gbe_dup_profiling = gbe::kernelDupProfiling;
       gbe_output_profiling = gbe::kernelOutputProfiling;
       gbe_get_printf_buf_bti = gbe::kernelGetPrintfBufBTI;
-      gbe_get_printf_indexbuf_bti = gbe::kernelGetPrintfIndexBufBTI;
       gbe_dup_printfset = gbe::kernelDupPrintfSet;
-      gbe_get_printf_sizeof_size = gbe::kernelGetPrintfSizeOfSize;
       gbe_release_printf_info = gbe::kernelReleasePrintfSet;
       gbe_output_printf = gbe::kernelOutputPrintf;
       genSetupCallBacks();
