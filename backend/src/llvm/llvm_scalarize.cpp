@@ -671,6 +671,11 @@ namespace gbe {
             *CI = InsertToVector(call, *CI);
             break;
           }
+          case GEN_OCL_PRINTF:
+            for (; CI != CS.arg_end(); ++CI)
+              if ((*CI)->getType()->isVectorTy())
+                *CI = InsertToVector(call, *CI);
+            break;
         }
       }
     }
