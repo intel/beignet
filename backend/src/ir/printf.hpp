@@ -144,6 +144,31 @@ namespace gbe
       }
     };
 
+    struct PrintfLog {
+      uint32_t magic;  // 0xAABBCCDD as magic for ASSERT.
+      uint32_t size;  // Size of this printf log, include header.
+      uint32_t statementNum; // which printf within one kernel.
+      const char* content;
+
+      PrintfLog(const char* p) {
+        GBE_ASSERT(*((uint32_t *)p) == 0xAABBCCDD);
+        magic = *((uint32_t *)p);
+        p += sizeof(uint32_t);
+        size = *((uint32_t *)p);
+        p += sizeof(uint32_t);
+        statementNum = *((uint32_t *)p);
+        p += sizeof(uint32_t);
+        content = p;
+      }
+
+      template <typename T>
+      T getData(void) {
+        T D = *((T *)content);
+        content += sizeof(T);
+        return D;
+      }
+    };
+
     class Context;
 
     class PrintfSet //: public Serializable
