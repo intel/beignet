@@ -243,7 +243,7 @@ namespace gbe
         return 0;
       }
 
-      void outputPrintf(void* index_addr);
+      void outputPrintf(void* buf_addr);
 
     private:
       std::map<uint32_t, PrintfFmt> fmts;
