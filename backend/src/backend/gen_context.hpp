@@ -227,6 +227,7 @@ namespace gbe
     void allocCurbeReg(ir::Register reg);
 
     virtual void setA0Content(uint16_t new_a0[16], uint16_t max_offset = 0, int sz = 0);
+    virtual void emitPrintfLongInstruction(GenRegister& addr, GenRegister& data, GenRegister& src, uint32_t bti);
 
   private:
     CompileErrorCode errCode;

@@ -85,6 +85,7 @@ namespace gbe
 
   protected:
     virtual void setA0Content(uint16_t new_a0[16], uint16_t max_offset = 0, int sz = 0);
+    virtual void emitPrintfLongInstruction(GenRegister& addr, GenRegister& data, GenRegister& src, uint32_t bti);
     virtual GenEncoder* generateEncoder(void) {
       return GBE_NEW(Gen8Encoder, this->simdWidth, 8, deviceID);
     }

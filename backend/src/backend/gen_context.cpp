@@ -2879,7 +2879,77 @@ namespace gbe
     }
   }
 
+  void GenContext::emitPrintfLongInstruction(GenRegister& addr, GenRegister& data,
+                                             GenRegister& src, uint32_t bti) {
+    p->MOV(GenRegister::retype(data, GEN_TYPE_UD), src.bottom_half());
+    p->UNTYPED_WRITE(addr, GenRegister::immud(bti), 1);
+    p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
+
+    p->MOV(GenRegister::retype(data, GEN_TYPE_UD), src.top_half(this->simdWidth));
+    p->UNTYPED_WRITE(addr, GenRegister::immud(bti), 1);
+    p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
+  }
+
   void GenContext::emitPrintfInstruction(const SelectionInstruction &insn) {
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    const GenRegister tmp0 = ra->genReg(insn.dst(1));
+    GenRegister src;
+    uint32_t srcNum = insn.srcNum;
+    if (insn.extra.continueFlag)
+      srcNum--;
+
+    GenRegister addr = GenRegister::retype(tmp0, GEN_TYPE_UD);
+    GenRegister data = GenRegister::offset(addr, 2);
+
+    if (!insn.extra.continueFlag) {
+      p->push(); {
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        p->curr.noMask = 1;
+        //ptr[0] is the total count of the log size.
+        p->MOV(addr, GenRegister::immud(0));
+        p->MOV(data, GenRegister::immud(insn.extra.printfSize + 12));
+      } p->pop();
+
+      p->ATOMIC(addr, GEN_ATOMIC_OP_ADD, addr, GenRegister::immud(insn.extra.printfBTI), 2);
+      /* Write out the header. */
+      p->MOV(data, GenRegister::immud(0xAABBCCDD));
+      p->UNTYPED_WRITE(addr, GenRegister::immud(insn.extra.printfBTI), 1);
+
+      p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
+      p->MOV(data, GenRegister::immud(insn.extra.printfSize + 12));
+      p->UNTYPED_WRITE(addr, GenRegister::immud(insn.extra.printfBTI), 1);
+
+      p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
+      p->MOV(data, GenRegister::immud(insn.extra.printfNum));
+      p->UNTYPED_WRITE(addr, GenRegister::immud(insn.extra.printfBTI), 1);
+
+      p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
+    }
+
+    // Now, store out every parameter.
+    for(uint32_t i = 0; i < srcNum; i++) {
+      src = ra->genReg(insn.src(i));
+      if (src.type == GEN_TYPE_UD || src.type == GEN_TYPE_D || src.type == GEN_TYPE_F) {
+        p->MOV(GenRegister::retype(data, src.type), src);
+        p->UNTYPED_WRITE(addr, GenRegister::immud(insn.extra.printfBTI), 1);
+        p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
+      } else if (src.type == GEN_TYPE_B || src.type == GEN_TYPE_UB ) {
+        p->MOV(GenRegister::retype(data, GEN_TYPE_UD), src);
+        p->UNTYPED_WRITE(addr, GenRegister::immud(insn.extra.printfBTI), 1);
+        p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
+      } else if (src.type == GEN_TYPE_L || src.type == GEN_TYPE_UL ) {
+        emitPrintfLongInstruction(addr, data, src, insn.extra.printfBTI);
+      }
+    }
+
+    if (dst.hstride == GEN_HORIZONTAL_STRIDE_0) {
+      p->push();
+      p->curr.execWidth = 1;
+    }
+    p->MOV(dst, GenRegister::immd(0));
+    if (dst.hstride == GEN_HORIZONTAL_STRIDE_0) {
+      p->pop();
+    }
   }
 
   void GenContext::setA0Content(uint16_t new_a0[16], uint16_t max_offset, int sz) {

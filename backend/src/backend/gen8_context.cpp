@@ -1314,6 +1314,42 @@ namespace gbe
     p->ADD(dst, dst, res);
   }
 
+  void Gen8Context::emitPrintfLongInstruction(GenRegister& addr, GenRegister& data,
+                                             GenRegister& src, uint32_t bti) {
+    GenRegister tempSrc, tempDst;
+    GenRegister nextSrc, nextDst;
+    p->push();
+      tempSrc = GenRegister::h2(GenRegister::retype(src, GEN_TYPE_UD));
+      tempDst = GenRegister::retype(data, GEN_TYPE_UD);
+      p->curr.execWidth = 8;
+      p->curr.quarterControl = GEN_COMPRESSION_Q1;
+      p->MOV(tempDst, tempSrc);
+
+      p->curr.quarterControl = GEN_COMPRESSION_Q2;
+      nextSrc = GenRegister::Qn(tempSrc, 1);
+      nextDst = GenRegister::Qn(tempDst, 1);
+      p->MOV(nextDst, nextSrc);
+    p->pop();
+    p->UNTYPED_WRITE(addr, GenRegister::immud(bti), 1);
+    p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
+
+    p->push();
+      tempSrc = GenRegister::h2(
+        GenRegister::retype(GenRegister::offset(src, 0, 4), GEN_TYPE_UD));
+      tempDst = GenRegister::retype(data, GEN_TYPE_UD);
+      p->curr.execWidth = 8;
+      p->curr.quarterControl = GEN_COMPRESSION_Q1;
+      p->MOV(tempDst, tempSrc);
+
+      p->curr.quarterControl = GEN_COMPRESSION_Q2;
+      nextSrc = GenRegister::Qn(tempSrc, 1);
+      nextDst = GenRegister::Qn(tempDst, 1);
+      p->MOV(nextDst, nextSrc);
+    p->pop();
+    p->UNTYPED_WRITE(addr, GenRegister::immud(bti), 1);
+    p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
+  }
+
   void ChvContext::setA0Content(uint16_t new_a0[16], uint16_t max_offset, int sz) {
     if (sz == 0)
       sz = 16;
