@@ -409,6 +409,18 @@ static const char *math_function_gen8[16] = {
   [GEN8_MATH_FUNCTION_RSQRTM] = "rsqrtm",
 };
 
+static const char *data_port_data_cache_data_size[] = {
+  "1 byte",
+  "2 bytes",
+  "4 bytes",
+  "Reserved"
+};
+
+static const char *data_port_data_cache_byte_scattered_simd_mode[] = {
+  "SIMD8",
+  "SIMD16",
+};
+
 static const char *data_port_data_cache_simd_mode[] = {
   "SIMD4x2",
   "SIMD16",
@@ -549,6 +561,8 @@ static int gen_version;
 #define UNTYPED_RW_SIMD_MODE(inst) GEN_BITS_FIELD(inst, bits3.gen7_untyped_rw.simd_mode)
 #define UNTYPED_RW_CATEGORY(inst)  GEN_BITS_FIELD(inst, bits3.gen7_untyped_rw.category)
 #define UNTYPED_RW_MSG_TYPE(inst)  GEN_BITS_FIELD(inst, bits3.gen7_untyped_rw.msg_type)
+#define BYTE_RW_SIMD_MODE(inst)    GEN_BITS_FIELD(inst, bits3.gen7_byte_rw.simd_mode)
+#define BYTE_RW_DATA_SIZE(inst)    GEN_BITS_FIELD(inst, bits3.gen7_byte_rw.data_size)
 #define SCRATCH_RW_OFFSET(inst)    GEN_BITS_FIELD(inst, bits3.gen7_scratch_rw.offset)
 #define SCRATCH_RW_BLOCK_SIZE(inst) GEN_BITS_FIELD(inst, bits3.gen7_scratch_rw.block_size)
 #define SCRATCH_RW_INVALIDATE_AFTER_READ(inst) GEN_BITS_FIELD(inst, bits3.gen7_scratch_rw.invalidate_after_read)
@@ -1455,12 +1469,22 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
           break;
         case GEN_SFID_DATAPORT_DATA:
           if(UNTYPED_RW_CATEGORY(inst) == 0) {
-            format(file, " (bti: %d, rgba: %d, %s, %s, %s)",
+            if(UNTYPED_RW_MSG_TYPE(inst) == 5 || UNTYPED_RW_MSG_TYPE(inst) == 13)
+              format(file, " (bti: %d, rgba: %d, %s, %s, %s)",
                    UNTYPED_RW_BTI(inst),
                    UNTYPED_RW_RGBA(inst),
                    data_port_data_cache_simd_mode[UNTYPED_RW_SIMD_MODE(inst)],
                    data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
                    data_port_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
+            else if(UNTYPED_RW_MSG_TYPE(inst) == 4 || UNTYPED_RW_MSG_TYPE(inst) == 12)
+              format(file, " (bti: %d, data size: %s, %s, %s, %s)",
+                   UNTYPED_RW_BTI(inst),
+                   data_port_data_cache_data_size[BYTE_RW_DATA_SIZE(inst)],
+                   data_port_data_cache_byte_scattered_simd_mode[BYTE_RW_SIMD_MODE(inst)],
+                   data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
+                   data_port_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
+            else
+              format(file, " not implemented");
           } else {
             format(file, " (addr: %d, blocks: %s, %s, mode: %s, %s)",
                    SCRATCH_RW_OFFSET(inst),
