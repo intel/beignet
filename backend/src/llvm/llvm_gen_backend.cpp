@@ -486,6 +486,9 @@ namespace gbe
     typedef map<Value *, SmallVector<Value *, 4>>::iterator PtrOrigMapIter;
     // map pointer source to bti
     map<Value *, unsigned> BtiMap;
+    // map printf pointer source to bti
+    int printfBti;
+    uint32_t printfNum;
     // map ptr to its bti register
     map<Value *, Value *> BtiValueMap;
     // map ptr to it's base
@@ -520,6 +523,8 @@ namespace gbe
         unit(unit),
         ctx(unit),
         regTranslator(ctx),
+        printfBti(-1),
+        printfNum(0),
         LI(0),
         TheModule(0),
         btiBase(BTI_RESERVED_NUM),
@@ -586,6 +591,7 @@ namespace gbe
       addrStoreInst.clear();
       // Reset for next function
       btiBase = BTI_RESERVED_NUM;
+      printfBti = -1;
       return false;
     }
     /*! Given a possible pointer value, find out the interested escape like
@@ -594,7 +600,7 @@ namespace gbe
     /*! For all possible pointers, GlobalVariable, function pointer argument,
         alloca instruction, find their pointer escape points */
     void analyzePointerOrigin(Function &F);
-    unsigned getNewBti(Value *origin, bool isImage);
+    unsigned getNewBti(Value *origin, bool force);
     void assignBti(Function &F);
     bool isSingleBti(Value *Val);
     Value *getBtiRegister(Value *v);
@@ -717,11 +723,10 @@ namespace gbe
     // handle load of dword/qword with unaligned address
     void emitUnalignedDQLoadStore(ir::Register ptr, Value *llvmValues, ir::AddressSpace addrSpace, ir::Register bti, bool isLoad, bool dwAligned, bool fixedBTI);
     void visitInstruction(Instruction &I) {NOT_SUPPORTED;}
-    void* getPrintfInfo(CallInst* inst)
-    {
-      if (&unit.printfs[inst])
-        return (void*)&unit.printfs[inst];
-      return NULL;
+    ir::PrintfSet::PrintfFmt* getPrintfInfo(CallInst* inst) {
+      if (unit.printfs.find(inst) == unit.printfs.end())
+        return NULL;
+      return &unit.printfs[inst];
     }
     private:
       void setDebugInfo_CTX(llvm::Instruction * insn); // store the debug infomation in context for subsequently passing to Gen insn
@@ -1127,21 +1132,15 @@ namespace gbe
     }
   }
 
-  unsigned GenWriter::getNewBti(Value *origin, bool isImage) {
+  unsigned GenWriter::getNewBti(Value *origin, bool force) {
     unsigned new_bti = 0;
-    if (isImage) {
+    if (force) {
       new_bti = btiBase;
       incBtiBase();
       return new_bti;
     }
 
-    if(origin->getName().equals(StringRef("__gen_ocl_printf_buf"))) {
-      new_bti = btiBase;
-      incBtiBase();
-    } else if (origin->getName().equals(StringRef("__gen_ocl_printf_index_buf"))) {
-      new_bti = btiBase;
-      incBtiBase();
-    } else if (origin->getName().equals(StringRef("__gen_ocl_profiling_buf"))) {
+    if (origin->getName().equals(StringRef("__gen_ocl_profiling_buf"))) {
       new_bti = btiBase;
       incBtiBase();
     }
@@ -3716,6 +3715,16 @@ namespace gbe
         this->newRegister(&I);
         break;
       case GEN_OCL_PRINTF:
+        this->newRegister(&I);  // fall through
+      case GEN_OCL_PUTS:
+      {
+         // We need a new BTI as printf output.
+         if (printfBti < 0) {
+           printfBti = this->getNewBti(&I, true);
+           ctx.getFunction().getPrintfSet()->setBufBTI(printfBti);
+         }
+         break;
+      }
       case GEN_OCL_CALC_TIMESTAMP:
       case GEN_OCL_STORE_PROFILING:
       case GEN_OCL_DEBUGWAIT:
@@ -4517,6 +4526,62 @@ namespace gbe
 
           case GEN_OCL_PRINTF:
           {
+            ir::PrintfSet::PrintfFmt* fmt = getPrintfInfo(&I);
+            if (fmt == NULL)
+              break;
+
+            ctx.getFunction().getPrintfSet()->append(printfNum, fmt);
+
+            vector<ir::Register> tupleData;
+            vector<ir::Type> tupleTypeData;
+            int argNum = static_cast<int>(I.getNumOperands());
+            argNum -= 2; // no fmt and last NULL.
+            int realArgNum = argNum;
+
+            for (int n = 0; n < argNum; n++) {
+              /* First, ignore %s, the strings are recorded and not passed to GPU. */
+              llvm::Constant* args = dyn_cast<llvm::ConstantExpr>(I.getOperand(n + 1));
+              llvm::Constant* args_ptr = NULL;
+              if (args)
+                args_ptr = dyn_cast<llvm::Constant>(args->getOperand(0));
+
+              if (args_ptr) {
+                ConstantDataSequential* fmt_arg = dyn_cast<ConstantDataSequential>(args_ptr->getOperand(0));
+                if (fmt_arg && fmt_arg->isCString()) {
+                  realArgNum--;
+                  continue;
+                }
+              }
+
+              Type * type = I.getOperand(n + 1)->getType();
+              if (type->isVectorTy()) {
+                uint32_t srcElemNum = 0;
+                Value *srcValue = I.getOperand(n + 1);
+                ir::Type srcType = getVectorInfo(ctx, srcValue, srcElemNum);
+                GBE_ASSERT(!(srcType == ir::TYPE_S64 || srcType == ir::TYPE_DOUBLE));
+
+                uint32_t elemID = 0;
+                for (elemID = 0; elemID < srcElemNum; ++elemID) {
+                  ir::Register reg = getRegister(srcValue, elemID);
+                  tupleData.push_back(reg);
+                  tupleTypeData.push_back(srcType);
+                }
+                realArgNum += srcElemNum - 1;
+              } else {
+                ir::Register reg = getRegister(I.getOperand(n + 1));
+                tupleData.push_back(reg);
+                tupleTypeData.push_back(getType(ctx, I.getOperand(n + 1)->getType()));
+              }
+            }
+
+            ir::Tuple tuple;
+            ir::Tuple typeTuple;
+            if (realArgNum > 0) {
+              tuple = ctx.arrayTuple(&tupleData[0], realArgNum);
+              typeTuple = ctx.arrayTypeTuple(&tupleTypeData[0], realArgNum);
+            }
+            ctx.PRINTF(getRegister(&I), tuple, typeTuple, realArgNum, printfBti, printfNum);
+            printfNum++;
             break;
           }
           case GEN_OCL_CALC_TIMESTAMP:
