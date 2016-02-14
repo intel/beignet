@@ -110,7 +110,8 @@ namespace gbe
     }
 
     void loadLaneID(GenRegister dst);
-
+    GenRegister getBlockIP(void);
+    void setBlockIP(GenRegister blockip, uint32_t label);
     void collectShifter(GenRegister dest, GenRegister src);
     void loadTopHalf(GenRegister dest, GenRegister src);
     void storeTopHalf(GenRegister dest, GenRegister src);

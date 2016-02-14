@@ -398,7 +398,7 @@ namespace gbe
     uint32_t stackSize = 128;
     while (stackSize < fn.getStackSize()) {
       stackSize *= 3;
-      GBE_ASSERT(stackSize <= 64*KB);
+      //GBE_ASSERT(stackSize <= 64*KB);
     }
     this->kernel->stackSize = stackSize;
   }

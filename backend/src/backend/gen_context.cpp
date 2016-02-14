@@ -148,33 +148,33 @@ namespace gbe
   }
 
   /* Get proper block ip register according to current label width. */
-  static GenRegister getBlockIP(GenContext &ctx) {
+  GenRegister GenContext::getBlockIP(void) {
     GenRegister blockip;
-    if (!ctx.isDWLabel())
-      blockip = ctx.ra->genReg(GenRegister::uw8grf(ir::ocl::blockip));
+    if (!isDWLabel())
+      blockip = ra->genReg(GenRegister::uw8grf(ir::ocl::blockip));
     else
-      blockip = ctx.ra->genReg(GenRegister::ud8grf(ir::ocl::dwblockip));
+      blockip = ra->genReg(GenRegister::ud8grf(ir::ocl::dwblockip));
     return blockip;
   }
 
   /* Set current block ip register to a specified constant label value. */
-  static void setBlockIP(GenContext &ctx, GenRegister blockip, uint32_t label) {
-    if (!ctx.isDWLabel())
-      ctx.p->MOV(blockip, GenRegister::immuw(label));
+  void GenContext::setBlockIP(GenRegister blockip, uint32_t label) {
+    if (!isDWLabel())
+      p->MOV(blockip, GenRegister::immuw(label));
     else
-      ctx.p->MOV(blockip, GenRegister::immud(label));
+      p->MOV(blockip, GenRegister::immud(label));
   }
 
   void GenContext::clearFlagRegister(void) {
     // when group size not aligned to simdWidth, flag register need clear to
     // make prediction(any8/16h) work correctly
-    const GenRegister blockip = getBlockIP(*this);
+    const GenRegister blockip = getBlockIP();
     p->push();
       p->curr.noMask = 1;
       p->curr.predicate = GEN_PREDICATE_NONE;
-      setBlockIP(*this, blockip, getMaxLabel());
+      setBlockIP(blockip, getMaxLabel());
       p->curr.noMask = 0;
-      setBlockIP(*this, blockip, 0);
+      setBlockIP(blockip, 0);
       p->curr.execWidth = 1;
       if (ra->isAllocated(ir::ocl::zero))
         p->MOV(ra->genReg(GenRegister::uw1grf(ir::ocl::zero)), GenRegister::immuw(0));
@@ -219,7 +219,6 @@ namespace gbe
 
     // Check that everything is consistent in the kernel code
     const uint32_t perLaneSize = kernel->getStackSize();
-    const uint32_t perThreadSize = perLaneSize * this->simdWidth;
     GBE_ASSERT(perLaneSize > 0);
 
     const GenRegister selStatckPtr = this->simdWidth == 8 ?
@@ -228,28 +227,27 @@ namespace gbe
     const GenRegister stackptr = ra->genReg(selStatckPtr);
     // borrow block ip as temporary register as we will
     // initialize block ip latter.
-    const GenRegister tmpReg = GenRegister::retype(GenRegister::vec1(getBlockIP(*this)), GEN_TYPE_UD);
+    const GenRegister tmpReg = GenRegister::retype(GenRegister::vec1(getBlockIP()), GEN_TYPE_UW);
+    const GenRegister tmpReg_ud = GenRegister::retype(tmpReg, GEN_TYPE_UD);
 
     loadLaneID(stackptr);
 
     // We compute the per-lane stack pointer here
-    // threadId * perThreadSize + laneId*perLaneSize
+    // threadId * perThreadSize + laneId*perLaneSize or
+    // (threadId * simdWidth + laneId)*perLaneSize
     // let private address start from zero
     //p->MOV(stackptr, GenRegister::immud(0));
     p->push();
       p->curr.execWidth = 1;
       p->curr.predicate = GEN_PREDICATE_NONE;
-      p->AND(tmpReg, GenRegister::ud1grf(0,5), GenRegister::immud(0x1ff));
+      p->AND(tmpReg, GenRegister::ud1grf(0,5), GenRegister::immuw(0x1ff)); //threadId
+      p->MUL(tmpReg, tmpReg, GenRegister::immuw(this->simdWidth));  //threadId * simdWidth
       p->curr.execWidth = this->simdWidth;
-      p->MUL(stackptr, stackptr, GenRegister::immuw(perLaneSize));  //perLaneSize < 64K
+      p->ADD(stackptr, GenRegister::unpacked_uw(stackptr), tmpReg);  //threadId * simdWidth + laneId, must < 64K
       p->curr.execWidth = 1;
-      if(perThreadSize > 0xffff) {
-        p->MUL(tmpReg, tmpReg, GenRegister::immuw(perLaneSize));
-        p->MUL(tmpReg, tmpReg, GenRegister::immuw(this->simdWidth));  //Only support W * D, perLaneSize < 64K
-      } else
-        p->MUL(tmpReg, tmpReg, GenRegister::immuw(perThreadSize));
+      p->MOV(tmpReg_ud, GenRegister::immud(perLaneSize));
       p->curr.execWidth = this->simdWidth;
-      p->ADD(stackptr, stackptr, tmpReg);
+      p->MUL(stackptr, tmpReg_ud, stackptr); // (threadId * simdWidth + laneId)*perLaneSize
     p->pop();
   }
 
