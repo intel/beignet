@@ -26,8 +26,8 @@ void compiler_double_div(void)
   OCL_MAP_BUFFER(2);
   for (int32_t i = 0; i < (int32_t) n; ++i) {
     cpu_src0[i] = ((double*)buf_data[0])[i] = ((double)(((i - 5)*1334) * 11105));
-    cpu_src1[i] = ((double*)buf_data[1])[i] = 499.13542123d*(i + 132.43d + 142.32*i);
-    ((double*)buf_data[2])[i] = 0.0d;
+    cpu_src1[i] = ((double*)buf_data[1])[i] = 499.13542123*(i + 132.43 + 142.32*i);
+    ((double*)buf_data[2])[i] = 0.0;
   }
   OCL_UNMAP_BUFFER(0);
   OCL_UNMAP_BUFFER(1);
@@ -42,7 +42,7 @@ void compiler_double_div(void)
     if (i % 3 != 0)
       OCL_ASSERT(fabs(((double*)buf_data[2])[i] - cpu_src0[i]/cpu_src1[i]) < 1e-32);
     else
-      OCL_ASSERT(((double*)buf_data[2])[i] == 0.0d);
+      OCL_ASSERT(((double*)buf_data[2])[i] == 0.0);
 
     //printf("%d :  %f        ref value: %f\n", i, ((double*)buf_data[2])[i], cpu_src0[i]/cpu_src1[i]);
   }
@@ -53,9 +53,9 @@ MAKE_UTEST_FROM_FUNCTION(compiler_double_div);
 
 void compiler_double_div_uniform(void)
 {
-  double src0 = 13234.1438786319d;
-  double src1 = 0.000134123d;
-  double tmp = 25.128d;
+  double src0 = 13234.1438786319;
+  double src1 = 0.000134123;
+  double tmp = 25.128;
 
   if (!cl_check_double())
     return;

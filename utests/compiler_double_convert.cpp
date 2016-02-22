@@ -30,7 +30,7 @@ void compiler_double_convert_int(void)
   OCL_MAP_BUFFER(1);
   OCL_MAP_BUFFER(2);
   for (int32_t i = 0; i < (int32_t) n; ++i) {
-    src[i] = ((double*)buf_data[0])[i] = 32.1d * (rand() & 1324135) + 1434342.73209855531d;
+    src[i] = ((double*)buf_data[0])[i] = 32.1 * (rand() & 1324135) + 1434342.73209855531;
     ((int32_t*)buf_data[1])[i] = 0;
     ((uint32_t*)buf_data[2])[i] = 0;
   }
@@ -86,7 +86,7 @@ void compiler_double_convert_float(void)
   OCL_MAP_BUFFER(0);
   OCL_MAP_BUFFER(1);
   for (int32_t i = 0; i < (int32_t) n; ++i) {
-    src[i] = ((double*)buf_data[0])[i] = 1332.1d * (rand() & 1324135) - 1434342.73209855531d * (rand() & 135);
+    src[i] = ((double*)buf_data[0])[i] = 1332.1 * (rand() & 1324135) - 1434342.73209855531 * (rand() & 135);
     ((float*)buf_data[1])[i] = 0;
   }
   OCL_UNMAP_BUFFER(0);
@@ -140,7 +140,7 @@ void compiler_double_convert_short(void)
   OCL_MAP_BUFFER(1);
   OCL_MAP_BUFFER(2);
   for (int32_t i = 0; i < (int32_t) n; ++i) {
-    src[i] = ((double*)buf_data[0])[i] = 10.3443d * (rand() & 15) + 14.8924323d;
+    src[i] = ((double*)buf_data[0])[i] = 10.3443 * (rand() & 15) + 14.8924323;
     ((int16_t*)buf_data[1])[i] = 0;
     ((uint16_t*)buf_data[2])[i] = 0;
   }
@@ -201,7 +201,7 @@ void compiler_double_convert_char(void)
   OCL_MAP_BUFFER(1);
   OCL_MAP_BUFFER(2);
   for (int32_t i = 0; i < (int32_t) n; ++i) {
-    src[i] = ((double*)buf_data[0])[i] = 10.3443d * (rand() & 7) + 2.8924323d;
+    src[i] = ((double*)buf_data[0])[i] = 10.3443 * (rand() & 7) + 2.8924323;
     ((int8_t*)buf_data[1])[i] = 0;
     ((uint8_t*)buf_data[2])[i] = 0;
   }
@@ -262,7 +262,7 @@ void compiler_double_convert_long(void)
   OCL_MAP_BUFFER(1);
   OCL_MAP_BUFFER(2);
   for (int32_t i = 0; i < (int32_t) n; ++i) {
-    src[i] = ((double*)buf_data[0])[i] = 10.3443d * (rand() & 7) + 2.8924323d;
+    src[i] = ((double*)buf_data[0])[i] = 10.3443 * (rand() & 7) + 2.8924323;
     ((int64_t*)buf_data[1])[i] = 0;
     ((uint64_t*)buf_data[2])[i] = 0;
   }
@@ -330,8 +330,8 @@ void compiler_long_convert_double(void)
   for (int32_t i = 0; i < (int32_t) n; ++i) {
     src0[i] = ((int64_t*)buf_data[0])[i] = 0xABC8ABACDA00C * (rand() & 7);
     src1[i] = ((uint64_t*)buf_data[1])[i] = 0xCABC8ABACDA00C * (rand() & 15);
-    ((double*)buf_data[2])[i] = 0.0d;
-    ((double*)buf_data[3])[i] = 0.0d;
+    ((double*)buf_data[2])[i] = 0.0;
+    ((double*)buf_data[3])[i] = 0.0;
   }
   OCL_UNMAP_BUFFER(0);
   OCL_UNMAP_BUFFER(1);
@@ -399,8 +399,8 @@ void compiler_int_convert_double(void)
   for (int32_t i = 0; i < (int32_t) n; ++i) {
     src0[i] = ((int32_t*)buf_data[0])[i] = 0xCABC8A0C * (rand() & 7);
     src1[i] = ((uint32_t*)buf_data[1])[i] = 0xCACDA00C * (rand() & 15);
-    ((double*)buf_data[2])[i] = 0.0d;
-    ((double*)buf_data[3])[i] = 0.0d;
+    ((double*)buf_data[2])[i] = 0.0;
+    ((double*)buf_data[3])[i] = 0.0;
   }
   OCL_UNMAP_BUFFER(0);
   OCL_UNMAP_BUFFER(1);
@@ -468,8 +468,8 @@ void compiler_short_convert_double(void)
   for (int32_t i = 0; i < (int32_t) n; ++i) {
     src0[i] = ((int16_t*)buf_data[0])[i] = 0x8A0C * (rand() & 7);
     src1[i] = ((uint16_t*)buf_data[1])[i] = 0xC00C * (rand() & 15);
-    ((double*)buf_data[2])[i] = 0.0d;
-    ((double*)buf_data[3])[i] = 0.0d;
+    ((double*)buf_data[2])[i] = 0.0;
+    ((double*)buf_data[3])[i] = 0.0;
   }
   OCL_UNMAP_BUFFER(0);
   OCL_UNMAP_BUFFER(1);
@@ -537,8 +537,8 @@ void compiler_char_convert_double(void)
   for (int32_t i = 0; i < (int32_t) n; ++i) {
     src0[i] = ((int8_t*)buf_data[0])[i] = 0x8C * (rand() & 7);
     src1[i] = ((uint8_t*)buf_data[1])[i] = 0xC0 * (rand() & 15);
-    ((double*)buf_data[2])[i] = 0.0d;
-    ((double*)buf_data[3])[i] = 0.0d;
+    ((double*)buf_data[2])[i] = 0.0;
+    ((double*)buf_data[3])[i] = 0.0;
   }
   OCL_UNMAP_BUFFER(0);
   OCL_UNMAP_BUFFER(1);
@@ -596,7 +596,7 @@ void compiler_float_convert_double(void)
   OCL_MAP_BUFFER(1);
   for (int32_t i = 0; i < (int32_t) n; ++i) {
     src[i] = ((float*)buf_data[0])[i] = (float)(0x8C * (rand() & 7)) * 1342.42f;
-    ((double*)buf_data[1])[i] = 0.0d;
+    ((double*)buf_data[1])[i] = 0.0;
   }
   OCL_UNMAP_BUFFER(0);
   OCL_UNMAP_BUFFER(1);
