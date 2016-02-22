@@ -349,10 +349,12 @@ static float atan2pi(float y, float x){
   ldexp_input_type2 = ['int','int2','int4','int8','int16']
   ldexp_output_type = ['float','float2','float4','float8','float16']
   ldexp_cpu_func='''
+namespace utest {
 static float ldexp(float x, int y){
     return x * exp2(y);
+}
 } '''
-  ldexpUtests = func('ldexp','ldexp',[ldexp_input_type1,ldexp_input_type2],ldexp_output_type,[ldexp_input_values1,ldexp_input_values2],'0 * FLT_ULP', ldexp_cpu_func)
+  ldexpUtests = func('ldexp','utest::ldexp',[ldexp_input_type1,ldexp_input_type2],ldexp_output_type,[ldexp_input_values1,ldexp_input_values2],'0 * FLT_ULP', ldexp_cpu_func)
 
   ##### gentype lgamma(gentype x)
   lgamma_input_values = base_input_values
