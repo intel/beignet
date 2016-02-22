@@ -1074,8 +1074,8 @@ namespace gbe
       p->curr.execWidth = 4;
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->curr.noMask= 1;
-      p->MOV(r1, GenRegister::immdf(1.0d));
-      p->MOV(r0, GenRegister::immdf(0.0d));
+      p->MOV(r1, GenRegister::immdf(1.0));
+      p->MOV(r0, GenRegister::immdf(0.0));
     } p->pop();
 
     for (int i = 0; i < loopNum; i++) {

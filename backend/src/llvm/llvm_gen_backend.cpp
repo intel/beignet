@@ -3842,7 +3842,7 @@ namespace gbe
       ctx.WORKGROUP(opcode, (uint32_t)0, getRegister(&I), srcTuple, 1, ir::TYPE_S32);
     } else if (opcode == ir::WORKGROUP_OP_BROADCAST) {
       int argNum = CS.arg_size();
-      ir::Register src[argNum];
+      std::vector<ir::Register> src(argNum);
       for (int i = 0; i < argNum; i++) {
         src[i] = this->getRegister(*(AI++));
       }
