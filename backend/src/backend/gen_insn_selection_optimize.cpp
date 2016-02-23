@@ -141,8 +141,16 @@ namespace gbe
         return;
       }
       if (info->replacement.reg() == var.reg()) {  //replacement is overwritten
+        //there could be more than one replacements (with different physical subnr) overwritten,
+        //so do not break here, need to scann the whole map.
+        //here is an example:
+        // mov %10, %9.0
+        // mov %11, %9.1
+        // ...
+        // mov %9, %8
+        //both %9.0 and %9.1 are collected into replacement in the ReplaceInfoMap after the first two insts are scanned.
+        //when scan the last inst that %9 is overwritten, we should flag both %9.0 and %9.1 in the map.
         info->replacementOverwritten = true;
-        return;
       }
     }
   }
