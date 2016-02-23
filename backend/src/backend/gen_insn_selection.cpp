@@ -2263,7 +2263,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     this->opaque->setHas32X32Mul(true);
     this->opaque->setHasLongType(true);
     this->opaque->setHasDoubleType(true);
-    this->opaque->setSlowByteGather(true);
+    this->opaque->setSlowByteGather(false);
     this->opaque->setHasHalfType(true);
     opt_features = SIOF_LOGICAL_SRCMOD;
   }
@@ -2283,7 +2283,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     this->opaque->setHasLongType(true);
     this->opaque->setHasDoubleType(true);
     this->opaque->setLdMsgOrder(LD_MSG_ORDER_SKL);
-    this->opaque->setSlowByteGather(true);
+    this->opaque->setSlowByteGather(false);
     this->opaque->setHasHalfType(true);
     opt_features = SIOF_LOGICAL_SRCMOD;
   }
@@ -2294,7 +2294,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     this->opaque->setLongRegRestrict(true);
     this->opaque->setHasDoubleType(true);
     this->opaque->setLdMsgOrder(LD_MSG_ORDER_SKL);
-    this->opaque->setSlowByteGather(true);
+    this->opaque->setSlowByteGather(false);
     this->opaque->setHasHalfType(true);
     opt_features = SIOF_LOGICAL_SRCMOD | SIOF_OP_MOV_LONG_REG_RESTRICT;
   }
@@ -3784,53 +3784,96 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
 
       if(valueNum > 1) {
         GBE_ASSERT(!isUniform && "vector load should not be uniform. Something went wrong.");
-        vector<GenRegister> dst(valueNum);
-        const uint32_t typeSize = getFamilySize(family);
+        //need to investigate the case of GEN_BYTE_SCATTER_WORD later
+        //for GEN_BYTE_SCATTER_BYTE, if the pointer is not aligned to 4, using byte gather,
+        //                           on BDW, vec8 and vec16 are worse. on SKL/BXT, vec16 is worse.
+        if(sel.getSlowByteGather() || elemSize == GEN_BYTE_SCATTER_WORD
+            || (elemSize == GEN_BYTE_SCATTER_BYTE && (valueNum == 16 || valueNum == 8))) {
+          vector<GenRegister> dst(valueNum);
+          const uint32_t typeSize = getFamilySize(family);
 
-        for(uint32_t i = 0; i < valueNum; i++)
-          dst[i] = sel.selReg(insn.getValue(i), getType(family));
+          for(uint32_t i = 0; i < valueNum; i++)
+            dst[i] = sel.selReg(insn.getValue(i), getType(family));
 
-        uint32_t effectDataNum = (typeSize*valueNum + 3) / 4;
-        vector<GenRegister> tmp(effectDataNum + 1);
-        vector<GenRegister> tmp2(effectDataNum + 1);
-        vector<GenRegister> effectData(effectDataNum);
-        for(uint32_t i = 0; i < effectDataNum + 1; i++)
-          tmp2[i] = tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
+          uint32_t effectDataNum = (typeSize*valueNum + 3) / 4;
+          vector<GenRegister> tmp(effectDataNum + 1);
+          vector<GenRegister> tmp2(effectDataNum + 1);
+          vector<GenRegister> effectData(effectDataNum);
+          for(uint32_t i = 0; i < effectDataNum + 1; i++)
+            tmp2[i] = tmp[i] = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
 
-        GenRegister alignedAddr = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
-        sel.push();
-          if (isUniform)
-            sel.curr.noMask = 1;
-          sel.AND(alignedAddr, GenRegister::retype(address, GEN_TYPE_UD), GenRegister::immud(~0x3));
-        sel.pop();
+          GenRegister alignedAddr = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
+          sel.push();
+            if (isUniform)
+              sel.curr.noMask = 1;
+            sel.AND(alignedAddr, GenRegister::retype(address, GEN_TYPE_UD), GenRegister::immud(~0x3));
+          sel.pop();
 
-        uint32_t remainedReg = effectDataNum + 1;
-        uint32_t pos = 0;
-        do {
-          uint32_t width = remainedReg > 4 ? 4 : remainedReg;
-          vector<GenRegister> t1(tmp.begin() + pos, tmp.begin() + pos + width);
-          vector<GenRegister> t2(tmp2.begin() + pos, tmp2.begin() + pos + width);
-          if (pos != 0) {
-            sel.push();
-              if (isUniform)
-                sel.curr.noMask = 1;
-              sel.ADD(alignedAddr, alignedAddr, GenRegister::immud(pos * 4));
-            sel.pop();
+          uint32_t remainedReg = effectDataNum + 1;
+          uint32_t pos = 0;
+          do {
+            uint32_t width = remainedReg > 4 ? 4 : remainedReg;
+            vector<GenRegister> t1(tmp.begin() + pos, tmp.begin() + pos + width);
+            vector<GenRegister> t2(tmp2.begin() + pos, tmp2.begin() + pos + width);
+            if (pos != 0) {
+              sel.push();
+                if (isUniform)
+                  sel.curr.noMask = 1;
+                sel.ADD(alignedAddr, alignedAddr, GenRegister::immud(pos * 4));
+              sel.pop();
+            }
+            readDWord(sel, t1, alignedAddr, width, bti);
+            remainedReg -= width;
+            pos += width;
+          } while(remainedReg);
+
+          for(uint32_t i = 0; i < effectDataNum; i++)
+            effectData[i] = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
+
+          getEffectByteData(sel, effectData, tmp, effectDataNum, address, isUniform);
+
+          for(uint32_t i = 0; i < effectDataNum; i++) {
+            unsigned int elemNum = (valueNum - i * (4 / typeSize)) > 4/typeSize ?
+                                   4/typeSize : (valueNum - i * (4 / typeSize));
+            sel.UNPACK_BYTE(dst.data() + i * 4/typeSize, effectData[i], typeSize, elemNum);
           }
-          readDWord(sel, t1, alignedAddr, width, bti);
-          remainedReg -= width;
-          pos += width;
-        } while(remainedReg);
+        } else {
+          GBE_ASSERT(elemSize == GEN_BYTE_SCATTER_BYTE);
+          GenRegister b = bti.isConst ? GenRegister::immud(bti.imm) : sel.selReg(bti.reg, ir::TYPE_U32);
+          vector<GenRegister> dst(valueNum);
+          for(uint32_t i = 0; i < valueNum; i++)
+            dst[i] = sel.selReg(insn.getValue(i), getType(family));
 
-        for(uint32_t i = 0; i < effectDataNum; i++)
-          effectData[i] = sel.selReg(sel.reg(FAMILY_DWORD, isUniform), ir::TYPE_U32);
+          GenRegister readDst = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
+          uint32_t valueIndex = 0;
+          uint32_t loopCount = (valueNum + 3) / 4;
+          GenRegister addressForLoop = address;
 
-        getEffectByteData(sel, effectData, tmp, effectDataNum, address, isUniform);
+          sel.push();
+          if (loopCount > 1) {
+            addressForLoop = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
+            sel.MOV(addressForLoop, address);
+          }
 
-        for(uint32_t i = 0; i < effectDataNum; i++) {
-          unsigned int elemNum = (valueNum - i * (4 / typeSize)) > 4/typeSize ?
-                                 4/typeSize : (valueNum - i * (4 / typeSize));
-          sel.UNPACK_BYTE(dst.data() + i * 4/typeSize, effectData[i], typeSize, elemNum);
+          for (uint32_t i = 0; i < loopCount; ++i) {
+            uint32_t valueLeft = valueNum - valueIndex;
+            GBE_ASSERT(valueLeft > 1);
+            uint32_t dataSize = 0;
+            if (valueLeft == 2)
+              dataSize = GEN_BYTE_SCATTER_WORD;
+            else
+              dataSize = GEN_BYTE_SCATTER_DWORD;
+            sel.BYTE_GATHER(readDst, addressForLoop, dataSize, b, sel.getBTITemps(bti));
+
+            // only 4 bytes is gathered even if valueLeft >= 4
+            sel.UNPACK_BYTE(dst.data(), readDst, getFamilySize(FAMILY_BYTE), (valueLeft < 4 ? valueLeft : 4));
+            valueIndex += 4;
+
+            //calculate the new address to read
+            if (valueIndex < valueNum)
+              sel.ADD(addressForLoop, addressForLoop, GenRegister::immud(4));
+          }
+          sel.pop();
         }
       } else {
         GBE_ASSERT(insn.getValueNum() == 1);
