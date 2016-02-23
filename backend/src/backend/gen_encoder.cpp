@@ -451,7 +451,7 @@ namespace gbe
     this->setHeader(insn);
     insn->header.destreg_or_condmod = GEN_SFID_DATAPORT_DATA;
 
-    this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
+    this->setDst(insn, GenRegister::ud8grf(dst.nr, 0));
     this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
 
     if (bti.file == GEN_IMMEDIATE_VALUE) {
