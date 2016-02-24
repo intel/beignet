@@ -29,7 +29,7 @@ void compiler_mul24(void)
 
   OCL_MAP_BUFFER(2);
   for (int i = 0; i < n; ++i)
-    OCL_ASSERT(((int*)buf_data[2])[i] == ((src1[i] << 8) >> 8) * ((src2[i] << 8) >> 8));
+    OCL_ASSERT(((int*)buf_data[2])[i] == (src1[i]) * (src2[i]));
   OCL_UNMAP_BUFFER(2);
 }
 

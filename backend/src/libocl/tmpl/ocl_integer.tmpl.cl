@@ -139,8 +139,8 @@ DEF(long)
 DEF(ulong)
 #undef DEF
 
-OVERLOADABLE int mul24(int a, int b) { return ((a << 8) >> 8) * ((b << 8) >> 8); }
-OVERLOADABLE uint mul24(uint a, uint b) { return (a & 0xFFFFFF) * (b & 0xFFFFFF); }
+OVERLOADABLE int mul24(int a, int b) { return a*b; }
+OVERLOADABLE uint mul24(uint a, uint b) { return a*b; }
 
 OVERLOADABLE int mad24(int a, int b, int c) { return mul24(a, b) + c; }
 OVERLOADABLE uint mad24(uint a, uint b, uint c) { return mul24(a, b) + c; }

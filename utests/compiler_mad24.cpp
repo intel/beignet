@@ -34,7 +34,7 @@ void compiler_mad24(void)
 
   OCL_MAP_BUFFER(3);
   for (int i = 0; i < n; ++i)
-    OCL_ASSERT(((int*)buf_data[3])[i] == ((src1[i] << 8) >> 8) * ((src2[i] << 8) >> 8) + src3[i]);
+    OCL_ASSERT(((int*)buf_data[3])[i] == (src1[i]) * (src2[i]) + src3[i]);
   OCL_UNMAP_BUFFER(3);
 }
 
