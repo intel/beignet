@@ -52,7 +52,8 @@ static void profiling_exec(void)
 
 
     /* Because the profiling prop, we can not use default queue. */
-    profiling_queue = clCreateCommandQueue(ctx, device, CL_QUEUE_PROFILING_ENABLE, &status);
+    const cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+    profiling_queue = clCreateCommandQueueWithProperties(ctx, device, properties, &status);
     OCL_ASSERT(status == CL_SUCCESS);
 
     OCL_CREATE_KERNEL("compiler_fabs");
