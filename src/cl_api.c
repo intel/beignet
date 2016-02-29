@@ -429,6 +429,76 @@ error:
   return queue;
 }
 
+cl_command_queue
+clCreateCommandQueueWithProperties(cl_context                         context,
+                                   cl_device_id                       device,
+                                   const cl_queue_properties*         properties,
+                                   cl_int *                           errcode_ret)
+{
+  cl_command_queue queue = NULL;
+  cl_int err = CL_SUCCESS;
+  cl_command_queue_properties prop = 0xFFFFFFFF;
+  CHECK_CONTEXT (context);
+
+  INVALID_DEVICE_IF (device != context->device);
+  if(properties)
+  {
+    cl_ulong que_type;
+    cl_ulong que_val;
+    cl_uint i;
+    for(i = 0;(que_type = properties[i++])!=0;i++)
+    {
+      que_val = properties[i];
+      switch(que_type)
+      {
+        case CL_QUEUE_PROPERTIES:
+          if(prop != 0xFFFFFFFF)
+            err = CL_INVALID_VALUE;
+          else {
+            switch (que_val) {
+            case 0:
+            case CL_QUEUE_PROFILING_ENABLE:
+            case CL_QUEUE_PROFILING_ENABLE |
+                CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE:
+            case CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE:
+            case CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE:
+            case CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE |
+                CL_QUEUE_ON_DEVICE_DEFAULT:
+            case CL_QUEUE_PROFILING_ENABLE |
+                CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE:
+            case CL_QUEUE_PROFILING_ENABLE |
+                CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE |
+                CL_QUEUE_ON_DEVICE_DEFAULT:
+                prop = que_val;
+                break;
+            default:
+              err = CL_INVALID_VALUE;
+              break;
+            }
+          }
+          break;
+        case CL_QUEUE_SIZE:
+          break;
+        default:
+          err = CL_INVALID_VALUE;
+          break;
+      }
+    }
+  }
+  if(prop == 0xFFFFFFFF) prop = 0;
+
+  if((prop & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)||(prop & CL_QUEUE_ON_DEVICE)) {/*not supported now.*/
+    err = CL_INVALID_QUEUE_PROPERTIES;
+    goto error;
+  }
+
+  queue = cl_context_create_queue(context, device, prop, &err);
+error:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return queue;
+}
+
 cl_int
 clRetainCommandQueue(cl_command_queue command_queue)
 {

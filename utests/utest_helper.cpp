@@ -501,9 +501,9 @@ cl_ocl_init(void)
         cl_test_channel_type_string(fmt[i].image_channel_data_type));
 
   /* We are going to push NDRange kernels here */
-  queue = clCreateCommandQueue(ctx, device, 0, &status);
+  queue = clCreateCommandQueueWithProperties(ctx, device, 0, &status);
   if (status != CL_SUCCESS) {
-    fprintf(stderr, "error calling clCreateCommandQueue\n");
+    fprintf(stderr, "error calling clCreateCommandQueueWithProperties\n");
     goto error;
   }
 
