@@ -3926,17 +3926,6 @@ namespace gbe
           }
           break;
 #if LLVM_VERSION_MINOR >= 2
-          case Intrinsic::fmuladd:
-          {
-            const ir::Register tmp  = ctx.reg(ir::FAMILY_DWORD);
-            const ir::Register dst  = this->getRegister(&I);
-            const ir::Register src0 = this->getRegister(I.getOperand(0));
-            const ir::Register src1 = this->getRegister(I.getOperand(1));
-            const ir::Register src2 = this->getRegister(I.getOperand(2));
-            ctx.MUL(ir::TYPE_FLOAT, tmp, src0, src1);
-            ctx.ADD(ir::TYPE_FLOAT, dst, tmp, src2);
-          }
-          break;
           case Intrinsic::lifetime_start:
           case Intrinsic::lifetime_end:
           break;
@@ -4023,6 +4012,7 @@ namespace gbe
           }
           break;
           case Intrinsic::fma:
+          case Intrinsic::fmuladd:
           {
             ir::Type srcType = getType(ctx, I.getType());
             const ir::Register dst = this->getRegister(&I);

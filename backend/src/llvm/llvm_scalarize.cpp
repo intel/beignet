@@ -269,6 +269,7 @@ namespace gbe {
           case Intrinsic::sqrt:
           case Intrinsic::ceil:
           case Intrinsic::trunc:
+          case Intrinsic::fmuladd:
               return true;
         }
     }

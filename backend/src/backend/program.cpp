@@ -630,7 +630,7 @@ namespace gbe {
     args.push_back("spir");
 #endif /* LLVM_VERSION_MINOR <= 2 */
     args.push_back("stringInput.cl");
-    args.push_back("-ffp-contract=off");
+    args.push_back("-ffp-contract=on");
     if(OCL_DEBUGINFO) args.push_back("-g");
 
     // The compiler invocation needs a DiagnosticsEngine so it can report problems
