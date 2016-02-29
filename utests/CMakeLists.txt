@@ -303,6 +303,7 @@ if (ENABLE_OPENCL_20)
       compiler_program_global.cpp
       compiler_generic_atomic.cpp
       compiler_atomic_functions_20.cpp
+      compiler_sampler.cpp
       compiler_generic_pointer.cpp)
 endif (ENABLE_OPENCL_20)
 
