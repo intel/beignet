@@ -42,9 +42,13 @@
 .preferred_wg_sz_mul = 16,
 .address_bits = 64,
 .svm_capabilities = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER,
+.preferred_platform_atomic_alignment = 0,
+.preferred_global_atomic_alignment = 0,
+.preferred_local_atomic_alignment = 0,
 .image_support = CL_TRUE,
 .max_read_image_args = BTI_MAX_READ_IMAGE_ARGS,
 .max_write_image_args = BTI_MAX_WRITE_IMAGE_ARGS,
+.max_read_write_image_args = BTI_MAX_WRITE_IMAGE_ARGS,
 .image_max_array_size = 2048,
 .image2d_max_width = 8192,
 .image2d_max_height = 8192,
@@ -59,6 +63,8 @@
 .global_mem_cache_type = CL_READ_WRITE_CACHE,
 .max_constant_buffer_size = 128 * 1024 * 1024,
 .max_constant_args = 8,
+.max_global_variable_size = 64 * 1024,
+.global_variable_preferred_total_size = 64 * 1024,
 .error_correction_support = CL_FALSE,
 #ifdef HAS_USERPTR
 .host_unified_memory = CL_TRUE,
@@ -72,6 +78,12 @@
 .linker_available = CL_TRUE,
 .execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL,
 .queue_properties = CL_QUEUE_PROFILING_ENABLE,
+.queue_on_host_properties = CL_QUEUE_PROFILING_ENABLE,
+.queue_on_device_properties = CL_QUEUE_PROFILING_ENABLE,
+.queue_on_device_preferred_size = 16 * 1024,
+.queue_on_device_max_size = 256 * 1024,
+.max_on_device_queues = 1,
+.max_on_device_events = 1024,
 .platform = NULL, /* == intel_platform (set when requested) */
 /* IEEE 754, XXX does IVB support CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT? */
 .single_fp_config = CL_FP_INF_NAN | CL_FP_ROUND_TO_NEAREST , /* IEEE 754. */
