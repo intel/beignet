@@ -164,7 +164,11 @@ cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k, cl_gpgpu gpgp
       struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)k->args[i].mem;
       cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, k->args[i].mem->offset + buffer->sub_offset, k->args[i].mem->size, interp_kernel_get_arg_bti(k->opaque, i));
     } else {
-      cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, k->args[i].mem->offset, k->args[i].mem->size, interp_kernel_get_arg_bti(k->opaque, i));
+      size_t mem_offset = 0; //
+      if(k->args[i].is_svm) {
+        mem_offset = (size_t)k->args[i].ptr - (size_t)k->args[i].mem->host_ptr;
+      }
+      cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, k->args[i].mem->offset + mem_offset, k->args[i].mem->size, interp_kernel_get_arg_bti(k->opaque, i));
     }
   }
 
