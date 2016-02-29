@@ -1439,10 +1439,12 @@ intel_gpgpu_bind_buf(intel_gpgpu_t *gpgpu, drm_intel_bo *buf, uint32_t offset,
                      uint32_t internal_offset, size_t size, uint8_t bti)
 {
   assert(gpgpu->binded_n < max_buf_n);
-  gpgpu->binded_buf[gpgpu->binded_n] = buf;
-  gpgpu->target_buf_offset[gpgpu->binded_n] = internal_offset;
-  gpgpu->binded_offset[gpgpu->binded_n] = offset;
-  gpgpu->binded_n++;
+  if(offset != -1) {
+    gpgpu->binded_buf[gpgpu->binded_n] = buf;
+    gpgpu->target_buf_offset[gpgpu->binded_n] = internal_offset;
+    gpgpu->binded_offset[gpgpu->binded_n] = offset;
+    gpgpu->binded_n++;
+  }
   intel_gpgpu_setup_bti(gpgpu, buf, internal_offset, size, bti, I965_SURFACEFORMAT_RAW);
 }
 

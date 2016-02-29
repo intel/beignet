@@ -67,6 +67,8 @@ struct _cl_kernel {
   cl_argument *args;          /* To track argument setting */
   uint32_t arg_n:31;          /* Number of arguments */
   uint32_t ref_its_program:1; /* True only for the user kernel (created by clCreateKernel) */
+  uint32_t exec_info_n;       /* The kernel's exec info count */
+  void** exec_info;            /* The kernel's exec info */
 };
 
 /* Allocate an empty kernel */
@@ -103,7 +105,9 @@ extern int cl_kernel_set_arg(cl_kernel,
 extern int cl_kernel_set_arg_svm_pointer(cl_kernel,
                                             uint32_t arg_index,
                                             const void *arg_value);
-
+extern cl_int cl_kernel_set_exec_info(cl_kernel k,
+                                      size_t n,
+                                      const void *value);
 
 /* Get the argument information */
 extern int cl_get_kernel_arg_info(cl_kernel k, cl_uint arg_index,

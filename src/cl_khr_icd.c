@@ -184,6 +184,7 @@ struct _cl_icd_dispatch const cl_khr_icd_dispatch = {
   (void *) clEnqueueSVMUnmap,
   (void *) NULL /* clCreateSamplerWithProperties */,
   clSetKernelArgSVMPointer,
+  clSetKernelExecInfo,
 #endif
 };
 
