@@ -85,10 +85,19 @@ extern cl_int cl_command_queue_set_report_buffer(cl_command_queue, cl_mem);
 extern int cl_command_queue_flush_gpgpu(cl_gpgpu);
 
 /* Bind all the surfaces in the GPGPU state */
-extern cl_int cl_command_queue_bind_surface(cl_command_queue, cl_kernel, cl_gpgpu);
+extern cl_int cl_command_queue_bind_surface(cl_command_queue, cl_kernel, cl_gpgpu, uint32_t *);
 
 /* Bind all the image surfaces in the GPGPU state */
-extern cl_int cl_command_queue_bind_image(cl_command_queue, cl_kernel, cl_gpgpu);
+extern cl_int cl_command_queue_bind_image(cl_command_queue, cl_kernel, cl_gpgpu, uint32_t *);
+
+/* Bind all exec info to bind table */
+extern cl_int cl_command_queue_bind_exec_info(cl_command_queue, cl_kernel, cl_gpgpu, uint32_t);
+
+/* Insert a user event to command's wait_events */
+extern void cl_command_queue_insert_event(cl_command_queue, cl_event);
+
+/* Remove a user event from command's wait_events */
+extern void cl_command_queue_remove_event(cl_command_queue, cl_event);
 
 extern void cl_command_queue_insert_barrier_event(cl_command_queue queue, cl_event event);
 extern void cl_command_queue_remove_barrier_event(cl_command_queue queue, cl_event event);

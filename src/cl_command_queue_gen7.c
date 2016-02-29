@@ -369,6 +369,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   cl_int err = CL_SUCCESS;
   size_t global_size = global_wk_sz[0] * global_wk_sz[1] * global_wk_sz[2];
   void* printf_info = NULL;
+  uint32_t max_bti = 0;
 
   /* Setup kernel */
   kernel.name = interp_kernel_get_name(ker->opaque);
@@ -423,10 +424,12 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   }
 
   /* Bind user buffers */
-  cl_command_queue_bind_surface(queue, ker, gpgpu);
+  cl_command_queue_bind_surface(queue, ker, gpgpu, &max_bti);
   /* Bind user images */
-  if(UNLIKELY(err = cl_command_queue_bind_image(queue, ker, gpgpu) != CL_SUCCESS))
+  if(UNLIKELY(err = cl_command_queue_bind_image(queue, ker, gpgpu, &max_bti) != CL_SUCCESS))
     return err;
+  /* Bind all exec infos */
+  cl_command_queue_bind_exec_info(queue, ker, gpgpu, max_bti);
   /* Bind all samplers */
   if (ker->vme)
     cl_gpgpu_bind_vme_state(gpgpu, ker->accel);

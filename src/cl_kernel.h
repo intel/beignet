@@ -72,6 +72,8 @@ struct _cl_kernel {
   uint32_t vme:1;             /* True only if it is a built-in kernel for VME */
 
   void* cmrt_kernel;          /* CmKernel* */
+  uint32_t exec_info_n;       /* The kernel's exec info count */
+  void** exec_info;            /* The kernel's exec info */
 };
 
 #define CL_OBJECT_KERNEL_MAGIC 0x1234567890abedefLL
@@ -113,7 +115,9 @@ extern int cl_kernel_set_arg(cl_kernel,
 extern int cl_kernel_set_arg_svm_pointer(cl_kernel,
                                             uint32_t arg_index,
                                             const void *arg_value);
-
+extern cl_int cl_kernel_set_exec_info(cl_kernel k,
+                                      size_t n,
+                                      const void *value);
 
 /* Get the argument information */
 extern int cl_get_kernel_arg_info(cl_kernel k, cl_uint arg_index,

@@ -571,7 +571,7 @@ error:
 }
 
 void
- clSVMFree (cl_context context, void* svm_pointer)
+clSVMFree (cl_context context, void* svm_pointer)
 {
   cl_int err = CL_SUCCESS;
   CHECK_CONTEXT (context);
@@ -1592,7 +1592,7 @@ error:
 }
 
 cl_int
-clSetKernelArgSVMPointer (cl_kernel kernel,
+clSetKernelArgSVMPointer(cl_kernel kernel,
                           cl_uint arg_index,
                           const void *arg_value)
 {
@@ -1600,6 +1600,33 @@ clSetKernelArgSVMPointer (cl_kernel kernel,
   CHECK_KERNEL(kernel);
 
   err = cl_kernel_set_arg_svm_pointer(kernel, arg_index, arg_value);
+error:
+  return err;
+}
+cl_int
+clSetKernelExecInfo(cl_kernel kernel,
+                     cl_kernel_exec_info  param_name,
+                     size_t  param_value_size,
+                     const void  *param_value)
+{
+
+  cl_int err = CL_SUCCESS;
+  CHECK_KERNEL(kernel);
+
+  if((param_name != CL_KERNEL_EXEC_INFO_SVM_PTRS &&
+     param_name != CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM) ||
+     param_value == NULL || param_value_size == 0) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if(param_name == CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM &&
+     *(cl_bool *)param_value == CL_TRUE) {
+    err = CL_INVALID_OPERATION;
+    goto error;
+  }
+
+  err = cl_kernel_set_exec_info(kernel, param_value_size, param_value);
 error:
   return err;
 }

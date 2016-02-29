@@ -71,6 +71,9 @@ cl_kernel_delete(cl_kernel k)
   if (k->image_sz)
     cl_free(k->images);
 
+  if (k->exec_info)
+    cl_free(k->exec_info);
+
   CL_OBJECT_DESTROY_BASE(k);
   cl_free(k);
 }
@@ -266,14 +269,14 @@ LOCAL cl_int
 cl_kernel_set_arg_svm_pointer(cl_kernel k, cl_uint index, const void *value)
 {
   enum gbe_arg_type arg_type; /* kind of argument */
-  size_t arg_sz;              /* size of the argument */
+  //size_t arg_sz;              /* size of the argument */
   cl_context ctx = k->program->ctx;
   cl_mem mem= cl_context_get_svm_from_ptr(ctx, value);
 
   if (UNLIKELY(index >= k->arg_n))
     return CL_INVALID_ARG_INDEX;
   arg_type = interp_kernel_get_arg_type(k->opaque, index);
-  arg_sz = interp_kernel_get_arg_size(k->opaque, index);
+  //arg_sz = interp_kernel_get_arg_size(k->opaque, index);
 
   if(arg_type != GBE_ARG_GLOBAL_PTR && arg_type != GBE_ARG_CONSTANT_PTR )
     return CL_INVALID_ARG_VALUE;
@@ -292,6 +295,21 @@ cl_kernel_set_arg_svm_pointer(cl_kernel k, cl_uint index, const void *value)
   k->args[index].local_sz = 0;
   k->args[index].bti = interp_kernel_get_arg_bti(k->opaque, index);
   return 0;
+}
+
+LOCAL cl_int
+cl_kernel_set_exec_info(cl_kernel k, size_t n, const void *value)
+{
+  cl_int err = CL_SUCCESS;
+  assert(k != NULL);
+
+  if (n == 0) return err;
+  TRY_ALLOC(k->exec_info, cl_calloc(n, 1));
+  memcpy(k->exec_info, value, n);
+  k->exec_info_n = n / sizeof(void *);
+
+error:
+  return err;
 }
 
 LOCAL int
@@ -455,6 +473,7 @@ cl_kernel_dup(cl_kernel from)
   to->curbe_sz = from->curbe_sz;
   to->sampler_sz = from->sampler_sz;
   to->image_sz = from->image_sz;
+  to->exec_info_n = from->exec_info_n;
   memcpy(to->compile_wg_sz, from->compile_wg_sz, sizeof(from->compile_wg_sz));
   to->stack_size = from->stack_size;
   if (to->sampler_sz)
@@ -464,6 +483,10 @@ cl_kernel_dup(cl_kernel from)
     memcpy(to->images, from->images, to->image_sz * sizeof(to->images[0]));
   } else
     to->images = NULL;
+  if (to->exec_info_n) { /* Must always 0 here */
+    TRY_ALLOC_NO_ERR(to->exec_info, cl_calloc(to->exec_info_n, sizeof(void *)));
+    memcpy(to->exec_info, from->exec_info, to->exec_info_n * sizeof(void *));
+  }
   TRY_ALLOC_NO_ERR(to->args, cl_calloc(to->arg_n, sizeof(cl_argument)));
   if (to->curbe_sz) TRY_ALLOC_NO_ERR(to->curbe, cl_calloc(1, to->curbe_sz));
 

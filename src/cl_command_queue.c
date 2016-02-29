@@ -110,7 +110,7 @@ set_image_info(char *curbe,
 }
 
 LOCAL cl_int
-cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k, cl_gpgpu gpgpu)
+cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k, cl_gpgpu gpgpu, uint32_t *max_bti)
 {
   uint32_t i;
 
@@ -134,6 +134,12 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k, cl_gpgpu gpgpu)
                           image->intel_fmt, image->image_type, image->bpp,
                           image->w, image->h, image->depth,
                           image->row_pitch, image->slice_pitch, (cl_gpgpu_tiling)image->tiling);
+    if(*max_bti < k->images[i].idx)
+      *max_bti = k->images[i].idx;
+    cl_gpgpu_bind_image(gpgpu, k->images[i].idx, image->base.bo, image->offset + k->args[id].mem->offset,
+                        image->intel_fmt, image->image_type, image->bpp,
+                        image->w, image->h, image->depth,
+                        image->row_pitch, image->slice_pitch, (cl_gpgpu_tiling)image->tiling);
     // TODO, this workaround is for GEN7/GEN75 only, we may need to do it in the driver layer
     // on demand.
     if (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
@@ -146,10 +152,10 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k, cl_gpgpu gpgpu)
 }
 
 LOCAL cl_int
-cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k, cl_gpgpu gpgpu)
+cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k, cl_gpgpu gpgpu, uint32_t *max_bti)
 {
   /* Bind all user buffers (given by clSetKernelArg) */
-  uint32_t i;
+  uint32_t i, bti;
   uint32_t ocl_version = interp_kernel_get_ocl_version(k->opaque);
   enum gbe_arg_type arg_type; /* kind of argument */
   for (i = 0; i < k->arg_n; ++i) {
@@ -160,15 +166,39 @@ cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k, cl_gpgpu gpgp
     offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, i);
     if (offset < 0)
       continue;
+    bti = interp_kernel_get_arg_bti(k->opaque, i);
+    if(*max_bti < bti)
+      *max_bti = bti;
     if (k->args[i].mem->type == CL_MEM_SUBBUFFER_TYPE) {
       struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)k->args[i].mem;
-      cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, k->args[i].mem->offset + buffer->sub_offset, k->args[i].mem->size, interp_kernel_get_arg_bti(k->opaque, i));
+      cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, k->args[i].mem->offset + buffer->sub_offset, k->args[i].mem->size, bti);
     } else {
       size_t mem_offset = 0; //
       if(k->args[i].is_svm) {
         mem_offset = (size_t)k->args[i].ptr - (size_t)k->args[i].mem->host_ptr;
       }
-      cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, k->args[i].mem->offset + mem_offset, k->args[i].mem->size, interp_kernel_get_arg_bti(k->opaque, i));
+      cl_gpgpu_bind_buf(gpgpu, k->args[i].mem->bo, offset, k->args[i].mem->offset + mem_offset, k->args[i].mem->size, bti);
+    }
+  }
+  return CL_SUCCESS;
+}
+
+LOCAL cl_int
+cl_command_queue_bind_exec_info(cl_command_queue queue, cl_kernel k, cl_gpgpu gpgpu, uint32_t max_bti)
+{
+  uint32_t i;
+  size_t mem_offset, bti = max_bti;
+  cl_mem svm_mem;
+
+  for (i = 0; i < k->exec_info_n; i++) {
+    void *ptr = k->exec_info[i];
+    if((svm_mem = cl_context_get_svm_from_ptr(k->program->ctx, ptr)) != NULL) {
+      mem_offset = (size_t)ptr - (size_t)svm_mem->host_ptr;
+      /* only need realloc in surface state, don't need realloc in curbe */
+      cl_gpgpu_bind_buf(gpgpu, svm_mem->bo, -1, svm_mem->offset + mem_offset, svm_mem->size, bti++);
+      if(bti == BTI_WORKAROUND_IMAGE_OFFSET)
+        bti = max_bti + BTI_WORKAROUND_IMAGE_OFFSET;
+      assert(bti < BTI_MAX_ID);
     }
   }
 
