@@ -56,9 +56,13 @@ struct _cl_device_id {
   cl_uint  address_bits;
   size_t   max_mem_alloc_size;
   cl_device_svm_capabilities  svm_capabilities;
+  cl_uint preferred_platform_atomic_alignment;
+  cl_uint preferred_global_atomic_alignment;
+  cl_uint preferred_local_atomic_alignment;
   cl_bool  image_support;
   cl_uint  max_read_image_args;
   cl_uint  max_write_image_args;
+  cl_uint  max_read_write_image_args;
   size_t   image2d_max_width;
   size_t   image_max_array_size;
   size_t   image2d_max_height;
@@ -79,6 +83,8 @@ struct _cl_device_id {
   cl_ulong global_mem_size;
   cl_ulong max_constant_buffer_size;
   cl_uint  max_constant_args;
+  size_t  max_global_variable_size;
+  size_t  global_variable_preferred_total_size;
   cl_device_local_mem_type local_mem_type;
   cl_ulong local_mem_size;
   cl_ulong scratch_mem_size;
@@ -91,6 +97,12 @@ struct _cl_device_id {
   cl_bool  linker_available;
   cl_device_exec_capabilities execution_capabilities;
   cl_command_queue_properties queue_properties;
+  cl_command_queue_properties queue_on_host_properties;
+  cl_command_queue_properties queue_on_device_properties;
+  cl_uint queue_on_device_preferred_size;
+  cl_uint queue_on_device_max_size;
+  cl_uint max_on_device_queues;
+  cl_uint max_on_device_events;
   cl_platform_id platform;
   size_t printf_buffer_size;
   cl_bool interop_user_sync;
@@ -119,8 +131,8 @@ struct _cl_device_id {
   cl_device_affinity_domain    affinity_domain;
   cl_device_partition_property partition_type[3];
   uint32_t atomic_test_result;
-  uint32_t image_pitch_alignment;
-  uint32_t image_base_address_alignment;
+  cl_uint image_pitch_alignment;
+  cl_uint image_base_address_alignment;
 
   //inited as NULL, created only when cmrt kernel is used
   void* cmrt_device;  //realtype: CmDevice*
