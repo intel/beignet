@@ -1070,6 +1070,69 @@ error:
   return sampler;
 }
 
+cl_sampler
+clCreateSamplerWithProperties(cl_context                  context,
+                              const cl_sampler_properties *sampler_properties,
+                              cl_int *                    errcode_ret)
+{
+  cl_sampler sampler = NULL;
+  cl_int err = CL_SUCCESS;
+  CHECK_CONTEXT (context);
+  cl_bool normalized = 0xFFFFFFFF;
+  cl_addressing_mode addressing = 0xFFFFFFFF;
+  cl_filter_mode filter = 0xFFFFFFFF;
+  if(sampler_properties)
+  {
+    cl_ulong sam_type;
+    cl_ulong sam_val;
+    cl_uint i;
+    for(i = 0;(sam_type = sampler_properties[i++])!=0;i++)
+    {
+      sam_val = sampler_properties[i];
+      switch(sam_type)
+      {
+        case CL_SAMPLER_NORMALIZED_COORDS:
+          if(normalized != 0xFFFFFFFF)
+            err = CL_INVALID_VALUE;
+          else if(sam_val == CL_TRUE || sam_val == CL_FALSE)
+            normalized = sam_val;
+          else
+            err = CL_INVALID_VALUE;
+          break;
+        case CL_SAMPLER_ADDRESSING_MODE:
+          if(addressing != 0xFFFFFFFF)
+            err = CL_INVALID_VALUE;
+          else if(sam_val == CL_ADDRESS_MIRRORED_REPEAT || sam_val == CL_ADDRESS_REPEAT ||
+                  sam_val == CL_ADDRESS_CLAMP_TO_EDGE || sam_val == CL_ADDRESS_CLAMP ||
+                  sam_val == CL_ADDRESS_NONE)
+            addressing = sam_val;
+          else
+            err = CL_INVALID_VALUE;
+          break;
+        case CL_SAMPLER_FILTER_MODE:
+          if(filter != 0xFFFFFFFF)
+            err = CL_INVALID_VALUE;
+          else if(sam_val == CL_FILTER_LINEAR || sam_val == CL_FILTER_NEAREST)
+            filter = sam_val;
+          else
+            err = CL_INVALID_VALUE;
+          break;
+        default:
+          err = CL_INVALID_VALUE;
+          break;
+      }
+    }
+  }
+  if(normalized == 0xFFFFFFFF) normalized = CL_TRUE;
+  if(addressing == 0xFFFFFFFF) addressing = CL_ADDRESS_CLAMP;
+  if(filter == 0xFFFFFFFF) filter = CL_FILTER_NEAREST;
+  sampler = cl_sampler_new(context, normalized, addressing, filter, &err);
+error:
+  if (errcode_ret)
+    *errcode_ret = err;
+  return sampler;
+}
+
 cl_int
 clRetainSampler(cl_sampler sampler)
 {

@@ -613,7 +613,7 @@ cl_self_test(cl_device_id device, cl_self_test_res atomic_in_l3_flag)
   ctx = clCreateContext(NULL, 1, &device, NULL, NULL, &status);
   cl_driver_set_atomic_flag(ctx->drv, atomic_in_l3_flag);
   if (status == CL_SUCCESS) {
-    queue = clCreateCommandQueue(ctx, device, 0, &status);
+    queue = clCreateCommandQueueWithProperties(ctx, device, 0, &status);
     if (status == CL_SUCCESS) {
       program = clCreateProgramWithSource(ctx, 1, &kernel_source, NULL, &status);
       if (status == CL_SUCCESS) {
