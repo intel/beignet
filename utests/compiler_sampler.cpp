@@ -8,7 +8,7 @@ void compiler_sampler(void)
   OCL_ASSERT(ctx != 0);
   cl_sampler s;
   cl_int err;
-  int a1[] = {CL_TRUE, CL_FALSE},
+  cl_uint a1[] = {CL_TRUE, CL_FALSE},
       a2[] = {CL_ADDRESS_MIRRORED_REPEAT,
               CL_ADDRESS_REPEAT,
               CL_ADDRESS_CLAMP_TO_EDGE,
@@ -27,6 +27,18 @@ void compiler_sampler(void)
     for(j=0; j<5; j++)
       for(k=0; k<2; k++) {
         s = clCreateSampler(ctx, a1[i], a2[j], a3[k], &err);
+        OCL_ASSERT(err == CL_SUCCESS);
+        OCL_CALL(clRetainSampler, s);
+        OCL_CALL(clReleaseSampler, s);
+        for(l=0; l<5; l++)
+          OCL_CALL(clGetSamplerInfo, s, a4[l], 1000, pv, &pv_size);
+        OCL_CALL(clReleaseSampler, s);
+        cl_sampler_properties sam[] = {
+        CL_SAMPLER_NORMALIZED_COORDS, a1[i],
+        CL_SAMPLER_ADDRESSING_MODE, a2[j],
+        CL_SAMPLER_FILTER_MODE, a3[k],
+        0};
+        s = clCreateSamplerWithProperties(ctx, sam, &err);
         OCL_ASSERT(err == CL_SUCCESS);
         OCL_CALL(clRetainSampler, s);
         OCL_CALL(clReleaseSampler, s);

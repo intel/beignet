@@ -60,6 +60,7 @@ set (utests_sources
   compiler_copy_buffer_row.cpp
   compiler_degrees.cpp
   compiler_step.cpp
+  compiler_sampler.cpp
   compiler_fabs.cpp
   compiler_abs.cpp
   compiler_abs_diff.cpp
