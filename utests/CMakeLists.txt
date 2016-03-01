@@ -301,6 +301,7 @@ if (ENABLE_OPENCL_20)
   SET(utests_sources
       ${utests_sources}
       compiler_program_global.cpp
+      compiler_generic_atomic.cpp
       compiler_generic_pointer.cpp)
 endif (ENABLE_OPENCL_20)
 
