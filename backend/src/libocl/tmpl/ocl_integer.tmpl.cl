@@ -40,6 +40,18 @@ SDEF(long, s, 64);
 SDEF(ulong, u, 64);
 #undef SDEF
 
+#define SDEF(TYPE, TYPE_NAME, SIZE)        \
+OVERLOADABLE TYPE ctz(TYPE x){ return ctz_##TYPE_NAME##SIZE(x);}
+SDEF(char, s, 8);
+SDEF(uchar, u, 8);
+SDEF(short, s, 16);
+SDEF(ushort, u, 16);
+SDEF(int, s, 32);
+SDEF(uint, u, 32);
+SDEF(long, s, 64);
+SDEF(ulong, u, 64);
+#undef SDEF
+
 #define SDEF(TYPE)        \
 OVERLOADABLE TYPE popcount(TYPE x){ return __gen_ocl_cbit(x);}
 SDEF(char);

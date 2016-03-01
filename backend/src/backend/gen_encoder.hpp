@@ -128,6 +128,7 @@ namespace gbe
     //ALU2(MOV_DF);
     ALU2(BRC)
     ALU1(BRD)
+    ALU1(BFREV)
 #undef ALU1
 #undef ALU2
 #undef ALU2_MOD

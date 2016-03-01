@@ -70,6 +70,7 @@ static const struct {
   [GEN_OPCODE_CBIT] = { .name = "cbit", .nsrc = 1, .ndst = 1 },
   [GEN_OPCODE_F16TO32] = { .name = "f16to32", .nsrc = 1, .ndst = 1 },
   [GEN_OPCODE_F32TO16] = { .name = "f32to16", .nsrc = 1, .ndst = 1 },
+  [GEN_OPCODE_BFREV] = { .name = "bfrev", .nsrc = 1, .ndst = 1 },
 
   [GEN_OPCODE_MUL] = { .name = "mul", .nsrc = 2, .ndst = 1 },
   [GEN_OPCODE_MAC] = { .name = "mac", .nsrc = 2, .ndst = 1 },

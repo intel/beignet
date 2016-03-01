@@ -571,6 +571,7 @@ namespace gbe
     I64Shift(I64SHL)
     I64Shift(I64SHR)
     I64Shift(I64ASR)
+    ALU1(BFREV)
 #undef ALU1
 #undef ALU1WithTemp
 #undef ALU2
@@ -2639,7 +2640,7 @@ namespace gbe
         return isSrc ? insnType : ir::TYPE_U32;
       if (insnType == ir::TYPE_S64 || insnType == ir::TYPE_U64 || insnType == ir::TYPE_S8 || insnType == ir::TYPE_U8)
         return insnType;
-      if (opcode == ir::OP_FBH || opcode == ir::OP_FBL || opcode == ir::OP_LZD)
+      if (opcode == ir::OP_FBH || opcode == ir::OP_FBL || opcode == ir::OP_LZD || opcode == ir::OP_BFREV)
         return ir::TYPE_U32;
       if (opcode == ir::OP_SIMD_ANY || opcode == ir::OP_SIMD_ALL)
         return ir::TYPE_S32;
@@ -2694,6 +2695,7 @@ namespace gbe
           case ir::OP_FBL: sel.FBL(dst, src); break;
           case ir::OP_CBIT: sel.CBIT(dst, src); break;
           case ir::OP_LZD: sel.LZD(dst, src); break;
+          case ir::OP_BFREV: sel.BFREV(dst, src); break;
           case ir::OP_COS: sel.MATH(dst, GEN_MATH_FUNCTION_COS, src); break;
           case ir::OP_SIN: sel.MATH(dst, GEN_MATH_FUNCTION_SIN, src); break;
           case ir::OP_LOG: sel.MATH(dst, GEN_MATH_FUNCTION_LOG, src); break;
