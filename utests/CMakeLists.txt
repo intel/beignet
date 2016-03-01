@@ -79,6 +79,7 @@ set (utests_sources
   compiler_global_constant_2.cpp
   compiler_group_size.cpp
   compiler_generic_pointer.cpp
+  compiler_generic_atomic.cpp
   compiler_hadd.cpp
   compiler_if_else.cpp
   compiler_integer_division.cpp
