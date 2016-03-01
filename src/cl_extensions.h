@@ -9,6 +9,9 @@
   DECL_EXT(khr_local_int32_base_atomics) \
   DECL_EXT(khr_local_int32_extended_atomics) \
   DECL_EXT(khr_byte_addressable_store) \
+  DECL_EXT(khr_3d_image_writes)\
+  DECL_EXT(khr_image2d_from_buffer)\
+  DECL_EXT(khr_depth_images)\
   DECL_EXT(khr_fp64)
 
 /* The OPT1 extensions are those optional extensions
@@ -16,12 +19,9 @@
 #define DECL_OPT1_EXTENSIONS \
   DECL_EXT(khr_int64_base_atomics)\
   DECL_EXT(khr_int64_extended_atomics)\
-  DECL_EXT(khr_3d_image_writes)\
   DECL_EXT(khr_fp16)\
-  DECL_EXT(khr_image2d_from_buffer)\
   DECL_EXT(khr_initialize_memory)\
   DECL_EXT(khr_context_abort)\
-  DECL_EXT(khr_depth_images)\
   DECL_EXT(khr_spir) \
   DECL_EXT(khr_icd)
 
