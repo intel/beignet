@@ -201,7 +201,7 @@ namespace gbe
     // Run instcombine after redundancy elimination to exploit opportunities
     // opened up by them.
     MPM.add(createInstructionCombiningPass());
-    MPM.add(createJumpThreadingPass());         // Thread jumps
+    //MPM.add(createJumpThreadingPass());         // Thread jumps
     MPM.add(createCorrelatedValuePropagationPass());
     MPM.add(createDeadStoreEliminationPass());  // Delete dead stores
     MPM.add(createAggressiveDCEPass());         // Delete dead instructions

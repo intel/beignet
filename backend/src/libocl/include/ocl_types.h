@@ -20,6 +20,11 @@
 
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
+#define DISABLE_ATOMIC_INT64
+#ifndef DISABLE_ATOMIC_INT64
+#pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable
+#pragma OPENCL EXTENSION cl_khr_int64_extended_atomics : enable
+#endif
 #include "ocl_defines.h"
 
 #define NULL 0
