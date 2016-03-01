@@ -33,6 +33,9 @@
 #define cl_khr_local_int32_base_atomics
 #define cl_khr_local_int32_extended_atomics
 #define cl_khr_byte_addressable_store
+#define cl_khr_3d_image_writes
+#define cl_khr_image2d_from_buffer
+#define cl_khr_depth_images
 #define cl_khr_icd
 #define cl_khr_gl_sharing
 #define cl_khr_spir
