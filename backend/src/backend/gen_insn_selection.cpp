@@ -6334,8 +6334,19 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         if (addrBytes == 8)
           addrDW = convertU64ToU32(sel, address);
         sel.ATOMIC(dst, genAtomicOp, msgPayload, addrDW, src1, src2, GenRegister::immud(0xfe), sel.getBTITemps(AM));
-      }
-      else
+      } else if (addrSpace == ir::MEM_GENERIC) {
+          Register localMask = generateLocalMask(sel, address);
+          sel.push();
+            sel.curr.useVirtualFlag(localMask, GEN_PREDICATE_NORMAL);
+            GenRegister addrDW = address;
+            if (addrBytes == 8)
+              addrDW = convertU64ToU32(sel, address);
+            sel.ATOMIC(dst, genAtomicOp, msgPayload, addrDW, src1, src2, GenRegister::immud(0xfe), sel.getBTITemps(AM));
+
+            sel.curr.inversePredicate = 1;
+            untypedAtomicA64Stateless(sel, insn, msgPayload, dst, address, src1, src2, GenRegister::immud(0xff));
+          sel.pop();
+      } else
         untypedAtomicA64Stateless(sel, insn, msgPayload, dst, address, src1, src2, GenRegister::immud(0xff));
 
       markAllChildren(dag);
