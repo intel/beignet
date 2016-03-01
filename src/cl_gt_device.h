@@ -39,7 +39,11 @@
 .native_vector_width_float = 4,
 .native_vector_width_double = 2,
 .native_vector_width_half = 8,
+#ifdef ENABLE_OPENCL_20
+.address_bits = 64,
+#else
 .address_bits = 32,
+#endif
 .svm_capabilities = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER,
 .image_support = CL_TRUE,
 .max_read_image_args = BTI_MAX_READ_IMAGE_ARGS,
