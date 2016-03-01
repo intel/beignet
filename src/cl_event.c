@@ -55,7 +55,7 @@ void cl_event_insert_last_events(cl_command_queue queue,cl_event event)
   else set_last_event(queue,event);
 }
 
-inline cl_bool
+static inline cl_bool
 cl_event_is_gpu_command_type(cl_command_type type)
 {
   switch(type) {
