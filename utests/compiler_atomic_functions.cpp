@@ -56,7 +56,7 @@ static void cpu_compiler_atomic(int *dst, int *src)
     dst[i+12] = tmp[i];
 }
 
-static void compiler_atomic_functions(void)
+static void compiler_atomic_functions(const char* kernel_name)
 {
   const size_t n = GROUP_NUM * LOCAL_SIZE;
   int cpu_dst[24] = {0}, cpu_src[256];
@@ -65,7 +65,7 @@ static void compiler_atomic_functions(void)
   locals[0] = LOCAL_SIZE;
 
   // Setup kernel and buffers
-  OCL_CREATE_KERNEL("compiler_atomic_functions");
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_atomic_functions", kernel_name);
   OCL_CREATE_BUFFER(buf[0], 0, 24 * sizeof(int), NULL);
   OCL_CREATE_BUFFER(buf[1], 0, locals[0] * sizeof(int), NULL);
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
@@ -94,4 +94,14 @@ static void compiler_atomic_functions(void)
   OCL_UNMAP_BUFFER(0);
 }
 
-MAKE_UTEST_FROM_FUNCTION(compiler_atomic_functions)
+#define compiler_atomic(kernel, version) \
+static void compiler_atomic_functions_##version()\
+{\
+  compiler_atomic_functions(kernel); \
+} \
+MAKE_UTEST_FROM_FUNCTION(compiler_atomic_functions_##version)
+
+compiler_atomic("compiler_atomic_functions", 12)
+compiler_atomic("compiler_atomic_functions_20", 20)
+
+
