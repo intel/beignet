@@ -119,8 +119,4 @@ typedef enum clk_sampler_type {
 
 } clk_sampler_type;
 
-// Memory synchronization
-#define CLK_LOCAL_MEM_FENCE     (1 << 0)
-#define CLK_GLOBAL_MEM_FENCE    (1 << 1)
-
 #endif   /* __OCL_COMMON_DEFINES__ */

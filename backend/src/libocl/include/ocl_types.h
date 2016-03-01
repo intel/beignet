@@ -84,6 +84,34 @@ DEF(half);
 #undef DEF
 
 /////////////////////////////////////////////////////////////////////////////
+// OpenCL atomic related types
+/////////////////////////////////////////////////////////////////////////////
+//atomic flags
+#define CLK_LOCAL_MEM_FENCE  (1 << 0)
+#define CLK_GLOBAL_MEM_FENCE (1 << 1)
+#define  CLK_IMAGE_MEM_FENCE (1 << 2)
+
+typedef uint cl_mem_fence_flags;
+
+//memory order
+typedef enum {
+	memory_order_relaxed,
+	memory_order_acquire,
+	memory_order_release,
+	memory_order_acq_rel,
+	memory_order_seq_cst
+} memory_order;
+
+//memory scope
+typedef enum {
+	memory_scope_work_item,
+	memory_scope_work_group,
+	memory_scope_device,
+	memory_scope_all_svm_devices,
+	memory_scope_sub_group,
+} memory_scope;
+
+/////////////////////////////////////////////////////////////////////////////
 // OpenCL built-in event types
 /////////////////////////////////////////////////////////////////////////////
 // FIXME:
