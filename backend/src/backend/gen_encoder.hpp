@@ -131,6 +131,7 @@ namespace gbe
     ALU3(LRP)
     ALU2(BRC)
     ALU1(BRD)
+    ALU1(BFREV)
 #undef ALU1
 #undef ALU2
 #undef ALU2_MOD

@@ -578,6 +578,7 @@ namespace gbe
     I64Shift(I64SHL)
     I64Shift(I64SHR)
     I64Shift(I64ASR)
+    ALU1(BFREV)
 #undef ALU1
 #undef ALU1WithTemp
 #undef ALU2
@@ -3043,6 +3044,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           case ir::OP_FBL: sel.FBL(dst, src); break;
           case ir::OP_CBIT: sel.CBIT(dst, src); break;
           case ir::OP_LZD: sel.LZD(dst, src); break;
+          case ir::OP_BFREV: sel.BFREV(dst, src); break;
           case ir::OP_COS: sel.MATH(dst, GEN_MATH_FUNCTION_COS, src); break;
           case ir::OP_SIN: sel.MATH(dst, GEN_MATH_FUNCTION_SIN, src); break;
           case ir::OP_LOG: sel.MATH(dst, GEN_MATH_FUNCTION_LOG, src); break;

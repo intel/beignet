@@ -210,8 +210,23 @@ FOREACH(f ${OCL_LL_MODULES})
     ADD_LL_TO_BC_TARGET(${f})
     STRING(REGEX REPLACE "\(o.*\)" "${OCL_OBJECT_DIR}/\\1.bc" bc_name ${f})
     SET(OCL_BC_FILES ${OCL_BC_FILES} ${bc_name})
-ENDFOREACH(f) 
+ENDFOREACH(f)
 
+SET (OCL_LL_MODULES_12 ocl_ctz)
+FOREACH(f ${OCL_LL_MODULES_12})
+    COPY_THE_LL(${f})
+    ADD_LL_TO_BC_TARGET(${f})
+    STRING(REGEX REPLACE "\(o.*\)" "${OCL_OBJECT_DIR}/\\1.bc" bc_name ${f})
+    SET(OCL_BC_FILES_12 ${OCL_BC_FILES_12} ${bc_name})
+ENDFOREACH(f)
+
+SET (OCL_LL_MODULES_20 ocl_ctz_20)
+FOREACH(f ${OCL_LL_MODULES_20})
+    COPY_THE_LL(${f})
+    ADD_LL_TO_BC_TARGET(${f})
+    STRING(REGEX REPLACE "\(o.*\)" "${OCL_OBJECT_DIR}/\\1.bc" bc_name ${f})
+    SET(OCL_BC_FILES_20 ${OCL_BC_FILES_20} ${bc_name})
+ENDFOREACH(f)
 
 ADD_CUSTOM_COMMAND(OUTPUT ${OCL_OBJECT_DIR}/beignet.bc
     COMMAND mkdir -p ${LIBOCL_BINARY_DIR}/lib/

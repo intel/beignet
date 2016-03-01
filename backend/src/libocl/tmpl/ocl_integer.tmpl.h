@@ -54,6 +54,24 @@ uint   clz_u32(uint);
 long   clz_s64(long);
 ulong  clz_u64(ulong);
 
+OVERLOADABLE char ctz(char x);
+OVERLOADABLE uchar ctz(uchar x);
+OVERLOADABLE short ctz(short x);
+OVERLOADABLE ushort ctz(ushort x);
+OVERLOADABLE int ctz(int x);
+OVERLOADABLE uint ctz(uint x);
+OVERLOADABLE long ctz(long x);
+OVERLOADABLE ulong ctz(ulong x);
+
+char   ctz_s8(char);
+uchar  ctz_u8(uchar);
+short  ctz_s16(short);
+ushort ctz_u16(ushort);
+int    ctz_s32(int);
+uint   ctz_u32(uint);
+long   ctz_s64(long);
+ulong  ctz_u64(ulong);
+
 OVERLOADABLE char popcount(char x);
 OVERLOADABLE uchar popcount(uchar x);
 OVERLOADABLE short popcount(short x);

@@ -3658,6 +3658,7 @@ namespace gbe
             this->newRegister(&I);
           break;
           case Intrinsic::ctlz:
+          case Intrinsic::cttz:
           case Intrinsic::bswap:
             this->newRegister(&I);
           break;
@@ -4351,6 +4352,56 @@ namespace gbe
             {
               GBE_ASSERT(srcType == ir::TYPE_U32);
               ctx.ALU1(ir::OP_LZD, srcType, dst, src);
+            }
+          }
+          break;
+          case Intrinsic::cttz:
+          {
+            Type *llvmDstType = I.getType();
+            ir::Type dstType = getType(ctx, llvmDstType);
+            Type *llvmSrcType = I.getOperand(0)->getType();
+            ir::Type srcType = getUnsignedType(ctx, llvmSrcType);
+
+            //the llvm.ctlz.i64 is lowered to two llvm.cttz.i32 call in ocl_ctz.ll
+            GBE_ASSERT(srcType != ir::TYPE_U64);
+
+            const ir::Register dst = this->getRegister(&I);
+            const ir::Register src = this->getRegister(I.getOperand(0));
+
+            uint32_t imm_value = 0;
+            if(srcType == ir::TYPE_U16) {
+              imm_value = 0xFFFF0000;
+            }else if(srcType == ir::TYPE_U8) {
+              imm_value = 0xFFFFFF00;
+            }
+            if(srcType == ir::TYPE_U16 || srcType == ir::TYPE_U8) {
+              ir::ImmediateIndex imm;
+              ir::Type tmpType = ir::TYPE_S32;
+              ir::Type revType = ir::TYPE_U32;
+              imm = ctx.newIntegerImmediate(imm_value, revType);
+              const ir::RegisterFamily family = getFamily(revType);
+              const ir::Register immReg = ctx.reg(family);
+              ctx.LOADI(ir::TYPE_U32, immReg, imm);
+
+              ir::Register tmp0 = ctx.reg(getFamily(tmpType));
+              ir::Register tmp1 = ctx.reg(getFamily(revType));
+              ir::Register tmp2 = ctx.reg(getFamily(revType));
+              ir::Register revTmp = ctx.reg(getFamily(revType));
+
+              ctx.CVT(tmpType, srcType, tmp0, src);
+              //gen does not have 'tzd', so reverse first
+              ctx.ADD(revType, tmp1, tmp0, immReg);
+              ctx.ALU1(ir::OP_BFREV, revType, revTmp, tmp1);
+              ctx.ALU1(ir::OP_LZD, ir::TYPE_U32, tmp2, revTmp);
+              ctx.CVT(dstType, tmpType, dst, tmp2);
+            }
+            else
+            {
+              GBE_ASSERT(srcType == ir::TYPE_U32);
+              ir::Type revType = ir::TYPE_U32;
+              ir::Register revTmp = ctx.reg(getFamily(revType));
+              ctx.ALU1(ir::OP_BFREV, revType, revTmp, src);
+              ctx.ALU1(ir::OP_LZD, dstType, dst, revTmp);
             }
           }
           break;
