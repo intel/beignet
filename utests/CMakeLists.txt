@@ -117,6 +117,7 @@ set (utests_sources
   compiler_switch.cpp
   compiler_bswap.cpp
   compiler_clz.cpp
+  compiler_ctz.cpp
   compiler_math.cpp
   compiler_atomic_functions.cpp
   compiler_async_copy.cpp
