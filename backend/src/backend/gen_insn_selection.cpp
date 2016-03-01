@@ -6262,28 +6262,46 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         sel.ATOMICA64(dst, genAtomicOp, msgPayload, msgs, bti, sel.getBTITemps(AM));
       } else if (simdWidth == 16) {
         vector<GenRegister> msgs;
+        RegisterFamily family = sel.getRegisterFamily(insn.getDst(0));
+        Type type = getType(family);
         for (unsigned k = 0; k < msgPayload; k++) {
-          msgs.push_back(sel.selReg(sel.reg(ir::FAMILY_DWORD), ir::TYPE_U32));
+          msgs.push_back(sel.selReg(sel.reg(family), type));
         }
         sel.push();
         /* first quarter */
         sel.curr.execWidth = 8;
         sel.curr.quarterControl = GEN_COMPRESSION_Q1;
         sel.MOV(GenRegister::retype(msgs[0], GEN_TYPE_UL), GenRegister::Qn(addrQ, 0));
-        if(msgPayload > 1)
-          sel.MOV(GenRegister::Qn(msgs[1], 0), GenRegister::Qn(src1, 0));
-        if(msgPayload > 2)
-          sel.MOV(GenRegister::Qn(msgs[1], 1), GenRegister::Qn(src2, 0));
+        if(msgPayload > 1) {
+          if(family == ir::FAMILY_QWORD)
+            sel.MOV(GenRegister::Qn(msgs[0], 1), GenRegister::Qn(src1, 0));
+          else
+            sel.MOV(GenRegister::Qn(msgs[1], 0), GenRegister::Qn(src1, 0));
+        }
+        if(msgPayload > 2) {
+          if(family == ir::FAMILY_QWORD)
+            sel.MOV(GenRegister::Qn(msgs[1], 0), GenRegister::Qn(src2, 0));
+          else
+            sel.MOV(GenRegister::Qn(msgs[1], 1), GenRegister::Qn(src2, 0));
+        }
         sel.ATOMICA64(GenRegister::Qn(dst, 0), genAtomicOp, msgPayload, msgs, bti, sel.getBTITemps(AM));
 
         /* second quarter */
         sel.curr.execWidth = 8;
         sel.curr.quarterControl = GEN_COMPRESSION_Q2;
         sel.MOV(GenRegister::retype(msgs[0], GEN_TYPE_UL), GenRegister::Qn(addrQ, 1));
-        if(msgPayload > 1)
-          sel.MOV(GenRegister::Qn(msgs[1], 0), GenRegister::Qn(src1, 1));
-        if(msgPayload > 2)
-          sel.MOV(GenRegister::Qn(msgs[1], 1), GenRegister::Qn(src2, 1));
+        if(msgPayload > 1) {
+          if(family == ir::FAMILY_QWORD)
+            sel.MOV(GenRegister::Qn(msgs[0], 1), GenRegister::Qn(src1, 1));
+          else
+            sel.MOV(GenRegister::Qn(msgs[1], 0), GenRegister::Qn(src1, 1));
+        }
+        if(msgPayload > 2) {
+          if(family == ir::FAMILY_QWORD)
+            sel.MOV(GenRegister::Qn(msgs[1], 0), GenRegister::Qn(src2, 1));
+          else
+            sel.MOV(GenRegister::Qn(msgs[1], 1), GenRegister::Qn(src2, 1));
+        }
         sel.ATOMICA64(GenRegister::Qn(dst, 1), genAtomicOp, msgPayload, msgs, bti, sel.getBTITemps(AM));
         sel.pop();
       }
@@ -6313,17 +6331,18 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         msgPayload = srcNum;
       }
 
-      GenRegister dst  = sel.selReg(insn.getDst(0), TYPE_U32);
-      GenRegister src0 = sel.selReg(insn.getAddressRegister(), TYPE_U32);
+      Type type = getType(sel.getRegisterFamily(insn.getDst(0)));
+      GenRegister dst  = sel.selReg(insn.getDst(0), type);
+      GenRegister src0 = sel.selReg(insn.getAddressRegister(), type);
       GenRegister src1 = src0, src2 = src0;
-      if(msgPayload > 1) src1 = sel.selReg(insn.getSrc(1), TYPE_U32);
-      if(msgPayload > 2) src2 = sel.selReg(insn.getSrc(2), TYPE_U32);
+      if(msgPayload > 1) src1 = sel.selReg(insn.getSrc(1), type);
+      if(msgPayload > 2) src2 = sel.selReg(insn.getSrc(2), type);
 
       GenAtomicOpCode genAtomicOp = (GenAtomicOpCode)atomicOp;
       if (AM == AM_DynamicBti || AM == AM_StaticBti) {
         if (AM == AM_DynamicBti) {
           Register btiReg = insn.getBtiReg();
-          sel.ATOMIC(dst, genAtomicOp, msgPayload, address, src1, src2, sel.selReg(btiReg, TYPE_U32), sel.getBTITemps(AM));
+          sel.ATOMIC(dst, genAtomicOp, msgPayload, address, src1, src2, sel.selReg(btiReg, type), sel.getBTITemps(AM));
         } else {
           unsigned SI = insn.getSurfaceIndex();
           sel.ATOMIC(dst, genAtomicOp, msgPayload, address, src1, src2, GenRegister::immud(SI), sel.getBTITemps(AM));

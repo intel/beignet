@@ -8,7 +8,19 @@ entry:
     ret i32 %0
 }
 
+define i32 @__gen_ocl_atomic_exchangef(i32 addrspace(4)* nocapture %ptr, i32 %value, i32 %order, i32 %scope) nounwind alwaysinline {
+entry:
+    %0 = atomicrmw volatile xchg i32 addrspace(4)* %ptr, i32 %value seq_cst
+    ret i32 %0
+}
+
 define i32 @__gen_ocl_atomic_fetch_add32(i32 addrspace(4)* nocapture %ptr, i32 %value, i32 %order, i32 %scope) nounwind alwaysinline {
+entry:
+    %0 = atomicrmw volatile add i32 addrspace(4)* %ptr, i32 %value seq_cst
+    ret i32 %0
+}
+
+define i32 @__gen_ocl_atomic_fetch_addf(i32 addrspace(4)* nocapture %ptr, i32 %value, i32 %order, i32 %scope) nounwind alwaysinline {
 entry:
     %0 = atomicrmw volatile add i32 addrspace(4)* %ptr, i32 %value seq_cst
     ret i32 %0
