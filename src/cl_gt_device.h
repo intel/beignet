@@ -40,7 +40,7 @@
 .native_vector_width_double = 2,
 .native_vector_width_half = 8,
 .preferred_wg_sz_mul = 16,
-.address_bits = 32,
+.address_bits = 64,
 .svm_capabilities = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER,
 .image_support = CL_TRUE,
 .max_read_image_args = BTI_MAX_READ_IMAGE_ARGS,
