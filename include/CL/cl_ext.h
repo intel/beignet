@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008-2013 The Khronos Group Inc.
+ * Copyright (c) 2008-2015 The Khronos Group Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and/or associated documentation files (the
@@ -11,6 +11,11 @@
  *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Materials.
+ *
+ * MODIFICATIONS TO THIS FILE MAY MEAN IT NO LONGER ACCURATELY REFLECTS
+ * KHRONOS STANDARDS. THE UNMODIFIED, NORMATIVE VERSIONS OF KHRONOS
+ * SPECIFICATIONS AND HEADER INFORMATION ARE LOCATED AT
+ *    https://www.khronos.org/registry/
  *
  * THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
@@ -327,7 +332,7 @@ clGetKernelSubGroupInfoKHR(cl_kernel /* in_kernel */,
 						   cl_kernel_sub_group_info /* param_name */,
 						   size_t /*input_value_size*/,
 						   const void * /*input_value*/,
-						   size_t * /*param_value_size*/,
+						   size_t /*param_value_size*/,
 						   void* /*param_value*/,
 						   size_t* /*param_value_size_ret*/ ) CL_EXT_SUFFIX__VERSION_2_0;
 						   
@@ -337,7 +342,7 @@ typedef CL_API_ENTRY cl_int
 						      cl_kernel_sub_group_info /* param_name */,
 						      size_t /*input_value_size*/,
 						      const void * /*input_value*/,
-						      size_t * /*param_value_size*/,
+						      size_t /*param_value_size*/,
 						      void* /*param_value*/,
 						      size_t* /*param_value_size_ret*/ ) CL_EXT_SUFFIX__VERSION_2_0;
 #endif /* CL_VERSION_2_0 */
