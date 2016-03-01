@@ -242,7 +242,7 @@ namespace gbe
                               unsigned msg_length, unsigned response_length,
                               bool header_present = false, bool end_of_thread = false);
     virtual unsigned setAtomicMessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum);
-    virtual unsigned setAtomicA64MessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum);
+    virtual unsigned setAtomicA64MessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum, int type_long);
     virtual unsigned setUntypedReadMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
     virtual unsigned setUntypedWriteMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
     unsigned setByteGatherMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemSize);

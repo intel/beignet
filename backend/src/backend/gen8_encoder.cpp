@@ -169,14 +169,17 @@ namespace gbe
     }
   }
 
-  unsigned Gen8Encoder::setAtomicA64MessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum) {
+  unsigned Gen8Encoder::setAtomicA64MessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum, int type_long) {
     Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
     uint32_t msg_length = 0;
     uint32_t response_length = 0;
+    assert(srcNum <= 3);
 
     if (this->curr.execWidth == 8) {
-      msg_length = srcNum + 1;
-      response_length = 1;
+      msg_length = srcNum + 1 + type_long;
+      if(srcNum == 3 && type_long)
+        msg_length++;
+      response_length = 1 + type_long;
     } else if (this->curr.execWidth == 16) {
       msg_length = 2 * (srcNum + 1);
       response_length = 2;
@@ -189,7 +192,7 @@ namespace gbe
     gen8_insn->bits3.gen8_atomic_a64.bti = bti;
     gen8_insn->bits3.gen8_atomic_a64.return_data = 1;
     gen8_insn->bits3.gen8_atomic_a64.aop_type = function;
-    gen8_insn->bits3.gen8_atomic_a64.data_size = 0;
+    gen8_insn->bits3.gen8_atomic_a64.data_size = type_long;
 
     return gen8_insn->bits3.ud;
   }
@@ -203,7 +206,8 @@ namespace gbe
     this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
     this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
     this->setSrc1(insn, GenRegister::immud(0));
-    setAtomicA64MessageDesc(insn, function, bti.value.ud, srcNum);
+    int type_long = (src.type == GEN_TYPE_UL || src.type == GEN_TYPE_L) ? 1: 0;
+    setAtomicA64MessageDesc(insn, function, bti.value.ud, srcNum, type_long);
   }
 
   unsigned Gen8Encoder::setUntypedReadMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum) {

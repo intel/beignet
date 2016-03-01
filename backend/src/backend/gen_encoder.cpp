@@ -594,7 +594,7 @@ namespace gbe
       NOT_SUPPORTED;
     return insn->bits3.ud;
   }
-  unsigned GenEncoder::setAtomicA64MessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum) {
+  unsigned GenEncoder::setAtomicA64MessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum, int type_long) {
     GBE_ASSERT(0);
     return 0;
   }
