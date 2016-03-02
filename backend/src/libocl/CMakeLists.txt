@@ -53,7 +53,7 @@ FOREACH(M ${OCL_COPY_HEADERS})
 ENDFOREACH(M) 
 
 SET (OCL_COPY_MODULES ocl_workitem ocl_atom ocl_async ocl_sync ocl_memcpy
-                      ocl_memset ocl_misc ocl_vload ocl_geometric ocl_image ocl_work_group)
+                      ocl_memset ocl_misc ocl_vload ocl_geometric ocl_image ocl_work_group ocl_pipe)
 FOREACH(M ${OCL_COPY_MODULES})
     COPY_THE_HEADER(${M})
     COPY_THE_SOURCE(${M})

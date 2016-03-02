@@ -50,6 +50,7 @@ enum gbe_arg_type {
   GBE_ARG_LOCAL_PTR = 3,        // __local
   GBE_ARG_IMAGE = 4,            // image2d_t, image3d_t
   GBE_ARG_SAMPLER = 5,          // sampler_t
+  GBE_ARG_PIPE = 6,             // pipe
   GBE_ARG_INVALID = 0xffffffff
 };
 

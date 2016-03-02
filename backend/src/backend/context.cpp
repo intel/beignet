@@ -466,6 +466,11 @@ namespace gbe
           kernel->args[argID].type = GBE_ARG_SAMPLER;
           kernel->args[argID].size = sizeof(void*);
           break;
+        case ir::FunctionArgument::PIPE:
+          kernel->args[argID].type = GBE_ARG_PIPE;
+          kernel->args[argID].size = sizeof(void*);
+          kernel->args[argID].bti = arg.bti;
+          break;
       }
     }
   }

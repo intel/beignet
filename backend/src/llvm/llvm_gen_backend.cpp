@@ -1154,6 +1154,7 @@ namespace gbe
       BtiMap.insert(std::make_pair(&v, getNewBti(&v, false)));
     }
     MDNode *typeNameNode = NULL;
+    MDNode *typeQualNode = NULL;
     MDNode *node = getKernelFunctionMetadata(&F);
     for(uint j = 0; j < node->getNumOperands() - 1; j++) {
       MDNode *attrNode = dyn_cast_or_null<MDNode>(node->getOperand(1 + j));
@@ -1162,6 +1163,8 @@ namespace gbe
       if (!attrName) continue;
       if (attrName->getString() == "kernel_arg_type") {
         typeNameNode = attrNode;
+      } else if (attrName->getString() == "kernel_arg_type_qual") {
+        typeQualNode = attrNode;
       }
     }
 
@@ -1169,9 +1172,11 @@ namespace gbe
     ir::FunctionArgument::InfoFromLLVM llvmInfo;
     for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I, argID++) {
       llvmInfo.typeName= (cast<MDString>(typeNameNode->getOperand(1 + argID)))->getString();
+      llvmInfo.typeQual = (cast<MDString>(typeQualNode->getOperand(1 + argID)))->getString();
       bool isImage = llvmInfo.isImageType();
-      if (I->getType()->isPointerTy() || isImage) {
-        BtiMap.insert(std::make_pair(&*I, getNewBti(&*I, isImage)));
+      bool isPipe = llvmInfo.isPipeType();
+      if (I->getType()->isPointerTy() || isImage || isPipe) {
+        BtiMap.insert(std::make_pair(&*I, getNewBti(&*I, isImage || isPipe)));
       }
     }
 
@@ -2051,6 +2056,10 @@ namespace gbe
         if (llvmInfo.isSamplerType()) {
           ctx.input(argName, ir::FunctionArgument::SAMPLER, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type), 0);
           (void)ctx.getFunction().getSamplerSet()->append(reg, &ctx);
+          continue;
+        }
+        if(llvmInfo.isPipeType()) {
+          ctx.input(argName, ir::FunctionArgument::PIPE, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type), BtiMap.find(&*I)->second);
           continue;
         }
 
@@ -3625,6 +3634,24 @@ namespace gbe
       case GEN_OCL_WORK_GROUP_SCAN_INCLUSIVE_MIN:
         this->newRegister(&I);
         break;
+      case GEN_OCL_GET_PIPE:
+      {
+        Value *srcValue = I.getOperand(0);
+        if( BtiMap.find(dst) == BtiMap.end())
+        {
+          unsigned tranBti = BtiMap.find(srcValue)->second;
+          BtiMap.insert(std::make_pair(dst, tranBti));
+        }
+        regTranslator.newValueProxy(srcValue, dst);
+        break;
+      }
+      case GEN_OCL_MAKE_RID:
+      case GEN_OCL_GET_RID:
+      {
+        Value *srcValue = I.getOperand(0);
+        regTranslator.newValueProxy(srcValue, dst);
+        break;
+      }
       case GEN_OCL_PRINTF:
         break;
       case GEN_OCL_NOT_FOUND:
@@ -4602,6 +4629,12 @@ namespace gbe
             this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_INCLUSIVE_MAX); break;
           case GEN_OCL_WORK_GROUP_SCAN_INCLUSIVE_MIN:
             this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_INCLUSIVE_MIN); break;
+          case GEN_OCL_GET_PIPE:
+          case GEN_OCL_MAKE_RID:
+          case GEN_OCL_GET_RID:
+          {
+            break;
+          }
           default: break;
         }
       }

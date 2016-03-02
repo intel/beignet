@@ -138,7 +138,8 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
       return CL_INVALID_SAMPLER;
   } else {
     // should be image, GLOBAL_PTR, CONSTANT_PTR
-    if (UNLIKELY(value == NULL && arg_type == GBE_ARG_IMAGE))
+    if (UNLIKELY(value == NULL && (arg_type == GBE_ARG_IMAGE ||
+            arg_type == GBE_ARG_PIPE)))
       return CL_INVALID_ARG_VALUE;
     if(value != NULL)
       mem = *(cl_mem*)value;
@@ -348,6 +349,8 @@ cl_get_kernel_arg_info(cl_kernel k, cl_uint arg_index, cl_kernel_arg_info param_
       type_qual = type_qual | CL_KERNEL_ARG_TYPE_VOLATILE;
     if (strstr((char*)ret_info, "restrict"))
       type_qual = type_qual | CL_KERNEL_ARG_TYPE_RESTRICT;
+    if (strstr((char*)ret_info, "pipe"))
+      type_qual = CL_KERNEL_ARG_TYPE_PIPE;
     *(cl_kernel_arg_type_qualifier *)param_value = type_qual;
     return CL_SUCCESS;
 

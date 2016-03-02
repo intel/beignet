@@ -163,7 +163,7 @@ cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k, uint32_t *max
   for (i = 0; i < k->arg_n; ++i) {
     int32_t offset; // location of the address in the curbe
     arg_type = interp_kernel_get_arg_type(k->opaque, i);
-    if (!(arg_type == GBE_ARG_GLOBAL_PTR || arg_type == GBE_ARG_CONSTANT_PTR) || !k->args[i].mem)
+    if (!(arg_type == GBE_ARG_GLOBAL_PTR || arg_type == GBE_ARG_CONSTANT_PTR || arg_type == GBE_ARG_PIPE) || !k->args[i].mem)
       continue;
     offset = interp_kernel_get_curbe_offset(k->opaque, GBE_CURBE_KERNEL_ARGUMENT, i);
     if (offset < 0)

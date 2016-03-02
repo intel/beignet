@@ -189,3 +189,8 @@ DECL_LLVM_GEN_FUNCTION(WORK_GROUP_SCAN_INCLUSIVE_MIN, __gen_ocl_work_group_scan_
 
 DECL_LLVM_GEN_FUNCTION(WORK_GROUP_ALL, __gen_ocl_work_group_all)
 DECL_LLVM_GEN_FUNCTION(WORK_GROUP_ANY, __gen_ocl_work_group_any)
+
+// pipe function
+DECL_LLVM_GEN_FUNCTION(GET_PIPE, __gen_ocl_get_pipe)
+DECL_LLVM_GEN_FUNCTION(GET_RID, __gen_ocl_get_rid)
+DECL_LLVM_GEN_FUNCTION(MAKE_RID, __gen_ocl_make_rid)
