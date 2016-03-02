@@ -35,6 +35,7 @@ extern uint32_t cl_image_get_intel_format(const cl_image_format *fmt);
 
 /* Return the list of formats supported by the API */
 extern cl_int cl_image_get_supported_fmt(cl_context context,
+                                         cl_mem_flags flags,
                                          cl_mem_object_type image_type,
                                          cl_uint num_entries,
                                          cl_image_format *image_formats,

@@ -986,6 +986,7 @@ clGetSupportedImageFormats(cl_context         ctx,
     goto error;
   }
   err = cl_image_get_supported_fmt(ctx,
+                                   flags,
                                    image_type,
                                    num_entries,
                                    image_formats,
