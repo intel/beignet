@@ -228,6 +228,7 @@ static const size_t cl_image_type_n = SIZEOF32(cl_image_type);
 
 cl_int
 cl_image_get_supported_fmt(cl_context ctx,
+                           cl_mem_flags flags,
                            cl_mem_object_type image_type,
                            cl_uint num_entries,
                            cl_image_format *image_formats,
@@ -241,6 +242,10 @@ cl_image_get_supported_fmt(cl_context ctx,
       .image_channel_data_type = cl_image_type[j]
     };
     const uint32_t intel_fmt = cl_image_get_intel_format(&fmt);
+    if (cl_image_order[i] >= CL_sRGBA &&
+        ((flags & CL_MEM_WRITE_ONLY) || (flags & CL_MEM_READ_WRITE) ||
+         (flags & CL_MEM_KERNEL_READ_AND_WRITE)))
+      continue;
     if (intel_fmt == INTEL_UNSUPPORTED_FORMAT)
       continue;
     if (n < num_entries && image_formats) image_formats[n] = fmt;
