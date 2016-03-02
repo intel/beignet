@@ -1239,9 +1239,11 @@ namespace gbe
     }
     MDNode *typeNameNode = NULL;
     MDNode *typeBaseNameNode = NULL;
+    MDNode *typeQualNode = NULL;
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
     typeNameNode = F.getMetadata("kernel_arg_type");
     typeBaseNameNode = F.getMetadata("kernel_arg_base_type");
+    typeQualNode = F.getMetadata("kernel_arg_type_qual");
 #else
     MDNode *node = getKernelFunctionMetadata(&F);
     for(uint j = 0;node && j < node->getNumOperands() - 1; j++) {
@@ -1251,6 +1253,8 @@ namespace gbe
       if (!attrName) continue;
       if (attrName->getString() == "kernel_arg_type") {
         typeNameNode = attrNode;
+      } else if (attrName->getString() == "kernel_arg_type_qual") {
+        typeQualNode = attrNode;
       }
       if (attrName->getString() == "kernel_arg_base_type") {
         typeBaseNameNode = attrNode;
@@ -1272,9 +1276,12 @@ namespace gbe
       if(typeBaseNameNode) {
         llvmInfo.typeBaseName= (cast<MDString>(typeBaseNameNode->getOperand(opID)))->getString();
       }
+      llvmInfo.typeName= (cast<MDString>(typeNameNode->getOperand(opID)))->getString();
+      llvmInfo.typeQual = (cast<MDString>(typeQualNode->getOperand(opID)))->getString();
       bool isImage = llvmInfo.isImageType();
-      if (I->getType()->isPointerTy() || isImage) {
-        BtiMap.insert(std::make_pair(&*I, getNewBti(&*I, isImage)));
+      bool isPipe = llvmInfo.isPipeType();
+      if (I->getType()->isPointerTy() || isImage || isPipe) {
+        BtiMap.insert(std::make_pair(&*I, getNewBti(&*I, isImage || isPipe)));
       }
     }
 
@@ -2307,6 +2314,10 @@ namespace gbe
         if (llvmInfo.isSamplerType()) {
           ctx.input(argName, ir::FunctionArgument::SAMPLER, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type), 0);
           (void)ctx.getFunction().getSamplerSet()->append(reg, &ctx);
+          continue;
+        }
+        if(llvmInfo.isPipeType()) {
+          ctx.input(argName, ir::FunctionArgument::PIPE, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type), BtiMap.find(&*I)->second);
           continue;
         }
 
@@ -3906,6 +3917,24 @@ namespace gbe
       case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE8:
         this->newRegister(&I);
         break;
+      case GEN_OCL_GET_PIPE:
+      {
+        Value *srcValue = I.getOperand(0);
+        if( BtiMap.find(dst) == BtiMap.end())
+        {
+          unsigned tranBti = BtiMap.find(srcValue)->second;
+          BtiMap.insert(std::make_pair(dst, tranBti));
+        }
+        regTranslator.newValueProxy(srcValue, dst);
+        break;
+      }
+      case GEN_OCL_MAKE_RID:
+      case GEN_OCL_GET_RID:
+      {
+        Value *srcValue = I.getOperand(0);
+        regTranslator.newValueProxy(srcValue, dst);
+        break;
+      }
       case GEN_OCL_PRINTF:
         this->newRegister(&I);  // fall through
       case GEN_OCL_PUTS:
@@ -5274,6 +5303,12 @@ namespace gbe
             this->emitBlockReadWriteImageInst(I, CS, true, 4, ir::TYPE_U16); break;
           case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE8:
             this->emitBlockReadWriteImageInst(I, CS, true, 8, ir::TYPE_U16); break;
+          case GEN_OCL_GET_PIPE:
+          case GEN_OCL_MAKE_RID:
+          case GEN_OCL_GET_RID:
+          {
+            break;
+          }
           default: break;
         }
       }

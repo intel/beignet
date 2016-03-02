@@ -253,3 +253,8 @@ DECL_LLVM_GEN_FUNCTION(SUB_GROUP_BLOCK_WRITE_US_IMAGE4, __gen_ocl_sub_group_bloc
 DECL_LLVM_GEN_FUNCTION(SUB_GROUP_BLOCK_WRITE_US_IMAGE8, __gen_ocl_sub_group_block_write_us_image8)
 // common function
 DECL_LLVM_GEN_FUNCTION(LRP, __gen_ocl_lrp)
+
+// pipe function
+DECL_LLVM_GEN_FUNCTION(GET_PIPE, __gen_ocl_get_pipe)
+DECL_LLVM_GEN_FUNCTION(GET_RID, __gen_ocl_get_rid)
+DECL_LLVM_GEN_FUNCTION(MAKE_RID, __gen_ocl_make_rid)

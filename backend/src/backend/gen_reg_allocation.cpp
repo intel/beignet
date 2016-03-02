@@ -1522,7 +1522,8 @@ do { \
       const ir::FunctionArgument &arg = this->opaque->ctx.getFunction().getArg(subType);
       if (arg.type == ir::FunctionArgument::GLOBAL_POINTER ||
           arg.type == ir::FunctionArgument::LOCAL_POINTER  ||
-          arg.type == ir::FunctionArgument::CONSTANT_POINTER)
+          arg.type == ir::FunctionArgument::CONSTANT_POINTER||
+          arg.type == ir::FunctionArgument::PIPE)
         regSize = this->opaque->ctx.getPointerSize();
       else
         regSize = arg.size;

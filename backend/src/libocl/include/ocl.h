@@ -99,6 +99,7 @@
 #if (__OPENCL_C_VERSION__ >= 200)
 #include "ocl_vload_20.h"
 #include "ocl_atom_20.h"
+#include "ocl_pipe.h"
 #else
 #include "ocl_vload.h"
 #include "ocl_atom.h"

@@ -170,8 +170,9 @@ namespace ir {
       LOCAL_POINTER     = 2, // __local
       VALUE             = 3, // int, float
       STRUCTURE         = 4, // struct foo
-      IMAGE             = 5,  // image*d_t
-      SAMPLER           = 6
+      IMAGE             = 5, // image*d_t
+      SAMPLER           = 6,
+      PIPE              = 7  // pipe
     };
 
     struct InfoFromLLVM { // All the info about passed by llvm, using -cl-kernel-arg-info
@@ -235,6 +236,9 @@ namespace ir {
                isImage2dT() || isImage2dArrayT() || isImage3dT();
       }
 
+      bool isPipeType() const {
+        return typeQual.compare("pipe") == 0;
+      }
     };
 
     /*! Create a function input argument */

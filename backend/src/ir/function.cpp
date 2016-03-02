@@ -357,6 +357,7 @@ namespace ir {
           out << "structure." << input.size;
         break;
         case FunctionArgument::IMAGE: out << "image"; break;
+        case FunctionArgument::PIPE: out << "pipe"; break;
         default: break;
       }
       out << " %" << input.reg << " " << input.name << std::endl;
