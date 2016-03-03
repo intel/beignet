@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 
 #define FIELD_SIZE(CASE,TYPE)               \
   case JOIN(CL_,CASE):                      \
@@ -1658,6 +1659,8 @@ cl_image_fill(cl_command_queue queue, const void * pattern, struct _cl_mem_image
   size_t global_off[] = {0,0,0};
   size_t global_sz[] = {1,1,1};
   size_t local_sz[] = {LOCAL_SZ_0,LOCAL_SZ_1,LOCAL_SZ_2};
+  uint32_t savedIntelFmt = src_image->intel_fmt;
+
 
   if(region[1] == 1) local_sz[1] = 1;
   if(region[2] == 1) local_sz[2] = 1;
@@ -1703,7 +1706,24 @@ cl_image_fill(cl_command_queue queue, const void * pattern, struct _cl_mem_image
     return CL_OUT_OF_RESOURCES;
 
   cl_kernel_set_arg(ker, 0, sizeof(cl_mem), &src_image);
-  cl_kernel_set_arg(ker, 1, sizeof(float)*4, pattern);
+  if(src_image->fmt.image_channel_order >= CL_sRGBA) {
+#define RGB2sRGB(linear)  ( linear <= 0.0031308f )? ( 12.92f * linear ):( 1.055f * powf( linear, 1.0f/2.4f ) - 0.055f);
+    cl_image_format fmt;
+    float newpattern[4] = {0.0,0.0,0.0,((float*)pattern)[3]};
+    int i;
+    for(i = 0;i < 3; i++){
+      if(src_image->fmt.image_channel_order == CL_sRGBA) {
+        newpattern[i] = RGB2sRGB(((float*)pattern)[i]);
+      } else
+        newpattern[2-i] = RGB2sRGB(((float*)pattern)[i]);
+    }
+    cl_kernel_set_arg(ker, 1, sizeof(float)*4, newpattern);
+    fmt.image_channel_order = CL_RGBA;
+    fmt.image_channel_data_type = CL_UNORM_INT8;
+    src_image->intel_fmt = cl_image_get_intel_format(&fmt);
+#undef RGB2sRGB
+  } else
+    cl_kernel_set_arg(ker, 1, sizeof(float)*4, pattern);
   cl_kernel_set_arg(ker, 2, sizeof(cl_int), &region[0]);
   cl_kernel_set_arg(ker, 3, sizeof(cl_int), &region[1]);
   cl_kernel_set_arg(ker, 4, sizeof(cl_int), &region[2]);
@@ -1713,6 +1733,7 @@ cl_image_fill(cl_command_queue queue, const void * pattern, struct _cl_mem_image
 
   ret = cl_command_queue_ND_range(queue, ker, 3, global_off, global_sz, local_sz);
   cl_kernel_delete(ker);
+  src_image->intel_fmt = savedIntelFmt;
   return ret;
 }
 
