@@ -1911,7 +1911,9 @@ cl_mem_kernel_copy_image(cl_command_queue queue, cl_event event, struct _cl_mem_
 
   if (fixupDataType) {
     cl_image_format fmt;
-    if (src_image->fmt.image_channel_order != CL_BGRA)
+    if (src_image->fmt.image_channel_order != CL_BGRA &&
+        src_image->fmt.image_channel_order != CL_sBGRA &&
+        src_image->fmt.image_channel_order != CL_sRGBA)
       fmt.image_channel_order = src_image->fmt.image_channel_order;
     else
       fmt.image_channel_order = CL_RGBA;
