@@ -176,6 +176,12 @@ namespace gbe {
         if (ExitBlock)
           currTripCount = SE->getSmallConstantTripCount(L, ExitBlock);
 
+        if (currTripCount > 32) {
+          shouldUnroll = false;
+          setUnrollID(currL, false);
+          return shouldUnroll;
+        }
+
         while(currL) {
           Loop *parentL = currL->getParentLoop();
           unsigned parentTripCount = 0;
@@ -187,20 +193,17 @@ namespace gbe {
             if (parentExitBlock)
               parentTripCount = SE->getSmallConstantTripCount(parentL, parentExitBlock);
           }
-          if ((parentTripCount != 0 && currTripCount / parentTripCount > 16) ||
-              (currTripCount > 32)) {
-            if (currL == L)
-              shouldUnroll = false;
-            setUnrollID(currL, false);
-            if (currL != L)
+          if (parentTripCount != 0 && currTripCount * parentTripCount > 32) {
+            setUnrollID(parentL, false);
 #if LLVM_VERSION_MAJOR == 3 &&  LLVM_VERSION_MINOR >= 8
-              loopInfo.markAsRemoved(currL);
+            loopInfo.markAsRemoved(parentL);
 #else
-              LPM.deleteLoopFromQueue(currL);
+            LPM.deleteLoopFromQueue(parentL);
 #endif
+            return shouldUnroll;
           }
           currL = parentL;
-          currTripCount = parentTripCount;
+          currTripCount = parentTripCount * currTripCount;
         }
         return shouldUnroll;
       }
