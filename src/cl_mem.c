@@ -120,12 +120,16 @@ cl_get_mem_object_info(cl_mem mem,
     *((cl_context *)param_value) = mem->ctx;
     break;
   case CL_MEM_ASSOCIATED_MEMOBJECT:
-    if(mem->type != CL_MEM_SUBBUFFER_TYPE) {
-      *((cl_mem *)param_value) = NULL;
-    } else {
+    if(mem->type == CL_MEM_SUBBUFFER_TYPE) {
       struct _cl_mem_buffer* buf = (struct _cl_mem_buffer*)mem;
       *((cl_mem *)param_value) = (cl_mem)(buf->parent);
-    }
+    } else if (mem->type == CL_MEM_IMAGE_TYPE) {
+      *((cl_mem *)param_value) = mem;
+    } else if (mem->type == CL_MEM_BUFFER1D_IMAGE_TYPE) {
+      struct _cl_mem_buffer1d_image* image_buffer = (struct _cl_mem_buffer1d_image*)mem;
+      *((cl_mem *)param_value) = image_buffer->descbuffer;
+    } else
+      *((cl_mem *)param_value) = NULL;
     break;
   case CL_MEM_OFFSET:
     if(mem->type != CL_MEM_SUBBUFFER_TYPE) {
@@ -1285,6 +1289,8 @@ _cl_mem_new_image_from_buffer(cl_context ctx,
     memcpy(dst, src, mem_buffer->base.size);
     cl_mem_unmap(image);
     cl_mem_unmap(buffer);
+    struct _cl_mem_buffer1d_image* image_buffer = (struct _cl_mem_buffer1d_image*)image;
+    image_buffer->descbuffer = buffer;
   }
   else
     assert(0);

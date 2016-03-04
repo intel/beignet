@@ -155,6 +155,7 @@ struct _cl_mem_gl_image {
 struct _cl_mem_buffer1d_image {
   struct _cl_mem_image base;
   uint32_t size;
+  _cl_mem * descbuffer;
 };
 
 inline static void
