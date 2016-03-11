@@ -331,17 +331,35 @@ DECL_ATOMIC_LOAD_TYPE(load_explicit, fetch_addf, atomic_float, atomic_int, float
 
 OVERLOADABLE bool atomic_flag_test_and_set(volatile atomic_flag *object) {
   atomic_int * temp = (atomic_int*)object;
-  return (bool)__gen_ocl_atomic_compare_exchange_strong32(temp, 0, 1, memory_order_seq_cst, memory_order_seq_cst, memory_scope_device);
+  int expected = 0;
+  int new_value = 1;
+  int oldValue = __gen_ocl_atomic_compare_exchange_strong32(temp, expected, new_value, memory_order_seq_cst, memory_order_seq_cst, memory_scope_device);
+  if(oldValue == new_value)
+    return true;
+  else
+    return false;
 }
 
 OVERLOADABLE bool atomic_flag_test_and_set_explicit(volatile atomic_flag *object, memory_order order) {
   atomic_int * temp = (atomic_int*)object;
-  return (bool)__gen_ocl_atomic_compare_exchange_strong32(temp, 0, 1, memory_order_seq_cst, memory_order_seq_cst, memory_scope_device);
+  int expected = 0;
+  int new_value = 1;
+  int oldValue = __gen_ocl_atomic_compare_exchange_strong32(temp, expected, new_value, memory_order_seq_cst, memory_order_seq_cst, memory_scope_device);
+  if(oldValue == new_value)
+    return true;
+  else
+    return false;
 }
 
 OVERLOADABLE bool atomic_flag_test_and_set_explicit(volatile atomic_flag *object, memory_order order, memory_scope scope){
   atomic_int * temp = (atomic_int*)object;
-  return (bool)__gen_ocl_atomic_compare_exchange_strong32(temp, 0, 1, memory_order_seq_cst, memory_order_seq_cst, memory_scope_device);
+  int expected = 0;
+  int new_value = 1;
+  int oldValue = __gen_ocl_atomic_compare_exchange_strong32(temp, expected, new_value, memory_order_seq_cst, memory_order_seq_cst, memory_scope_device);
+  if(oldValue == new_value)
+    return true;
+  else
+    return false;
 }
 
 OVERLOADABLE void atomic_flag_clear(volatile atomic_flag *object){
