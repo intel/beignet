@@ -24,7 +24,8 @@ kernel void compiler_generic_atomic_##T(global T *src, global T *dst)  \
   generic T * q1 = &pdata[lid];                                        \
   generic T * q2 = &ldata[lid];                                        \
   generic T *q = (gid & 1) ? q1 : q2;                                  \
-  dst[gid] = atomic_add(q , pdata[lid]);                               \
+  atomic_fetch_add((atomic_int*)q , pdata[lid]);                       \
+  dst[gid] = *q;                                                       \
 }
 
 GENERIC_KERNEL(int)
