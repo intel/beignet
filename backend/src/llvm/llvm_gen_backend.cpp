@@ -4058,7 +4058,9 @@ namespace gbe
     ir::AtomicOps opcode = ir::ATOMIC_OP_CMPXCHG;
     uint32_t payloadNum = 0;
     vector<ir::Register> payload;
-    const ir::Register dst = this->getRegister(&I);
+    const ir::Register oldValue = this->getRegister(&I, 0);
+    const ir::Register compareRet = this->getRegister(&I, 1);
+    const ir::Register expected = this->getRegister(I.getCompareOperand());
 
     payload.push_back(this->getRegister(I.getCompareOperand()));
     payloadNum++;
@@ -4068,7 +4070,8 @@ namespace gbe
     const ir::Tuple payloadTuple = payloadNum == 0 ?
                                    ir::Tuple(0) :
                                    ctx.arrayTuple(&payload[0], payloadNum);
-    this->emitAtomicInstHelper(opcode, type, dst, llvmPtr, payloadTuple);
+    this->emitAtomicInstHelper(opcode, type, oldValue, llvmPtr, payloadTuple);
+    ctx.EQ(type, compareRet, oldValue, expected);
   }
 
   void GenWriter::regAllocateAtomicRMWInst(AtomicRMWInst &I) {
