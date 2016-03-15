@@ -209,7 +209,7 @@ cl_command_queue_bind_exec_info(cl_command_queue queue, cl_kernel k, uint32_t ma
   return CL_SUCCESS;
 }
 
-extern cl_int cl_command_queue_ND_range_gen7(cl_command_queue, cl_kernel, uint32_t, const size_t *, const size_t *, const size_t *);
+extern cl_int cl_command_queue_ND_range_gen7(cl_command_queue, cl_kernel, uint32_t, const size_t *,const size_t *, const size_t *, const size_t *, const size_t *, const size_t *);
 
 static cl_int
 cl_kernel_check_args(cl_kernel k)
@@ -219,6 +219,61 @@ cl_kernel_check_args(cl_kernel k)
     if (k->args[i].is_set == CL_FALSE)
       return CL_INVALID_KERNEL_ARGS;
   return CL_SUCCESS;
+}
+
+LOCAL cl_int
+cl_command_queue_ND_range_wrap(cl_command_queue queue,
+                               cl_kernel ker,
+                               const uint32_t work_dim,
+                               const size_t *global_wk_off,
+                               const size_t *global_wk_sz,
+                               const size_t *local_wk_sz)
+{
+  /* Used for non uniform work group size */
+  cl_int err = CL_SUCCESS;
+  int i,j,k,count = 0;
+  const size_t global_wk_sz_div[3] = {
+    global_wk_sz[0]/local_wk_sz[0]*local_wk_sz[0],
+    global_wk_sz[1]/local_wk_sz[1]*local_wk_sz[1],
+    global_wk_sz[2]/local_wk_sz[2]*local_wk_sz[2]
+  };
+
+  const size_t global_wk_sz_rem[3] = {
+    global_wk_sz[0]%local_wk_sz[0],
+    global_wk_sz[1]%local_wk_sz[1],
+    global_wk_sz[2]%local_wk_sz[2]
+  };
+
+  const size_t *global_wk_all[2] = {global_wk_sz_div, global_wk_sz_rem};
+  /* Go through the at most 8 cases and euque if there is work items left */
+  for(i = 0; i < 2;i++) {
+    for(j = 0; j < 2;j++) {
+      for(k = 0; k < 2; k++) {
+        size_t global_wk_sz_use[3] = {global_wk_all[k][0],global_wk_all[j][1],global_wk_all[i][2]};
+        size_t global_dim_off[3] = {
+          k * global_wk_sz_div[0] / local_wk_sz[0],
+          j * global_wk_sz_div[1] / local_wk_sz[1],
+          i * global_wk_sz_div[2] / local_wk_sz[2]
+        };
+        size_t local_wk_sz_use[3] = {
+          k ? global_wk_sz_rem[0] : local_wk_sz[0],
+          j ? global_wk_sz_rem[1] : local_wk_sz[1],
+          i ? global_wk_sz_rem[2] : local_wk_sz[2]
+        };
+        if(local_wk_sz_use[0] == 0 || local_wk_sz_use[1] == 0 || local_wk_sz_use[2] == 0) continue;
+        TRY (cl_command_queue_ND_range_gen7, queue, ker, work_dim, global_wk_off,global_dim_off, global_wk_sz,global_wk_sz_use,local_wk_sz, local_wk_sz_use);
+        /* TODO: need to handle events for multiple enqueue, now is a workaroud for uniform group size */
+        if(!(global_wk_sz_rem[0] == 0 && global_wk_sz_rem[1] == 0 && global_wk_sz_rem[2] == 0))
+          err = cl_command_queue_flush(queue);
+      }
+      if(work_dim < 2)
+        break;
+    }
+    if(work_dim < 3)
+      break;
+  }
+error:
+  return err;
 }
 
 LOCAL cl_int
@@ -238,7 +293,8 @@ cl_command_queue_ND_range(cl_command_queue queue,
   TRY (cl_kernel_check_args, k);
 
   if (ver == 7 || ver == 75 || ver == 8 || ver == 9)
-    TRY (cl_command_queue_ND_range_gen7, queue, k, work_dim, global_wk_off, global_wk_sz, local_wk_sz);
+    //TRY (cl_command_queue_ND_range_gen7, queue, k, work_dim, global_wk_off, global_wk_sz, local_wk_sz);
+    TRY (cl_command_queue_ND_range_wrap, queue, k, work_dim, global_wk_off, global_wk_sz, local_wk_sz);
   else
     FATAL ("Unknown Gen Device");
 

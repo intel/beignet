@@ -3396,14 +3396,6 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
       }
     }
 
-  /* Local sizes must be non-null and divide global sizes */
-  if (local_work_size != NULL)
-    for (i = 0; i < work_dim; ++i)
-      if (UNLIKELY(local_work_size[i] == 0 || global_work_size[i] % local_work_size[i])) {
-        err = CL_INVALID_WORK_GROUP_SIZE;
-        goto error;
-      }
-
   /* Queue and kernel must share the same context */
   assert(kernel->program);
   if (command_queue->ctx != kernel->program->ctx) {
