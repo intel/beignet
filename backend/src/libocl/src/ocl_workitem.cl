@@ -30,6 +30,7 @@ PURE CONST unsigned int __gen_ocl_##NAME##1(void); \
 PURE CONST unsigned int __gen_ocl_##NAME##2(void);
 DECL_INTERNAL_WORK_ITEM_FN(get_group_id)
 DECL_INTERNAL_WORK_ITEM_FN(get_local_id)
+DECL_INTERNAL_WORK_ITEM_FN(get_enqueued_local_size)
 DECL_INTERNAL_WORK_ITEM_FN(get_local_size)
 DECL_INTERNAL_WORK_ITEM_FN(get_global_size)
 DECL_INTERNAL_WORK_ITEM_FN(get_global_offset)
@@ -46,6 +47,7 @@ OVERLOADABLE unsigned NAME(unsigned int dim) {             \
 
 DECL_PUBLIC_WORK_ITEM_FN(get_group_id, 0)
 DECL_PUBLIC_WORK_ITEM_FN(get_local_id, 0)
+DECL_PUBLIC_WORK_ITEM_FN(get_enqueued_local_size, 1)
 DECL_PUBLIC_WORK_ITEM_FN(get_local_size, 1)
 DECL_PUBLIC_WORK_ITEM_FN(get_global_size, 1)
 DECL_PUBLIC_WORK_ITEM_FN(get_global_offset, 0)
@@ -53,14 +55,7 @@ DECL_PUBLIC_WORK_ITEM_FN(get_num_groups, 1)
 #undef DECL_PUBLIC_WORK_ITEM_FN
 
 OVERLOADABLE uint get_global_id(uint dim) {
-  return get_local_id(dim) + get_local_size(dim) * get_group_id(dim) + get_global_offset(dim);
-}
-
-OVERLOADABLE uint get_enqueued_local_size (uint dimindx)
-{
-  //TODO: should be different with get_local_size when support
-  //non-uniform work-group size
-  return get_local_size(dimindx);
+  return get_local_id(dim) + get_enqueued_local_size(dim) * get_group_id(dim) + get_global_offset(dim);
 }
 
 OVERLOADABLE uint get_global_linear_id(void)
@@ -80,8 +75,8 @@ OVERLOADABLE uint get_local_linear_id(void)
 {
   uint dim = __gen_ocl_get_work_dim();
   if (dim == 1) return get_local_id(0);
-  else if (dim == 2) return get_local_id(1) * get_local_size (0) + get_local_id(0);
-  else if (dim == 3) return (get_local_id(2) * get_local_size(1) * get_local_size(0)) +
-                            (get_local_id(1) * get_local_size(0)) + get_local_id(0);
+  else if (dim == 2) return get_local_id(1) * get_enqueued_local_size(0) + get_local_id(0);
+  else if (dim == 3) return (get_local_id(2) * get_enqueued_local_size(1) * get_local_size(0)) +
+                            (get_local_id(1) * get_enqueued_local_size(0)) + get_local_id(0);
   else return 0;
 }

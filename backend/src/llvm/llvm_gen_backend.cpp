@@ -3590,6 +3590,12 @@ namespace gbe
         regTranslator.newScalarProxy(ir::ocl::lsize1, dst); break;
       case GEN_OCL_GET_LOCAL_SIZE2:
         regTranslator.newScalarProxy(ir::ocl::lsize2, dst); break;
+      case GEN_OCL_GET_ENQUEUED_LOCAL_SIZE0:
+        regTranslator.newScalarProxy(ir::ocl::enqlsize0, dst); break;
+      case GEN_OCL_GET_ENQUEUED_LOCAL_SIZE1:
+        regTranslator.newScalarProxy(ir::ocl::enqlsize1, dst); break;
+      case GEN_OCL_GET_ENQUEUED_LOCAL_SIZE2:
+        regTranslator.newScalarProxy(ir::ocl::enqlsize2, dst); break;
       case GEN_OCL_GET_GLOBAL_SIZE0:
         regTranslator.newScalarProxy(ir::ocl::gsize0, dst); break;
       case GEN_OCL_GET_GLOBAL_SIZE1:
