@@ -2074,6 +2074,7 @@ intel_gpgpu_walker_gen7(intel_gpgpu_t *gpgpu,
                    uint32_t simd_sz,
                    uint32_t thread_n,
                    const size_t global_wk_off[3],
+                   const size_t global_dim_off[3],
                    const size_t global_wk_sz[3],
                    const size_t local_wk_sz[3])
 {
@@ -2123,6 +2124,7 @@ intel_gpgpu_walker_gen8(intel_gpgpu_t *gpgpu,
                    uint32_t simd_sz,
                    uint32_t thread_n,
                    const size_t global_wk_off[3],
+                   const size_t global_dim_off[3],
                    const size_t global_wk_sz[3],
                    const size_t local_wk_sz[3])
 {
@@ -2150,14 +2152,14 @@ intel_gpgpu_walker_gen8(intel_gpgpu_t *gpgpu,
     OUT_BATCH(gpgpu->batch, (1 << 30) | (thread_n-1)); /* SIMD16 | thread max */
   else
     OUT_BATCH(gpgpu->batch, (0 << 30) | (thread_n-1)); /* SIMD8  | thread max */
+  OUT_BATCH(gpgpu->batch, global_dim_off[0]);
   OUT_BATCH(gpgpu->batch, 0);
+  OUT_BATCH(gpgpu->batch, global_wk_dim[0]+global_dim_off[0]);
+  OUT_BATCH(gpgpu->batch, global_dim_off[1]);
   OUT_BATCH(gpgpu->batch, 0);
-  OUT_BATCH(gpgpu->batch, global_wk_dim[0]);
-  OUT_BATCH(gpgpu->batch, 0);
-  OUT_BATCH(gpgpu->batch, 0);
-  OUT_BATCH(gpgpu->batch, global_wk_dim[1]);
-  OUT_BATCH(gpgpu->batch, 0);
-  OUT_BATCH(gpgpu->batch, global_wk_dim[2]);
+  OUT_BATCH(gpgpu->batch, global_wk_dim[1]+global_dim_off[1]);
+  OUT_BATCH(gpgpu->batch, global_dim_off[2]);
+  OUT_BATCH(gpgpu->batch, global_wk_dim[2]+global_dim_off[2]);
   OUT_BATCH(gpgpu->batch, right_mask);
   OUT_BATCH(gpgpu->batch, ~0x0);                     /* we always set height as 1, so set bottom mask as all 1*/
   ADVANCE_BATCH(gpgpu->batch);

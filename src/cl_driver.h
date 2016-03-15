@@ -326,6 +326,7 @@ typedef void (cl_gpgpu_walker_cb)(cl_gpgpu,
                                   uint32_t simd_sz,
                                   uint32_t thread_n,
                                   const size_t global_wk_off[3],
+                                  const size_t global_dim_off[3],
                                   const size_t global_wk_sz[3],
                                   const size_t local_wk_sz[3]);
 extern cl_gpgpu_walker_cb *cl_gpgpu_walker;

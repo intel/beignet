@@ -240,9 +240,9 @@ cl_curbe_fill(cl_kernel ker,
   UPLOAD(GBE_CURBE_GLOBAL_OFFSET_X, global_wk_off[0]);
   UPLOAD(GBE_CURBE_GLOBAL_OFFSET_Y, global_wk_off[1]);
   UPLOAD(GBE_CURBE_GLOBAL_OFFSET_Z, global_wk_off[2]);
-  UPLOAD(GBE_CURBE_GROUP_NUM_X, global_wk_sz[0]/local_wk_sz[0]);
-  UPLOAD(GBE_CURBE_GROUP_NUM_Y, global_wk_sz[1]/local_wk_sz[1]);
-  UPLOAD(GBE_CURBE_GROUP_NUM_Z, global_wk_sz[2]/local_wk_sz[2]);
+  UPLOAD(GBE_CURBE_GROUP_NUM_X, global_wk_sz[0] / enqueued_local_wk_sz[0] + (global_wk_sz[0]%enqueued_local_wk_sz[0]?1:0));
+  UPLOAD(GBE_CURBE_GROUP_NUM_Y, global_wk_sz[1] / enqueued_local_wk_sz[1] + (global_wk_sz[1]%enqueued_local_wk_sz[1]?1:0));
+  UPLOAD(GBE_CURBE_GROUP_NUM_Z, global_wk_sz[2] / enqueued_local_wk_sz[2] + (global_wk_sz[2]%enqueued_local_wk_sz[2]?1:0));
   UPLOAD(GBE_CURBE_THREAD_NUM, thread_n);
   UPLOAD(GBE_CURBE_WORK_DIM, work_dim);
 #undef UPLOAD
@@ -357,8 +357,11 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
                                cl_event event,
                                const uint32_t work_dim,
                                const size_t *global_wk_off,
+                               const size_t *global_dim_off,
                                const size_t *global_wk_sz,
-                               const size_t *local_wk_sz)
+                               const size_t *global_wk_sz_use,
+                               const size_t *local_wk_sz,
+                               const size_t *local_wk_sz_use)
 {
   cl_gpgpu gpgpu = cl_gpgpu_new(queue->ctx->drv);
   cl_context ctx = queue->ctx;
@@ -384,7 +387,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   kernel.use_slm = interp_kernel_use_slm(ker->opaque);
 
   /* Compute the number of HW threads we need */
-  if(UNLIKELY(err = cl_kernel_work_group_sz(ker, local_wk_sz, 3, &local_sz) != CL_SUCCESS)) {
+  if(UNLIKELY(err = cl_kernel_work_group_sz(ker, local_wk_sz_use, 3, &local_sz) != CL_SUCCESS)) {
     DEBUGP(DL_ERROR, "Work group size exceed Kernel's work group size.");
     return err;
   }
@@ -397,7 +400,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   }
   /* Curbe step 1: fill the constant urb buffer data shared by all threads */
   if (ker->curbe) {
-    kernel.slm_sz = cl_curbe_fill(ker, work_dim, global_wk_off, global_wk_sz,local_wk_sz ,local_wk_sz, thread_n);
+    kernel.slm_sz = cl_curbe_fill(ker, work_dim, global_wk_off, global_wk_sz,local_wk_sz_use ,local_wk_sz, thread_n);
     if (kernel.slm_sz > ker->program->ctx->device->local_mem_size) {
       DEBUGP(DL_ERROR, "Out of shared local memory %d.", kernel.slm_sz);
       return CL_OUT_OF_RESOURCES;
@@ -458,7 +461,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
     for (i = 0; i < thread_n; ++i) {
         memcpy(final_curbe + cst_sz * i, ker->curbe, cst_sz);
     }
-    TRY (cl_set_varying_payload, ker, final_curbe, local_wk_sz, simd_sz, cst_sz, thread_n);
+    TRY (cl_set_varying_payload, ker, final_curbe, local_wk_sz_use, simd_sz, cst_sz, thread_n);
     if (cl_gpgpu_upload_curbes(gpgpu, final_curbe, thread_n*cst_sz) != 0)
       goto error;
   }
@@ -471,7 +474,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   cl_gpgpu_batch_start(gpgpu);
 
   /* Issue the GPGPU_WALKER command */
-  cl_gpgpu_walker(gpgpu, simd_sz, thread_n, global_wk_off, global_wk_sz, local_wk_sz);
+  cl_gpgpu_walker(gpgpu, simd_sz, thread_n, global_wk_off,global_dim_off, global_wk_sz_use, local_wk_sz_use);
 
   /* Close the batch buffer and submit it */
   cl_gpgpu_batch_end(gpgpu, 0);
