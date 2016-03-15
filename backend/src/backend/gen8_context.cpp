@@ -1054,7 +1054,7 @@ namespace gbe
     const GenRegister dst = ra->genReg(insn.dst(0));
 
     /* Scalar register need not to convert. */
-    GBE_ASSERT(dst.hstride != GEN_HORIZONTAL_STRIDE_0 && src.hstride != GEN_HORIZONTAL_STRIDE_0);
+    GBE_ASSERT(dst.hstride != GEN_HORIZONTAL_STRIDE_0);
     this->unpackLongVec(src, dst, p->curr.execWidth);
   }
 
