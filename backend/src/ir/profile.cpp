@@ -35,6 +35,7 @@ namespace ir {
         "group_id_0", "group_id_1", "group_id_2",
         "num_groups_0", "num_groups_1", "num_groups_2",
         "local_size_0", "local_size_1", "local_size_2",
+        "enqueued_local_size_0", "enqueued_local_size_1", "enqueued_local_size_2",
         "global_size_0", "global_size_1", "global_size_2",
         "global_offset_0", "global_offset_1", "global_offset_2",
         "stack_pointer", "stack_buffer",
@@ -74,6 +75,9 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, lsize0, 1, GBE_CURBE_LOCAL_SIZE_X);
       DECL_NEW_REG(FAMILY_DWORD, lsize1, 1, GBE_CURBE_LOCAL_SIZE_Y);
       DECL_NEW_REG(FAMILY_DWORD, lsize2, 1, GBE_CURBE_LOCAL_SIZE_Z);
+      DECL_NEW_REG(FAMILY_DWORD, enqlsize0, 1, GBE_CURBE_ENQUEUED_LOCAL_SIZE_X);
+      DECL_NEW_REG(FAMILY_DWORD, enqlsize1, 1, GBE_CURBE_ENQUEUED_LOCAL_SIZE_Y);
+      DECL_NEW_REG(FAMILY_DWORD, enqlsize2, 1, GBE_CURBE_ENQUEUED_LOCAL_SIZE_Z);
       DECL_NEW_REG(FAMILY_DWORD, gsize0, 1, GBE_CURBE_GLOBAL_SIZE_X);
       DECL_NEW_REG(FAMILY_DWORD, gsize1, 1, GBE_CURBE_GLOBAL_SIZE_Y);
       DECL_NEW_REG(FAMILY_DWORD, gsize2, 1, GBE_CURBE_GLOBAL_SIZE_Z);

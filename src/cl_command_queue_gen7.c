@@ -221,6 +221,7 @@ cl_curbe_fill(cl_kernel ker,
               const size_t *global_wk_off,
               const size_t *global_wk_sz,
               const size_t *local_wk_sz,
+              const size_t *enqueued_local_wk_sz,
               size_t thread_n)
 {
   int32_t offset;
@@ -230,6 +231,9 @@ cl_curbe_fill(cl_kernel ker,
   UPLOAD(GBE_CURBE_LOCAL_SIZE_X, local_wk_sz[0]);
   UPLOAD(GBE_CURBE_LOCAL_SIZE_Y, local_wk_sz[1]);
   UPLOAD(GBE_CURBE_LOCAL_SIZE_Z, local_wk_sz[2]);
+  UPLOAD(GBE_CURBE_ENQUEUED_LOCAL_SIZE_X, enqueued_local_wk_sz[0]);
+  UPLOAD(GBE_CURBE_ENQUEUED_LOCAL_SIZE_Y, enqueued_local_wk_sz[1]);
+  UPLOAD(GBE_CURBE_ENQUEUED_LOCAL_SIZE_Z, enqueued_local_wk_sz[2]);
   UPLOAD(GBE_CURBE_GLOBAL_SIZE_X, global_wk_sz[0]);
   UPLOAD(GBE_CURBE_GLOBAL_SIZE_Y, global_wk_sz[1]);
   UPLOAD(GBE_CURBE_GLOBAL_SIZE_Z, global_wk_sz[2]);
@@ -393,7 +397,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   }
   /* Curbe step 1: fill the constant urb buffer data shared by all threads */
   if (ker->curbe) {
-    kernel.slm_sz = cl_curbe_fill(ker, work_dim, global_wk_off, global_wk_sz, local_wk_sz, thread_n);
+    kernel.slm_sz = cl_curbe_fill(ker, work_dim, global_wk_off, global_wk_sz,local_wk_sz ,local_wk_sz, thread_n);
     if (kernel.slm_sz > ker->program->ctx->device->local_mem_size) {
       DEBUGP(DL_ERROR, "Out of shared local memory %d.", kernel.slm_sz);
       return CL_OUT_OF_RESOURCES;

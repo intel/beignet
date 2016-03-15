@@ -3771,8 +3771,11 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           reg == ir::ocl::lid1 ||
           reg == ir::ocl::lid2 ||
           reg == ir::ocl::lsize0 ||
-          reg == ir::ocl::lsize1||
-          reg == ir::ocl::lsize2)
+          reg == ir::ocl::lsize1 ||
+          reg == ir::ocl::lsize2 ||
+          reg == ir::ocl::enqlsize0 ||
+          reg == ir::ocl::enqlsize1 ||
+          reg == ir::ocl::enqlsize2)
         return true;
       else
         return false;
