@@ -48,7 +48,7 @@ void builtin_kernel_block_motion_estimate_intel(void)
       if (i >= 32 && i <= 47 && j >= 16 && j <= 31)
         image_data2[w * j + i] = image_data1[w * j + i] = 100;
       else
-        image_data2[w * j + i] = image_data1[w * j + i] = 0;
+        image_data2[w * j + i] = image_data1[w * j + i] = 17;
     }
   }
 
@@ -61,8 +61,9 @@ void builtin_kernel_block_motion_estimate_intel(void)
   OCL_CREATE_IMAGE(buf[0], CL_MEM_COPY_HOST_PTR, &format, &desc, image_data1);        //src
   OCL_CREATE_IMAGE(buf[1], CL_MEM_COPY_HOST_PTR, &format, &desc, image_data2);        //ref
 
-  const size_t mv = (80/16) * (48/16);
-  OCL_CREATE_BUFFER(buf[2], 0, mv * sizeof(int) * 4, NULL);
+  const size_t mv_w = (w + 15) / 16;
+  const size_t mv_h = (h + 15) / 16;
+  OCL_CREATE_BUFFER(buf[2], 0, mv_w * mv_h * sizeof(short) * 2, NULL);
 
   OCL_SET_ARG(0, sizeof(cl_accelerator_intel), &accel);
   OCL_SET_ARG(1, sizeof(cl_mem), &buf[0]);
@@ -76,7 +77,7 @@ void builtin_kernel_block_motion_estimate_intel(void)
   OCL_CALL(clEnqueueNDRangeKernel, queue, kernel, 2, NULL, globals, NULL, 0, NULL, NULL);
 
   OCL_MAP_BUFFER(2);
-  short expected[] = {-64, -48,
+  short expected[] = {-64, -48,   //S13.2 fixed point value
                     -64, -48,
                     -64, -48,
                     -64, -48,
@@ -92,9 +93,12 @@ void builtin_kernel_block_motion_estimate_intel(void)
                     0, -48,
                     -64, -48};
   short* res = (short*)buf_data[2];
-  for (uint32_t j = 0; j < mv; ++j) {
-    OCL_ASSERT(res[j * 2 + 0] == expected[j * 2 + 0]);
-    OCL_ASSERT(res[j * 2 + 1] == expected[j * 2 + 1]);
+  for (uint32_t j = 0; j < mv_h - 1; ++j) {
+    for (uint32_t i = 0; i < mv_w - 1; ++i) {
+        uint32_t index = j * mv_w * 2 + i * 2;
+        OCL_ASSERT(res[index + 0] == expected[index + 0]);
+        OCL_ASSERT(res[index + 1] == expected[index + 1]);
+    }
   }
   OCL_UNMAP_BUFFER(2);
 
