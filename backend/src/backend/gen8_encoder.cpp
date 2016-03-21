@@ -206,7 +206,7 @@ namespace gbe
     this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
     this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
     this->setSrc1(insn, GenRegister::immud(0));
-    int type_long = (src.type == GEN_TYPE_UL || src.type == GEN_TYPE_L) ? 1: 0;
+    int type_long = (dst.type == GEN_TYPE_UL || dst.type == GEN_TYPE_L) ? 1: 0;
     setAtomicA64MessageDesc(insn, function, bti.value.ud, srcNum, type_long);
   }
 
