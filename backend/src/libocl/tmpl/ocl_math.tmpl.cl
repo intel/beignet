@@ -127,15 +127,7 @@ OVERLOADABLE float __gen_ocl_internal_fastpath_rootn(float x, int n) {
 OVERLOADABLE float __gen_ocl_internal_fastpath_sin (float x) {
     return native_sin(x);
 }
-OVERLOADABLE float __gen_ocl_internal_fastpath_sincos (float x, __global float *cosval) {
-    *cosval = native_cos(x);
-    return native_sin(x);
-}
-OVERLOADABLE float __gen_ocl_internal_fastpath_sincos (float x, __local float *cosval) {
-    *cosval = native_cos(x);
-    return native_sin(x);
-}
-OVERLOADABLE float __gen_ocl_internal_fastpath_sincos (float x, __private float *cosval) {
+OVERLOADABLE float __gen_ocl_internal_fastpath_sincos (float x, float *cosval) {
     *cosval = native_cos(x);
     return native_sin(x);
 }
@@ -1182,9 +1174,7 @@ OVERLOADABLE float lgamma(float x) {
 	if (hx < 0)  \
 		r = nadj - r;  \
 	return r;
-OVERLOADABLE float lgamma_r(float x, global int *signgamp) { BODY; }
-OVERLOADABLE float lgamma_r(float x, local int *signgamp) { BODY; }
-OVERLOADABLE float lgamma_r(float x, private int *signgamp) { BODY; }
+OVERLOADABLE float lgamma_r(float x, int *signgamp) { BODY; }
 #undef BODY
 
 OVERLOADABLE float log1p(float x) {
@@ -1406,17 +1396,7 @@ OVERLOADABLE float __gen_ocl_internal_cbrt(float x) {
   *cosval = cos(x); \
   return sin(x);
 
-OVERLOADABLE float sincos(float x, global float *cosval) {
-  if (__ocl_math_fastpath_flag)
-    return __gen_ocl_internal_fastpath_sincos(x, cosval);
-  BODY;
-}
-OVERLOADABLE float sincos(float x, local float *cosval) {
-  if (__ocl_math_fastpath_flag)
-    return __gen_ocl_internal_fastpath_sincos(x, cosval);
-  BODY;
-}
-OVERLOADABLE float sincos(float x, private float *cosval) {
+OVERLOADABLE float sincos(float x, float *cosval) {
   if (__ocl_math_fastpath_flag)
     return __gen_ocl_internal_fastpath_sincos(x, cosval);
   BODY;
@@ -2641,9 +2621,7 @@ OVERLOADABLE float mad(float a, float b, float c) {
   a <<= 1; \
   *exp = e; \
   return as_float((a & (0x807FFFFFu)) | (u & 0x80000000u) | 0x3F000000);
-OVERLOADABLE float frexp(float x, global int *exp) { BODY; }
-OVERLOADABLE float frexp(float x, local int *exp) { BODY; }
-OVERLOADABLE float frexp(float x, private int *exp) { BODY; }
+OVERLOADABLE float frexp(float x, int *exp) { BODY; }
 #undef BODY
 
 OVERLOADABLE float nextafter(float x, float y) {
@@ -2690,9 +2668,7 @@ OVERLOADABLE float nextafter(float x, float y) {
   } \
   *i = __gen_ocl_rndz(x); \
   return x - *i;
-OVERLOADABLE float modf(float x, global float *i) { BODY; }
-OVERLOADABLE float modf(float x, local float *i) { BODY; }
-OVERLOADABLE float modf(float x, private float *i) { BODY; }
+OVERLOADABLE float modf(float x, float *i) { BODY; }
 #undef BODY
 
 OVERLOADABLE float __gen_ocl_internal_fmax(float a, float b) { return max(a,b); }
@@ -3287,9 +3263,7 @@ OVERLOADABLE float hypot(float x, float y) {
     return x > 0 ? +0. : -0.; \
   } \
   return __gen_ocl_internal_fmin(x - *p, 0x1.FFFFFep-1F);
-OVERLOADABLE float fract(float x, global float *p) { BODY; }
-OVERLOADABLE float fract(float x, local float *p) { BODY; }
-OVERLOADABLE float fract(float x, private float *p) { BODY; }
+OVERLOADABLE float fract(float x, float *p) { BODY; }
 #undef BODY
 
 #define BODY \
@@ -3371,11 +3345,9 @@ fixup: \
   *quo = (sign ? -q : q); \
   return x;
 
-OVERLOADABLE float remquo(float x, float y, global int *quo) {
+OVERLOADABLE float remquo(float x, float y, int *quo) {
 	BODY;
 }
-OVERLOADABLE float remquo(float x, float y, local int *quo) { BODY; }
-OVERLOADABLE float remquo(float x, float y, private int *quo) { BODY; }
 #undef BODY
 
 OVERLOADABLE float powr(float x, float y) {
@@ -3855,15 +3827,7 @@ OVERLOADABLE half lgamma(half x) {
   float _x = (float)x;
   return (half)lgamma(_x);
 }
-OVERLOADABLE half lgamma_r(half x, global int *signgamp) {
-  float _x = (float)x;
-  return (half)lgamma_r(_x, signgamp);
-}
-OVERLOADABLE half lgamma_r(half x, local int *signgamp) {
-  float _x = (float)x;
-  return (half)lgamma_r(_x, signgamp);
-}
-OVERLOADABLE half lgamma_r(half x, private int *signgamp) {
+OVERLOADABLE half lgamma_r(half x, int *signgamp) {
   float _x = (float)x;
   return (half)lgamma_r(_x, signgamp);
 }
@@ -3883,21 +3847,7 @@ OVERLOADABLE half nan(ushort code) {
   return (half)NAN;
 }
 
-OVERLOADABLE half sincos(half x, global half *cosval) {
-  float _x = (float)x;
-  float _cosval;
-  half ret = (half)sincos(_x, &_cosval);
-  *cosval = (half)_cosval;
-  return ret;
-}
-OVERLOADABLE half sincos(half x, local half *cosval) {
-  float _x = (float)x;
-  float _cosval;
-  half ret = (half)sincos(_x, &_cosval);
-  *cosval = (half)_cosval;
-  return ret;
-}
-OVERLOADABLE half sincos(half x, private half *cosval) {
+OVERLOADABLE half sincos(half x, half *cosval) {
   float _x = (float)x;
   float _cosval;
   half ret = (half)sincos(_x, &_cosval);
@@ -3913,15 +3863,7 @@ OVERLOADABLE half rsqrt(half x) {
   float _x = (float)x;
   return (half)rsqrt(_x);
 }
-OVERLOADABLE half frexp(half x, global int *exp) {
-  float _x = (float)x;
-  return (half)frexp(_x, exp);
-}
-OVERLOADABLE half frexp(half x, local int *exp) {
-  float _x = (float)x;
-  return (half)frexp(_x, exp);
-}
-OVERLOADABLE half frexp(half x, private int *exp) {
+OVERLOADABLE half frexp(half x, int *exp) {
   float _x = (float)x;
   return (half)frexp(_x, exp);
 }
@@ -3931,21 +3873,7 @@ OVERLOADABLE half nextafter(half x, half y) {
   return (half)nextafter(_x, _y);
 }
 
-OVERLOADABLE half modf(half x, global half *i) {
-  float _x = (float)x;
-  float _i;
-  half ret = (half)modf(_x, &_i);
-  *i = (half)_i;
-  return ret;
-}
-OVERLOADABLE half modf(half x, local half *i) {
-  float _x = (float)x;
-  float _i;
-  half ret = (half)modf(_x, &_i);
-  *i = (half)_i;
-  return ret;
-}
-OVERLOADABLE half modf(half x, private half *i) {
+OVERLOADABLE half modf(half x, half *i) {
   float _x = (float)x;
   float _i;
   half ret = (half)modf(_x, &_i);
@@ -3959,21 +3887,7 @@ OVERLOADABLE half hypot(half x, half y) {
   return (half)hypot(_x, _y);
 }
 
-OVERLOADABLE half fract(half x, global half *p) {
-  float _x = (float)x;
-  float _p;
-  half ret = (half)fract(_x, &_p);
-  *p = (half)_p;
-  return ret;
-}
-OVERLOADABLE half fract(half x, local half *p) {
-  float _x = (float)x;
-  float _p;
-  half ret = (half)fract(_x, &_p);
-  *p = (half)_p;
-  return ret;
-}
-OVERLOADABLE half fract(half x, private half *p) {
+OVERLOADABLE half fract(half x, half *p) {
   float _x = (float)x;
   float _p;
   half ret = (half)fract(_x, &_p);
@@ -3981,17 +3895,7 @@ OVERLOADABLE half fract(half x, private half *p) {
   return ret;
 }
 
-OVERLOADABLE half remquo(half x, half y, global int *quo) {
-  float _x = (float)x;
-  float _y = (float)y;
-  return (half)remquo(_x, _y, quo);
-}
-OVERLOADABLE half remquo(half x, half y, local int *quo) {
-  float _x = (float)x;
-  float _y = (float)y;
-  return (half)remquo(_x, _y, quo);
-}
-OVERLOADABLE half remquo(half x, half y, private int *quo) {
+OVERLOADABLE half remquo(half x, half y, int *quo) {
   float _x = (float)x;
   float _y = (float)y;
   return (half)remquo(_x, _y, quo);
