@@ -439,6 +439,7 @@ clCreateCommandQueueWithProperties(cl_context                         context,
   cl_command_queue queue = NULL;
   cl_int err = CL_SUCCESS;
   cl_command_queue_properties prop = 0xFFFFFFFF;
+  cl_uint queue_sz = 0xFFFFFFFF;
   CHECK_CONTEXT (context);
 
   INVALID_DEVICE_IF (device != context->device);
@@ -470,8 +471,8 @@ clCreateCommandQueueWithProperties(cl_context                         context,
             case CL_QUEUE_PROFILING_ENABLE |
                 CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE |
                 CL_QUEUE_ON_DEVICE_DEFAULT:
-                prop = que_val;
-                break;
+              prop = que_val;
+              break;
             default:
               err = CL_INVALID_VALUE;
               break;
@@ -479,6 +480,7 @@ clCreateCommandQueueWithProperties(cl_context                         context,
           }
           break;
         case CL_QUEUE_SIZE:
+          queue_sz = que_val;
           break;
         default:
           err = CL_INVALID_VALUE;
@@ -486,14 +488,18 @@ clCreateCommandQueueWithProperties(cl_context                         context,
       }
     }
   }
+  if(err) goto error;
   if(prop == 0xFFFFFFFF) prop = 0;
-
-  if((prop & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)||(prop & CL_QUEUE_ON_DEVICE)) {/*not supported now.*/
-    err = CL_INVALID_QUEUE_PROPERTIES;
-    goto error;
-  }
+  if(queue_sz != 0xFFFFFFFF)
+    if(!(prop & CL_QUEUE_ON_DEVICE)) {
+      err = CL_INVALID_VALUE;
+      goto error;
+    }
+  if(queue_sz == 0xFFFFFFFF) queue_sz = device->queue_on_device_preferred_size;
+  INVALID_VALUE_IF (queue_sz > device->queue_on_device_max_size);
 
   queue = cl_context_create_queue(context, device, prop, &err);
+  queue->size = queue_sz;
 error:
   if (errcode_ret)
     *errcode_ret = err;
@@ -539,6 +545,8 @@ clGetCommandQueueInfo(cl_command_queue       command_queue,
     FILL_GETINFO_RET (cl_uint, 1, &ref, CL_SUCCESS);
   } else if (param_name == CL_QUEUE_PROPERTIES) {
     FILL_GETINFO_RET (cl_command_queue_properties, 1, &command_queue->props, CL_SUCCESS);
+  } else if (param_name == CL_QUEUE_SIZE) {
+    FILL_GETINFO_RET (cl_uint, 1, &command_queue->size, CL_SUCCESS);
   } else {
     return CL_INVALID_VALUE;
   }
@@ -1125,6 +1133,8 @@ clCreateSamplerWithProperties(cl_context                  context,
       }
     }
   }
+  if(err)
+    goto error;
   if(normalized == 0xFFFFFFFF) normalized = CL_TRUE;
   if(addressing == 0xFFFFFFFF) addressing = CL_ADDRESS_CLAMP;
   if(filter == 0xFFFFFFFF) filter = CL_FILTER_NEAREST;

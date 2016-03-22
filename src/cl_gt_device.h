@@ -82,7 +82,7 @@
 .execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL,
 .queue_properties = CL_QUEUE_PROFILING_ENABLE,
 .queue_on_host_properties = CL_QUEUE_PROFILING_ENABLE,
-.queue_on_device_properties = CL_QUEUE_PROFILING_ENABLE,
+.queue_on_device_properties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
 .queue_on_device_preferred_size = 16 * 1024,
 .queue_on_device_max_size = 256 * 1024,
 .max_on_device_queues = 1,

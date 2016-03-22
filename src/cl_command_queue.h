@@ -44,6 +44,7 @@ struct _cl_command_queue {
   cl_command_queue prev, next;         /* We chain the command queues together */
   void *thread_data;                   /* Used to store thread context data */
   cl_mem perf;                         /* Where to put the perf counters */
+  cl_uint size;                        /* Store the specified size for queueu */
 };
 
 /* The macro to get the thread specified gpgpu struct. */
