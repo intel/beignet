@@ -37,8 +37,6 @@
 #define PURE __attribute__((pure))
 #define CONST __attribute__((const))
 #define INLINE_OVERLOADABLE inline __attribute__((overloadable,always_inline))
-// FIXME, clang's opencl FE doesn't support static.
-#define static
 
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL built-in scalar data types
