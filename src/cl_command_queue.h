@@ -51,6 +51,7 @@ struct _cl_command_queue {
   cl_mem perf;                         /* Where to put the perf counters */
 
   void* cmrt_event;                    /* the latest CmEvent* of the command queue */
+  cl_uint size;                        /* Store the specified size for queueu */
 };
 
 #define CL_OBJECT_COMMAND_QUEUE_MAGIC 0x83650a12b79ce4efLL
