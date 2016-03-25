@@ -120,6 +120,7 @@ cl_program_delete(cl_program p)
   cl_free(p);
 }
 
+#define BUILD_LOG_MAX_SIZE (1024*1024U)
 LOCAL cl_program
 cl_program_new(cl_context ctx)
 {
@@ -133,9 +134,9 @@ cl_program_new(cl_context ctx)
   p->magic = CL_MAGIC_PROGRAM_HEADER;
   p->ctx = ctx;
   p->cmrt_program = NULL;
-  p->build_log = calloc(1000, sizeof(char));
+  p->build_log = calloc(BUILD_LOG_MAX_SIZE, sizeof(char));
   if (p->build_log)
-    p->build_log_max_sz = 1000;
+    p->build_log_max_sz = BUILD_LOG_MAX_SIZE;
   /* The queue also belongs to its context */
   cl_context_add_ref(ctx);
 
