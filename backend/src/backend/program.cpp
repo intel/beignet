@@ -556,7 +556,11 @@ namespace gbe {
     args.push_back("-x");
     args.push_back("cl");
     args.push_back("-triple");
+if(sizeof(int*) == 8) {
     args.push_back("spir64");
+} else {
+    args.push_back("spir");
+}
 #endif /* LLVM_VERSION_MINOR <= 2 */
     args.push_back("stringInput.cl");
     args.push_back("-ffp-contract=off");

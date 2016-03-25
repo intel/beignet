@@ -47,8 +47,13 @@ typedef unsigned int uint;
 typedef unsigned long ulong;
 typedef __typeof__(sizeof(int)) size_t;
 typedef __typeof__((int *)0-(int *)0) ptrdiff_t;
-typedef signed int intptr_t;
-typedef unsigned int uintptr_t;
+#define __int_t_type(a,b,c) a##b##c
+#define __int_type(type,n) __int_t_type(type,n,_TYPE__)
+typedef __int_type(__INT,__INTPTR_WIDTH__) intptr_t;
+typedef __int_type(__UINT,__INTPTR_WIDTH__) uintptr_t;
+#undef __int_type
+#undef __int_t_type
+
 
 /////////////////////////////////////////////////////////////////////////////
 // OpenCL address space

@@ -130,14 +130,20 @@ FOREACH(M ${OCL_BASH_GENERATED_MODULES})
 ENDFOREACH(M) 
 
 
-SET (CLANG_OCL_FLAGS -fno-builtin -ffp-contract=off -cl-kernel-arg-info -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND "-cl-std=CL2.0")
+if(NOT SPIRTARGET)
+  set(SPIRTARGET spir)
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(SPIRTARGET spir64)
+  endif()
+endif()
+SET (CLANG_OCL_FLAGS -fno-builtin -ffp-contract=off -cl-kernel-arg-info -triple ${SPIRTARGET} -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND -cl-std=CL2.0)
 MACRO(ADD_CL_TO_BC_TARGET _file)
     # CMake seems can not add pattern rule, use MACRO to replace.
     STRING(REGEX REPLACE "${LIBOCL_BINARY_DIR}/src/\(o.*\)\\.cl" "${OCL_OBJECT_DIR}/\\1.bc" output_name ${_file})
     ADD_CUSTOM_COMMAND(OUTPUT ${output_name}
 	COMMAND mkdir -p ${OCL_OBJECT_DIR}/
-	#COMMAND echo ${LLVM_INSTALL_DIR}clang -cc1 ${CLANG_OCL_FLAGS} -I ${LIBOCL_BINARY_DIR}/include/ -emit-llvm-bc -triple spir64 -o ${output_name} -x cl ${_file}
-	COMMAND ${CLANG_EXECUTABLE} -cc1 ${CLANG_OCL_FLAGS} -I ${OCL_OBJECT_DIR}/include/ -emit-llvm-bc -triple spir64 -o ${output_name} -x cl ${_file}
+  #COMMAND echo ${LLVM_INSTALL_DIR}clang -cc1 ${CLANG_OCL_FLAGS} -I ${LIBOCL_BINARY_DIR}/include/ -emit-llvm-bc -o ${output_name} -x cl ${_file}
+	COMMAND ${CLANG_EXECUTABLE} -cc1 ${CLANG_OCL_FLAGS} -I ${OCL_OBJECT_DIR}/include/ -emit-llvm-bc -o ${output_name} -x cl ${_file}
 	DEPENDS ${_file} ${OCL_HEADER_FILES}
 	COMMENT "Compiling ${_file}"
 	)
@@ -201,14 +207,14 @@ ADD_CUSTOM_COMMAND(OUTPUT ${OCL_OBJECT_DIR}/beignet.bc
 
 ADD_CUSTOM_COMMAND(OUTPUT ${OCL_OBJECT_DIR}/beignet.local.pch
     COMMAND mkdir -p ${OCL_OBJECT_DIR}
-    COMMAND ${CLANG_EXECUTABLE} -cc1 ${CLANG_OCL_FLAGS} -triple spir64 -I ${OCL_OBJECT_DIR}/include/ -emit-pch -x cl ${OCL_OBJECT_DIR}/include/ocl.h -o ${OCL_OBJECT_DIR}/beignet.local.pch
+    COMMAND ${CLANG_EXECUTABLE} -cc1 ${CLANG_OCL_FLAGS} -I ${OCL_OBJECT_DIR}/include/ -emit-pch -x cl ${OCL_OBJECT_DIR}/include/ocl.h -o ${OCL_OBJECT_DIR}/beignet.local.pch
     DEPENDS ${OCL_HEADER_FILES}
     COMMENT "Generate the pch file: ${OCL_OBJECT_DIR}/beignet.local.pch"
     )
 
 ADD_CUSTOM_COMMAND(OUTPUT ${OCL_OBJECT_DIR}/beignet.pch
     COMMAND mkdir -p ${OCL_OBJECT_DIR}
-    COMMAND ${CLANG_EXECUTABLE} -cc1 ${CLANG_OCL_FLAGS} -triple spir64 -I ${OCL_OBJECT_DIR}/include/ --relocatable-pch -emit-pch -isysroot ${LIBOCL_BINARY_DIR} -x cl ${OCL_OBJECT_DIR}/include/ocl.h -o ${OCL_OBJECT_DIR}/beignet.pch
+    COMMAND ${CLANG_EXECUTABLE} -cc1 ${CLANG_OCL_FLAGS} -I ${OCL_OBJECT_DIR}/include/ --relocatable-pch -emit-pch -isysroot ${LIBOCL_BINARY_DIR} -x cl ${OCL_OBJECT_DIR}/include/ocl.h -o ${OCL_OBJECT_DIR}/beignet.pch
     DEPENDS ${OCL_HEADER_FILES}
     COMMENT "Generate the pch file: ${OCL_OBJECT_DIR}/beignet.pch"
     )

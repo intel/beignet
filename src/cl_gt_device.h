@@ -40,7 +40,7 @@
 .native_vector_width_double = 2,
 .native_vector_width_half = 8,
 .preferred_wg_sz_mul = 16,
-.address_bits = 64,
+.address_bits = sizeof(size_t)*8,
 .svm_capabilities = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER,
 .preferred_platform_atomic_alignment = 0,
 .preferred_global_atomic_alignment = 0,
