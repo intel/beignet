@@ -341,7 +341,8 @@ void block_motion_estimate_intel(accelerator_intel_t accel,
     mv_index = index * 1;
     if( lid_x == 0 ){
       motion_vector_buffer[mv_index] = mv[lid_x];
-      residuals[mv_index] = 2 * res[lid_x];
+      if(residuals)
+        residuals[mv_index] = 2 * res[lid_x];
     }
   }
   //CL_ME_MB_TYPE_8x8_INTEL
@@ -350,7 +351,8 @@ void block_motion_estimate_intel(accelerator_intel_t accel,
       mv_index = lgid_y * num_groups_x * 4 + lgid_x * 2;
       mv_index = mv_index + num_groups_x * 2 * (lid_x / 2) + (lid_x % 2);
       motion_vector_buffer[mv_index] = mv[lid_x];
-      residuals[mv_index] = 2 * res[lid_x];
+      if(residuals)
+        residuals[mv_index] = 2 * res[lid_x];
     }
   }
   //CL_ME_MB_TYPE_4x4_INTEL
@@ -359,7 +361,8 @@ void block_motion_estimate_intel(accelerator_intel_t accel,
       mv_index = lgid_y * num_groups_x * 16 + lgid_x * 4;
       mv_index = mv_index + num_groups_x * 4 * (lid_x / 4) + (lid_x % 4);
       motion_vector_buffer[mv_index] = mv[lid_x];
-      residuals[mv_index] = 2 * res[lid_x];
+      if(residuals)
+        residuals[mv_index] = 2 * res[lid_x];
     }
   }
 
