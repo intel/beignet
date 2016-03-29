@@ -74,8 +74,8 @@ static void builtin_pow(void)
     {
       index_cur = k * max_function + i;
 #if udebug
-      if ( (isinf(cpu_data[index_cur]) && !isinf(gpu_data[index_cur])) ||
-           (isnan(cpu_data[index_cur]) && !isnan(gpu_data[index_cur])) ||
+      if ( (std::isinf(cpu_data[index_cur]) && !std::isinf(gpu_data[index_cur])) ||
+           (std::isnan(cpu_data[index_cur]) && !std::isnan(gpu_data[index_cur])) ||
            (fabs(gpu_data[index_cur] - cpu_data[index_cur]) > cl_FLT_ULP(cpu_data[index_cur]) * ULPSIZE_FACTOR
            && (denormals_supported || gpu_data[index_cur]!=0 || std::fpclassify(cpu_data[index_cur])!=FP_SUBNORMAL) ) )
 
@@ -85,10 +85,10 @@ static void builtin_pow(void)
       else
         printf("%d/%d: x:%f, y:%f -> gpu:%f  cpu:%f\n", k, i, input_data1[k], input_data2[k], gpu_data[index_cur], cpu_data[index_cur]);
 #else
-     if (isinf(cpu_data[index_cur]))
-       OCL_ASSERT(isinf(gpu_data[index_cur]));
-     else if (isnan(cpu_data[index_cur]))
-       OCL_ASSERT(isnan(gpu_data[index_cur]));
+     if (std::isinf(cpu_data[index_cur]))
+       OCL_ASSERT(std::isinf(gpu_data[index_cur]));
+     else if (std::isnan(cpu_data[index_cur]))
+       OCL_ASSERT(std::isnan(gpu_data[index_cur]));
      else
      {
        OCL_ASSERT((fabs(gpu_data[index_cur] - cpu_data[index_cur]) < cl_FLT_ULP(cpu_data[index_cur]) * ULPSIZE_FACTOR) ||

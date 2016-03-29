@@ -229,7 +229,7 @@ MAKE_UTEST_FROM_FUNCTION(compiler_half_basic);
       OCL_ASSERT(((fabs(fdst[i]) < 6e-8f) && (fabs(f) < 6e-8f)) ||      \
                  (fabs(f - fdst[i]) <= 0.03 * fabs(fdst[i])) ||         \
                  (isInf && ((infSign && fdst[i] > 65504.0f) || (!infSign && fdst[i] < -65504.0f))) || \
-                 (isnan(f) && isnan(fdst[i])));                         \
+                 (std::isnan(f) && std::isnan(fdst[i])));               \
     }                                                                   \
     OCL_UNMAP_BUFFER(1);                                                \
   }                                                                     \
@@ -303,7 +303,7 @@ HALF_MATH_TEST_1ARG(ceil, ceilf, -19.0, 20.0);
     OCL_ASSERT(((fabs(fdst[i]) < 6e-8f) && (fabs(f) < 6e-8f)) ||        \
                (fabs(f - fdst[i]) <= 0.03 * fabs(fdst[i])) ||           \
                (isInf && ((infSign && fdst[i] > 65504.0f) || (!infSign && fdst[i] < -65504.0f))) || \
-               (isnan(f) && isnan(fdst[i])));                           \
+               (std::isnan(f) && std::isnan(fdst[i])));                 \
     }                                                                   \
     OCL_UNMAP_BUFFER(2);                                                \
   }                                                                     \

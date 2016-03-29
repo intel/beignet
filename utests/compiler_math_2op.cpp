@@ -65,10 +65,10 @@ static void compiler_math_2op(void)
     for (int i = 0; i < 16; ++i) {
       const float cpu = cpu_dst[i];
       const float gpu = ((float*)buf_data[0])[i];
-      if (isinf(cpu))
-        OCL_ASSERT(isinf(gpu));
-      else if (isnan(cpu))
-        OCL_ASSERT(isnan(gpu));
+      if (std::isinf(cpu))
+        OCL_ASSERT(std::isinf(gpu));
+      else if (std::isnan(cpu))
+        OCL_ASSERT(std::isnan(gpu));
       else {
         OCL_ASSERT(fabs(gpu-cpu) < 1e-3f);
       }

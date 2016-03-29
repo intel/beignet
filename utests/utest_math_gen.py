@@ -488,9 +488,9 @@ static float powr(float x, float y){
         return 1;
     else if ((x == +INFINITY) && (y == 0.0f))
         return NAN;
-    else if (isnan(x) || (x < 0))
+    else if (std::isnan(x) || (x < 0))
         return NAN;
-    else if ((x >=  0) && (isnan(y)))
+    else if ((x >=  0) && (std::isnan(y)))
         return NAN;
     else
         return powf(x,y);
