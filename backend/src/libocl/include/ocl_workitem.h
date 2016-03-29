@@ -21,15 +21,15 @@
 #include "ocl_types.h"
 
 OVERLOADABLE uint get_work_dim(void);
-OVERLOADABLE uint get_global_size(uint dimindx);
-OVERLOADABLE uint get_global_id(uint dimindx);
-OVERLOADABLE uint get_local_size(uint dimindx);
-OVERLOADABLE uint get_enqueued_local_size(uint dimindx);
-OVERLOADABLE uint get_local_id(uint dimindx);
-OVERLOADABLE uint get_num_groups(uint dimindx);
-OVERLOADABLE uint get_group_id(uint dimindx);
-OVERLOADABLE uint get_global_offset(uint dimindx);
-OVERLOADABLE uint get_global_linear_id(void);
-OVERLOADABLE uint get_local_linear_id(void);
+OVERLOADABLE size_t get_global_size(uint dimindx);
+OVERLOADABLE size_t get_global_id(uint dimindx);
+OVERLOADABLE size_t get_local_size(uint dimindx);
+OVERLOADABLE size_t get_enqueued_local_size(uint dimindx);
+OVERLOADABLE size_t get_local_id(uint dimindx);
+OVERLOADABLE size_t get_num_groups(uint dimindx);
+OVERLOADABLE size_t get_group_id(uint dimindx);
+OVERLOADABLE size_t get_global_offset(uint dimindx);
+OVERLOADABLE size_t get_global_linear_id(void);
+OVERLOADABLE size_t get_local_linear_id(void);
 
 #endif  /* __OCL_WORKITEM_H__ */
