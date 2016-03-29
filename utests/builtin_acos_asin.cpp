@@ -59,10 +59,10 @@ static void builtin_acos_asin(void)
     {
       index_cur = k * max_function + i;
 #if udebug
-      if (isinf(cpu_data[index_cur]) && !isinf(gpu_data[index_cur])){
+      if (std::isinf(cpu_data[index_cur]) && !std::isinf(gpu_data[index_cur])){
         printf_c("%d/%d: %f -> gpu:%f  cpu:%f\n", k, i, input_data[k], gpu_data[index_cur], cpu_data[index_cur]);
       }
-      else if (isnan(cpu_data[index_cur]) && !isnan(gpu_data[index_cur])){
+      else if (std::isnan(cpu_data[index_cur]) && !std::isnan(gpu_data[index_cur])){
         printf_c("%d/%d: %f -> gpu:%f  cpu:%f\n", k, i, input_data[k], gpu_data[index_cur], cpu_data[index_cur]);
       }
       else if(fabs(gpu_data[index_cur] - cpu_data[index_cur]) > 1e-3f){
@@ -71,10 +71,10 @@ static void builtin_acos_asin(void)
       else
         printf("%d/%d: %f -> gpu:%f  cpu:%f\n", k, i, input_data[k], gpu_data[index_cur], cpu_data[index_cur]);
 #else
-     if (isinf(cpu_data[index_cur]))
-       OCL_ASSERT(isinf(gpu_data[index_cur]));
-     else if (isnan(cpu_data[index_cur]))
-       OCL_ASSERT(isnan(gpu_data[index_cur]));
+     if (std::isinf(cpu_data[index_cur]))
+       OCL_ASSERT(std::isinf(gpu_data[index_cur]));
+     else if (std::isnan(cpu_data[index_cur]))
+       OCL_ASSERT(std::isnan(gpu_data[index_cur]));
      else
      {
        OCL_ASSERT(fabs(gpu_data[index_cur] - cpu_data[index_cur]) < 1e-3f);

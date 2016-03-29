@@ -43,8 +43,8 @@ void builtin_tgamma(void)
         max_ulp = fabsf(cpu - dst[i]) / cl_FLT_ULP(cpu);
         max_ulp_at = src[i];
       }
-      if (isinf(cpu)) {
-        OCL_ASSERT(isinf(dst[i]));
+      if (std::isinf(cpu)) {
+        OCL_ASSERT(std::isinf(dst[i]));
       } else if (fabsf(cpu - dst[i]) >= cl_FLT_ULP(cpu) * ULPSIZE_FACTOR) {
         printf("%f %f %f\n", src[i], cpu, dst[i]);
         OCL_ASSERT(0);

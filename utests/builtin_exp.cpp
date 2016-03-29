@@ -71,10 +71,10 @@ static void builtin_exp(void)
          diff/gpu_data[index_cur], 3 * FLT_ULP);
 
 #if udebug
-      if (isinf(cpu_data[index_cur]) && isinf(gpu_data[index_cur])){
+      if (std::isinf(cpu_data[index_cur]) && std::isinf(gpu_data[index_cur])){
         printf(log);
       }
-      else if (isnan(cpu_data[index_cur]) && isnan(gpu_data[index_cur])){
+      else if (std::isnan(cpu_data[index_cur]) && std::isnan(gpu_data[index_cur])){
         printf(log);
       }
       else if( diff / cpu_data[index_cur] < 3 * FLT_ULP \
@@ -86,10 +86,10 @@ static void builtin_exp(void)
       else
         printf_c(log);
 #else
-      if (isinf(cpu_data[index_cur]))
-        OCL_ASSERTM(isinf(gpu_data[index_cur]), log);
-      else if (isnan(cpu_data[index_cur]))
-        OCL_ASSERTM(isnan(gpu_data[index_cur]), log);
+      if (std::isinf(cpu_data[index_cur]))
+        OCL_ASSERTM(std::isinf(gpu_data[index_cur]), log);
+      else if (std::isnan(cpu_data[index_cur]))
+        OCL_ASSERTM(std::isnan(gpu_data[index_cur]), log);
       else if ( gpu_data[index_cur] > FLT_ULP || cpu_data[index_cur] > FLT_ULP)
         OCL_ASSERTM(fabs( diff / cpu_data[index_cur]) < 3 * FLT_ULP, log);
       else

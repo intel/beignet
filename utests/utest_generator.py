@@ -112,10 +112,10 @@ def udebug(ulpSize,returnType,function):
     ULPSIZE_FACTOR = select_ulpsize(ULPSIZE_FAST_MATH,ULPSIZE_NO_FAST_MATH);
     bool fast_math = ULPSIZE_FACTOR == ULPSIZE_FAST_MATH;
 
-    if (isinf(cpu_data[index])){
+    if (std::isinf(cpu_data[index])){
       INFORNAN="INF";
     }
-    else if (isnan(cpu_data[index])){
+    else if (std::isnan(cpu_data[index])){
       INFORNAN="NAN";
     }
     else{
@@ -124,14 +124,14 @@ def udebug(ulpSize,returnType,function):
     }
 
 #if udebug 
-    if (isinf(cpu_data[index])){ 
-      if (isinf(gpu_data[index]))
+    if (std::isinf(cpu_data[index])){
+      if (std::isinf(gpu_data[index]))
         printf("%s expect:%s\\n", log, INFORNAN);
       else
         printf_c("%s expect:%s\\n", log, INFORNAN);
       }
-    else if (isnan(cpu_data[index])){
-      if (isnan(gpu_data[index]))
+    else if (std::isnan(cpu_data[index])){
+      if (std::isnan(gpu_data[index]))
         printf("%s expect:%s\\n", log, INFORNAN);
       else
         printf_c("%s expect:%s\\n", log, INFORNAN);
@@ -142,13 +142,13 @@ def udebug(ulpSize,returnType,function):
     else
       printf_c("%s expect:%s\\n", log, ULPSIZE);
 #else
-    if (isinf(cpu_data[index])){
+    if (std::isinf(cpu_data[index])){
       sprintf(log, "%s expect:%s\\n", log, INFORNAN);
-      OCL_ASSERTM(isinf(gpu_data[index]) || fast_math,log);
+      OCL_ASSERTM(std::isinf(gpu_data[index]) || fast_math,log);
     }
-    else if (isnan(cpu_data[index])){
+    else if (std::isnan(cpu_data[index])){
       sprintf(log, "%s expect:%s\\n", log, INFORNAN);
-      OCL_ASSERTM(isnan(gpu_data[index]) || fast_math,log);
+      OCL_ASSERTM(std::isnan(gpu_data[index]) || fast_math,log);
     }
     else{
       sprintf(log, "%s expect:%s\\n", log, ULPSIZE);
