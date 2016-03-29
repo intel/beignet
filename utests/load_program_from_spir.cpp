@@ -31,7 +31,10 @@ static void test_load_program_from_spir(void)
     char *ker_path = NULL;
 
     cl_file_map_t *fm = cl_file_map_new();
-    ker_path = cl_do_kiss_path("compiler_ceil32.spir", device);
+    if(sizeof(size_t) == 8)
+      ker_path = cl_do_kiss_path("compiler_ceil64.spir", device);
+    else
+      ker_path = cl_do_kiss_path("compiler_ceil32.spir", device);
     OCL_ASSERT (cl_file_map_open(fm, ker_path) == CL_FILE_MAP_SUCCESS);
 
     const unsigned char *src = (const unsigned char *)cl_file_map_begin(fm);

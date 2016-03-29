@@ -38,7 +38,7 @@ DECL_INTERNAL_WORK_ITEM_FN(get_num_groups)
 #undef DECL_INTERNAL_WORK_ITEM_FN
 
 #define DECL_PUBLIC_WORK_ITEM_FN(NAME, OTHER_RET)    \
-OVERLOADABLE unsigned NAME(unsigned int dim) {             \
+OVERLOADABLE size_t NAME(unsigned int dim) {             \
   if (dim == 0) return __gen_ocl_##NAME##0();        \
   else if (dim == 1) return __gen_ocl_##NAME##1();   \
   else if (dim == 2) return __gen_ocl_##NAME##2();   \
@@ -54,11 +54,11 @@ DECL_PUBLIC_WORK_ITEM_FN(get_global_offset, 0)
 DECL_PUBLIC_WORK_ITEM_FN(get_num_groups, 1)
 #undef DECL_PUBLIC_WORK_ITEM_FN
 
-OVERLOADABLE uint get_global_id(uint dim) {
+OVERLOADABLE size_t get_global_id(uint dim) {
   return get_local_id(dim) + get_enqueued_local_size(dim) * get_group_id(dim) + get_global_offset(dim);
 }
 
-OVERLOADABLE uint get_global_linear_id(void)
+OVERLOADABLE size_t get_global_linear_id(void)
 {
   uint dim = __gen_ocl_get_work_dim();
   if (dim == 1) return get_global_id(0) - get_global_offset(0);
@@ -71,7 +71,7 @@ OVERLOADABLE uint get_global_linear_id(void)
   else return 0;
 }
 
-OVERLOADABLE uint get_local_linear_id(void)
+OVERLOADABLE size_t get_local_linear_id(void)
 {
   uint dim = __gen_ocl_get_work_dim();
   if (dim == 1) return get_local_id(0);
