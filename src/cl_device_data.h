@@ -253,6 +253,7 @@
 #define PCI_CHIP_SKYLAKE_ULX_GT2	0x191E   /* Intel(R) Skylake ULX - GT2 */
 #define PCI_CHIP_SKYLAKE_DT_GT1		0x1902   /* Intel(R) Skylake Desktop - GT1 */
 #define PCI_CHIP_SKYLAKE_DT_GT2		0x1912   /* Intel(R) Skylake Desktop - GT2 */
+#define PCI_CHIP_SKYLAKE_DT_GT4   0x1932   /* Intel(R) Skylake Desktop - GT4 */
 #define PCI_CHIP_SKYLAKE_HALO_GT1 	0x190B   /* Intel(R) Skylake HALO - GT1 */
 #define PCI_CHIP_SKYLAKE_HALO_GT2	0x191B   /* Intel(R) Skylake HALO - GT2 */
 #define PCI_CHIP_SKYLAKE_HALO_GT3	0x192B   /* Intel(R) Skylake HALO - GT3 */
@@ -261,6 +262,9 @@
 #define PCI_CHIP_SKYLAKE_SRV_GT2	0x191A   /* Intel(R) Skylake Server - GT2 */
 #define PCI_CHIP_SKYLAKE_SRV_GT3	0x192A   /* Intel(R) Skylake Server - GT3 */
 #define PCI_CHIP_SKYLAKE_SRV_GT4	0x193A   /* Intel(R) Skylake Server - GT4 */
+#define PCI_CHIP_SKYLAKE_WKS_GT2  0x191D   /* Intel(R) Skylake WKS - GT2 */
+#define PCI_CHIP_SKYLAKE_MEDIA_SRV_GT3  0x192D /* Intel(R) Skylake Media Server - GT3 */
+#define PCI_CHIP_SKYLAKE_WKS_GT4  0x193D   /* Intel(R) Skylake WKS - GT4 */
 
 #define IS_SKL_GT1(devid)               \
   (devid == PCI_CHIP_SKYLAKE_ULT_GT1 ||   \
@@ -275,16 +279,20 @@
    devid == PCI_CHIP_SKYLAKE_ULX_GT2 || \
    devid == PCI_CHIP_SKYLAKE_DT_GT2 || \
    devid == PCI_CHIP_SKYLAKE_HALO_GT2 || \
-   devid == PCI_CHIP_SKYLAKE_SRV_GT2)
+   devid == PCI_CHIP_SKYLAKE_SRV_GT2 || \
+   devid == PCI_CHIP_SKYLAKE_WKS_GT2)
 
 #define IS_SKL_GT3(devid)               \
   (devid == PCI_CHIP_SKYLAKE_ULT_GT3 ||   \
    devid == PCI_CHIP_SKYLAKE_HALO_GT3 || \
-   devid == PCI_CHIP_SKYLAKE_SRV_GT3)
+   devid == PCI_CHIP_SKYLAKE_SRV_GT3 || \
+   devid == PCI_CHIP_SKYLAKE_MEDIA_SRV_GT3)
 
 #define IS_SKL_GT4(devid)               \
-  (devid == PCI_CHIP_SKYLAKE_HALO_GT4 || \
-   devid == PCI_CHIP_SKYLAKE_SRV_GT4)
+  (devid == PCI_CHIP_SKYLAKE_DT_GT4 ||  \
+   devid == PCI_CHIP_SKYLAKE_HALO_GT4 || \
+   devid == PCI_CHIP_SKYLAKE_SRV_GT4 || \
+   devid == PCI_CHIP_SKYLAKE_WKS_GT4)
 
 #define IS_SKYLAKE(devid) (IS_SKL_GT1(devid) || IS_SKL_GT2(devid) || IS_SKL_GT3(devid) || IS_SKL_GT4(devid))
 

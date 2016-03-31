@@ -518,6 +518,8 @@ skl_gt1_break:
       DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake Halo GT2");
     case PCI_CHIP_SKYLAKE_SRV_GT2:
       DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake Server GT2");
+    case PCI_CHIP_SKYLAKE_WKS_GT2:
+      DECL_INFO_STRING(skl_gt2_break, intel_skl_gt2_device, name, "Intel(R) HD Graphics Skylake Workstation GT2");
 skl_gt2_break:
       intel_skl_gt2_device.device_id = device_id;
       intel_skl_gt2_device.platform = cl_get_platform_default();
@@ -535,6 +537,8 @@ skl_gt2_break:
       DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake Halo GT3");
     case PCI_CHIP_SKYLAKE_SRV_GT3:
       DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake Server GT3");
+    case PCI_CHIP_SKYLAKE_MEDIA_SRV_GT3:
+      DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake Media Server GT3");
 skl_gt3_break:
       intel_skl_gt3_device.device_id = device_id;
       intel_skl_gt3_device.platform = cl_get_platform_default();
@@ -546,10 +550,14 @@ skl_gt3_break:
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
+    case PCI_CHIP_SKYLAKE_DT_GT4:
+      DECL_INFO_STRING(skl_gt4_break, intel_skl_gt4_device, name, "Intel(R) HD Graphics Skylake Desktop GT4");
     case PCI_CHIP_SKYLAKE_HALO_GT4:
       DECL_INFO_STRING(skl_gt4_break, intel_skl_gt4_device, name, "Intel(R) HD Graphics Skylake Halo GT4");
     case PCI_CHIP_SKYLAKE_SRV_GT4:
       DECL_INFO_STRING(skl_gt4_break, intel_skl_gt4_device, name, "Intel(R) HD Graphics Skylake Server GT4");
+    case PCI_CHIP_SKYLAKE_WKS_GT4:
+      DECL_INFO_STRING(skl_gt4_break, intel_skl_gt4_device, name, "Intel(R) HD Graphics Skylake Workstation GT4");
 skl_gt4_break:
       intel_skl_gt4_device.device_id = device_id;
       intel_skl_gt4_device.platform = cl_get_platform_default();
