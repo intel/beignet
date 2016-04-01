@@ -4309,7 +4309,8 @@ namespace gbe
             const ir::Register dst = this->getRegister(&I);
             uint32_t stackSize = ctx.getFunction().getStackSize();
             if (stackSize == 0) {
-              ctx.MOV(ir::TYPE_BOOL, dst, ir::ocl::zero);
+              ir::ImmediateIndex imm = ctx.newImmediate((bool)0);
+              ctx.LOADI(ir::TYPE_BOOL, dst, imm);
             } else {
               ir::Register cmp0 = ctx.reg(ir::FAMILY_BOOL);
               ir::Register cmp1 = ctx.reg(ir::FAMILY_BOOL);
