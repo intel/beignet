@@ -657,7 +657,7 @@ namespace gbe
             bool isSrc = false;
             bool needMov = false;
             ir::Type ir_type = ir::TYPE_FLOAT;
-            if (insn.src(0).isint64())
+            if (insn.src(0).isint64() || insn.src(0).isdf())
               ir_type = ir::TYPE_U64;
             this->replaceReg(selection, &insn, 0, isSrc, ir_type, needMov);
           }
