@@ -2039,9 +2039,9 @@ namespace gbe
     } else {
       uint32_t regNum = (regSize/2*simdWidth) > 32 ? 2 : 1;
       this->scratchRead(payload, msg, scratchOffset, regNum, GEN_TYPE_UD, GEN_SCRATCH_CHANNEL_MODE_DWORD);
-      storeBottomHalf(dst, payload);
+      storeBottomHalf(GenRegister::ul8grf(dst.nr, dst.subnr), payload);
       this->scratchRead(payload, msg, scratchOffset + 4*simdWidth, regNum, GEN_TYPE_UD, GEN_SCRATCH_CHANNEL_MODE_DWORD);
-      storeTopHalf(dst, payload);
+      storeTopHalf(GenRegister::ul8grf(dst.nr, dst.subnr), payload);
     }
     p->pop();
   }
