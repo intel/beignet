@@ -2007,10 +2007,10 @@ namespace gbe
     else { //size == 8
       payload.type = GEN_TYPE_UD;
       GBE_ASSERT(payload.hstride == GEN_HORIZONTAL_STRIDE_1);
-      loadBottomHalf(payload, src);
+      loadBottomHalf(payload, src.isdf()? GenRegister::retype(src, GEN_TYPE_UL) : src );
       uint32_t regNum = (regSize/2*simdWidth) > 32 ? 2 : 1;
       this->scratchWrite(msg, scratchOffset, regNum, GEN_TYPE_UD, GEN_SCRATCH_CHANNEL_MODE_DWORD);
-      loadTopHalf(payload, src);
+      loadTopHalf(payload, src.isdf() ? GenRegister::retype(src, GEN_TYPE_UL) : src);
       this->scratchWrite(msg, scratchOffset + 4*simdWidth, regNum, GEN_TYPE_UD, GEN_SCRATCH_CHANNEL_MODE_DWORD);
     }
     p->pop();
