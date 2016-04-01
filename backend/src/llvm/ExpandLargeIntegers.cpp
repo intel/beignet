@@ -324,12 +324,14 @@ static Value *buildVectorOrScalar(ConversionState &State, IRBuilder<> &IRB, Smal
     Value * vec = NULL;
     unsigned ElemNo = Elements.size();
     Type *ElemTy = Elements[0]->getType();
+    // if it is illegal integer type, these instructions will be further
+    // splited, that's why these temporary values should be erased.
     bool KeepInsert = isLegalBitSize(ElemTy->getPrimitiveSizeInBits() * ElemNo);
     for (unsigned i = 0; i < ElemNo; ++i) {
       Value *tmp = vec ? vec : UndefValue::get(VectorType::get(ElemTy, ElemNo));
       Value *idx = ConstantInt::get(IntTy, i);
       vec = IRB.CreateInsertElement(tmp, Elements[i], idx);
-      if (!KeepInsert) {
+      if (!KeepInsert && !isa<Constant>(vec)) {
         State.addEraseCandidate(cast<Instruction>(vec));
       }
     }
