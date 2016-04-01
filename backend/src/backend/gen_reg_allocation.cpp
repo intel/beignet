@@ -624,6 +624,11 @@ namespace gbe
               }
               insn.extra.function = GEN_CONDITIONAL_NEQ;
             }
+            // SEL.bool instruction, the dst register should be stored in GRF
+            // the pred flag is used by flag register
+            if (insn.opcode == SEL_OP_SEL && ctx.sel->getRegisterFamily(insn.dst(0).reg()) == ir::FAMILY_BOOL) {
+              allocatedFlags.erase(insn.dst(0).reg());
+            }
             // If this is an external bool, we need to validate it if it is not validated yet.
             if ((insn.state.externFlag &&
                  insn.state.predicate != GEN_PREDICATE_NONE))
