@@ -203,7 +203,7 @@ namespace gbe
                                         unsigned msg_length, unsigned response_length,
                                         bool header_present, bool end_of_thread)
   {
-     setSrc1(inst, GenRegister::immd(0));
+     setSrc1(inst, GenRegister::immud(0));
      inst->bits3.generic_gen5.header_present = header_present;
      inst->bits3.generic_gen5.response_length = response_length;
      inst->bits3.generic_gen5.msg_length = msg_length;
@@ -913,7 +913,7 @@ namespace gbe
      insn->bits3.msg_gateway.notify = notifyN;
   }
 
-  void GenEncoder::FENCE(GenRegister dst) {
+  void GenEncoder::FENCE(GenRegister dst, bool flushRWCache) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     this->setHeader(insn);
     this->setDst(insn, dst);
@@ -1182,6 +1182,10 @@ namespace gbe
                        response_length, msg_length,
                        header_present,
                        simd_mode, return_format);
+  }
+  void GenEncoder::FLUSH_SAMPLERCACHE(GenRegister dst) {
+    // only Gen8+ support flushing sampler cache
+    assert(0);
   }
 
   void GenEncoder::setVmeMessage(GenNativeInstruction *insn,

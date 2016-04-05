@@ -1475,7 +1475,8 @@ namespace ir {
                                  SYNC_LOCAL_READ_FENCE |
                                  SYNC_LOCAL_WRITE_FENCE |
                                  SYNC_GLOBAL_READ_FENCE |
-                                 SYNC_GLOBAL_WRITE_FENCE;
+                                 SYNC_GLOBAL_WRITE_FENCE |
+                                 SYNC_IMAGE_FENCE;
       if (UNLIKELY(this->parameters > maxParams)) {
         whyNot = "Invalid parameters for sync instruction";
         return false;
@@ -1857,7 +1858,7 @@ namespace ir {
     }
 
     static const char *syncStr[syncFieldNum] = {
-      "workgroup", "local_read", "local_write", "global_read", "global_write"
+      "workgroup", "local_read", "local_write", "global_read", "global_write", "image"
     };
 
     INLINE void SyncInstruction::out(std::ostream &out, const Function &fn) const {

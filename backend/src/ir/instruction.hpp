@@ -542,17 +542,19 @@ namespace ir {
     SYNC_LOCAL_WRITE_FENCE  = 1<<2,
     SYNC_GLOBAL_READ_FENCE  = 1<<3,
     SYNC_GLOBAL_WRITE_FENCE = 1<<4,
-    SYNC_INVALID            = 1<<5
+    SYNC_IMAGE_FENCE        = 1<<5,
+    SYNC_INVALID            = 1<<6
   };
 
   /*! 5 bits to encode all possible synchronization capablities */
-  static const uint32_t syncFieldNum = 5u;
+  static const uint32_t syncFieldNum = 6u;
 
   /*! When barrier(CLK_LOCAL_MEM_FENCE) is issued */
   static const uint32_t syncLocalBarrier = SYNC_WORKGROUP_EXEC |SYNC_LOCAL_WRITE_FENCE | SYNC_LOCAL_READ_FENCE;
 
   /*! When barrier(CLK_GLOBAL_MEM_FENCE) is issued */
   static const uint32_t syncGlobalBarrier = SYNC_WORKGROUP_EXEC | SYNC_GLOBAL_WRITE_FENCE | SYNC_GLOBAL_READ_FENCE;
+  static const uint32_t syncImageBarrier =  SYNC_WORKGROUP_EXEC | SYNC_GLOBAL_WRITE_FENCE | SYNC_GLOBAL_READ_FENCE | SYNC_IMAGE_FENCE;
 
   /*! Sync instructions are used to order loads and stores for a given memory
    *  space and/or to serialize threads at a given point in the program

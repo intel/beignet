@@ -540,7 +540,11 @@ union Gen8NativeInstruction
       /*! Memory fence */
       struct {
         uint32_t bti:8;
-        uint32_t pad:5;
+        uint32_t pad:1;
+        uint32_t flush_instruction:1;
+        uint32_t flush_texture:1;
+        uint32_t flush_constant:1;
+        uint32_t flush_rw:1;
         uint32_t commit_enable:1;
         uint32_t msg_type:4;
         uint32_t pad2:1;
