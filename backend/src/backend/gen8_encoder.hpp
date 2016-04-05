@@ -38,6 +38,7 @@ namespace gbe
 
     /*! Jump indexed instruction */
     virtual void JMPI(GenRegister src, bool longjmp = false);
+    virtual void FENCE(GenRegister dst, bool flushRWCache);
     /*! Patch JMPI/BRC/BRD (located at index insnID) with the given jump distance */
     virtual void patchJMPI(uint32_t insnID, int32_t jip, int32_t uip);
     virtual void F16TO32(GenRegister dest, GenRegister src0);
@@ -59,6 +60,7 @@ namespace gbe
     virtual void setTypedWriteMessage(GenNativeInstruction *insn, unsigned char bti,
                                       unsigned char msg_type, uint32_t msg_length,
                                       bool header_present);
+    virtual void FLUSH_SAMPLERCACHE(GenRegister dst);
     virtual void setDst(GenNativeInstruction *insn, GenRegister dest);
     virtual void setSrc0(GenNativeInstruction *insn, GenRegister reg);
     virtual void setSrc1(GenNativeInstruction *insn, GenRegister reg);

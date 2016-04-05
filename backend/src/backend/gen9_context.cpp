@@ -34,9 +34,10 @@ namespace gbe
     const GenRegister fenceDst = ra->genReg(insn.dst(0));
     uint32_t barrierType = insn.extra.barrierType;
     const GenRegister barrierId = ra->genReg(GenRegister::ud1grf(ir::ocl::barrierid));
+    bool imageFence = barrierType & ir::SYNC_IMAGE_FENCE;
 
-    if (barrierType == ir::syncGlobalBarrier) {
-      p->FENCE(fenceDst);
+    if (barrierType & ir::SYNC_GLOBAL_READ_FENCE) {
+      p->FENCE(fenceDst, imageFence);
       p->MOV(fenceDst, fenceDst);
     }
     p->push();
@@ -53,5 +54,9 @@ namespace gbe
       // Now we wait for the other threads
       p->WAIT();
     p->pop();
+    if (imageFence) {
+      p->FLUSH_SAMPLERCACHE(fenceDst);
+      p->MOV(fenceDst, fenceDst);
+    }
   }
 }

@@ -424,6 +424,7 @@ enum GenMessageTarget {
 #define GEN5_SAMPLER_MESSAGE_SAMPLE_LOD_COMPARE  6
 #define GEN5_SAMPLER_MESSAGE_SAMPLE_LD           7
 #define GEN5_SAMPLER_MESSAGE_SAMPLE_RESINFO      10
+#define GEN_SAMPLER_MESSAGE_CACHE_FLUSH          0x1f
 
 /* for GEN5 only */
 #define GEN_SAMPLER_SIMD_MODE_SIMD4X2                   0

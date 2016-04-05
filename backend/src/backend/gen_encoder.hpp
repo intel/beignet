@@ -144,7 +144,7 @@ namespace gbe
     /*! Forward the gateway message. */
     void FWD_GATEWAY_MSG(GenRegister src, uint32_t notifyN = 0);
     /*! Memory fence message (to order loads and stores between threads) */
-    void FENCE(GenRegister dst);
+    virtual void FENCE(GenRegister dst, bool flushRWCache);
     /*! Jump indexed instruction */
     virtual void JMPI(GenRegister src, bool longjmp = false);
     /*! IF indexed instruction */
@@ -216,6 +216,7 @@ namespace gbe
                            bool header_present,
                            uint32_t simd_mode,
                            uint32_t return_format);
+    virtual void FLUSH_SAMPLERCACHE(GenRegister dst);
 
     /*! TypedWrite instruction for texture */
     virtual void TYPED_WRITE(GenRegister header,

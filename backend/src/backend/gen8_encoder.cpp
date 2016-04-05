@@ -494,6 +494,30 @@ namespace gbe
 
     this->setSrc1(&insn, GenRegister::immd(jip*8));
   }
+  void Gen8Encoder::FENCE(GenRegister dst, bool flushRWCache) {
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
+    this->setHeader(insn);
+    this->setDst(insn, dst);
+    this->setSrc0(insn, dst);
+    setMessageDescriptor(insn, GEN_SFID_DATAPORT_DATA, 1, 1, 1);
+    gen8_insn->bits3.gen7_memory_fence.msg_type = GEN_MEM_FENCE;
+    gen8_insn->bits3.gen7_memory_fence.commit_enable = 0x1;
+    gen8_insn->bits3.gen7_memory_fence.flush_rw = flushRWCache ? 1 : 0;
+  }
+
+  void Gen8Encoder::FLUSH_SAMPLERCACHE(GenRegister dst) {
+     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+     this->setHeader(insn);
+     this->setDst(insn, dst);
+     this->setSrc0(insn, GenRegister::ud8grf(0,0));
+     unsigned msg_type = GEN_SAMPLER_MESSAGE_CACHE_FLUSH;
+     unsigned simd_mode = GEN_SAMPLER_SIMD_MODE_SIMD32_64;
+     setSamplerMessage(insn, 0, 0, msg_type,
+                       1, 1,
+                       true,
+                       simd_mode, 0);
+  }
 
   void Gen8Encoder::setDst(GenNativeInstruction *insn, GenRegister dest) {
     Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;

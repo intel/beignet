@@ -30,7 +30,7 @@ DECL_LLVM_GEN_FUNCTION(FMIN, __gen_ocl_fmin)
 // Barrier function
 DECL_LLVM_GEN_FUNCTION(LBARRIER, __gen_ocl_barrier_local)
 DECL_LLVM_GEN_FUNCTION(GBARRIER, __gen_ocl_barrier_global)
-DECL_LLVM_GEN_FUNCTION(LGBARRIER, __gen_ocl_barrier_local_and_global)
+DECL_LLVM_GEN_FUNCTION(BARRIER, __gen_ocl_barrier)
 
 // To force SIMD8/16 compilation
 DECL_LLVM_GEN_FUNCTION(FORCE_SIMD8,  __gen_ocl_force_simd8)

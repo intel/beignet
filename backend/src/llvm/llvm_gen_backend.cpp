@@ -3654,7 +3654,7 @@ namespace gbe
       case GEN_OCL_FORCE_SIMD16:
       case GEN_OCL_LBARRIER:
       case GEN_OCL_GBARRIER:
-      case GEN_OCL_LGBARRIER:
+      case GEN_OCL_BARRIER:
         ctx.getFunction().setUseSLM(true);
         break;
       case GEN_OCL_WRITE_IMAGE_I:
@@ -4344,7 +4344,31 @@ namespace gbe
           case GEN_OCL_FORCE_SIMD16: ctx.setSimdWidth(16); break;
           case GEN_OCL_LBARRIER: ctx.SYNC(ir::syncLocalBarrier); break;
           case GEN_OCL_GBARRIER: ctx.SYNC(ir::syncGlobalBarrier); break;
-          case GEN_OCL_LGBARRIER: ctx.SYNC(ir::syncLocalBarrier | ir::syncGlobalBarrier); break;
+          case GEN_OCL_BARRIER:
+          {
+            Constant *CPV = dyn_cast<Constant>(*AI);
+            unsigned syncFlag = 0;
+            if (CPV) {
+              const ir::Immediate &x = processConstantImm(CPV);
+              unsigned barrierArg = x.getIntegerValue();
+              if (barrierArg & 0x1) {
+                syncFlag |= ir::syncLocalBarrier;
+              }
+              if (barrierArg & 0x2) {
+                syncFlag |= ir::syncGlobalBarrier;
+              }
+              if (barrierArg & 0x4) {
+                syncFlag |= ir::syncImageBarrier;
+              }
+            } else {
+              // FIXME we default it to do global fence and barrier.
+              // we need to do runtime check here.
+              syncFlag = ir::syncLocalBarrier | ir::syncGlobalBarrier;
+            }
+
+            ctx.SYNC(syncFlag);
+            break;
+          }
           case GEN_OCL_ATOMIC_ADD0:
           case GEN_OCL_ATOMIC_ADD1: this->emitAtomicInst(I,CS,ir::ATOMIC_OP_ADD); break;
           case GEN_OCL_ATOMIC_SUB0:
