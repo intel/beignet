@@ -248,6 +248,11 @@ static cl_int get_program_global_data(cl_program prog) {
 #endif
   return CL_SUCCESS;
 }
+
+LOCAL size_t cl_program_get_global_variable_size(cl_program prog) {
+  return interp_program_get_global_constant_size(prog->opaque);
+}
+
 LOCAL cl_program
 cl_program_create_from_binary(cl_context             ctx,
                               cl_uint                num_devices,

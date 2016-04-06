@@ -152,5 +152,7 @@ cl_program_get_kernel_names(cl_program p,
                             size_t size,
                             char *names,
                             size_t *size_ret);
+extern size_t
+cl_program_get_global_variable_size(cl_program p);
 #endif /* __CL_PROGRAM_H__ */
 
