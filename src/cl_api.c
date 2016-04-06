@@ -1522,6 +1522,11 @@ clGetProgramBuildInfo(cl_program             program,
   }else if (param_name == CL_PROGRAM_BINARY_TYPE){
 
     FILL_GETINFO_RET (cl_uint, 1, &program->binary_type, CL_SUCCESS);
+  } else if (param_name == CL_PROGRAM_BUILD_GLOBAL_VARIABLE_TOTAL_SIZE) {
+    size_t global_size = 0;
+    if (program->is_built)
+      global_size = cl_program_get_global_variable_size(program);
+    FILL_GETINFO_RET (size_t, 1, &global_size, CL_SUCCESS);
   } else {
     return CL_INVALID_VALUE;
   }
