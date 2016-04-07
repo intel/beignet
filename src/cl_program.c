@@ -210,6 +210,7 @@ static cl_int get_program_global_data(cl_program prog) {
 
   prog->global_data = cl_buffer_alloc_userptr(bufmgr, "program global data", p, alignedSz, 0);
   cl_buffer_set_softpin_offset(prog->global_data, (size_t)p);
+  cl_buffer_set_bo_use_full_range(prog->global_data, 1);
 
   uint32_t reloc_count = interp_program_get_global_reloc_count(prog->opaque);
   if (reloc_count > 0) {
