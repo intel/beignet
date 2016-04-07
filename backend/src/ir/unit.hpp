@@ -58,7 +58,7 @@ namespace ir {
                                             entries(other.entries) {}
       uint32_t getCount() { return entries.size(); }
       void getData(char *p) {
-        if (entries.size() > 1 && p)
+        if (entries.size() > 0 && p)
           memcpy(p, entries.data(), entries.size()*sizeof(RelocEntry));
       }
     static const uint32_t magic_begin = TO_MAGIC('R', 'E', 'L', 'C');
