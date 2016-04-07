@@ -31,6 +31,9 @@ global int a = 1;
 global int b = 2;
 global int * constant gArr[2]= {&a, &b};
 
+global int a_var[1] = {0};
+global int *p_var = a_var;
+
 __kernel void compiler_program_global0(const global int *src, int dynamic) {
   size_t gid = get_global_id(0);
   /* global read/write */
@@ -60,9 +63,15 @@ __kernel void compiler_program_global1(global int *dst, int dynamic) {
   dst[12] = *p;
   dst[13] = s;
   dst[14] = l;
-  dst[15] = *gArr[dynamic];
+  if (p_var == a_var)
+    dst[15] = *gArr[dynamic];
 
   if (gid < 11)
     dst[gid] = ba[gid];
+}
+
+__kernel void nouse(int dynamic) {
+  c[0].s1 = &s2;
+  p_var = a+dynamic;
 }
 
