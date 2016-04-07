@@ -69,7 +69,7 @@ namespace ir {
   {
   public:
     /*! Append a new constant in the constant set */
-    void append(const char*, const std::string&, uint32_t size, uint32_t alignment);
+    void append(const std::string&, uint32_t size, uint32_t alignment);
     /*! Number of constants */
     size_t getConstantNum(void) const { return constants.size(); }
     /*! Get a special constant */
@@ -90,6 +90,11 @@ namespace ir {
     void getData(char *mem) const {
       for (size_t i = 0; i < data.size(); i ++)
         mem[i] = data[i];
+    }
+    void setData(char *mem, int offset, int size) {
+      for (int i = 0; i < size; i++) {
+        data[i+offset] = mem[i];
+      }
     }
     ConstantSet() {}
     ConstantSet(const ConstantSet& other) : Serializable(other),

@@ -1584,38 +1584,48 @@ namespace gbe
                }
     }
   }
-
+  static bool isProgramGlobal(const GlobalVariable &v) {
+    unsigned addrSpace = v.getType()->getAddressSpace();
+    // private/global/constant
+    return (addrSpace == 2 || addrSpace == 1 || addrSpace == 0);
+  }
   void GenWriter::collectGlobalConstant(void) const {
     const Module::GlobalListType &globalList = TheModule->getGlobalList();
+    // The first pass just create the global variable constants
     for(auto i = globalList.begin(); i != globalList.end(); i ++) {
       const GlobalVariable &v = *i;
       const char *name = v.getName().data();
-      unsigned addrSpace = v.getType()->getAddressSpace();
 
-      vector<ir::RelocEntry> relocs;
-      if(addrSpace == 2 /* __constant */
-          || addrSpace == 1
-          || addrSpace == 0) {
+      if(isProgramGlobal(v)) {
         Type * type = v.getValueType();
-
         uint32_t size = getTypeByteSize(unit, type);
-        void* mem = malloc(size);
-        uint32_t offset = 0;
+        uint32_t alignment = getAlignmentByte(unit, type);
+        unit.newConstant(name, size, alignment);
+      }
+    }
+    // the second pass to initialize the data
+    for(auto i = globalList.begin(); i != globalList.end(); i ++) {
+      const GlobalVariable &v = *i;
+      const char *name = v.getName().data();
+
+      if(isProgramGlobal(v)) {
         if (v.hasInitializer()) {
+          vector<ir::RelocEntry> relocs;
+          uint32_t offset = 0;
+          ir::Constant &con = unit.getConstantSet().getConstant(name);
+          void* mem = malloc(con.getSize());
           const Constant *c = v.getInitializer();
           getConstantData(c, mem, offset, relocs);
-        } else {
-          memset(mem, 0, size);
-        }
-        uint32_t alignment = getAlignmentByte(unit, type);
-        unit.newConstant((char *)mem, name, size, alignment);
-        free(mem);
-        uint32_t refOffset = unit.getConstantSet().getConstant(name).getOffset();
-        for (uint32_t k = 0; k < relocs.size(); k++) {
-          unit.getRelocTable().addEntry(
-                               refOffset + relocs[k].refOffset,
-                               relocs[k].defOffset
-                               );
+          unit.getConstantSet().setData((char*)mem, con.getOffset(), con.getSize());
+          free(mem);
+
+          uint32_t refOffset = unit.getConstantSet().getConstant(name).getOffset();
+          for (uint32_t k = 0; k < relocs.size(); k++) {
+            unit.getRelocTable().addEntry(
+                                 refOffset + relocs[k].refOffset,
+                                 relocs[k].defOffset
+                                 );
+          }
         }
       }
     }
