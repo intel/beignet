@@ -1497,6 +1497,36 @@ namespace gbe
     Type::TypeID id = type->getTypeID();
 
     GBE_ASSERT(c);
+    if (isa<ConstantExpr>(c)) {
+      const ConstantExpr *expr = dyn_cast<ConstantExpr>(c);
+      Value *pointer = expr->getOperand(0);
+      if (expr->getOpcode() == Instruction::GetElementPtr) {
+        uint32_t constantOffset = 0;
+        CompositeType* CompTy = cast<CompositeType>(pointer->getType());
+        for(uint32_t op=1; op<expr->getNumOperands(); ++op) {
+            int32_t TypeIndex;
+            ConstantInt* ConstOP = dyn_cast<ConstantInt>(expr->getOperand(op));
+            GBE_ASSERTM(ConstOP != NULL, "must be constant index");
+            TypeIndex = ConstOP->getZExtValue();
+            GBE_ASSERT(TypeIndex >= 0);
+            constantOffset += getGEPConstOffset(unit, CompTy, TypeIndex);
+            CompTy = dyn_cast<CompositeType>(CompTy->getTypeAtIndex(TypeIndex));
+        }
+
+        ir::Constant cc = unit.getConstantSet().getConstant(pointer->getName());
+        unsigned int defOffset = cc.getOffset();
+        relocs.push_back(ir::RelocEntry(offset, defOffset + constantOffset));
+
+        uint32_t size = getTypeByteSize(unit, type);
+        memset((char*)mem+offset, 0, size);
+        offset += size;
+      } else if (expr->isCast()) {
+        Constant *constPtr = cast<Constant>(pointer);
+        getConstantData(constPtr, mem, offset, relocs);
+        offset += getTypeByteSize(unit, type);
+      }
+      return;
+    }
     if (isa<GlobalVariable>(c)) {
       ir::Constant cc = unit.getConstantSet().getConstant(c->getName());
       unsigned int defOffset = cc.getOffset();
@@ -1594,8 +1624,21 @@ namespace gbe
           offset += sizeof(double);
           break;
         }
-      default:
+      case Type::TypeID::HalfTyID:
+        {
+          const ConstantFP *cf = dyn_cast<ConstantFP>(c);
+          llvm::APFloat apf = cf->getValueAPF();
+          llvm::APInt api = apf.bitcastToAPInt();
+          uint64_t v64 = api.getZExtValue();
+          uint16_t v16 = static_cast<uint16_t>(v64);
+          *(unsigned short *)((char*)mem+offset) = v16;
+          offset += sizeof(short);
+          break;
+        }
+      default: {
+        c->dump();
         NOT_IMPLEMENTED;
+               }
     }
   }
 
