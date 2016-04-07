@@ -58,7 +58,7 @@ namespace ir {
     /*! Return NULL if the function already exists */
     Function *newFunction(const std::string &name);
     /*! Create a new constant in the constant set */
-    void newConstant(const char*, const std::string&, uint32_t size, uint32_t alignment);
+    void newConstant(const std::string&, uint32_t size, uint32_t alignment);
     /*! Apply the given functor on all the functions */
     template <typename T>
     INLINE void apply(const T &functor) const {
