@@ -2768,12 +2768,32 @@ namespace gbe
       if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD
           || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD)
         p->ADD(dst, dst, partialData);
-      else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN
-          || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN)
+      else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN)
+      {
         p->SEL_CMP(GEN_CONDITIONAL_LE, dst, dst, partialData);
-      else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX
-          || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
+        /* workaround QW datatype on CMP */
+        if(dst.type == GEN_TYPE_UL || dst.type == GEN_TYPE_L){
+            p->SEL_CMP(GEN_CONDITIONAL_LE, dst.offset(dst, 1, 0),
+                       dst.offset(dst, 1, 0), partialData);
+            p->SEL_CMP(GEN_CONDITIONAL_LE, dst.offset(dst, 2, 0),
+                       dst.offset(dst, 2, 0), partialData);
+            p->SEL_CMP(GEN_CONDITIONAL_LE, dst.offset(dst, 3, 0),
+                       dst.offset(dst, 3, 0), partialData);
+        }
+      }
+      else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
+      {
         p->SEL_CMP(GEN_CONDITIONAL_GE, dst, dst, partialData);
+        /* workaround QW datatype on CMP */
+        if(dst.type == GEN_TYPE_UL || dst.type == GEN_TYPE_L){
+            p->SEL_CMP(GEN_CONDITIONAL_GE, dst.offset(dst, 1, 0),
+                       dst.offset(dst, 1, 0), partialData);
+            p->SEL_CMP(GEN_CONDITIONAL_GE, dst.offset(dst, 2, 0),
+                       dst.offset(dst, 2, 0), partialData);
+            p->SEL_CMP(GEN_CONDITIONAL_GE, dst.offset(dst, 3, 0),
+                       dst.offset(dst, 3, 0), partialData);
+        }
+      }
     }
 
     /* corner cases for threads 0 */
