@@ -1461,12 +1461,10 @@ namespace ir {
 
     INLINE bool WorkGroupInstruction::wellFormed(const Function &fn, std::string &whyNot) const {
       const RegisterFamily family = getFamily(this->type);
+
       if (UNLIKELY(checkSpecialRegForWrite(dst[0], fn, whyNot) == false))
         return false;
       if (UNLIKELY(checkRegisterData(family, dst[0], fn, whyNot) == false))
-        return false;
-      const Register src0 = fn.getRegister(src, 0);
-      if (UNLIKELY(checkRegisterData(family, src0, fn, whyNot) == false))
         return false;
 
       switch (this->workGroupOp) {

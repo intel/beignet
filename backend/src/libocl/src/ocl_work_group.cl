@@ -17,12 +17,12 @@
  */
 #include "ocl_work_group.h"
 
-int __gen_ocl_work_group_all(int predicate);
+int __gen_ocl_work_group_all(int);
 int work_group_all(int predicate) {
   return __gen_ocl_work_group_all(predicate);
 }
 
-int __gen_ocl_work_group_any(int predicate);
+int __gen_ocl_work_group_any(int);
 int work_group_any(int predicate) {
   return __gen_ocl_work_group_any(predicate);
 }

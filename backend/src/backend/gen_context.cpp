@@ -2845,123 +2845,262 @@ namespace gbe
       }
     } p->pop();
   }
-  static void workgroupOpBetweenThread(GenRegister partialRes,
-                                       GenRegister value,
-                                       uint32_t wg_op,
-                                       GenEncoder *p)
+
+  static void workgroupOp(GenRegister dst,
+                         GenRegister src1,
+                         GenRegister src2,
+                         uint32_t wg_op,
+                         GenEncoder *p)
   {
-    if (wg_op == ir::WORKGROUP_OP_REDUCE_MIN
-        || wg_op == ir::WORKGROUP_OP_REDUCE_MAX) {
-      if (wg_op == ir::WORKGROUP_OP_REDUCE_MIN)
-        cond = GEN_CONDITIONAL_LE;
-      else
-        cond = GEN_CONDITIONAL_GE;
-      p->SEL_CMP(cond, partialRes, partialRes, value);
-    } else if (wg_op == ir::WORKGROUP_OP_REDUCE_ADD) {
-      p->ADD(partialRes, partialRes, value);
-    }
-  }
+    // REDUCE
+    if (wg_op == ir::WORKGROUP_OP_ANY)
+      p->OR(dst, src1, src2);
+    else if (wg_op == ir::WORKGROUP_OP_ALL)
+      p->AND(dst, src1, src2);
+    else if(wg_op == ir::WORKGROUP_OP_REDUCE_ADD)
+      p->ADD(dst, src1, src2);
+    else if(wg_op == ir::WORKGROUP_OP_REDUCE_MIN)
+      p->SEL_CMP(GEN_CONDITIONAL_LE, dst, src1, src2);
+    else if(wg_op == ir::WORKGROUP_OP_REDUCE_MAX)
+      p->SEL_CMP(GEN_CONDITIONAL_GE, dst, src1, src2);
 
-  static void initValue(GenEncoder *p, GenRegister dataReg, uint32_t wg_op) {
-    if (dataReg.type == GEN_TYPE_UD) {
-      if (wg_op == ir::WORKGROUP_OP_REDUCE_MIN || wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN
-          || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN) {
-        p->MOV(dataReg, GenRegister::immud(0xFFFFFFFF));
-      } else {
-        GBE_ASSERT(wg_op == ir::WORKGROUP_OP_REDUCE_MAX || wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX
-             || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX || wg_op == ir::WORKGROUP_OP_REDUCE_ADD
-             || wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD);
-        p->MOV(dataReg, GenRegister::immud(0));
-      }
-    } else if (dataReg.type == GEN_TYPE_F) {
-      if (wg_op == ir::WORKGROUP_OP_REDUCE_MIN || wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN
-          || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN) {
-        p->MOV(GenRegister::retype(dataReg, GEN_TYPE_UD), GenRegister::immud(0x7F800000)); // inf
-      } else if (wg_op == ir::WORKGROUP_OP_REDUCE_MAX || wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX
-          || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX) {
-        p->MOV(GenRegister::retype(dataReg, GEN_TYPE_UD), GenRegister::immud(0xFF800000)); // -inf
-      } else {
-        GBE_ASSERT(wg_op == ir::WORKGROUP_OP_REDUCE_ADD || wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD
-            || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD);
-        p->MOV(GenRegister::retype(dataReg, GEN_TYPE_UD), GenRegister::immud(0x0));
-      }
-    } else {
+    // INCLUSIVE
+    else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD)
+      p->ADD(dst, src1, src2);
+    else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN)
+      p->SEL_CMP(GEN_CONDITIONAL_LE, dst, src1, src2);
+    else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX)
+      p->SEL_CMP(GEN_CONDITIONAL_GE, dst, src1, src2);
+
+    // EXCLUSIVE
+    else if(wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD)
+      p->ADD(dst, src1, src2);
+    else if(wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN)
+      p->SEL_CMP(GEN_CONDITIONAL_LE, dst, src1, src2);
+    else if(wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
+      p->SEL_CMP(GEN_CONDITIONAL_GE, dst, src1, src2);
+
+    else
       GBE_ASSERT(0);
-    }
   }
 
-  static void workgroupOpInThread(GenRegister msgData, GenRegister theVal, GenRegister threadData,
-                                  GenRegister tmp, uint32_t simd, uint32_t wg_op, GenEncoder *p) {
-    p->push();
-    p->curr.predicate = GEN_PREDICATE_NONE;
-    p->curr.noMask = 1;
-    p->curr.execWidth = 1;
+  static void initValue(GenEncoder *p, GenRegister dataReg, uint32_t wg_op)
+  {
 
-    /* Setting the init value here. */
-    threadData = GenRegister::retype(threadData, theVal.type);
-    initValue(p, threadData, wg_op);
-
-    if (theVal.hstride != GEN_HORIZONTAL_STRIDE_0) {
-      /* We need to set the value out of dispatch mask to MAX. */
-      tmp = GenRegister::retype(tmp, theVal.type);
-      p->push();
-      p->curr.predicate = GEN_PREDICATE_NONE;
-      p->curr.noMask = 1;
-      p->curr.execWidth = simd;
-      initValue(p, tmp, wg_op);
-      p->curr.noMask = 0;
-      p->MOV(tmp, theVal);
-      p->pop();
-    }
-
-    if (wg_op == ir::WORKGROUP_OP_REDUCE_MIN || wg_op == ir::WORKGROUP_OP_REDUCE_MAX) {
-      uint32_t cond;
-      if (wg_op == ir::WORKGROUP_OP_REDUCE_MIN)
-        cond = GEN_CONDITIONAL_LE;
+    if (wg_op == ir::WORKGROUP_OP_ALL)
+    {
+      if (dataReg.type == GEN_TYPE_D
+          || dataReg.type == GEN_TYPE_UD
+          || dataReg.type == GEN_TYPE_F)
+        p->MOV(dataReg, GenRegister::immd(0xFFFFFFFF));
+      else if(dataReg.type == GEN_TYPE_L ||
+          dataReg.type == GEN_TYPE_UL)
+        p->MOV(dataReg, GenRegister::immint64(0xFFFFFFFFFFFFFFFFL));
       else
-        cond = GEN_CONDITIONAL_GE;
-
-      if (theVal.hstride == GEN_HORIZONTAL_STRIDE_0) { // an uniform value.
-        p->SEL_CMP(cond, threadData, threadData, theVal);
-      } else {
-        GBE_ASSERT(tmp.type == theVal.type);
-        GenRegister v = GenRegister::toUniform(tmp, theVal.type);
-        for (uint32_t i = 0; i < simd; i++) {
-          p->SEL_CMP(cond, threadData, threadData, v);
-          v.subnr += typeSize(theVal.type);
-          if (v.subnr == 32) {
-            v.subnr = 0;
-            v.nr++;
-          }
-        }
-      }
+        GBE_ASSERT(0); /* unsupported data-type */
     }
-    else if (wg_op == ir::WORKGROUP_OP_REDUCE_ADD){
-      tmp.hstride = GEN_HORIZONTAL_STRIDE_1;
-      tmp.vstride = GEN_VERTICAL_STRIDE_4;
-      tmp.width = 2;
 
-      GBE_ASSERT(tmp.type == theVal.type);
-      GenRegister partialSum = tmp;
-
-      /* adjust offset, compute add with ADD4/ADD */
-      for (uint32_t i = 1; i < simd/4; i++){
-        p->push(); {
-          tmp = tmp.suboffset(tmp, 4);
-          p->curr.execWidth = 4;
-          p->ADD(partialSum, partialSum, tmp);
-        } p->pop();
-      }
-
-      for (uint32_t i = 0; i < 4; i++){
-        p->push(); {
-        p->ADD(threadData, threadData, partialSum);
-        partialSum = partialSum.suboffset(partialSum, 1);
-        } p->pop();
-      }
+    else if(wg_op == ir::WORKGROUP_OP_ANY
+      || wg_op == ir::WORKGROUP_OP_REDUCE_ADD
+      || wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD
+      || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD)
+    {
+      if (dataReg.type == GEN_TYPE_D)
+        p->MOV(dataReg, GenRegister::immd(0x0));
+      else if (dataReg.type == GEN_TYPE_UD)
+        p->MOV(dataReg, GenRegister::immud(0x0));
+      else if (dataReg.type == GEN_TYPE_F)
+        p->MOV(dataReg, GenRegister::immf(0x0));
+      else if (dataReg.type == GEN_TYPE_L)
+        p->MOV(dataReg, GenRegister::immint64(0x0));
+      else if (dataReg.type == GEN_TYPE_UL)
+        p->MOV(dataReg, GenRegister::immuint64(0x0));
+      else
+        GBE_ASSERT(0); /* unsupported data-type */
     }
-    p->pop();
-}
+
+    else if(wg_op == ir::WORKGROUP_OP_REDUCE_MIN
+      || wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN
+      || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN)
+    {
+      if (dataReg.type == GEN_TYPE_D)
+        p->MOV(dataReg, GenRegister::immd(0x7FFFFFFF));
+      else if (dataReg.type == GEN_TYPE_UD)
+        p->MOV(dataReg, GenRegister::immud(0xFFFFFFFF));
+      else if (dataReg.type == GEN_TYPE_F)
+        p->MOV(GenRegister::retype(dataReg, GEN_TYPE_UD), GenRegister::immud(0x7F800000));
+      else if (dataReg.type == GEN_TYPE_L)
+        p->MOV(dataReg, GenRegister::immint64(0x7FFFFFFFFFFFFFFFL));
+      else if (dataReg.type == GEN_TYPE_UL)
+        p->MOV(dataReg, GenRegister::immuint64(0xFFFFFFFFFFFFFFFFL));
+      else
+        GBE_ASSERT(0); /* unsupported data-type */
+    }
+
+    else if(wg_op == ir::WORKGROUP_OP_REDUCE_MAX
+      || wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX
+      || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
+    {
+      if (dataReg.type == GEN_TYPE_D)
+        p->MOV(dataReg, GenRegister::immd(0x80000000));
+      else if (dataReg.type == GEN_TYPE_UD)
+        p->MOV(dataReg, GenRegister::immud(0x0));
+      else if (dataReg.type == GEN_TYPE_F)
+        p->MOV(GenRegister::retype(dataReg, GEN_TYPE_UD), GenRegister::immud(0x7F800000));
+      else if (dataReg.type == GEN_TYPE_L)
+        p->MOV(dataReg, GenRegister::immint64(0x8000000000000000L));
+      else if (dataReg.type == GEN_TYPE_UL)
+        p->MOV(dataReg, GenRegister::immuint64(0x0));
+      else
+        GBE_ASSERT(0); /* unsupported data-type */
+    }
+
+    /* unsupported operation */
+    else
+      GBE_ASSERT(0);
+  }
+
+  static void workgroupOpInThread(GenRegister threadDst, GenRegister inputVal, GenRegister threadExchangeData,
+                                   GenRegister resultVal, uint32_t simd, uint32_t wg_op, GenEncoder *p) {
+   p->push();
+   p->curr.predicate = GEN_PREDICATE_NONE;
+   p->curr.noMask = 1;
+   p->curr.execWidth = 1;
+
+   /* setting the type */
+   resultVal = GenRegister::retype(resultVal, inputVal.type);
+   threadDst = GenRegister::retype(threadDst, inputVal.type);
+   threadExchangeData = GenRegister::retype(threadExchangeData, inputVal.type);
+
+   if (inputVal.hstride == GEN_HORIZONTAL_STRIDE_0) {
+     p->MOV(threadExchangeData, inputVal);
+     p->pop();
+     return;
+   }
+
+   /* init thread data to min/max/null values */
+   p->push(); {
+     p->curr.execWidth = simd;
+     initValue(p, threadExchangeData, wg_op);
+     p->MOV(resultVal, inputVal);
+   } p->pop();
+
+   GenRegister resultValSingle = resultVal;
+   resultValSingle.hstride = GEN_HORIZONTAL_STRIDE_0;
+   resultValSingle.vstride = GEN_VERTICAL_STRIDE_0;
+   resultValSingle.width = GEN_WIDTH_1;
+
+   GenRegister inputValSingle = inputVal;
+   inputValSingle.hstride = GEN_HORIZONTAL_STRIDE_0;
+   inputValSingle.vstride = GEN_VERTICAL_STRIDE_0;
+   inputValSingle.width = GEN_WIDTH_1;
+
+   vector<GenRegister> input;
+   vector<GenRegister> result;
+
+   /* make an array of registers for easy accesing */
+   for(uint32_t i = 0; i < simd; i++){
+     /* add all resultVal offset reg positions from list */
+     result.push_back(resultValSingle);
+     input.push_back(inputValSingle);
+
+     /* move to next position */
+     resultValSingle.subnr += typeSize(resultValSingle.type);
+     if (resultValSingle.subnr == 32) {
+         resultValSingle.subnr = 0;
+         resultValSingle.nr++;
+     }
+     /* move to next position */
+     inputValSingle.subnr += typeSize(inputValSingle.type);
+     if (inputValSingle.subnr == 32) {
+         inputValSingle.subnr = 0;
+         inputValSingle.nr++;
+     }
+   }
+
+   uint32_t start_i = 0;
+   if(wg_op == ir::WORKGROUP_OP_ANY ||
+       wg_op == ir::WORKGROUP_OP_ALL ||
+       wg_op == ir::WORKGROUP_OP_REDUCE_ADD ||
+       wg_op == ir::WORKGROUP_OP_REDUCE_MIN ||
+       wg_op == ir::WORKGROUP_OP_REDUCE_MAX ||
+       wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD ||
+       wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN ||
+       wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX) {
+     p->MOV(result[0], input[0]);
+     start_i = 1;
+   }
+
+   else if(wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD ||
+       wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN ||
+       wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX) {
+     p->MOV(result[1], input[0]);
+     start_i = 2;
+   }
+
+   /* algorithm workgroup */
+   for (uint32_t i = start_i; i < simd; i++)
+   {
+     if(wg_op == ir::WORKGROUP_OP_ANY ||
+         wg_op == ir::WORKGROUP_OP_ALL ||
+         wg_op == ir::WORKGROUP_OP_REDUCE_ADD ||
+         wg_op == ir::WORKGROUP_OP_REDUCE_MIN ||
+         wg_op == ir::WORKGROUP_OP_REDUCE_MAX)
+       workgroupOp(result[0], result[0], input[i], wg_op, p);
+
+     else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD ||
+         wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN ||
+         wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX)
+       workgroupOp(result[i], result[i - 1], input[i], wg_op, p);
+
+     else if(wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD ||
+         wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN ||
+         wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
+       workgroupOp(result[i], result[i - 1], input[i - 1], wg_op, p);
+
+     else
+       GBE_ASSERT(0);
+   }
+
+   if(wg_op == ir::WORKGROUP_OP_ANY ||
+       wg_op == ir::WORKGROUP_OP_ALL ||
+       wg_op == ir::WORKGROUP_OP_REDUCE_ADD ||
+       wg_op == ir::WORKGROUP_OP_REDUCE_MIN ||
+       wg_op == ir::WORKGROUP_OP_REDUCE_MAX)
+   {
+     p->curr.execWidth = 16;
+     /* value exchanged with other threads */
+     p->MOV(threadExchangeData, result[0]);
+     /* partial result thread */
+     p->MOV(threadDst, result[0]);
+   }
+   else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD ||
+       wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN ||
+       wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX)
+   {
+     p->curr.execWidth = 16;
+     /* value exchanged with other threads */
+     p->MOV(threadExchangeData, result[simd - 1]);
+     /* partial result thread */
+     p->MOV(threadDst, resultVal);
+   }
+   else if(wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD ||
+       wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN ||
+       wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
+   {
+     p->curr.execWidth = 1;
+     /* set result[0] to min/max/null */
+     initValue(p, result[0], wg_op);
+
+     p->curr.execWidth = 16;
+     /* value exchanged with other threads */
+     workgroupOp(threadExchangeData, result[simd - 1], input[simd - 1], wg_op, p);
+     /* partial result thread */
+     p->MOV(threadDst, resultVal);
+   }
+
+   p->pop();
+ }
 
 /**
  * Basic idea:
@@ -2976,22 +3115,17 @@ namespace gbe
   void GenContext::emitWorkGroupOpInstruction(const SelectionInstruction &insn){
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister tmp = ra->genReg(insn.dst(1));
-
-    const GenRegister theVal = ra->genReg(insn.src(0));
-    GenRegister threadData = ra->genReg(insn.src(1));
+    const GenRegister theVal = ra->genReg(insn.src(2));
+    GenRegister threadData = ra->genReg(insn.src(3));
     GenRegister partialData = GenRegister::toUniform(threadData, dst.type);
-    GenRegister threadId = ra->genReg(insn.src(2));
-    GenRegister threadNum = ra->genReg(insn.src(3));
-
-    threadId = GenRegister::toUniform(threadId, GEN_TYPE_UD);
-    threadNum = GenRegister::toUniform(threadNum, GEN_TYPE_UD);
+    GenRegister threadId = ra->genReg(insn.src(0));
+    GenRegister threadLoop = ra->genReg(insn.src(1));
 
     uint32_t wg_op = insn.extra.workgroupOp;
     uint32_t simd = p->curr.execWidth;
     int32_t jip0, jip1;
 
-    GenRegister result = GenRegister::offset(dst, 0, 16);
-    result = GenRegister::toUniform(result, dst.type);
+    threadId = GenRegister::toUniform(threadId, GEN_TYPE_UD);
 
     /* Use of continuous GRF allocation from insn selection */
     GenRegister msg = GenRegister::retype(ra->genReg(insn.dst(2)), dst.type);
@@ -3000,12 +3134,44 @@ namespace gbe
     GenRegister msgData = GenRegister::retype(GenRegister::offset(msg, 1), dst.type);
 
     /* Do some calculation within each thread */
-    workgroupOpInThread(msg, theVal, threadData, tmp, simd, wg_op, p);
+    workgroupOpInThread(dst, theVal, threadData, tmp, simd, wg_op, p);
+
+    p->curr.execWidth = 16;
+    p->MOV(theVal, dst);
     threadData = GenRegister::toUniform(threadData, dst.type);
 
     /* Store thread count for future use on read/write to SLM */
-    GenRegister threadN = GenRegister::retype(tmp, GEN_TYPE_UD);
-    p->MOV(threadN, ra->genReg(GenRegister::ud1grf(ir::ocl::threadn)));
+    if (wg_op == ir::WORKGROUP_OP_ANY ||
+        wg_op == ir::WORKGROUP_OP_ALL ||
+        wg_op == ir::WORKGROUP_OP_REDUCE_ADD ||
+        wg_op == ir::WORKGROUP_OP_REDUCE_MIN ||
+        wg_op == ir::WORKGROUP_OP_REDUCE_MAX)
+    {
+        //p->MOV(threadLoop, ra->genReg(GenRegister::ud1grf(ir::ocl::threadn)));
+        threadLoop = GenRegister::retype(tmp, GEN_TYPE_D);
+        p->MOV(threadLoop, ra->genReg(GenRegister::ud1grf(ir::ocl::threadn)));
+    }
+    else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD ||
+        wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN ||
+        wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX ||
+        wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD ||
+        wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN ||
+        wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
+    {
+        //p->MOV(threadLoop, ra->genReg(GenRegister::ud1grf(ir::ocl::threadid)));
+        threadLoop = GenRegister::retype(tmp, GEN_TYPE_D);
+        p->MOV(threadLoop, ra->genReg(GenRegister::ud1grf(ir::ocl::threadid)));
+    }
+
+    /* TODO implement communication for DW types */
+    if(dst.type == GEN_TYPE_UL ||
+        dst.type == GEN_TYPE_L ||
+        dst.type == GEN_TYPE_DF_IMM)
+    {
+      p->curr.execWidth = 16;
+      p->MOV(dst, threadData);
+      return;
+    }
 
     /* All threads write the partial results to SLM memory */
     p->curr.execWidth = 8;
@@ -3017,30 +3183,10 @@ namespace gbe
     /* Init partialData register, it will hold the final result */
     initValue(p, partialData, wg_op);
 
-    /* Thread 0 will write extra elements for future reads in chunks of 4 */
-    p->push();{
-      p->curr.noMask = 1;
-      p->curr.flag = 0;
-      p->curr.subFlag = 1;
-      p->CMP(GEN_CONDITIONAL_EQ, threadId, GenRegister::immd(0x0));
-      p->curr.predicate = GEN_PREDICATE_NORMAL;
-      p->curr.execWidth = 8;
-      p->MOV(msgData.offset(msgData, 0), partialData);
-      p->MOV(msgData.offset(msgData, 1), partialData);
-      p->MOV(msgData.offset(msgData, 2), partialData);
-      p->MUL(msgAddr, threadN, GenRegister::immd(0x4));
-      p->ADD(msgAddr, msgAddr, msgSlmOff);
-      p->UNTYPED_WRITE(msg, GenRegister::immw(0xFE), 3);
-    } p->pop();
-
-    /* Round threadN to nearest upper number divisible with 4 required for
-     * reading in chunks of 4 elements from SLM */
-    p->ADD(threadN, threadN, GenRegister::immd(0x3));
-    p->SHR(threadN, threadN, GenRegister::immd(0x2));
-    p->SHL(threadN, threadN, GenRegister::immd(0x2));
-
-    /* Wait for all writes to complete in work-group */
-    p->FENCE(tmp);
+    p->FENCE(msgData);
+    p->MOV(msgData, msgData);
+    p->FENCE(msgData);
+    p->MOV(msgData, msgData);
 
     /* Perform a loop, based on thread count (which is now multiple of 4) */
     p->push();{
@@ -3050,31 +3196,67 @@ namespace gbe
       p->curr.predicate = GEN_PREDICATE_NONE;
 
       /* Read in chunks of 4 to optimize SLM reads and reduce SEND messages */
-      p->ADD(threadN, threadN, GenRegister::immd(-4));
-      p->MUL(msgAddr, threadN, GenRegister::immd(0x4));
+      p->ADD(threadLoop, threadLoop, GenRegister::immd(-1));
+      p->MUL(msgAddr, threadLoop, GenRegister::immd(0x4));
       p->ADD(msgAddr, msgAddr, msgSlmOff);
-      p->UNTYPED_READ(msgData, msgAddr, GenRegister::immw(0xFE), 4);
+      p->UNTYPED_READ(msgData, msgAddr, GenRegister::immw(0xFE), 1);
 
       /* Perform operation, process 4 elements, partialData will hold result */
-      workgroupOpBetweenThread(partialData, msgData.offset(msgData, 0), wg_op, p);
-      workgroupOpBetweenThread(partialData, msgData.offset(msgData, 1), wg_op, p);
-      workgroupOpBetweenThread(partialData, msgData.offset(msgData, 2), wg_op, p);
-      workgroupOpBetweenThread(partialData, msgData.offset(msgData, 3), wg_op, p);
+      workgroupOp(partialData, partialData, msgData.offset(msgData, 0), wg_op, p);
 
       /* While threadN is not 0, cycle read SLM / update value */
       p->curr.noMask = 1;
       p->curr.flag = 0;
       p->curr.subFlag = 1;
-      p->CMP(GEN_CONDITIONAL_G, threadN, GenRegister::immd(0x0));
+      p->CMP(GEN_CONDITIONAL_G, threadLoop, GenRegister::immd(0x0));
       p->curr.predicate = GEN_PREDICATE_NORMAL;
       jip1 = p->n_instruction();
       p->JMPI(GenRegister::immud(0));
       p->patchJMPI(jip1, jip0 - jip1, 0);
     } p->pop();
 
-    /* Save result to final register location dst */
-    p->curr.execWidth = 16;
-    p->MOV(dst, partialData);
+    if(wg_op == ir::WORKGROUP_OP_ANY ||
+            wg_op == ir::WORKGROUP_OP_ALL ||
+            wg_op == ir::WORKGROUP_OP_REDUCE_ADD ||
+            wg_op == ir::WORKGROUP_OP_REDUCE_MIN ||
+            wg_op == ir::WORKGROUP_OP_REDUCE_MAX)
+    {
+        /* Save result to final register location dst */
+        p->curr.execWidth = 16;
+        p->MOV(dst, partialData);
+    }
+    else {
+        /* Save result to final register location dst */
+        p->curr.execWidth = 16;
+      if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD
+          || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD)
+        p->ADD(dst, dst, partialData);
+      else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN
+          || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN)
+        p->SEL_CMP(GEN_CONDITIONAL_LE, dst, dst, partialData);
+      else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX
+          || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
+        p->SEL_CMP(GEN_CONDITIONAL_GE, dst, dst, partialData);
+    }
+
+    /* corner cases for threads 0 */
+    if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD ||
+            wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN ||
+            wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX ||
+            wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD ||
+            wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN ||
+            wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
+    {
+      p->push();{
+        p->curr.flag = 0;
+        p->curr.subFlag = 1;
+        p->CMP(GEN_CONDITIONAL_EQ, threadId, GenRegister::immd(0x0));
+        p->curr.predicate = GEN_PREDICATE_NORMAL;
+
+        p->curr.execWidth = 16;
+        p->MOV(dst, theVal);
+      } p->pop();
+    }
   }
 
   void GenContext::emitPrintfLongInstruction(GenRegister& addr, GenRegister& data,

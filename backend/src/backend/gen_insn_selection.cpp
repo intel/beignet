@@ -1984,10 +1984,10 @@ namespace gbe
     for(uint32_t i = 0; i < msg.size(); i++)
       insn->dst(2 + i) = msg[i];
 
-    insn->src(0) = src;
-    insn->src(1) = data;
-    insn->src(2) = threadId;
-    insn->src(3) = threadN;
+    insn->src(0) = threadId;
+    insn->src(1) = threadN;
+    insn->src(2) = src;
+    insn->src(3) = data;
     insn->src(4) = slmOff;
   }
 
@@ -6216,7 +6216,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       GBE_ASSERT(insn.getSrc(0) == ir::ocl::threadn);
       GBE_ASSERT(insn.getSrc(1) == ir::ocl::threadid);
       GenRegister tmp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), type);
-      GenRegister data = sel.selReg(sel.reg(FAMILY_WORD), type);
+      GenRegister data = sel.selReg(sel.reg(FAMILY_DWORD), type);
       GenRegister slmOff = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
 
       vector<GenRegister> msg;
@@ -6225,8 +6225,11 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
 
       /* compute individual slice of workitems, (e.g. 0->16 workitems) */
       sel.MOV(slmOff, GenRegister::immud(insn.getSlmAddr()));
-      sel.WORKGROUP_OP(workGroupOp, dst, src, data, threadId,
-                       threadN, tmp, slmOff, msg);
+
+      /* barrier for syn prior to workgroup */
+      sel.BARRIER(GenRegister::ud8grf(sel.reg(FAMILY_DWORD)), sel.selReg(sel.reg(FAMILY_DWORD)), syncLocalBarrier);
+      sel.WORKGROUP_OP(workGroupOp, dst, src, data, threadId, threadN, tmp, slmOff, msg);
+
       return true;
     }
 
@@ -6304,7 +6307,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       if (workGroupOp == WORKGROUP_OP_BROADCAST){
         return emitWGBroadcast(sel, insn);
       }
-      else if (workGroupOp >= WORKGROUP_OP_REDUCE_ADD && workGroupOp <= WORKGROUP_OP_EXCLUSIVE_MAX){
+      else if (workGroupOp >= WORKGROUP_OP_ANY && workGroupOp <= WORKGROUP_OP_EXCLUSIVE_MAX){
         return emitWGReduce(sel, insn);
       }
       else
