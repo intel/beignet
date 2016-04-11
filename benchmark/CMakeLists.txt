@@ -16,7 +16,8 @@ set (benchmark_sources
   benchmark_read_buffer.cpp
   benchmark_read_image.cpp
   benchmark_copy_buffer_to_image.cpp
-  benchmark_copy_image_to_buffer.cpp)
+  benchmark_copy_image_to_buffer.cpp
+  benchmark_workgroup.cpp)
 
 
 SET(CMAKE_CXX_FLAGS "-DBUILD_BENCHMARK ${CMAKE_CXX_FLAGS}")
