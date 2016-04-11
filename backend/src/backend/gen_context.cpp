@@ -2668,22 +2668,27 @@ namespace gbe
         p->MOV(threadLoop, ra->genReg(GenRegister::ud1grf(ir::ocl::threadid)));
     }
 
-    /* TODO implement communication for DW types */
-    if(dst.type == GEN_TYPE_UL ||
-        dst.type == GEN_TYPE_L ||
-        dst.type == GEN_TYPE_DF_IMM)
-    {
-      p->curr.execWidth = 16;
-      p->MOV(dst, threadData);
-      return;
-    }
-
     /* All threads write the partial results to SLM memory */
-    p->curr.execWidth = 8;
-    p->MOV(msgData, threadData);
-    p->MUL(msgAddr, threadId, GenRegister::immd(0x4));
-    p->ADD(msgAddr, msgAddr, msgSlmOff);
-    p->UNTYPED_WRITE(msg, GenRegister::immw(0xFE), 1);
+    if(dst.type == GEN_TYPE_UL || dst.type == GEN_TYPE_L)
+    {
+      GenRegister threadDataL = GenRegister::retype(threadData, GEN_TYPE_D);
+      GenRegister threadDataH = threadDataL.offset(threadDataL, 0, 4);
+      p->MOV(msgData.offset(msgData, 0), threadDataL);
+      p->MOV(msgData.offset(msgData, 1), threadDataH);
+
+      p->curr.execWidth = 8;
+      p->MUL(msgAddr, threadId, GenRegister::immd(0x8));
+      p->ADD(msgAddr, msgAddr, msgSlmOff);
+      p->UNTYPED_WRITE(msg, GenRegister::immw(0xFE), 2);
+    }
+    else
+    {
+      p->curr.execWidth = 8;
+      p->MOV(msgData, threadData);
+      p->MUL(msgAddr, threadId, GenRegister::immd(0x4));
+      p->ADD(msgAddr, msgAddr, msgSlmOff);
+      p->UNTYPED_WRITE(msg, GenRegister::immw(0xFE), 1);
+    }
 
     /* Init partialData register, it will hold the final result */
     initValue(p, partialData, wg_op);
@@ -2697,17 +2702,37 @@ namespace gbe
     p->push();{
       jip0 = p->n_instruction();
 
-      p->curr.execWidth = 8;
-      p->curr.predicate = GEN_PREDICATE_NONE;
-
       /* Read in chunks of 4 to optimize SLM reads and reduce SEND messages */
-      p->ADD(threadLoop, threadLoop, GenRegister::immd(-1));
-      p->MUL(msgAddr, threadLoop, GenRegister::immd(0x4));
-      p->ADD(msgAddr, msgAddr, msgSlmOff);
-      p->UNTYPED_READ(msgData, msgAddr, GenRegister::immw(0xFE), 1);
+      if(dst.type == GEN_TYPE_UL || dst.type == GEN_TYPE_L)
+      {
+        p->curr.execWidth = 8;
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        p->ADD(threadLoop, threadLoop, GenRegister::immd(-1));
+        p->MUL(msgAddr, threadLoop, GenRegister::immd(0x8));
+        p->ADD(msgAddr, msgAddr, msgSlmOff);
+        p->UNTYPED_READ(msgData, msgAddr, GenRegister::immw(0xFE), 2);
 
-      /* Perform operation, process 4 elements, partialData will hold result */
-      workgroupOp(partialData, partialData, msgData.offset(msgData, 0), wg_op, p);
+        GenRegister msgDataL = msgData.retype(msgData.offset(msgData, 0, 4), GEN_TYPE_D);
+        GenRegister msgDataH = msgData.retype(msgData.offset(msgData, 1, 4), GEN_TYPE_D);
+        msgDataL.hstride = 2;
+        msgDataH.hstride = 2;
+        p->MOV(msgDataL, msgDataH);
+
+        /* Perform operation, partialData will hold result */
+        workgroupOp(partialData, partialData, msgData.offset(msgData, 0), wg_op, p);
+      }
+      else
+      {
+        p->curr.execWidth = 8;
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        p->ADD(threadLoop, threadLoop, GenRegister::immd(-1));
+        p->MUL(msgAddr, threadLoop, GenRegister::immd(0x4));
+        p->ADD(msgAddr, msgAddr, msgSlmOff);
+        p->UNTYPED_READ(msgData, msgAddr, GenRegister::immw(0xFE), 1);
+
+        /* Perform operation, partialData will hold result */
+        workgroupOp(partialData, partialData, msgData.offset(msgData, 0), wg_op, p);
+      }
 
       /* While threadN is not 0, cycle read SLM / update value */
       p->curr.noMask = 1;
