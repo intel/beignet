@@ -6215,9 +6215,9 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       GBE_ASSERT(srcNum == 3);
       GBE_ASSERT(insn.getSrc(0) == ir::ocl::threadn);
       GBE_ASSERT(insn.getSrc(1) == ir::ocl::threadid);
-      GenRegister tmp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), type);
-      GenRegister data = sel.selReg(sel.reg(FAMILY_DWORD), type);
-      GenRegister slmOff = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
+      GenRegister tmp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_QWORD)), type);
+      GenRegister data = sel.selReg(sel.reg(FAMILY_QWORD), type);
+      GenRegister slmOff = sel.selReg(sel.reg(FAMILY_QWORD), ir::TYPE_U32);
 
       vector<GenRegister> msg;
       for(uint32_t i = 0; i < 6; i++)
