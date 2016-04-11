@@ -3968,13 +3968,22 @@ namespace gbe
     }
 
     if (f.gettidMapSLM() < 0 && opcode >= ir::WORKGROUP_OP_REDUCE_ADD && opcode <= ir::WORKGROUP_OP_EXCLUSIVE_MAX) {
-      /* Because we can not know the thread ID and the EUID for every physical
+      /* 1. For thread SLM based communication (default):
+       * Threads will use SLM to write partial results computed individually
+         and then read the whole set. Because the read is done in chunks of 4
+         extra padding is required.
+
+       * 2. For thread message based communication:
+       * Because we can not know the thread ID and the EUID for every physical
          thead which the work items execute on before the run time. We need to
          sync the thread execution order when using work group functions. We
          create the workitems/threadID map table in slm.
+
          When we come to here, the global thread local vars should have all been
          allocated, so it's safe for us to steal a piece of SLM for this usage. */
-      uint32_t mapSize = sizeof(uint16_t) * 64;// at most 64 thread for one subslice.
+
+      // at most 64 thread for one subslice, along with extra padding
+      uint32_t mapSize = sizeof(uint32_t) * (64 + 4);
       f.setUseSLM(true);
       uint32_t oldSlm = f.getSLMSize();
       f.setSLMSize(oldSlm + mapSize);
