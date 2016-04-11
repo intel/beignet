@@ -2625,6 +2625,7 @@ namespace gbe
     GenRegister partialData = GenRegister::toUniform(threadData, dst.type);
     GenRegister threadId = ra->genReg(insn.src(0));
     GenRegister threadLoop = ra->genReg(insn.src(1));
+    GenRegister barrierId = ra->genReg(GenRegister::ud1grf(ir::ocl::barrierid));
 
     uint32_t wg_op = insn.extra.workgroupOp;
     uint32_t simd = p->curr.execWidth;
@@ -2693,10 +2694,16 @@ namespace gbe
     /* Init partialData register, it will hold the final result */
     initValue(p, partialData, wg_op);
 
-    p->FENCE(msgData);
-    p->MOV(msgData, msgData);
-    p->FENCE(msgData);
-    p->MOV(msgData, msgData);
+    /* Add call to barrier */
+    p->push();
+      p->curr.execWidth = 8;
+      p->curr.physicalFlag = 0;
+      p->curr.noMask = 1;
+      p->AND(msgData, barrierId, GenRegister::immud(0x0f000000));
+      p->BARRIER(msgData);
+      p->curr.execWidth = 1;
+      p->WAIT();
+    p->pop();
 
     /* Perform a loop, based on thread count (which is now multiple of 4) */
     p->push();{
