@@ -2846,52 +2846,15 @@ namespace gbe
     } p->pop();
   }
 
-  static void workgroupOp(GenRegister dst,
-                         GenRegister src1,
-                         GenRegister src2,
-                         uint32_t wg_op,
-                         GenEncoder *p)
-  {
-    // REDUCE
-    if (wg_op == ir::WORKGROUP_OP_ANY)
-      p->OR(dst, src1, src2);
-    else if (wg_op == ir::WORKGROUP_OP_ALL)
-      p->AND(dst, src1, src2);
-    else if(wg_op == ir::WORKGROUP_OP_REDUCE_ADD)
-      p->ADD(dst, src1, src2);
-    else if(wg_op == ir::WORKGROUP_OP_REDUCE_MIN)
-      p->SEL_CMP(GEN_CONDITIONAL_LE, dst, src1, src2);
-    else if(wg_op == ir::WORKGROUP_OP_REDUCE_MAX)
-      p->SEL_CMP(GEN_CONDITIONAL_GE, dst, src1, src2);
-
-    // INCLUSIVE
-    else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD)
-      p->ADD(dst, src1, src2);
-    else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN)
-      p->SEL_CMP(GEN_CONDITIONAL_LE, dst, src1, src2);
-    else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX)
-      p->SEL_CMP(GEN_CONDITIONAL_GE, dst, src1, src2);
-
-    // EXCLUSIVE
-    else if(wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD)
-      p->ADD(dst, src1, src2);
-    else if(wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN)
-      p->SEL_CMP(GEN_CONDITIONAL_LE, dst, src1, src2);
-    else if(wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
-      p->SEL_CMP(GEN_CONDITIONAL_GE, dst, src1, src2);
-
-    else
-      GBE_ASSERT(0);
-  }
-
-  static void initValue(GenEncoder *p, GenRegister dataReg, uint32_t wg_op)
+  /* Init value according to WORKGROUP OP
+   * Emit assert is invalid combination operation - datatype */
+  static void wgOpInitValue(GenEncoder *p, GenRegister dataReg, uint32_t wg_op)
   {
 
     if (wg_op == ir::WORKGROUP_OP_ALL)
     {
       if (dataReg.type == GEN_TYPE_D
-          || dataReg.type == GEN_TYPE_UD
-          || dataReg.type == GEN_TYPE_F)
+          || dataReg.type == GEN_TYPE_UD)
         p->MOV(dataReg, GenRegister::immd(0xFFFFFFFF));
       else if(dataReg.type == GEN_TYPE_L ||
           dataReg.type == GEN_TYPE_UL)
@@ -2946,7 +2909,7 @@ namespace gbe
       else if (dataReg.type == GEN_TYPE_UD)
         p->MOV(dataReg, GenRegister::immud(0x0));
       else if (dataReg.type == GEN_TYPE_F)
-        p->MOV(GenRegister::retype(dataReg, GEN_TYPE_UD), GenRegister::immud(0x7F800000));
+        p->MOV(GenRegister::retype(dataReg, GEN_TYPE_UD), GenRegister::immud(0xFF800000));
       else if (dataReg.type == GEN_TYPE_L)
         p->MOV(dataReg, GenRegister::immint64(0x8000000000000000L));
       else if (dataReg.type == GEN_TYPE_UL)
@@ -2960,8 +2923,53 @@ namespace gbe
       GBE_ASSERT(0);
   }
 
-  static void workgroupOpInThread(GenRegister threadDst, GenRegister inputVal, GenRegister threadExchangeData,
-                                   GenRegister resultVal, uint32_t simd, uint32_t wg_op, GenEncoder *p) {
+  /* Perform WORKGROUP OP on 2 input elements (registers) */
+  static void wgOpPerform(GenRegister dst,
+                         GenRegister src1,
+                         GenRegister src2,
+                         uint32_t wg_op,
+                         GenEncoder *p)
+  {
+    /* perform OP REDUCE on 2 elements */
+    if (wg_op == ir::WORKGROUP_OP_ANY)
+      p->OR(dst, src1, src2);
+    else if (wg_op == ir::WORKGROUP_OP_ALL)
+      p->AND(dst, src1, src2);
+    else if(wg_op == ir::WORKGROUP_OP_REDUCE_ADD)
+      p->ADD(dst, src1, src2);
+    else if(wg_op == ir::WORKGROUP_OP_REDUCE_MIN)
+      p->SEL_CMP(GEN_CONDITIONAL_LE, dst, src1, src2);
+    else if(wg_op == ir::WORKGROUP_OP_REDUCE_MAX)
+      p->SEL_CMP(GEN_CONDITIONAL_GE, dst, src1, src2);
+
+    /* perform OP SCAN INCLUSIVE on 2 elements */
+    else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD)
+      p->ADD(dst, src1, src2);
+    else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN)
+      p->SEL_CMP(GEN_CONDITIONAL_LE, dst, src1, src2);
+    else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX)
+      p->SEL_CMP(GEN_CONDITIONAL_GE, dst, src1, src2);
+
+    /* perform OP SCAN EXCLUSIVE on 2 elements */
+    else if(wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD)
+      p->ADD(dst, src1, src2);
+    else if(wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN)
+      p->SEL_CMP(GEN_CONDITIONAL_LE, dst, src1, src2);
+    else if(wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
+      p->SEL_CMP(GEN_CONDITIONAL_GE, dst, src1, src2);
+
+    else
+      GBE_ASSERT(0);
+  }
+
+  static void wgOpPerformThread(GenRegister threadDst,
+                                  GenRegister inputVal,
+                                  GenRegister threadExchangeData,
+                                   GenRegister resultVal,
+                                   uint32_t simd,
+                                   uint32_t wg_op,
+                                   GenEncoder *p)
+  {
    p->push();
    p->curr.predicate = GEN_PREDICATE_NONE;
    p->curr.noMask = 1;
@@ -2981,7 +2989,7 @@ namespace gbe
    /* init thread data to min/max/null values */
    p->push(); {
      p->curr.execWidth = simd;
-     initValue(p, threadExchangeData, wg_op);
+     wgOpInitValue(p, threadExchangeData, wg_op);
      p->MOV(resultVal, inputVal);
    } p->pop();
 
@@ -3046,17 +3054,17 @@ namespace gbe
          wg_op == ir::WORKGROUP_OP_REDUCE_ADD ||
          wg_op == ir::WORKGROUP_OP_REDUCE_MIN ||
          wg_op == ir::WORKGROUP_OP_REDUCE_MAX)
-       workgroupOp(result[0], result[0], input[i], wg_op, p);
+       wgOpPerform(result[0], result[0], input[i], wg_op, p);
 
      else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD ||
          wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN ||
          wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX)
-       workgroupOp(result[i], result[i - 1], input[i], wg_op, p);
+       wgOpPerform(result[i], result[i - 1], input[i], wg_op, p);
 
      else if(wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD ||
          wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN ||
          wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
-       workgroupOp(result[i], result[i - 1], input[i - 1], wg_op, p);
+       wgOpPerform(result[i], result[i - 1], input[i - 1], wg_op, p);
 
      else
        GBE_ASSERT(0);
@@ -3090,11 +3098,11 @@ namespace gbe
    {
      p->curr.execWidth = 1;
      /* set result[0] to min/max/null */
-     initValue(p, result[0], wg_op);
+     wgOpInitValue(p, result[0], wg_op);
 
      p->curr.execWidth = 16;
      /* value exchanged with other threads */
-     workgroupOp(threadExchangeData, result[simd - 1], input[simd - 1], wg_op, p);
+     wgOpPerform(threadExchangeData, result[simd - 1], input[simd - 1], wg_op, p);
      /* partial result thread */
      p->MOV(threadDst, resultVal);
    }
@@ -3103,68 +3111,82 @@ namespace gbe
  }
 
 /**
- * Basic idea:
- * 1. All the threads firstly calculate the max/min/add value for the
+ * WORKGROUP OP: ALL, ANY, REDUCE, SCAN INCLUSIVE, SCAN EXCLUSIVE
+ *
+ * Implementation:
+ * 1. All the threads first perform the workgroup op value for the
  * allocated work-items. SIMD16=> 16 work-items allocated for each thread
- * 2. Each thread will write the computed reduce OP result in SLM memory
- * based on the threadId
- * 3. After a memory fence, each thread will read in chunks of 4 elements,
- * the SLM region, using a loop based on the thread count value (threadN)
- * 4. At the end each thread has the final value computed individually
+ * 2. Each thread writes the partial result in shared local memory using threadId
+ * 3. After a barrier, each thread will read in chunks of 1-4 elements,
+ * the shared local memory region, using a loop based on the thread num value (threadN)
+ * 4. Each thread computes the final value individually
+ *
+ * Optimizations:
+ * Performance is given by chunk read. If threads read in chunks of 4 elements
+ * the performance is increase 2-3x times compared to chunks of 1 element.
  */
   void GenContext::emitWorkGroupOpInstruction(const SelectionInstruction &insn){
     const GenRegister dst = ra->genReg(insn.dst(0));
-    const GenRegister tmp = ra->genReg(insn.dst(1));
-    const GenRegister theVal = ra->genReg(insn.src(2));
+    const GenRegister tmp = GenRegister::retype(ra->genReg(insn.dst(1)), dst.type);
+    const GenRegister theVal = GenRegister::retype(ra->genReg(insn.src(2)), dst.type);
     GenRegister threadData = ra->genReg(insn.src(3));
     GenRegister partialData = GenRegister::toUniform(threadData, dst.type);
     GenRegister threadId = ra->genReg(insn.src(0));
     GenRegister threadLoop = ra->genReg(insn.src(1));
     GenRegister barrierId = ra->genReg(GenRegister::ud1grf(ir::ocl::barrierid));
+    GenRegister localBarrier = ra->genReg(insn.src(5));
 
     uint32_t wg_op = insn.extra.workgroupOp;
     uint32_t simd = p->curr.execWidth;
     int32_t jip0, jip1;
 
+    /* masked elements should be properly set to init value */
+    p->push(); {
+      p->curr.noMask = 1;
+      wgOpInitValue(p, tmp, wg_op);
+      p->curr.noMask = 0;
+      p->MOV(tmp, theVal);
+      p->curr.noMask = 1;
+      p->MOV(theVal, tmp);
+    } p->pop();
+
     threadId = GenRegister::toUniform(threadId, GEN_TYPE_UD);
 
-    /* Use of continuous GRF allocation from insn selection */
+    /* use of continuous GRF allocation from insn selection */
     GenRegister msg = GenRegister::retype(ra->genReg(insn.dst(2)), dst.type);
     GenRegister msgSlmOff = GenRegister::retype(ra->genReg(insn.src(4)), GEN_TYPE_UD);
     GenRegister msgAddr = GenRegister::retype(GenRegister::offset(msg, 0), GEN_TYPE_UD);
     GenRegister msgData = GenRegister::retype(GenRegister::offset(msg, 1), dst.type);
 
-    /* Do some calculation within each thread */
-    workgroupOpInThread(dst, theVal, threadData, tmp, simd, wg_op, p);
+    /* do some calculation within each thread */
+    wgOpPerformThread(dst, theVal, threadData, tmp, simd, wg_op, p);
 
     p->curr.execWidth = 16;
     p->MOV(theVal, dst);
     threadData = GenRegister::toUniform(threadData, dst.type);
 
-    /* Store thread count for future use on read/write to SLM */
+    /* store thread count for future use on read/write to SLM */
     if (wg_op == ir::WORKGROUP_OP_ANY ||
-        wg_op == ir::WORKGROUP_OP_ALL ||
-        wg_op == ir::WORKGROUP_OP_REDUCE_ADD ||
-        wg_op == ir::WORKGROUP_OP_REDUCE_MIN ||
-        wg_op == ir::WORKGROUP_OP_REDUCE_MAX)
+      wg_op == ir::WORKGROUP_OP_ALL ||
+      wg_op == ir::WORKGROUP_OP_REDUCE_ADD ||
+      wg_op == ir::WORKGROUP_OP_REDUCE_MIN ||
+      wg_op == ir::WORKGROUP_OP_REDUCE_MAX)
     {
-        //p->MOV(threadLoop, ra->genReg(GenRegister::ud1grf(ir::ocl::threadn)));
-        threadLoop = GenRegister::retype(tmp, GEN_TYPE_D);
-        p->MOV(threadLoop, ra->genReg(GenRegister::ud1grf(ir::ocl::threadn)));
+      threadLoop = GenRegister::retype(tmp, GEN_TYPE_D);
+      p->MOV(threadLoop, ra->genReg(GenRegister::ud1grf(ir::ocl::threadn)));
     }
     else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD ||
-        wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN ||
-        wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX ||
-        wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD ||
-        wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN ||
-        wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
+      wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN ||
+      wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX ||
+      wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD ||
+      wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN ||
+      wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
     {
-        //p->MOV(threadLoop, ra->genReg(GenRegister::ud1grf(ir::ocl::threadid)));
-        threadLoop = GenRegister::retype(tmp, GEN_TYPE_D);
-        p->MOV(threadLoop, ra->genReg(GenRegister::ud1grf(ir::ocl::threadid)));
+      threadLoop = GenRegister::retype(tmp, GEN_TYPE_D);
+      p->MOV(threadLoop, ra->genReg(GenRegister::ud1grf(ir::ocl::threadid)));
     }
 
-    /* All threads write the partial results to SLM memory */
+    /* all threads write the partial results to SLM memory */
     if(dst.type == GEN_TYPE_UL || dst.type == GEN_TYPE_L)
     {
       GenRegister threadDataL = GenRegister::retype(threadData, GEN_TYPE_D);
@@ -3186,25 +3208,25 @@ namespace gbe
       p->UNTYPED_WRITE(msg, GenRegister::immw(0xFE), 1);
     }
 
-    /* Init partialData register, it will hold the final result */
-    initValue(p, partialData, wg_op);
+    /* init partialData register, it will hold the final result */
+    wgOpInitValue(p, partialData, wg_op);
 
-    /* Add call to barrier */
+    /* add call to barrier */
     p->push();
       p->curr.execWidth = 8;
       p->curr.physicalFlag = 0;
       p->curr.noMask = 1;
-      p->AND(msgData, barrierId, GenRegister::immud(0x0f000000));
-      p->BARRIER(msgData);
+      p->AND(localBarrier, barrierId, GenRegister::immud(0x0f000000));
+      p->BARRIER(localBarrier);
       p->curr.execWidth = 1;
       p->WAIT();
     p->pop();
 
-    /* Perform a loop, based on thread count (which is now multiple of 4) */
+    /* perform a loop, based on thread count (which is now multiple of 4) */
     p->push();{
       jip0 = p->n_instruction();
 
-      /* Read in chunks of 4 to optimize SLM reads and reduce SEND messages */
+      /* read in chunks of 4 to optimize SLM reads and reduce SEND messages */
       if(dst.type == GEN_TYPE_UL || dst.type == GEN_TYPE_L)
       {
         p->curr.execWidth = 8;
@@ -3220,8 +3242,8 @@ namespace gbe
         msgDataH.hstride = 2;
         p->MOV(msgDataL, msgDataH);
 
-        /* Perform operation, partialData will hold result */
-        workgroupOp(partialData, partialData, msgData.offset(msgData, 0), wg_op, p);
+        /* perform operation, partialData will hold result */
+        wgOpPerform(partialData, partialData, msgData.offset(msgData, 0), wg_op, p);
       }
       else
       {
@@ -3232,11 +3254,11 @@ namespace gbe
         p->ADD(msgAddr, msgAddr, msgSlmOff);
         p->UNTYPED_READ(msgData, msgAddr, GenRegister::immw(0xFE), 1);
 
-        /* Perform operation, partialData will hold result */
-        workgroupOp(partialData, partialData, msgData.offset(msgData, 0), wg_op, p);
+        /* perform operation, partialData will hold result */
+        wgOpPerform(partialData, partialData, msgData.offset(msgData, 0), wg_op, p);
       }
 
-      /* While threadN is not 0, cycle read SLM / update value */
+      /* while threadN is not 0, cycle read SLM / update value */
       p->curr.noMask = 1;
       p->curr.flag = 0;
       p->curr.subFlag = 1;
@@ -3248,22 +3270,25 @@ namespace gbe
     } p->pop();
 
     if(wg_op == ir::WORKGROUP_OP_ANY ||
-            wg_op == ir::WORKGROUP_OP_ALL ||
-            wg_op == ir::WORKGROUP_OP_REDUCE_ADD ||
-            wg_op == ir::WORKGROUP_OP_REDUCE_MIN ||
-            wg_op == ir::WORKGROUP_OP_REDUCE_MAX)
+      wg_op == ir::WORKGROUP_OP_ALL ||
+      wg_op == ir::WORKGROUP_OP_REDUCE_ADD ||
+      wg_op == ir::WORKGROUP_OP_REDUCE_MIN ||
+      wg_op == ir::WORKGROUP_OP_REDUCE_MAX)
     {
-        /* Save result to final register location dst */
-        p->curr.execWidth = 16;
-        p->MOV(dst, partialData);
+      /* save result to final register location dst */
+      p->curr.execWidth = 16;
+      p->MOV(dst, partialData);
     }
-    else {
-        /* Save result to final register location dst */
-        p->curr.execWidth = 16;
+    else
+    {
+      /* save result to final register location dst */
+      p->curr.execWidth = 16;
+
       if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD
           || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD)
         p->ADD(dst, dst, partialData);
-      else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN)
+      else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN
+        || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN)
       {
         p->SEL_CMP(GEN_CONDITIONAL_LE, dst, dst, partialData);
         /* workaround QW datatype on CMP */
@@ -3276,7 +3301,8 @@ namespace gbe
                        dst.offset(dst, 3, 0), partialData);
         }
       }
-      else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
+      else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX
+        || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
       {
         p->SEL_CMP(GEN_CONDITIONAL_GE, dst, dst, partialData);
         /* workaround QW datatype on CMP */
@@ -3293,11 +3319,11 @@ namespace gbe
 
     /* corner cases for threads 0 */
     if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD ||
-            wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN ||
-            wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX ||
-            wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD ||
-            wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN ||
-            wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
+      wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN ||
+      wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX ||
+      wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD ||
+      wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN ||
+      wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
     {
       p->push();{
         p->curr.flag = 0;
