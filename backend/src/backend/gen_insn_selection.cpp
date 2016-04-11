@@ -688,8 +688,10 @@ namespace gbe
     /*! double division */
     void F64DIV(Reg dst, Reg src0, Reg src1, GenRegister* tmp, int tmpNum);
     /*! Work Group Operations */
-    void WORKGROUP_OP(uint32_t wg_op, Reg dst, GenRegister src, GenRegister nextThreadID,
-                     GenRegister threadID, GenRegister threadn, GenRegister tmp);
+    void WORKGROUP_OP(uint32_t wg_op, Reg dst, GenRegister src, GenRegister data,
+                      GenRegister threadId, GenRegister threadN,
+                      GenRegister tmp, GenRegister slmOff, vector<GenRegister> msg,
+                      uint32_t msgSizeReq);
     /* common functions for both binary instruction and sel_cmp and compare instruction.
        It will handle the IMM or normal register assignment, and will try to avoid LOADI
        as much as possible. */
@@ -1955,18 +1957,38 @@ namespace gbe
     }
   }
 
-  void Selection::Opaque::WORKGROUP_OP(uint32_t wg_op, Reg dst, GenRegister src, GenRegister nextThreadID,
-                      GenRegister threadID, GenRegister threadn, GenRegister tmp) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_WORKGROUP_OP, 3, 4);
+  void Selection::Opaque::WORKGROUP_OP(uint32_t wg_op,
+                                       Reg dst,
+                                       GenRegister src,
+                                       GenRegister data,
+                                       GenRegister threadId,
+                                       GenRegister threadN,
+                                       GenRegister tmp,
+                                       GenRegister slmOff,
+                                       vector<GenRegister> msg,
+                                       uint32_t msgSizeReq = 6)
+  {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_WORKGROUP_OP, 2 + msg.size(), 5);
+    SelectionVector *vector = this->appendVector();
+
+    /* allocate continuous GRF registers for READ/WRITE to SLM */
+    GBE_ASSERT(msg.size() >= msgSizeReq);
+    vector->regNum = msg.size();
+    vector->offsetID = 0;
+    vector->reg = &insn->dst(2);
+    vector->isSrc = 0;
     insn->extra.workgroupOp = wg_op;
+
     insn->dst(0) = dst;
-    insn->dst(1) = nextThreadID;
-    insn->dst(2) = tmp;
+    insn->dst(1) = tmp;
+    for(uint32_t i = 0; i < msg.size(); i++)
+      insn->dst(2 + i) = msg[i];
 
     insn->src(0) = src;
-    insn->src(1) = nextThreadID;
-    insn->src(2) = threadID;
-    insn->src(3) = threadn;
+    insn->src(1) = data;
+    insn->src(2) = threadId;
+    insn->src(3) = threadN;
+    insn->src(4) = slmOff;
   }
 
   // Boiler plate to initialize the selection library at c++ pre-main
@@ -6177,104 +6199,35 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
   /*! WorkGroup instruction pattern */
   DECL_PATTERN(WorkGroupInstruction)
   {
-    INLINE bool storeThreadID(Selection::Opaque &sel, uint32_t slmAddr) const
+    /* SLM bassed communication between threads, most of the logic bellow */
+    INLINE bool emitWGReduce(Selection::Opaque &sel, const ir::WorkGroupInstruction &insn) const
     {
       using namespace ir;
-      GenRegister sr0_0 = GenRegister::retype(GenRegister::sr(0), GEN_TYPE_UW);
-      const uint32_t simdWidth = sel.ctx.getSimdWidth();
-      GenRegister tmp;
-      GenRegister addr;
-      vector<GenRegister> fakeTemps;
+      const WorkGroupOps workGroupOp = insn.getWorkGroupOpcode();
 
-      if (simdWidth == 16) {
-        tmp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_WORD), ir::TYPE_U16), GEN_TYPE_UD);
-        addr = GenRegister::retype(sel.selReg(sel.reg(FAMILY_WORD), ir::TYPE_U16), GEN_TYPE_UD);
-      } else {
-        tmp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32), GEN_TYPE_UD);
-        addr = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32), GEN_TYPE_UD);
-      }
+      const Type type = insn.getType();
+      GenRegister dst = sel.selReg(insn.getDst(0), type);
+      GenRegister src = sel.selReg(insn.getSrc(2), type);
+      GenRegister threadId = sel.selReg(ocl::threadid, ir::TYPE_U32);
+      GenRegister threadN = sel.selReg(ocl::threadn, ir::TYPE_U32);
+      const uint32_t srcNum = insn.getSrcNum();
 
-      sr0_0 = GenRegister::vec1(sr0_0);
-      sel.push(); {
-        sel.curr.predicate = GEN_PREDICATE_NONE;
-        sel.curr.noMask = 1;
-        sel.curr.execWidth = 8;
+      GBE_ASSERT(srcNum == 3);
+      GBE_ASSERT(insn.getSrc(0) == ir::ocl::threadn);
+      GBE_ASSERT(insn.getSrc(1) == ir::ocl::threadid);
+      GenRegister tmp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), type);
+      GenRegister data = sel.selReg(sel.reg(FAMILY_WORD), type);
+      GenRegister slmOff = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
 
-        sel.MOV(tmp, sr0_0);
+      vector<GenRegister> msg;
+      for(uint32_t i = 0; i < 6; i++)
+        msg.push_back(sel.selReg(sel.reg(FAMILY_DWORD), type));
 
-        sel.MUL(addr, sel.selReg(ocl::threadid, ir::TYPE_U32), GenRegister::immud(2));
-        sel.ADD(addr, addr, GenRegister::immud(slmAddr));
-
-        sel.push(); {
-          sel.curr.predicate = GEN_PREDICATE_NONE;
-          sel.curr.noMask = 1;
-          sel.push(); {
-            sel.curr.execWidth = 1;
-            sel.MOV(GenRegister::flag(0, 1), GenRegister::immuw(0x01));
-          } sel.pop();
-          sel.curr.flag = 0;
-          sel.curr.subFlag = 1;
-          sel.curr.predicate = GEN_PREDICATE_NORMAL;
-          sel.BYTE_SCATTER(addr, tmp, 1, GenRegister::immw(0xfe), fakeTemps);
-        } sel.pop();
-      } sel.pop();
+      /* compute individual slice of workitems, (e.g. 0->16 workitems) */
+      sel.MOV(slmOff, GenRegister::immud(insn.getSlmAddr()));
+      sel.WORKGROUP_OP(workGroupOp, dst, src, data, threadId,
+                       threadN, tmp, slmOff, msg);
       return true;
-    }
-
-    INLINE GenRegister getNextThreadID(Selection::Opaque &sel, uint32_t slmAddr) const
-    {
-      using namespace ir;
-      const uint32_t simdWidth = sel.ctx.getSimdWidth();
-      GenRegister addr;
-      GenRegister nextThread;
-      GenRegister tid;
-      vector<GenRegister> fakeTemps;
-
-      if (simdWidth == 16) {
-        addr = GenRegister::retype(sel.selReg(sel.reg(FAMILY_WORD), ir::TYPE_U16), GEN_TYPE_UD);
-        nextThread = GenRegister::retype(sel.selReg(sel.reg(FAMILY_WORD), ir::TYPE_U16), GEN_TYPE_UD);
-        tid = GenRegister::retype(sel.selReg(sel.reg(FAMILY_WORD), ir::TYPE_U16), GEN_TYPE_UD);
-      } else {
-        addr = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
-        nextThread = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
-        tid = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
-      }
-
-      sel.push(); {
-        sel.curr.execWidth = 8;
-        sel.curr.predicate = GEN_PREDICATE_NONE;
-        sel.curr.noMask = 1;
-        sel.ADD(nextThread, sel.selReg(ocl::threadid, ir::TYPE_U32), GenRegister::immud(1));
-
-        /* Wrap the next thread id. */
-        sel.push(); {
-          sel.curr.predicate = GEN_PREDICATE_NONE;
-          sel.curr.noMask = 1;
-          sel.curr.flag = 0;
-          sel.curr.subFlag = 1;
-          sel.CMP(GEN_CONDITIONAL_EQ, nextThread, sel.selReg(ocl::threadn, ir::TYPE_U32), GenRegister::null());
-          sel.curr.predicate = GEN_PREDICATE_NORMAL;
-          sel.MOV(nextThread, GenRegister::immud(0));
-        } sel.pop();
-
-        sel.MUL(addr, nextThread, GenRegister::immud(2));
-        sel.ADD(addr, addr, GenRegister::immud(slmAddr));
-
-        sel.push(); {
-          sel.curr.predicate = GEN_PREDICATE_NONE;
-          sel.curr.noMask = 1;
-          sel.push(); {
-            sel.curr.execWidth = 1;
-            sel.MOV(GenRegister::flag(0, 1), GenRegister::immuw(0x010));
-          } sel.pop();
-          sel.curr.flag = 0;
-          sel.curr.subFlag = 1;
-          sel.curr.predicate = GEN_PREDICATE_NORMAL;
-          sel.BYTE_GATHER(tid, addr, 1, GenRegister::immw(0xfe), fakeTemps);
-        } sel.pop();
-
-      } sel.pop();
-      return tid;
     }
 
     INLINE bool emitWGBroadcast(Selection::Opaque &sel, const ir::WorkGroupInstruction &insn) const {
@@ -6348,42 +6301,14 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       using namespace ir;
       const WorkGroupOps workGroupOp = insn.getWorkGroupOpcode();
 
-      if (workGroupOp == WORKGROUP_OP_BROADCAST) {
+      if (workGroupOp == WORKGROUP_OP_BROADCAST){
         return emitWGBroadcast(sel, insn);
-      } else if (workGroupOp >= WORKGROUP_OP_REDUCE_ADD && workGroupOp <= WORKGROUP_OP_EXCLUSIVE_MAX) {
-        const uint32_t slmAddr = insn.getSlmAddr();
-        /* First, we create the TheadID/localID map, in order to get which thread hold the next 16 workitems. */
-
-        if (!sel.storeThreadMap) {
-          this->storeThreadID(sel, slmAddr);
-          sel.storeThreadMap = true;
-        }
-
-        /* Then we insert a barrier to make sure all the var we are interested in
-           have been assigned the final value. */
-        sel.BARRIER(GenRegister::ud8grf(sel.reg(FAMILY_DWORD)), sel.selReg(sel.reg(FAMILY_DWORD)), syncLocalBarrier);
-
-        /* Third, get the next thread ID which we will Forward MSG to. */
-        GenRegister nextThreadID = getNextThreadID(sel, slmAddr);
-        GenRegister threadID = sel.selReg(ocl::threadid, ir::TYPE_U32);
-        GenRegister threadNum = sel.selReg(ocl::threadn, ir::TYPE_U32);
-        GenRegister tmp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
-
-        const Type type = insn.getType();
-        const GenRegister dst = sel.selReg(insn.getDst(0), type);
-        const uint32_t srcNum = insn.getSrcNum();
-        GBE_ASSERT(srcNum == 3);
-        GBE_ASSERT(insn.getSrc(0) == ir::ocl::threadn);
-        GBE_ASSERT(insn.getSrc(1) == ir::ocl::threadid);
-        GenRegister src = sel.selReg(insn.getSrc(2), type);
-        sel.push(); {
-          sel.curr.flag = 0;
-          sel.curr.subFlag = 1;
-          sel.WORKGROUP_OP(workGroupOp, dst, src, nextThreadID, threadID, threadNum, tmp);
-        } sel.pop();
-      } else {
-        GBE_ASSERT(0);
       }
+      else if (workGroupOp >= WORKGROUP_OP_REDUCE_ADD && workGroupOp <= WORKGROUP_OP_EXCLUSIVE_MAX){
+        return emitWGReduce(sel, insn);
+      }
+      else
+        GBE_ASSERT(0);
 
       return true;
     }

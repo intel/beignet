@@ -2845,27 +2845,21 @@ namespace gbe
       }
     } p->pop();
   }
-
-  static void workgroupOpBetweenThread(GenRegister msgData, GenRegister theVal, GenRegister threadData,
-      uint32_t simd, uint32_t wg_op, GenEncoder *p) {
-    p->push();
-    p->curr.predicate = GEN_PREDICATE_NONE;
-    p->curr.noMask = 1;
-    p->curr.execWidth = 1;
-
-    if (wg_op == ir::WORKGROUP_OP_REDUCE_MIN || wg_op == ir::WORKGROUP_OP_REDUCE_MAX) {
-      uint32_t cond;
+  static void workgroupOpBetweenThread(GenRegister partialRes,
+                                       GenRegister value,
+                                       uint32_t wg_op,
+                                       GenEncoder *p)
+  {
+    if (wg_op == ir::WORKGROUP_OP_REDUCE_MIN
+        || wg_op == ir::WORKGROUP_OP_REDUCE_MAX) {
       if (wg_op == ir::WORKGROUP_OP_REDUCE_MIN)
         cond = GEN_CONDITIONAL_LE;
       else
         cond = GEN_CONDITIONAL_GE;
-
-      p->SEL_CMP(cond, msgData, threadData, msgData);
+      p->SEL_CMP(cond, partialRes, partialRes, value);
     } else if (wg_op == ir::WORKGROUP_OP_REDUCE_ADD) {
-      p->ADD(msgData, threadData, msgData);
+      p->ADD(partialRes, partialRes, value);
     }
-
-    p->pop();
   }
 
   static void initValue(GenEncoder *p, GenRegister dataReg, uint32_t wg_op) {
@@ -2941,209 +2935,146 @@ namespace gbe
           }
         }
       }
-    } else if (wg_op == ir::WORKGROUP_OP_REDUCE_ADD) {
+    }
+    else if (wg_op == ir::WORKGROUP_OP_REDUCE_ADD){
+      tmp.hstride = GEN_HORIZONTAL_STRIDE_1;
+      tmp.vstride = GEN_VERTICAL_STRIDE_4;
+      tmp.width = 2;
+
       GBE_ASSERT(tmp.type == theVal.type);
-      GenRegister v = GenRegister::toUniform(tmp, theVal.type);
-      for (uint32_t i = 0; i < simd; i++) {
-        p->ADD(threadData, threadData, v);
-        v.subnr += typeSize(theVal.type);
-        if (v.subnr == 32) {
-          v.subnr = 0;
-          v.nr++;
-        }
+      GenRegister partialSum = tmp;
+
+      /* adjust offset, compute add with ADD4/ADD */
+      for (uint32_t i = 1; i < simd/4; i++){
+        p->push(); {
+          tmp = tmp.suboffset(tmp, 4);
+          p->curr.execWidth = 4;
+          p->ADD(partialSum, partialSum, tmp);
+        } p->pop();
+      }
+
+      for (uint32_t i = 0; i < 4; i++){
+        p->push(); {
+        p->ADD(threadData, threadData, partialSum);
+        partialSum = partialSum.suboffset(partialSum, 1);
+        } p->pop();
       }
     }
-
     p->pop();
-  }
+}
 
-#define SEND_RESULT_MSG() \
-do { \
-  p->push(); { /* then send msg. */ \
-    p->curr.noMask = 1; \
-    p->curr.predicate = GEN_PREDICATE_NONE; \
-    p->curr.execWidth = 1; \
-    GenRegister offLen = GenRegister::retype(GenRegister::offset(nextThreadID, 0, 20), GEN_TYPE_UD); \
-    offLen.vstride = GEN_VERTICAL_STRIDE_0; \
-    offLen.width = GEN_WIDTH_1; \
-    offLen.hstride = GEN_HORIZONTAL_STRIDE_0; \
-    uint32_t szEnc = typeSize(theVal.type) >> 1; \
-    if (szEnc == 4) { \
-      szEnc = 3; \
-    } \
-    p->MOV(offLen, GenRegister::immud((szEnc << 8) | (nextThreadID.nr << 21))); \
-    \
-    GenRegister tidEuid = GenRegister::retype(GenRegister::offset(nextThreadID, 0, 16), GEN_TYPE_UD); \
-    tidEuid.vstride = GEN_VERTICAL_STRIDE_0; \
-    tidEuid.width = GEN_WIDTH_1; \
-    tidEuid.hstride = GEN_HORIZONTAL_STRIDE_0; \
-    p->SHL(tidEuid, tidEuid, GenRegister::immud(16)); \
-    \
-    p->curr.execWidth = 8; \
-    p->FWD_GATEWAY_MSG(nextThreadID, 2); \
-  } p->pop(); \
-} while(0)
-
-
-  /* The basic idea is like this:
-     1. All the threads firstly calculate the max/min/add value within their own thread, that is finding
-        the max/min/add value within their 16 work items when SIMD == 16.
-     2. The logical thread ID 0 begins to send the MSG to thread 1, and that message contains the calculated
-        result of the first step. Except the thread 0, all other threads wait on the n0.2 for message forwarding.
-     3. Each thread is waken up because of getting the forwarding message from the thread_id - 1. Then it
-        compares the result in the message and the result within its thread, then forward the correct result to
-        the next thread by sending a message again. If it is the last thread, send it to thread 0.
-     4. Thread 0 finally get the message from the last one and broadcast the final result. */
-  void GenContext::emitWorkGroupOpInstruction(const SelectionInstruction &insn) {
+/**
+ * Basic idea:
+ * 1. All the threads firstly calculate the max/min/add value for the
+ * allocated work-items. SIMD16=> 16 work-items allocated for each thread
+ * 2. Each thread will write the computed reduce OP result in SLM memory
+ * based on the threadId
+ * 3. After a memory fence, each thread will read in chunks of 4 elements,
+ * the SLM region, using a loop based on the thread count value (threadN)
+ * 4. At the end each thread has the final value computed individually
+ */
+  void GenContext::emitWorkGroupOpInstruction(const SelectionInstruction &insn){
     const GenRegister dst = ra->genReg(insn.dst(0));
-    const GenRegister tmp = ra->genReg(insn.dst(2));
-    GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
-    GenRegister nextThreadID = ra->genReg(insn.src(1));
+    const GenRegister tmp = ra->genReg(insn.dst(1));
+
     const GenRegister theVal = ra->genReg(insn.src(0));
-    GenRegister threadid = ra->genReg(GenRegister::ud1grf(ir::ocl::threadid));
-    GenRegister threadnum = ra->genReg(GenRegister::ud1grf(ir::ocl::threadn));
-    GenRegister msgData = GenRegister::retype(nextThreadID, dst.type); // The data forward.
-    msgData.vstride = GEN_VERTICAL_STRIDE_0;
-    msgData.width = GEN_WIDTH_1;
-    msgData.hstride = GEN_HORIZONTAL_STRIDE_0;
-    GenRegister threadData =
-      GenRegister::retype(GenRegister::offset(nextThreadID, 0, 24), dst.type); // Res within thread.
-    threadData.vstride = GEN_VERTICAL_STRIDE_0;
-    threadData.width = GEN_WIDTH_1;
-    threadData.hstride = GEN_HORIZONTAL_STRIDE_0;
+    GenRegister threadData = ra->genReg(insn.src(1));
+    GenRegister partialData = GenRegister::toUniform(threadData, dst.type);
+    GenRegister threadId = ra->genReg(insn.src(2));
+    GenRegister threadNum = ra->genReg(insn.src(3));
+
+    threadId = GenRegister::toUniform(threadId, GEN_TYPE_UD);
+    threadNum = GenRegister::toUniform(threadNum, GEN_TYPE_UD);
+
     uint32_t wg_op = insn.extra.workgroupOp;
     uint32_t simd = p->curr.execWidth;
-    GenRegister flag_save = GenRegister::retype(GenRegister::offset(nextThreadID, 0, 8), GEN_TYPE_UW);
-    flag_save.vstride = GEN_VERTICAL_STRIDE_0;
-    flag_save.width = GEN_WIDTH_1;
-    flag_save.hstride = GEN_HORIZONTAL_STRIDE_0;
-    int32_t jip;
-    int32_t oneThreadJip = -1;
+    int32_t jip0, jip1;
 
-    p->push(); { /* First, so something within thread. */
-      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
-      /* Do some calculation within each thread. */
-      workgroupOpInThread(msgData, theVal, threadData, tmp, simd, wg_op, p);
-    } p->pop();
+    GenRegister result = GenRegister::offset(dst, 0, 16);
+    result = GenRegister::toUniform(result, dst.type);
 
-    /* If we are the only one thread, no need to send msg, just broadcast the result.*/
-    p->push(); {
-      p->curr.predicate = GEN_PREDICATE_NONE;
+    /* Use of continuous GRF allocation from insn selection */
+    GenRegister msg = GenRegister::retype(ra->genReg(insn.dst(2)), dst.type);
+    GenRegister msgSlmOff = GenRegister::retype(ra->genReg(insn.src(4)), GEN_TYPE_UD);
+    GenRegister msgAddr = GenRegister::retype(GenRegister::offset(msg, 0), GEN_TYPE_UD);
+    GenRegister msgData = GenRegister::retype(GenRegister::offset(msg, 1), dst.type);
+
+    /* Do some calculation within each thread */
+    workgroupOpInThread(msg, theVal, threadData, tmp, simd, wg_op, p);
+    threadData = GenRegister::toUniform(threadData, dst.type);
+
+    /* Store thread count for future use on read/write to SLM */
+    GenRegister threadN = GenRegister::retype(tmp, GEN_TYPE_UD);
+    p->MOV(threadN, ra->genReg(GenRegister::ud1grf(ir::ocl::threadn)));
+
+    /* All threads write the partial results to SLM memory */
+    p->curr.execWidth = 8;
+    p->MOV(msgData, threadData);
+    p->MUL(msgAddr, threadId, GenRegister::immd(0x4));
+    p->ADD(msgAddr, msgAddr, msgSlmOff);
+    p->UNTYPED_WRITE(msg, GenRegister::immw(0xFE), 1);
+
+    /* Init partialData register, it will hold the final result */
+    initValue(p, partialData, wg_op);
+
+    /* Thread 0 will write extra elements for future reads in chunks of 4 */
+    p->push();{
       p->curr.noMask = 1;
-      p->curr.execWidth = 1;
-      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
-      p->CMP(GEN_CONDITIONAL_EQ, threadnum, GenRegister::immud(0x1));
-
-      /* Broadcast result. */
-      if (wg_op == ir::WORKGROUP_OP_REDUCE_MIN) {
-        p->curr.predicate = GEN_PREDICATE_NORMAL;
-        p->curr.inversePredicate = 1;
-        p->MOV(flag_save, GenRegister::immuw(0x0));
-        p->curr.inversePredicate = 0;
-        p->MOV(flag_save, GenRegister::immuw(0xffff));
-        p->curr.predicate = GEN_PREDICATE_NONE;
-        p->MOV(flagReg, flag_save);
-        p->curr.predicate = GEN_PREDICATE_NORMAL;
-        p->curr.execWidth = simd;
-        p->MOV(dst, threadData);
-      }
-
-      /* Bail out. */
+      p->curr.flag = 0;
+      p->curr.subFlag = 1;
+      p->CMP(GEN_CONDITIONAL_EQ, threadId, GenRegister::immd(0x0));
       p->curr.predicate = GEN_PREDICATE_NORMAL;
-      p->curr.inversePredicate = 0;
-      p->curr.execWidth = 1;
-      oneThreadJip = p->n_instruction();
-      p->JMPI(GenRegister::immud(0));
+      p->curr.execWidth = 8;
+      p->MOV(msgData.offset(msgData, 0), partialData);
+      p->MOV(msgData.offset(msgData, 1), partialData);
+      p->MOV(msgData.offset(msgData, 2), partialData);
+      p->MUL(msgAddr, threadN, GenRegister::immd(0x4));
+      p->ADD(msgAddr, msgAddr, msgSlmOff);
+      p->UNTYPED_WRITE(msg, GenRegister::immw(0xFE), 3);
     } p->pop();
 
-    p->push(); {
+    /* Round threadN to nearest upper number divisible with 4 required for
+     * reading in chunks of 4 elements from SLM */
+    p->ADD(threadN, threadN, GenRegister::immd(0x3));
+    p->SHR(threadN, threadN, GenRegister::immd(0x2));
+    p->SHL(threadN, threadN, GenRegister::immd(0x2));
+
+    /* Wait for all writes to complete in work-group */
+    p->FENCE(tmp);
+
+    /* Perform a loop, based on thread count (which is now multiple of 4) */
+    p->push();{
+      jip0 = p->n_instruction();
+
+      p->curr.execWidth = 8;
       p->curr.predicate = GEN_PREDICATE_NONE;
+
+      /* Read in chunks of 4 to optimize SLM reads and reduce SEND messages */
+      p->ADD(threadN, threadN, GenRegister::immd(-4));
+      p->MUL(msgAddr, threadN, GenRegister::immd(0x4));
+      p->ADD(msgAddr, msgAddr, msgSlmOff);
+      p->UNTYPED_READ(msgData, msgAddr, GenRegister::immw(0xFE), 4);
+
+      /* Perform operation, process 4 elements, partialData will hold result */
+      workgroupOpBetweenThread(partialData, msgData.offset(msgData, 0), wg_op, p);
+      workgroupOpBetweenThread(partialData, msgData.offset(msgData, 1), wg_op, p);
+      workgroupOpBetweenThread(partialData, msgData.offset(msgData, 2), wg_op, p);
+      workgroupOpBetweenThread(partialData, msgData.offset(msgData, 3), wg_op, p);
+
+      /* While threadN is not 0, cycle read SLM / update value */
       p->curr.noMask = 1;
-      p->curr.execWidth = 1;
-      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
-      p->CMP(GEN_CONDITIONAL_EQ, threadid, GenRegister::immud(0x0));
-
+      p->curr.flag = 0;
+      p->curr.subFlag = 1;
+      p->CMP(GEN_CONDITIONAL_G, threadN, GenRegister::immd(0x0));
       p->curr.predicate = GEN_PREDICATE_NORMAL;
-      p->curr.inversePredicate = 1;
-      p->MOV(flag_save, GenRegister::immuw(0x0));
-      p->curr.inversePredicate = 0;
-      p->MOV(flag_save, GenRegister::immuw(0xffff));
-
-      p->curr.predicate = GEN_PREDICATE_NONE;
-      p->MOV(flagReg, flag_save);
+      jip1 = p->n_instruction();
+      p->JMPI(GenRegister::immud(0));
+      p->patchJMPI(jip1, jip0 - jip1, 0);
     } p->pop();
 
-    p->push(); {
-      p->curr.noMask = 1;
-      p->curr.execWidth = 1;
-
-      /* threadid 0, send the msg and wait */
-      p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
-      p->curr.inversePredicate = 1;
-      p->curr.predicate = GEN_PREDICATE_NORMAL;
-      jip = p->n_instruction();
-      p->JMPI(GenRegister::immud(0));
-      p->curr.predicate = GEN_PREDICATE_NONE;
-      p->MOV(msgData, threadData);
-      SEND_RESULT_MSG();
-      p->WAIT(2);
-      p->patchJMPI(jip, (p->n_instruction() - jip), 0);
-
-      /* Others wait and send msg, and do something when we get the msg. */
-      p->curr.predicate = GEN_PREDICATE_NORMAL;
-      p->curr.inversePredicate = 0;
-      jip = p->n_instruction();
-      p->JMPI(GenRegister::immud(0));
-      p->curr.predicate = GEN_PREDICATE_NONE;
-      p->WAIT(2);
-      workgroupOpBetweenThread(msgData, theVal, threadData, simd, wg_op, p);
-      SEND_RESULT_MSG();
-      p->patchJMPI(jip, (p->n_instruction() - jip), 0);
-
-      /* Restore the flag. */
-      p->curr.predicate = GEN_PREDICATE_NONE;
-      p->MOV(flagReg, flag_save);
-    } p->pop();
-
-    /* Broadcast the result. */
-    if (wg_op == ir::WORKGROUP_OP_REDUCE_MIN || wg_op == ir::WORKGROUP_OP_REDUCE_MAX
-        || wg_op == ir::WORKGROUP_OP_REDUCE_ADD) {
-      p->push(); {
-        p->curr.predicate = GEN_PREDICATE_NORMAL;
-        p->curr.noMask = 1;
-        p->curr.execWidth = 1;
-        p->curr.useFlag(flagReg.flag_nr(), flagReg.flag_subnr());
-        p->curr.inversePredicate = 0;
-
-        /* Not the first thread, wait for msg first. */
-        jip = p->n_instruction();
-        p->JMPI(GenRegister::immud(0));
-        p->curr.predicate = GEN_PREDICATE_NONE;
-        p->WAIT(2);
-        p->patchJMPI(jip, (p->n_instruction() - jip), 0);
-    
-        /* Do something when get the msg. */
-        p->curr.execWidth = simd;
-        p->MOV(dst, msgData);
-
-        p->curr.execWidth = 8;
-        p->FWD_GATEWAY_MSG(nextThreadID, 2);
-
-        p->curr.execWidth = 1;
-        p->curr.inversePredicate = 1;
-        p->curr.predicate = GEN_PREDICATE_NORMAL;
-
-        /* The first thread, the last one will notify us. */
-        jip = p->n_instruction();
-        p->JMPI(GenRegister::immud(0));
-        p->curr.predicate = GEN_PREDICATE_NONE;
-        p->WAIT(2);
-        p->patchJMPI(jip, (p->n_instruction() - jip), 0);
-      } p->pop();
-    }
-
-    if (oneThreadJip >=0)
-      p->patchJMPI(oneThreadJip, (p->n_instruction() - oneThreadJip), 0);
+    /* Save result to final register location dst */
+    p->curr.execWidth = 16;
+    p->MOV(dst, partialData);
   }
 
   void GenContext::emitPrintfLongInstruction(GenRegister& addr, GenRegister& data,
