@@ -3967,17 +3967,11 @@ namespace gbe
       GBE_ASSERT(f.getwgBroadcastSLM() >= 0);
     }
 
-    if (f.gettidMapSLM() < 0 && opcode >= ir::WORKGROUP_OP_REDUCE_ADD && opcode <= ir::WORKGROUP_OP_EXCLUSIVE_MAX) {
+    else if (f.gettidMapSLM() < 0 && opcode >= ir::WORKGROUP_OP_ANY && opcode <= ir::WORKGROUP_OP_EXCLUSIVE_MAX) {
       /* 1. For thread SLM based communication (default):
        * Threads will use SLM to write partial results computed individually
          and then read the whole set. Because the read is done in chunks of 4
          extra padding is required.
-
-       * 2. For thread message based communication:
-       * Because we can not know the thread ID and the EUID for every physical
-         thead which the work items execute on before the run time. We need to
-         sync the thread execution order when using work group functions. We
-         create the workitems/threadID map table in slm.
 
          When we come to here, the global thread local vars should have all been
          allocated, so it's safe for us to steal a piece of SLM for this usage. */
@@ -3997,9 +3991,12 @@ namespace gbe
 
     if (opcode == ir::WORKGROUP_OP_ALL || opcode == ir::WORKGROUP_OP_ANY) {
       GBE_ASSERT(getType(ctx, (*AI)->getType()) == ir::TYPE_S32);
-      const ir::Register src = this->getRegister(*(AI++));
-      const ir::Tuple srcTuple = ctx.arrayTuple(&src, 1);
-      ctx.WORKGROUP(opcode, (uint32_t)0, getRegister(&I), srcTuple, 1, ir::TYPE_S32);
+      ir::Register src[3];
+      src[0] = ir::ocl::threadn;
+      src[1] = ir::ocl::threadid;
+      src[2] = this->getRegister(*(AI++));
+      const ir::Tuple srcTuple = ctx.arrayTuple(&src[0], 3);
+      ctx.WORKGROUP(opcode, (uint32_t)f.gettidMapSLM(), getRegister(&I), srcTuple, 3, ir::TYPE_S32);
     } else if (opcode == ir::WORKGROUP_OP_BROADCAST) {
       int argNum = CS.arg_size();
       ir::Register src[argNum];
@@ -4017,6 +4014,7 @@ namespace gbe
       ir::Type ty;
       if (isSign) {
         ty = getType(ctx, (*AI)->getType());
+
       } else {
         ty = getUnsignedType(ctx, (*AI)->getType());
       }
