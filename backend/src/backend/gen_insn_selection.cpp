@@ -6223,11 +6223,14 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       for(uint32_t i = 0; i < 6; i++)
         msg.push_back(sel.selReg(sel.reg(FAMILY_DWORD), type));
 
+      /* insert a barrier to make sure all the var we are interested in
+         have been assigned the final value. */
+      sel.BARRIER(GenRegister::ud8grf(sel.reg(FAMILY_DWORD)), sel.selReg(sel.reg(FAMILY_DWORD)), syncLocalBarrier);
+
       /* compute individual slice of workitems, (e.g. 0->16 workitems) */
       sel.MOV(slmOff, GenRegister::immud(insn.getSlmAddr()));
 
       /* barrier for syn prior to workgroup */
-      sel.BARRIER(GenRegister::ud8grf(sel.reg(FAMILY_DWORD)), sel.selReg(sel.reg(FAMILY_DWORD)), syncLocalBarrier);
       sel.WORKGROUP_OP(workGroupOp, dst, src, data, threadId, threadN, tmp, slmOff, msg);
 
       return true;
@@ -6249,10 +6252,6 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       GenRegister addr = sel.selReg(sel.reg(FAMILY_DWORD), ir::TYPE_U32);
       vector<GenRegister> fakeTemps;
 
-      /* Then we insert a barrier to make sure all the var we are interested in
-         have been assigned the final value. */
-      sel.BARRIER(GenRegister::ud8grf(sel.reg(FAMILY_DWORD)), sel.selReg(sel.reg(FAMILY_DWORD)), syncLocalBarrier);
-
       GBE_ASSERT(srcNum >= 2);
       GenRegister coords[3];
       for (uint32_t i = 1; i < srcNum; i++) {
@@ -6264,6 +6263,10 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         sel.curr.noMask = 1;
         sel.MOV(addr, GenRegister::immud(slmAddr));
       } sel.pop();
+
+      /* insert a barrier to make sure all the var we are interested in
+         have been assigned the final value. */
+      sel.BARRIER(GenRegister::ud8grf(sel.reg(FAMILY_DWORD)), sel.selReg(sel.reg(FAMILY_DWORD)), syncLocalBarrier);
 
       sel.push(); {
         sel.curr.flag = 0;
