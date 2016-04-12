@@ -799,7 +799,7 @@ namespace gbe {
         std::cout << options << std::endl;
       }
       std::cout << "CL kernel source:" << std::endl;
-      std::cout << source;
+      std::cout << source << std::endl;
     }
     std::string includePath  = "-I" + headerFilePath;
     clOpt.push_back(includePath);
