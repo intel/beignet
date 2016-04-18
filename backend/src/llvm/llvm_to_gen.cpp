@@ -183,7 +183,9 @@ namespace gbe
     // and it may even make som cl kernel cannot compile because of limited scratch memory for spill.
     // As we observe this under strict math. So we disable CustomLoopUnroll if strict math is enabled.
     if (!strictMath) {
+#if !defined(__ANDROID__)
       MPM.add(createCustomLoopUnrollPass()); //1024, 32, 1024, 512)); //Unroll loops
+#endif
       MPM.add(createLoopUnrollPass()); //1024, 32, 1024, 512)); //Unroll loops
       if(optLevel > 0) {
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
