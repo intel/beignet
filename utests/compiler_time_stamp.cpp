@@ -16,6 +16,9 @@ static void cpu(int global_id, int *src, int *dst) {
 
 void compiler_time_stamp(void)
 {
+  if (!cl_check_beignet())
+    return;
+
   const size_t n = 16;
   int cpu_dst[16], cpu_src[16];
 

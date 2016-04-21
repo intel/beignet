@@ -281,5 +281,7 @@ float select_ulpsize(float ULPSIZE_FAST_MATH, float ULPSIZE_NO_FAST_MATH);
 /* Check is FP64 enabled. */
 extern int cl_check_double(void);
 
+/* Check is beignet device. */
+extern int cl_check_beignet(void);
 #endif /* __UTEST_HELPER_HPP__ */
 
