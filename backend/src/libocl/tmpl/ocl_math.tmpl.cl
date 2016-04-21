@@ -2652,6 +2652,10 @@ OVERLOADABLE float nextafter(float x, float y) {
   hy = as_int(y);
   ix = hx & 0x7fffffff;
   iy = hy & 0x7fffffff;
+  if(ix == 0)
+    ix = hx & 0x7fffff;
+  if(iy == 0)
+    iy = hy & 0x7fffff;
   if(ix>0x7f800000 || iy>0x7f800000)
     return x+y;
   if(hx == hy)
