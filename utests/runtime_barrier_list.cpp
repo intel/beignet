@@ -65,7 +65,6 @@ void runtime_barrier_list(void)
   for (uint32_t i = 0; i < n; ++i) {
     OCL_ASSERT(((int*)buf_data[0])[i] == (int)value + 0x3);
   }
-  clEnqueueUnmapMemObject(queue, buf[0], buf_data[0], 0, NULL, NULL);
 
   for (cl_uint i = 0; i != sizeof(ev) / sizeof(cl_event); ++i) {
     clReleaseEvent(ev[i]);
