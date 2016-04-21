@@ -177,6 +177,11 @@ do {                                                        \
   } else {                                                  \
     REGION = PREGION;                                       \
   }                                                         \
+  if((REGION[0] == 0)||(REGION[1] == 0)||(REGION[2] == 0))  \
+  {                                                         \
+    err = CL_INVALID_VALUE;                                 \
+    goto error;                                             \
+  }                                                         \
 } while(0)
 
 #define FIXUP_IMAGE_ORIGIN(IMAGE, PREGION, REGION)          \
