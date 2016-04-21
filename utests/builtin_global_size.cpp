@@ -80,12 +80,8 @@ static void builtin_global_size(void)
       // Run the kernel
       OCL_NDRANGE( dim );
 
-      err = clEnqueueReadBuffer( queue, buf[0], CL_TRUE, 0, sizeof(int), &global_size, 0, NULL, NULL);
-      if (err != CL_SUCCESS)
-      {
-        printf("Error: Failed to read output array! %d\n", err);
-        exit(1);
-      }
+      OCL_MAP_BUFFER(0);
+      global_size = ((int*)buf_data[0])[0];
 
       //printf("get_global_size(%d) = %d (dimension:%d)\n", dim_arg_global, global_size, dim);
 
@@ -101,6 +97,7 @@ static void builtin_global_size(void)
         OCL_ASSERT( global_size == 1);
       #endif
       }
+      OCL_UNMAP_BUFFER(0);
     }
   }
 }

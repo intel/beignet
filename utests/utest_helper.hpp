@@ -129,7 +129,7 @@ extern EGLSurface  eglSurface;
     size_t size = 0; \
     status = clGetMemObjectInfo(buf[ID], CL_MEM_SIZE, sizeof(size), &size, NULL);\
     if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
-    RET = FN(__VA_ARGS__, CL_TRUE, CL_MAP_READ, 0, size, 0, NULL, NULL, &status);\
+    RET = FN(__VA_ARGS__, CL_TRUE, CL_MAP_READ|CL_MAP_WRITE, 0, size, 0, NULL, NULL, &status);\
     if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
   } while (0)
 
@@ -162,9 +162,11 @@ extern EGLSurface  eglSurface;
     size_t image_depth= 0; \
     status = clGetImageInfo(buf[ID], CL_IMAGE_DEPTH, sizeof(image_depth), &image_depth, NULL);\
     if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
+    if(image_depth == 0) image_depth = 1; \
+    if(image_height == 0) image_height = 1; \
     size_t origin[3] = {0, 0, 0}; \
     size_t region[3] = {image_width, image_height, image_depth}; \
-    RET = FN(__VA_ARGS__, CL_TRUE, CL_MAP_READ, origin, region, &image_row_pitch, &image_slice_pitch, 0, NULL, NULL, &status);\
+    RET = FN(__VA_ARGS__, CL_TRUE, CL_MAP_READ|CL_MAP_WRITE, origin, region, &image_row_pitch, &image_slice_pitch, 0, NULL, NULL, &status);\
     if (status != CL_SUCCESS) OCL_THROW_ERROR(FN, status); \
   } while (0)
 

@@ -62,13 +62,8 @@ static void builtin_num_groups(void)
       // Run the kernel
       OCL_NDRANGE( dim );
 
-      err = clEnqueueReadBuffer( queue, buf[0], CL_TRUE, 0, sizeof(int), &num_groups, 0, NULL, NULL);
-      if (err != CL_SUCCESS)
-      {
-        printf("Error: Failed to read output array! %d\n", err);
-        exit(1);
-      }
-
+      OCL_MAP_BUFFER(0);
+      num_groups = ((int*)buf_data[0])[0];
 #if udebug
       printf("get_num_groups(%d) = %d (dimension:%d)\n", dim_arg_global, num_groups, dim);
 #endif
@@ -78,6 +73,7 @@ static void builtin_num_groups(void)
       {
         OCL_ASSERT( num_groups == 1);
       }
+      OCL_UNMAP_BUFFER(0);
     }
   }
 }

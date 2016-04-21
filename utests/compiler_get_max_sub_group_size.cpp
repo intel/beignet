@@ -24,7 +24,7 @@ void compiler_get_max_sub_group_size(void)
   OCL_MAP_BUFFER(0);
   int* dst = (int *)buf_data[0];
   for (int32_t i = 0; i < (int32_t) n; ++i){
-    OCL_ASSERT(8 == dst[i] || 16 == dst[i]);
+    OCL_ASSERT(8 == dst[i] || 16 == dst[i] || 32 == dst[i]);
   }
   OCL_UNMAP_BUFFER(0);
 }

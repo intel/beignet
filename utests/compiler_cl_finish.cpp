@@ -34,6 +34,7 @@ static void compiler_cl_finish(void)
   T_GET(t1);
   OCL_MAP_BUFFER(0);
   T_GET(t2);
+  OCL_UNMAP_BUFFER(0);
   t_map_w_fin = T_LAPSE(t1, t2);
 
   // 2nd time map without clFinish

@@ -37,6 +37,8 @@ static void compiler_unstructured_branch3(void)
   OCL_MAP_BUFFER(1);
   for (uint32_t i = 0; i < n; ++i)
     OCL_ASSERT(((uint32_t*)buf_data[1])[i] == 3);
+  OCL_UNMAP_BUFFER(0);
+  OCL_UNMAP_BUFFER(1);
 
   // Third control flow
   OCL_MAP_BUFFER(0);
@@ -52,6 +54,8 @@ static void compiler_unstructured_branch3(void)
     OCL_ASSERT(((int32_t*)buf_data[1])[i] == 2);
   for (uint32_t i = 8; i < n; ++i)
     OCL_ASSERT(((int32_t*)buf_data[1])[i] == 3);
+  OCL_UNMAP_BUFFER(0);
+  OCL_UNMAP_BUFFER(1);
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_unstructured_branch3);

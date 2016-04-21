@@ -51,7 +51,7 @@ void test(const char *kernel_name, int s_type)
   OCL_MAP_BUFFER(1);
   OCL_ASSERT(((T*)buf_data[1])[0] == 0);
   for (int i = 1; i < n; ++i){
-    OCL_ASSERT(((T*)buf_data[1])[i] == n-i-s_type);
+    OCL_ASSERT(((T*)buf_data[1])[i] == (T)n-i-s_type);
   }
   OCL_UNMAP_BUFFER(1);
 }

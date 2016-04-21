@@ -209,7 +209,6 @@ clpanic(const char *msg, int rval)
 char*
 cl_do_kiss_path(const char *file, cl_device_id device)
 {
-  cl_int ver;
   const char *sub_path = NULL;
   char *ker_path = NULL;
   const char *kiss_path = getenv("OCL_KERNEL_PATH");

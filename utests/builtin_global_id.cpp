@@ -28,7 +28,7 @@ static void builtin_global_id(void)
 {
 
   // Setup kernel and buffers
-  int dim, global_id[80], err, i, buf_len=1;
+  int dim, i, buf_len=1;
   OCL_CREATE_KERNEL("builtin_global_id");
 
   OCL_CREATE_BUFFER(buf[0], CL_MEM_READ_WRITE, sizeof(int)*80, NULL);
@@ -53,24 +53,18 @@ static void builtin_global_id(void)
     OCL_NDRANGE( dim );
     clFinish(queue);
 
-    err = clEnqueueReadBuffer( queue, buf[0], CL_TRUE, 0, sizeof(int) * buf_len, &global_id, 0, NULL, NULL);
-
-    if (err != CL_SUCCESS)
-    {
-      printf("Error: Failed to read output array! %d\n", err);
-      exit(1);
-    }
-
+    OCL_MAP_BUFFER(0);
 #if udebug
     for(i = 0; i < buf_len; i++)
     {
-      printf("%2d ", global_id[i]);
+      printf("%2d ", ((int*)buf_data[0])[i]);
       if ((i + 1) % 3 == 0) printf("\n");
     }
 #endif
 
     for( i = 0; i < buf_len; i++)
-      OCL_ASSERT( global_id[i] == i);
+      OCL_ASSERT( ((int*)buf_data[0])[i] == i);
+    OCL_UNMAP_BUFFER(0);
   }
 }
 

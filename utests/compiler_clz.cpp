@@ -81,13 +81,13 @@ void test(const char *kernel_name, int s_type)
   {
     for (uint32_t i = 0; i < n; ++i) {
       if(sizeof(U) == 1 && i < 8 )
-        OCL_ASSERT(((U*)buf_data[1])[i] == i );
+        OCL_ASSERT(((U*)buf_data[1])[i] == (U)i );
       else if(sizeof(U) == 2 && i < 16 )
-        OCL_ASSERT(((U*)buf_data[1])[i] == i );
+        OCL_ASSERT(((U*)buf_data[1])[i] == (U)i );
       else if(sizeof(U) == 4 && i < 32 )
-        OCL_ASSERT(((U*)buf_data[1])[i] == i );
+        OCL_ASSERT(((U*)buf_data[1])[i] == (U)i );
       else if(sizeof(U) == 8 && i < 64 )
-        OCL_ASSERT(((U*)buf_data[1])[i] == i );
+        OCL_ASSERT(((U*)buf_data[1])[i] == (U)i );
     }
   }
   else  // signed type
@@ -96,28 +96,28 @@ void test(const char *kernel_name, int s_type)
       if(sizeof(U) == 1)
       {
         if( i < 8 )
-          OCL_ASSERT(((U*)buf_data[1])[i] == i+1 );
+          OCL_ASSERT(((U*)buf_data[1])[i] == (U)i+1 );
         else if( i == 8 )
           OCL_ASSERT(((U*)buf_data[1])[i] == 0 );
       }
       else if(sizeof(U) == 2)
       {
         if( i < 16 )
-          OCL_ASSERT(((U*)buf_data[1])[i] == i+1 );
+          OCL_ASSERT(((U*)buf_data[1])[i] == (U)i+1 );
         else if( i == 16 )
           OCL_ASSERT(((U*)buf_data[1])[i] == 0 );
       }
       else if(sizeof(U) == 4)
       {
         if( i < 32 )
-          OCL_ASSERT(((U*)buf_data[1])[i] == i+1 );
+          OCL_ASSERT(((U*)buf_data[1])[i] == (U)i+1 );
         else if( i == 32 )
           OCL_ASSERT(((U*)buf_data[1])[i] == 0 );
       }
       else if(sizeof(U) == 8)
       {
         if( i < 63 )
-          OCL_ASSERT(((U*)buf_data[1])[i] == i+1 );
+          OCL_ASSERT(((U*)buf_data[1])[i] == (U)i+1 );
       }
     }
   }

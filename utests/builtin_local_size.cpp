@@ -65,13 +65,8 @@ static void builtin_local_size(void)
       // Run the kernel
       OCL_NDRANGE( dim );
 
-      err = clEnqueueReadBuffer( queue, buf[0], CL_TRUE, 0, sizeof(int), &local_size, 0, NULL, NULL);
-      if (err != CL_SUCCESS)
-      {
-        printf("Error: Failed to read output array! %d\n", err);
-        exit(1);
-      }
-
+      OCL_MAP_BUFFER(0);
+      local_size = ((int*)buf_data[0])[0];
 #if udebug
       printf("get_local_size(%d) = %d (dimension:%d)\n", dim_arg_global, local_size, dim);
 #endif
@@ -81,6 +76,7 @@ static void builtin_local_size(void)
       {
         OCL_ASSERT( local_size == 1);
       }
+      OCL_UNMAP_BUFFER(0);
     }
   }
 }

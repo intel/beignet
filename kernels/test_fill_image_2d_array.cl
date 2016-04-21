@@ -9,5 +9,5 @@ test_fill_image_2d_array(__write_only image2d_array_t dst)
   coordz = (int)get_global_id(2);
   uint4 color4 = {0, 1, 2 ,3};
   if (coordz < 7)
-    write_imageui(dst, (int3)(coordx, coordy, coordz), color4);
+    write_imageui(dst, (int4)(coordx, coordy, coordz, 0), color4);
 }

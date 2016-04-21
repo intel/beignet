@@ -16,10 +16,10 @@ static void runtime_alloc_host_ptr_buffer(void)
   OCL_NDRANGE(1);
 
   // Check result
-  uint32_t* mapptr = (uint32_t*)clEnqueueMapBuffer(queue, buf[0], CL_TRUE, CL_MAP_READ, 0, n*sizeof(uint32_t), 0, NULL, NULL, NULL);
+  OCL_MAP_BUFFER(0);
   for (uint32_t i = 0; i < n; ++i)
-    OCL_ASSERT(mapptr[i] == i / 2);
-  clEnqueueUnmapMemObject(queue, buf[0], mapptr, 0, NULL, NULL);
+    OCL_ASSERT(((int*)buf_data[0])[i] == (int)i / 2);
+  OCL_UNMAP_BUFFER(0);
 }
 
 MAKE_UTEST_FROM_FUNCTION(runtime_alloc_host_ptr_buffer);

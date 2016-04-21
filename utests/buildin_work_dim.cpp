@@ -3,8 +3,6 @@
 static void buildin_work_dim(void)
 {
   // Setup kernel and buffers
-
-  int result, err;
   OCL_CREATE_KERNEL("buildin_work_dim");
 
   OCL_CREATE_BUFFER(buf[0], CL_MEM_READ_WRITE, sizeof(int), NULL);
@@ -23,14 +21,9 @@ static void buildin_work_dim(void)
     // Run the kernel
     OCL_NDRANGE(i);
 
-    err = clEnqueueReadBuffer( queue, buf[0], CL_TRUE, 0, sizeof(int), &result, 0, NULL, NULL);
-    if (err != CL_SUCCESS)
-    {
-       printf("Error: Failed to read output array! %d\n", err);
-       exit(1);
-    }
-
-    OCL_ASSERT( result == i);
+    OCL_MAP_BUFFER(0);
+    OCL_ASSERT( ((int*)buf_data[0])[0]== i);
+    OCL_UNMAP_BUFFER(0);
   }
 }
 

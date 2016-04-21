@@ -1,4 +1,5 @@
 #include "utest_helper.hpp"
+#include <string.h>
 
 void builtin_kernel_max_global_size(void)
 {
@@ -9,12 +10,17 @@ void builtin_kernel_max_global_size(void)
 
 
   OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_BUILT_IN_KERNELS, 0, 0, &built_in_kernels_size);
+  if(built_in_kernels_size == 0)
+    return;
+
   built_in_kernel_names = (char* )malloc(built_in_kernels_size * sizeof(char) );
   OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_BUILT_IN_KERNELS, built_in_kernels_size, (void*)built_in_kernel_names, &ret_sz);
   OCL_ASSERT(ret_sz == built_in_kernels_size);
   cl_program built_in_prog = clCreateProgramWithBuiltInKernels(ctx, 1, &device, built_in_kernel_names, &err);
   OCL_ASSERT(built_in_prog != NULL);
-  cl_kernel builtin_kernel_1d = clCreateKernel(built_in_prog, "__cl_copy_region_unalign_src_offset",  &err);
+  char* first_kernel = strtok(built_in_kernel_names, ";");
+  OCL_ASSERT(first_kernel);
+  cl_kernel builtin_kernel_1d = clCreateKernel(built_in_prog, first_kernel,  &err);
   OCL_ASSERT(builtin_kernel_1d != NULL);
   size_t param_value_size;
   void* param_value;

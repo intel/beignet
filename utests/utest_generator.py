@@ -361,10 +361,14 @@ static void %s_%s(void)
 
     funcrun='''
   // Run the kernel:
+  //int errRead = clEnqueueReadBuffer( queue, buf[0], CL_TRUE, 0, sizeof(%s) * count_input, gpu_data, 0, NULL, NULL);
   OCL_NDRANGE( 1 );
-  clEnqueueReadBuffer( queue, buf[0], CL_TRUE, 0, sizeof(%s) * count_input, gpu_data, 0, NULL, NULL);
-'''%(self.inputtype.__len__()+1)
+  OCL_MAP_BUFFER(0);
+'''%(self.argtype(0,index))
     funcline += [ funcrun ]
+
+    text = ''' memcpy(gpu_data, buf_data[0], sizeof(gpu_data)); '''
+    funcline += [ text ]
 
     funcsprintfa='    sprintf(log, \"'
     funcsprintfb=''
