@@ -439,6 +439,12 @@ namespace gbe
   #define GET_FLAG_REG(insn) GenRegister::uwxgrf(IS_SCALAR_FLAG(insn) ? 1 : 8,\
                                                  ir::Register(insn.state.flagIndex));
   #define IS_TEMP_FLAG(insn) (insn.state.flag == 0 && insn.state.subFlag == 1)
+  #define NEED_DST_GRF_TYPE_FIX(ty) \
+          (ty == GEN_TYPE_F ||      \
+           ty == GEN_TYPE_HF ||     \
+           ty == GEN_TYPE_DF ||     \
+           ty == GEN_TYPE_UL ||     \
+           ty == GEN_TYPE_L)
   // Flag is a virtual flag, this function is to validate the virtual flag
   // to a physical flag. It is used to validate both temporary flag and the
   // non-temporary flag registers.
@@ -648,19 +654,28 @@ namespace gbe
             if (insn.state.predicate != GEN_PREDICATE_NONE)
               validateFlag(selection, insn);
           }
-          // This is a CMP for a pure flag booleans, we don't need to write result to
-          // the grf. And latter, we will not allocate grf for it.
           if (insn.opcode == SEL_OP_CMP &&
               (flagBooleans.contains(insn.dst(0).reg()) ||
                GenRegister::isNull(insn.dst(0)))) {
+            // This is a CMP for a pure flag booleans, we don't need to write result to
+            // the grf. And latter, we will not allocate grf for it.
             // set a temporary register to avoid switch in this block.
             bool isSrc = false;
             bool needMov = false;
             ir::Type ir_type = ir::TYPE_FLOAT;
-            if (insn.src(0).isint64() || insn.src(0).isdf())
-              ir_type = ir::TYPE_U64;
+
+            // below (src : dst) type mapping for 'cmp'
+            // is allowed by hardware
+            // B,W,D,F : F
+            // HF      : HF
+            // DF      : DF
+            // Q       : Q
+            if (NEED_DST_GRF_TYPE_FIX(insn.src(0).type))
+              ir_type = getIRType(insn.src(0).type);
+
             this->replaceReg(selection, &insn, 0, isSrc, ir_type, needMov);
           }
+
           // If the instruction requires to generate (CMP for long/int/float..)
           // the flag value to the register, and it's not a pure flag boolean,
           // we need to use SEL instruction to generate the flag value to the UW8
