@@ -44,13 +44,13 @@ static void compiler_copy_image(void)
   OCL_NDRANGE(2);
 
   // Check result
-  OCL_MAP_BUFFER(0);
-  OCL_MAP_BUFFER(1);
+  OCL_MAP_BUFFER_GTT(0);
+  OCL_MAP_BUFFER_GTT(1);
   for (uint32_t j = 0; j < h; ++j)
     for (uint32_t i = 0; i < w; i++)
       OCL_ASSERT(((uint32_t*)buf_data[0])[j * w + i] == ((uint32_t*)buf_data[1])[j * w + i]);
-  OCL_UNMAP_BUFFER(0);
-  OCL_UNMAP_BUFFER(1);
+  OCL_UNMAP_BUFFER_GTT(0);
+  OCL_UNMAP_BUFFER_GTT(1);
 
   OCL_CALL(clReleaseSampler, sampler);
 }

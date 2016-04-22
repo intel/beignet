@@ -215,13 +215,7 @@ cl_do_kiss_path(const char *file, cl_device_id device)
   const char *kiss_path = getenv("OCL_KERNEL_PATH");
   size_t sz = strlen(file);
 
-  if (device == NULL)
-    sub_path = "";
-  else {
-    if (clGetGenVersionIntel(device, &ver) != CL_SUCCESS)
-      clpanic("Unable to get Gen version", -1);
-    sub_path = "";
-  }
+  sub_path = "";
 
   if (kiss_path == NULL)
     clpanic("set OCL_KERNEL_PATH. This is where the kiss kernels are", -1);
@@ -244,9 +238,9 @@ cl_kernel_init(const char *file_name, const char *kernel_name, int format, const
   if (!program || (program && (!prevFileName || strcmp(prevFileName, file_name)))) {
     if (program) clReleaseProgram(program);
     ker_path = cl_do_kiss_path(file_name, device);
-    if (format == LLVM)
-      program = clCreateProgramWithLLVMIntel(ctx, 1, &device, ker_path, &status);
-    else if (format == SOURCE) {
+    if (format == LLVM) {
+      assert(0);
+    } else if (format == SOURCE) {
       cl_file_map_t *fm = cl_file_map_new();
       FATAL_IF (cl_file_map_open(fm, ker_path) != CL_FILE_MAP_SUCCESS,
                 "Failed to open file \"%s\" with kernel \"%s\". Did you properly set OCL_KERNEL_PATH variable?",
@@ -561,8 +555,6 @@ cl_test_destroy(void)
 {
   cl_kernel_destroy();
   cl_ocl_destroy();
-  printf("%i memory leaks\n", clReportUnfreedIntel());
-  assert(clReportUnfreedIntel() == 0);
 }
 
 void
@@ -571,7 +563,7 @@ cl_buffer_destroy(void)
   int i;
   for (i = 0; i < MAX_BUFFER_N; ++i) {
     if (buf_data[i] != NULL) {
-      clUnmapBufferIntel(buf[i]);
+      clEnqueueUnmapMemObject(queue, buf[i], buf_data[i], 0, NULL, NULL);
       buf_data[i] = NULL;
     }
     if (buf[i] != NULL) {
@@ -589,7 +581,7 @@ cl_report_perf_counters(cl_mem perf)
   uint32_t i;
   if (perf == NULL)
     return;
-  start = (uint32_t*) clMapBufferIntel(perf, &status);
+  start = (uint32_t*)clEnqueueMapBuffer(queue, perf, CL_TRUE, CL_MAP_READ, 0,  128 * sizeof(uint32_t)/*size*/, 0, NULL, NULL, &status);
   assert(status == CL_SUCCESS && start != NULL);
   end = start + 128;
 
@@ -614,7 +606,7 @@ cl_report_perf_counters(cl_mem perf)
   }
   printf("\n\n");
 
-  clUnmapBufferIntel(perf);
+  clEnqueueUnmapMemObject(queue, perf, start, 0, NULL, NULL);
 }
 
 struct bmphdr {

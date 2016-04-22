@@ -22,6 +22,9 @@ extern "C"
 #include <X11/extensions/extutil.h>
 }
 
+typedef cl_mem (OCLCREATEIMAGEFROMLIBVAINTEL)(cl_context, const cl_libva_image *, cl_int *);
+OCLCREATEIMAGEFROMLIBVAINTEL *oclCreateImageFromLibvaIntel = NULL;
+
 // part of following code is copy from beignet/src/x11/
 typedef struct {
     CARD8   reqType;
@@ -151,7 +154,16 @@ void runtime_climage_from_boname(void)
   imageParam.height = h - hStart;
   imageParam.row_pitch = w;
 
-  cl_mem dst = clCreateImageFromLibvaIntel(ctx, &imageParam, NULL);
+#ifdef CL_VERSION_1_2
+  oclCreateImageFromLibvaIntel = (OCLCREATEIMAGEFROMLIBVAINTEL *)clGetExtensionFunctionAddressForPlatform(platform, "clCreateImageFromLibvaIntel");
+#else
+  oclCreateImageFromLibvaIntel = (OCLCREATEIMAGEFROMLIBVAINTEL *)clGetExtensionFunctionAddress("clCreateImageFromLibvaIntel");
+#endif
+  if(!oclCreateImageFromLibvaIntel){
+    fprintf(stderr, "Failed to get extension clCreateImageFromLibvaIntel\n");
+    exit(1);
+  }
+  cl_mem dst = oclCreateImageFromLibvaIntel(ctx, &imageParam, NULL);
 
   // Run the kernel
   OCL_SET_ARG(0, sizeof(cl_mem), &dst);

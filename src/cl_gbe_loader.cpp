@@ -88,7 +88,7 @@ struct GbeLoaderInitializer
   bool LoadInterp(const char*& path)
   {
     const char* interpPath = getenv("OCL_INTERP_PATH");
-    if (interpPath == NULL)
+    if (interpPath == NULL|| !strcmp(interpPath, ""))
       interpPath = INTERP_OBJECT_DIR;
 
     path = interpPath;
@@ -264,7 +264,7 @@ struct GbeLoaderInitializer
     }
 
     const char* gbePath = getenv("OCL_GBE_PATH");
-    if (gbePath == NULL)
+    if (gbePath == NULL || !strcmp(gbePath, ""))
       gbePath = GBE_OBJECT_DIR;
 
     dlhCompiler = dlopen(gbePath, RTLD_LAZY | RTLD_LOCAL);

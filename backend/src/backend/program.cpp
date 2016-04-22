@@ -781,6 +781,10 @@ namespace gbe {
     size_t start = 0, end = 0;
 
     std::string hdirs = OCL_HEADER_FILE_DIR;
+    if(hdirs == "")
+      hdirs = OCL_HEADER_DIR;
+    if(dirs == "")
+      dirs = OCL_PCH_OBJECT;
     std::istringstream hidirs(hdirs);
     std::string headerFilePath;
     bool findOcl = false;

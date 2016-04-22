@@ -1,3 +1,44 @@
+###################################################################################
+# these configurations are copied from beignet root directory cmake for stand alone build.
+# do NOT set the NOT_BUILD_STAND_ALONE_UTEST if build the utest alone.
+if (NOT NOT_BUILD_STAND_ALONE_UTEST)
+  message(STATUS "Building Stand Alone Utest")
+
+  CMAKE_MINIMUM_REQUIRED(VERSION 2.6.0)
+
+  INCLUDE (FindPkgConfig)
+  Find_Package(PythonInterp)
+
+  # OpenCL
+  pkg_check_modules(OPENCL REQUIRED OpenCL)
+  IF(OPENCL_FOUND)
+    INCLUDE_DIRECTORIES(${OPENCL_INCLUDE_DIRS})
+  ENDIF(OPENCL_FOUND)
+
+  # Force Release with debug info
+  if (NOT CMAKE_BUILD_TYPE)
+    set (CMAKE_BUILD_TYPE RelWithDebInfo)
+  endif (NOT CMAKE_BUILD_TYPE)
+  message(STATUS "Building mode: " ${CMAKE_BUILD_TYPE})
+
+  set (CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "assure config" FORCE)
+
+  # Threads
+  Find_Package(Threads)
+
+  set (CMAKE_CXX_FLAGS "${CMAKE_C_CXX_FLAGS} -std=c++0x -Wno-invalid-offsetof")
+  set (CMAKE_C_FLAGS "${CMAKE_C_CXX_FLAGS}")
+  set (CMAKE_CXX_FLAGS_DEBUG          "-O0 -g -DGBE_DEBUG=1")
+  set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -DGBE_DEBUG=1")
+  set (CMAKE_CXX_FLAGS_MINSIZEREL     "-Os -DNDEBUG -DGBE_DEBUG=0")
+  set (CMAKE_CXX_FLAGS_RELEASE        "-O2 -DNDEBUG -DGBE_DEBUG=0")
+  set (CMAKE_C_FLAGS_DEBUG          "-O0 -g -DGBE_DEBUG=1")
+  set (CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g -DGBE_DEBUG=1")
+  set (CMAKE_C_FLAGS_MINSIZEREL     "-Os -DNDEBUG -DGBE_DEBUG=0")
+  set (CMAKE_C_FLAGS_RELEASE        "-O2 -DNDEBUG -DGBE_DEBUG=0")
+endif (NOT NOT_BUILD_STAND_ALONE_UTEST)
+###################################################################################
+
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
@@ -27,7 +68,9 @@ set (utests_basic_sources
   utest_helper.cpp)
 
 # the test case with binary kernel
-set (utests_binary_kernel_sources load_program_from_bin_file.cpp enqueue_built_in_kernels.cpp)
+if (NOT_BUILD_STAND_ALONE_UTEST)
+  set (utests_binary_kernel_sources load_program_from_bin_file.cpp enqueue_built_in_kernels.cpp)
+endif (NOT_BUILD_STAND_ALONE_UTEST)
 
 set (utests_sources
   compiler_basic_arithmetic.cpp
@@ -208,7 +251,6 @@ set (utests_sources
   test_printf.cpp
   enqueue_fill_buf.cpp
   builtin_kernel_max_global_size.cpp
-  builtin_kernel_block_motion_estimate_intel.cpp
   image_1D_buffer.cpp
   image_from_buffer.cpp
   compare_image_2d_and_1d_array.cpp
@@ -234,14 +276,16 @@ if (LLVM_VERSION_NODOT VERSION_GREATER 34)
       compiler_overflow.cpp)
 endif (LLVM_VERSION_NODOT VERSION_GREATER 34)
 
-if (X11_FOUND)
-  SET(utests_sources
+if (NOT_BUILD_STAND_ALONE_UTEST)
+  if (X11_FOUND)
+    SET(utests_sources
       ${utests_sources}
       runtime_climage_from_boname.cpp)
-  SET(UTESTS_REQUIRED_X11_LIB ${X11_LIBRARIES} ${XEXT_LIBRARIES})
-else()
-  SET(UTESTS_REQUIRED_X11_LIB "")
-endif (X11_FOUND)
+    SET(UTESTS_REQUIRED_X11_LIB ${X11_LIBRARIES} ${XEXT_LIBRARIES})
+  else()
+    SET(UTESTS_REQUIRED_X11_LIB "")
+  endif (X11_FOUND)
+endif (NOT_BUILD_STAND_ALONE_UTEST)
 
 if (CMRT_FOUND)
   SET(utests_sources
@@ -264,8 +308,10 @@ else(GEN_PCI_ID)
   DEPENDS ${GBE_BIN_FILE} ${kernel_bin}.cl)
 endif(GEN_PCI_ID)
 
-ADD_CUSTOM_TARGET(kernel_bin.bin
-    DEPENDS ${kernel_bin}.bin)
+if (NOT_BUILD_STAND_ALONE_UTEST)
+  SET(utests_sources ${utests_sources} builtin_kernel_block_motion_estimate_intel.cpp)
+  ADD_CUSTOM_TARGET(kernel_bin.bin DEPENDS ${kernel_bin}.bin)
+endif (NOT_BUILD_STAND_ALONE_UTEST)
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/generated
     COMMAND mkdir ${CMAKE_CURRENT_SOURCE_DIR}/generated -p
@@ -299,11 +345,19 @@ endif ()
 
 ADD_LIBRARY(utests SHARED ${utests_sources})
 
-TARGET_LINK_LIBRARIES(utests cl m ${OPENGL_LIBRARIES} ${UTESTS_REQUIRED_EGL_LIB} ${CMAKE_THREAD_LIBS_INIT} ${UTESTS_REQUIRED_X11_LIB})
+if (NOT_BUILD_STAND_ALONE_UTEST)
+  TARGET_LINK_LIBRARIES(utests cl m ${OPENGL_LIBRARIES} ${UTESTS_REQUIRED_EGL_LIB} ${CMAKE_THREAD_LIBS_INIT} ${UTESTS_REQUIRED_X11_LIB})
+else()
+  TARGET_LINK_LIBRARIES(utests ${OPENCL_LIBRARIES} m ${OPENGL_LIBRARIES} ${UTESTS_REQUIRED_EGL_LIB} ${CMAKE_THREAD_LIBS_INIT} ${UTESTS_REQUIRED_X11_LIB})
+endif()
 
 ADD_EXECUTABLE(utest_run utest_run.cpp)
 TARGET_LINK_LIBRARIES(utest_run utests)
-ADD_DEPENDENCIES (utest_run kernel_bin.bin)
+
+if (NOT_BUILD_STAND_ALONE_UTEST)
+  ADD_DEPENDENCIES (utest_run kernel_bin.bin)
+endif (NOT_BUILD_STAND_ALONE_UTEST)
+
 ADD_DEPENDENCIES (utests utest_generator)
 
 ADD_EXECUTABLE(flat_address_space runtime_flat_address_space.cpp)

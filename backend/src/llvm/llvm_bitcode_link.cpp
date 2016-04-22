@@ -36,6 +36,8 @@ namespace gbe
   static Module* createOclBitCodeModule(LLVMContext& ctx, bool strictMath)
   {
     std::string bitCodeFiles = OCL_BITCODE_LIB_PATH;
+    if(bitCodeFiles == "")
+      bitCodeFiles = OCL_BITCODE_BIN;
     std::istringstream bitCodeFilePath(bitCodeFiles);
     std::string FilePath;
     bool findBC = false;

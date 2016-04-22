@@ -39,14 +39,14 @@ static void compiler_copy_image_1d(void)
   OCL_NDRANGE(1);
 
   // Check result
-  OCL_MAP_BUFFER(0);
-  OCL_MAP_BUFFER(1);
+  OCL_MAP_BUFFER_GTT(0);
+  OCL_MAP_BUFFER_GTT(1);
   for (uint32_t i = 0; i < w; i++) {
       //printf (" %x", ((uint32_t*)buf_data[1])[i]);
       OCL_ASSERT(((uint32_t*)buf_data[0])[i] == ((uint32_t*)buf_data[1])[i]);
   }
-  OCL_UNMAP_BUFFER(0);
-  OCL_UNMAP_BUFFER(1);
+  OCL_UNMAP_BUFFER_GTT(0);
+  OCL_UNMAP_BUFFER_GTT(1);
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_copy_image_1d);

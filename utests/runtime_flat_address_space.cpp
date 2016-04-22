@@ -53,7 +53,7 @@ main(int argc, char *argv[])
                                   NULL);
 
     // Be sure that everything run fine
-    dst_buffer = (int *) clMapBufferIntel(dst[j], &status);
+    dst_buffer = (int *)clEnqueueMapBuffer(queue, dst[j], CL_TRUE, CL_MAP_READ, 0, sizeof(int)*n, 0, NULL, NULL, &status);
     if (status != CL_SUCCESS)
       goto error;
     for (uint32_t i = 0; i < n; ++i)
@@ -61,13 +61,11 @@ main(int argc, char *argv[])
         fprintf(stderr, "run-time flat address space failed\n");
         exit(-1);
       }
-    OCL_CALL (clUnmapBufferIntel, dst[j]);
+    clEnqueueUnmapMemObject(queue, dst[j], dst_buffer, 0, NULL, NULL);
   }
 
   for (uint32_t j = 0; j < 24; ++j) OCL_CALL (clReleaseMemObject, dst[j]);
   cl_test_destroy();
-  printf("%i memory leaks\n", clReportUnfreedIntel());
-  assert(clReportUnfreedIntel() == 0);
 
 error:
   return status;

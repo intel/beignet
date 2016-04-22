@@ -32,6 +32,8 @@ configure_file (
   "src/OCLConfig.h"
 )
 
+set (NOT_BUILD_STAND_ALONE_UTEST 1)
+
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 

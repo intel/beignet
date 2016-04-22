@@ -1,6 +1,11 @@
 #include "utest_helper.hpp"
 #include <string.h>
 
+typedef cl_accelerator_intel (OCLCREATEACCELERATORINTEL)(cl_context, cl_accelerator_type_intel accel_type, size_t desc_sz, const void* desc, cl_int* errcode_ret);
+OCLCREATEACCELERATORINTEL * oclCreateAcceleratorIntel = NULL;
+typedef cl_int (OCLRELEASEACCELERATORINTEL)(cl_accelerator_intel accel_type);
+OCLRELEASEACCELERATORINTEL * oclReleaseAcceleratorIntel = NULL;
+
 void builtin_kernel_block_motion_estimate_intel(void)
 {
   char* built_in_kernel_names;
@@ -29,7 +34,16 @@ void builtin_kernel_block_motion_estimate_intel(void)
                                           CL_ME_SAD_ADJUST_MODE_NONE_INTEL,   //0x0
                                           CL_ME_SEARCH_PATH_RADIUS_16_12_INTEL //0x5
                                           };
-  cl_accelerator_intel accel = clCreateAcceleratorINTEL(ctx, CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL,sizeof(cl_motion_estimation_desc_intel), &vmedesc, &err);
+#ifdef CL_VERSION_1_2
+  oclCreateAcceleratorIntel = (OCLCREATEACCELERATORINTEL*)clGetExtensionFunctionAddressForPlatform(platform, "clCreateAcceleratorINTEL");
+#else
+  oclCreateAcceleratorIntel  = (OCLCREATEACCELERATORINTEL*)clGetExtensionFunctionAddress("clCreateAcceleratorINTEL");
+#endif
+  if(!oclCreateAcceleratorIntel){
+    fprintf(stderr, "Failed to get extension clCreateImageFromLibvaIntel\n");
+    exit(1);
+  }
+  cl_accelerator_intel accel = oclCreateAcceleratorIntel(ctx, CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL,sizeof(cl_motion_estimation_desc_intel), &vmedesc, &err);
   OCL_ASSERT(accel != NULL);
 
   const size_t w = 71; //80
@@ -102,8 +116,16 @@ void builtin_kernel_block_motion_estimate_intel(void)
   }
   OCL_UNMAP_BUFFER(2);
 
-  clReleaseAcceleratorINTEL(accel);
-  clReleaseKernel(kernel);
+#ifdef CL_VERSION_1_2
+  oclReleaseAcceleratorIntel = (OCLRELEASEACCELERATORINTEL*)clGetExtensionFunctionAddressForPlatform(platform, "clReleaseAcceleratorINTEL");
+#else
+  oclReleaseAcceleratorIntel  = (OCLRELEASEACCELERATORINTEL*)clGetExtensionFunctionAddress("clReleaseAcceleratorINTEL");
+#endif
+  if(!oclReleaseAcceleratorIntel){
+    fprintf(stderr, "Failed to get extension clCreateImageFromLibvaIntel\n");
+    exit(1);
+  }
+  oclReleaseAcceleratorIntel(accel);
   clReleaseProgram(built_in_prog);
   free(built_in_kernel_names);
   free(image_data1);

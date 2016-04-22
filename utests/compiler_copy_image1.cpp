@@ -57,12 +57,12 @@ static void compiler_copy_image1(void)
   OCL_NDRANGE(2);
 
   // Check result
-  OCL_MAP_BUFFER(0);
-  OCL_MAP_BUFFER(1);
-  OCL_MAP_BUFFER(2);
-  OCL_MAP_BUFFER(3);
-  OCL_MAP_BUFFER(4);
-  OCL_MAP_BUFFER(5);
+  OCL_MAP_BUFFER_GTT(0);
+  OCL_MAP_BUFFER_GTT(1);
+  OCL_MAP_BUFFER_GTT(2);
+  OCL_MAP_BUFFER_GTT(3);
+  OCL_MAP_BUFFER_GTT(4);
+  OCL_MAP_BUFFER_GTT(5);
 
   for(uint32_t k = 0; k < 5; k++)
   {
@@ -70,12 +70,12 @@ static void compiler_copy_image1(void)
       for (uint32_t i = 0; i < w; i++)
         OCL_ASSERT(((uint32_t*)buf_data[0])[j * w + i] == ((uint32_t*)buf_data[1 + k])[j * w + i]);
   }
-  OCL_UNMAP_BUFFER(0);
-  OCL_UNMAP_BUFFER(1);
-  OCL_UNMAP_BUFFER(2);
-  OCL_UNMAP_BUFFER(3);
-  OCL_UNMAP_BUFFER(4);
-  OCL_UNMAP_BUFFER(5);
+  OCL_UNMAP_BUFFER_GTT(0);
+  OCL_UNMAP_BUFFER_GTT(1);
+  OCL_UNMAP_BUFFER_GTT(2);
+  OCL_UNMAP_BUFFER_GTT(3);
+  OCL_UNMAP_BUFFER_GTT(4);
+  OCL_UNMAP_BUFFER_GTT(5);
 
   OCL_CALL(clReleaseSampler, sampler);
 }
