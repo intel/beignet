@@ -144,6 +144,7 @@ namespace gbe
       case GEN_TYPE_UL: return TYPE_U64;
       case GEN_TYPE_F: return TYPE_FLOAT;
       case GEN_TYPE_DF: return TYPE_DOUBLE;
+      case GEN_TYPE_HF : return TYPE_HALF;
       default: NOT_SUPPORTED; return TYPE_FLOAT;
     }
   }
@@ -5186,9 +5187,13 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       if (liveOut.contains(dst) || dag.computeBool)
         needStoreBool = true;
 
+      // why we set the tmpDst to null?
+      // because for the listed type compare instruction could not
+      // generate bool(uw) result to grf directly, we need an extra
+      // select to generate the bool value to grf
       if(type == TYPE_S64 || type == TYPE_U64 ||
          type == TYPE_DOUBLE || type == TYPE_FLOAT ||
-         type == TYPE_U32 ||  type == TYPE_S32 /*||
+         type == TYPE_U32 ||  type == TYPE_S32 || type == TYPE_HALF /*||
          (!needStoreBool)*/)
         tmpDst = GenRegister::retype(GenRegister::null(), GEN_TYPE_F);
       else
@@ -5221,7 +5226,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         } else {
           if((type == TYPE_S64 || type == TYPE_U64 ||
               type == TYPE_DOUBLE || type == TYPE_FLOAT ||
-              type == TYPE_U32 ||  type == TYPE_S32))
+              type == TYPE_U32 ||  type == TYPE_S32 || type == TYPE_HALF))
             sel.curr.flagGen = 1;
           else if (sel.isScalarReg(dst)) {
             // If the dest reg is a scalar bool, we can't set it as
