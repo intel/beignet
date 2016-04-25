@@ -503,7 +503,11 @@ namespace gbe
      gen8_insn->bits1.da3src.dest_writemask = 0xf;
      this->setHeader(insn);
      gen8_insn->header.access_mode = GEN_ALIGN_16;
-     gen8_insn->header.execution_size = GEN_WIDTH_8;
+
+     if (this->curr.execWidth == 1)
+       gen8_insn->header.execution_size = GEN_WIDTH_1;
+     else
+       gen8_insn->header.execution_size = GEN_WIDTH_8;
 
      assert(src0.file == GEN_GENERAL_REGISTER_FILE);
      assert(src0.address_mode == GEN_ADDRESS_DIRECT);

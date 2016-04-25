@@ -3183,7 +3183,11 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         const GenRegister src1 = sel.selReg(child0->insn.getSrc(1), TYPE_FLOAT);
         GenRegister src2 = sel.selReg(insn.getSrc(1), TYPE_FLOAT);
         if(insn.getOpcode() == ir::OP_SUB) src2 = GenRegister::negate(src2);
+        sel.push();
+        if (sel.isScalarReg(insn.getDst(0)))
+          sel.curr.execWidth = 1;
         sel.MAD(dst, src2, src0, src1); // order different on HW!
+        sel.pop();
         if (child0->child[0]) child0->child[0]->isRoot = 1;
         if (child0->child[1]) child0->child[1]->isRoot = 1;
         if (child1) child1->isRoot = 1;
@@ -3195,7 +3199,11 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         const GenRegister src1 = sel.selReg(child1->insn.getSrc(1), TYPE_FLOAT);
         const GenRegister src2 = sel.selReg(insn.getSrc(0), TYPE_FLOAT);
         if(insn.getOpcode() == ir::OP_SUB) src0 = GenRegister::negate(src0);
+        sel.push();
+        if (sel.isScalarReg(insn.getDst(0)))
+          sel.curr.execWidth = 1;
         sel.MAD(dst, src2, src0, src1); // order different on HW!
+        sel.pop();
         if (child1->child[0]) child1->child[0]->isRoot = 1;
         if (child1->child[1]) child1->child[1]->isRoot = 1;
         if (child0) child0->isRoot = 1;
@@ -5335,7 +5343,11 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
          }
         case OP_MAD:
          {
+          sel.push();
+          if (sel.isScalarReg(insn.getDst(0)))
+            sel.curr.execWidth = 1;
           sel.MAD(dst, src2, src0, src1);
+          sel.pop();
           break;
          }
         case OP_LRP:
