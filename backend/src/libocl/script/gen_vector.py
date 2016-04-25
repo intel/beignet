@@ -114,7 +114,7 @@ def _prefix(prefix, dtype):
         return prefix + '_' + dtype
     return dtype
 
-memspaces = ["__local ", "__private ", "__global "]
+memspaces = ["__local ", "__private ", "__global ", "__generic "]
 
 def stripMemSpace(t):
     if t[0:2] == '__':
@@ -254,7 +254,8 @@ class builtinProto():
                     tmpType = line[i]
                 if tmpType == '__local' or   \
                    tmpType == '__private' or \
-                   tmpType == '__global':
+                   tmpType == '__global' or\
+                   tmpType == '__generic':
                    memSpace = tmpType + ' '
                    stripped += 1
                    continue
