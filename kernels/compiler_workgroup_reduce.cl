@@ -7,7 +7,7 @@ kernel void compiler_workgroup_any(global int *src, global int *dst) {
   dst[get_global_id(0)] = predicate;
 }
 kernel void compiler_workgroup_all(global int *src, global int *dst) {
-  char val = src[get_global_id(0)];
+  int val = src[get_global_id(0)];
   int predicate = work_group_all(val);
   dst[get_global_id(0)] = predicate;
 }

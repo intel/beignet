@@ -38,7 +38,7 @@ static void compute_expected(WG_FUNCTION wg_func,
   {
     T wg_predicate = input[0];
     for(uint32_t i = 1; i < WG_LOCAL_SIZE; i++)
-      wg_predicate = (int)wg_predicate | (int)input[i];
+      wg_predicate = (int)wg_predicate || (int)input[i];
     for(uint32_t i = 0; i < WG_LOCAL_SIZE; i++)
       expected[i] = wg_predicate;
   }
@@ -46,7 +46,7 @@ static void compute_expected(WG_FUNCTION wg_func,
   {
     T wg_predicate = input[0];
     for(uint32_t i = 1; i < WG_LOCAL_SIZE; i++)
-      wg_predicate = (int)wg_predicate & (int)input[i];
+      wg_predicate = (int)wg_predicate && (int)input[i];
     for(uint32_t i = 0; i < WG_LOCAL_SIZE; i++)
       expected[i] = wg_predicate;
   }
@@ -112,7 +112,6 @@ static void generate_data(WG_FUNCTION wg_func,
         /* add trailing random bits, tests GENERAL cases */
         input[gid + lid] += (rand() % 112);
         /* always last bit is 1, ideal test ALL/ANY */
-        input[gid + lid] = (T)((long)input[gid + lid] | (long)1);
       } else {
         input[gid + lid] += rand();
         input[gid + lid] += rand() / ((float)RAND_MAX + 1);
