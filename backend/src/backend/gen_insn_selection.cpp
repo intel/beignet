@@ -4320,8 +4320,10 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           }
           if (addrFamily == FAMILY_DWORD)
             sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UD), GenRegister::immud(0xfffffffc));
-          else
-            sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UL), GenRegister::immuint64(0xfffffffffffffffc));
+          else {
+            sel.MOV(tmpAddr, GenRegister::immuint64(0xfffffffffffffffc));
+            sel.AND(tmpAddr, GenRegister::retype(address,GEN_TYPE_UL), tmpAddr);
+          }
 
         sel.pop();
         sel.push();
@@ -4558,8 +4560,10 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
               sel.curr.noMask = 1;
             if (addrFamily == FAMILY_DWORD)
               sel.AND(alignedAddr, GenRegister::retype(address, GEN_TYPE_UD), GenRegister::immud(~0x3));
-            else
-              sel.AND(alignedAddr, GenRegister::retype(address, GEN_TYPE_UL), GenRegister::immuint64(~0x3ul));
+            else {
+              sel.MOV(alignedAddr,  GenRegister::immuint64(~0x3ul));
+              sel.AND(alignedAddr, GenRegister::retype(address, GEN_TYPE_UL), alignedAddr);
+            }
           sel.pop();
 
           uint32_t remainedReg = effectDataNum + 1;
