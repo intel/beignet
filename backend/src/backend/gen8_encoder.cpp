@@ -649,9 +649,10 @@ namespace gbe
 
     assert(gen8_insn->bits1.da1.src0_reg_file != GEN_IMMEDIATE_VALUE);
 
-    if (reg.file == GEN_IMMEDIATE_VALUE)
+    if (reg.file == GEN_IMMEDIATE_VALUE) {
+      assert(!((reg.type == GEN_TYPE_L || reg.type == GEN_TYPE_UL || reg.type == GEN_TYPE_DF_IMM) && reg.value.u64 > 0xFFFFFFFFl));
       gen8_insn->bits3.ud = reg.value.ud;
-    else {
+    } else {
       assert (reg.address_mode == GEN_ADDRESS_DIRECT);
       if (gen8_insn->header.access_mode == GEN_ALIGN_1) {
         gen8_insn->bits3.da1.src1_subreg_nr = reg.subnr;
