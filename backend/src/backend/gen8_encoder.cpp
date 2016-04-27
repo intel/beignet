@@ -493,21 +493,27 @@ namespace gbe
      GenNativeInstruction *insn = this->next(opcode);
      Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
 
+     int execution_size = 0;
+     if (this->curr.execWidth == 1) {
+       execution_size = GEN_WIDTH_1;
+     }else if(this->curr.execWidth == 8) {
+       execution_size = GEN_WIDTH_8;
+     } else if(this->curr.execWidth == 16) {
+       execution_size = GEN_WIDTH_16;
+     }else
+       NOT_IMPLEMENTED;
+
      assert(dest.file == GEN_GENERAL_REGISTER_FILE);
      assert(dest.nr < 128);
      assert(dest.address_mode == GEN_ADDRESS_DIRECT);
      assert(dest.type = GEN_TYPE_F);
      //gen8_insn->bits1.da3src.dest_reg_file = 0;
      gen8_insn->bits1.da3src.dest_reg_nr = dest.nr;
-     gen8_insn->bits1.da3src.dest_subreg_nr = dest.subnr / 16;
+     gen8_insn->bits1.da3src.dest_subreg_nr = dest.subnr / 4;
      gen8_insn->bits1.da3src.dest_writemask = 0xf;
      this->setHeader(insn);
      gen8_insn->header.access_mode = GEN_ALIGN_16;
-
-     if (this->curr.execWidth == 1)
-       gen8_insn->header.execution_size = GEN_WIDTH_1;
-     else
-       gen8_insn->header.execution_size = GEN_WIDTH_8;
+     gen8_insn->header.execution_size = execution_size;
 
      assert(src0.file == GEN_GENERAL_REGISTER_FILE);
      assert(src0.address_mode == GEN_ADDRESS_DIRECT);
@@ -542,22 +548,6 @@ namespace gbe
      gen8_insn->bits3.da3src.src2_reg_nr = src2.nr;
      gen8_insn->bits1.da3src.src2_abs = src2.absolute;
      gen8_insn->bits1.da3src.src2_negate = src2.negation;
-
-     // Emit second half of the instruction
-     if (this->curr.execWidth == 16) {
-      GenNativeInstruction q1Insn = *insn;
-      insn = this->next(opcode);
-      *insn = q1Insn;
-      gen8_insn = &insn->gen8_insn;
-      gen8_insn->header.quarter_control = GEN_COMPRESSION_Q2;
-      gen8_insn->bits1.da3src.dest_reg_nr++;
-      if (gen8_insn->bits2.da3src.src0_rep_ctrl == 0)
-        gen8_insn->bits2.da3src.src0_reg_nr++;
-      if (gen8_insn->bits2.da3src.src1_rep_ctrl == 0)
-        gen8_insn->bits3.da3src.src1_reg_nr++;
-      if (gen8_insn->bits3.da3src.src2_rep_ctrl == 0)
-        gen8_insn->bits3.da3src.src2_reg_nr++;
-     }
   }
 
   void Gen8Encoder::MATH_WITH_ACC(GenRegister dst, uint32_t function, GenRegister src0, GenRegister src1,
