@@ -279,7 +279,8 @@ cl_int
 clReleaseDevice(cl_device_id device)
 {
 #ifdef HAS_CMRT
-  cmrt_destroy_device(device);
+  if (device->cmrt_device != NULL)
+    cmrt_destroy_device(device);
 #endif
 
   // XXX stub for C++ Bindings
