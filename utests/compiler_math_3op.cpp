@@ -5,11 +5,12 @@
 static void cpu_compiler_math(float *dst, float *src1, float *src2, float *src3, int i)
 {
   const float x = src1[i], y = src2[i], z = src3[i];
-  switch (i) {
+  switch (i%2) {
     case 0: dst[i] = x * y + z; break;
     case 1: dst[i] = x * y + z; break;
     default: dst[i] = 1.f; break;
   };
+  dst[0] = (src1[0]*src2[0]+src3[0]);
 }
 
 static void compiler_math_3op(void)
@@ -35,9 +36,9 @@ static void compiler_math_3op(void)
     OCL_MAP_BUFFER(2);
     OCL_MAP_BUFFER(3);
     for (uint32_t i = 0; i < 32; ++i) {
-      cpu_src1[i] = ((float*)buf_data[1])[i] = .1f * (rand() & 15);
-      cpu_src2[i] = ((float*)buf_data[2])[i] = .1f * (rand() & 15);
-      cpu_src3[i] = ((float*)buf_data[3])[i] = .1f * (rand() & 15);
+      cpu_src1[i] = ((float*)buf_data[1])[i] = .001f * (rand() & 15);
+      cpu_src2[i] = ((float*)buf_data[2])[i] = .002f * (rand() & 15);
+      cpu_src3[i] = ((float*)buf_data[3])[i] = .003f * (rand() & 15);
     }
     OCL_UNMAP_BUFFER(1);
     OCL_UNMAP_BUFFER(2);
@@ -50,6 +51,7 @@ static void compiler_math_3op(void)
     for (int i = 0; i < 16; ++i) {
       const float cpu = cpu_dst[i];
       const float gpu = ((float*)buf_data[0])[i];
+      //printf("cpu:%f, gpu:%f\n", cpu, gpu);
       if (std::isinf(cpu))
         OCL_ASSERT(std::isinf(gpu));
       else if (std::isnan(cpu))
