@@ -35,6 +35,7 @@
 #include <iomanip>
 
 
+#define HALF_REGISTER_FILE_OFFSET (32*64)
 namespace gbe
 {
   /////////////////////////////////////////////////////////////////////////////
@@ -48,9 +49,10 @@ namespace gbe
    */
   struct GenRegInterval {
     INLINE GenRegInterval(ir::Register reg) :
-      reg(reg), minID(INT_MAX), maxID(-INT_MAX) {}
+      reg(reg), minID(INT_MAX), maxID(-INT_MAX), conflictReg(0) {}
     ir::Register reg;     //!< (virtual) register of the interval
     int32_t minID, maxID; //!< Starting and ending points
+    ir::Register conflictReg; // < has banck conflict with this register
   };
 
   typedef struct GenRegIntervalKey {
@@ -1038,7 +1040,17 @@ namespace gbe
     // and the source is a scalar Dword. If that is the case, the byte register
     // must get 4byte alignment register offset.
     alignment = (alignment + 3) & ~3;
-    while ((grfOffset = ctx.allocate(size, alignment)) == -1) {
+
+    bool direction = true;
+    if (interval.conflictReg != 0) {
+      // try to allocate conflict registers in top/bottom half.
+      if (RA.contains(interval.conflictReg)) {
+        if (RA.find(interval.conflictReg)->second < HALF_REGISTER_FILE_OFFSET) {
+          direction = false;
+        }
+      }
+    }
+    while ((grfOffset = ctx.allocate(size, alignment, direction)) == -1) {
       const bool success = this->expireGRF(interval);
       if (success == false) {
         if (spillAtInterval(interval, size, alignment) == false)
@@ -1090,6 +1102,7 @@ namespace gbe
       for (auto &insn : block.insnList) {
         const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
         insn.ID  = insnID;
+        bool is3SrcOp = insn.opcode == SEL_OP_MAD;
         for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
           const GenRegister &selReg = insn.src(srcID);
           const ir::Register reg = selReg.reg();
@@ -1099,6 +1112,20 @@ namespace gbe
               reg == ir::ocl::groupid1  ||
               reg == ir::ocl::groupid2)
             continue;
+          ir::Register conflictReg = ir::Register(0);
+          if (is3SrcOp) {
+            if (srcID == 1)
+              conflictReg = insn.src(2).reg();
+            else if (srcID == 2)
+              conflictReg = insn.src(1).reg();
+          }
+          // we only let it conflict with one register, and with smaller reg number,
+          // as smaller virtual register usually comes first,
+          // and linear scan allocator allocate from smaller to larger register
+          // so, conflict with larger register number will not make any effect.
+          if (this->intervals[reg].conflictReg == 0 ||
+              this->intervals[reg].conflictReg > conflictReg)
+          this->intervals[reg].conflictReg = conflictReg;
           this->intervals[reg].minID = std::min(this->intervals[reg].minID, insnID);
           this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, insnID);
         }
