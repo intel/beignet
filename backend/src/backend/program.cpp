@@ -531,12 +531,21 @@ namespace gbe {
     // Arguments to pass to the clang frontend
     vector<const char *> args;
     bool bFastMath = false;
+    static bool ifsetllvm = false;
 
     for (auto &s : options) {
       args.push_back(s.c_str());
     }
 
     args.push_back("-cl-kernel-arg-info");
+    // The ParseCommandLineOptions used for mllvm args can not be used with multithread
+    // and GVN now have a 100 inst limit on block scan. Now only pass a bigger limit
+    // for each context only once, this can also fix multithread bug.
+    if(!ifsetllvm) {
+      args.push_back("-mllvm");
+      args.push_back("-memdep-block-scan-limit=200");
+      ifsetllvm = true;
+    }
 #ifdef GEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
     args.push_back("-DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND");
 #endif
@@ -605,7 +614,18 @@ if(sizeof(int*) == 8) {
     clang::LangOptions & lang_opts = Clang.getLangOpts();
     lang_opts.OpenCL = 1;
     
-    GBE_ASSERT(Clang.getFrontendOpts().LLVMArgs.empty() && "We do not have llvm args now");
+    //llvm flags need command line parsing to take effect
+    if (!Clang.getFrontendOpts().LLVMArgs.empty()) {
+      unsigned NumArgs = Clang.getFrontendOpts().LLVMArgs.size();
+      const char **Args = new const char*[NumArgs + 2];
+      Args[0] = "clang (LLVM option parsing)";
+      for (unsigned i = 0; i != NumArgs; ++i){
+        Args[i + 1] = Clang.getFrontendOpts().LLVMArgs[i].c_str();
+      }
+      Args[NumArgs + 1] = 0;
+      llvm::cl::ParseCommandLineOptions(NumArgs + 1, Args);
+      delete [] Args;
+    }
   
     // Create an action and make the compiler instance carry it out
     std::unique_ptr<clang::CodeGenAction> Act(new clang::EmitLLVMOnlyAction(llvm_ctx));
