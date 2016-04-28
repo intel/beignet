@@ -781,7 +781,7 @@ static int dest_3src(FILE *file, const void *inst)
   if (is_special_acc(inst)) {
     err |= control(file, "specialacc", special_acc, ((const union Gen8NativeInstruction *)inst)->bits1.da3srcacc.dst_special_acc, NULL);
   } else {
-    err |= control(file, "writemask", writemask, GEN_BITS_FIELD(inst, bits1.da16.dest_writemask), NULL);
+    err |= control(file, "writemask", writemask, GEN_BITS_FIELD(inst, bits1.da3src.dest_writemask), NULL);
   }
 
   if (gen_version < 80) {
