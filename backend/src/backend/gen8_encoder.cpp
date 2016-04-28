@@ -506,7 +506,7 @@ namespace gbe
      assert(dest.file == GEN_GENERAL_REGISTER_FILE);
      assert(dest.nr < 128);
      assert(dest.address_mode == GEN_ADDRESS_DIRECT);
-     assert(dest.type = GEN_TYPE_F);
+     assert(dest.type == GEN_TYPE_F);
      //gen8_insn->bits1.da3src.dest_reg_file = 0;
      gen8_insn->bits1.da3src.dest_reg_nr = dest.nr;
      gen8_insn->bits1.da3src.dest_subreg_nr = dest.subnr / 4;
