@@ -169,6 +169,11 @@ IMAGE = cl_mem_image(MEM);                                  \
 const size_t *REGION;                                       \
 size_t REGION ##_REC[3];                                    \
 do {                                                        \
+  if (PREGION == NULL)                                      \
+  {                                                         \
+    err = CL_INVALID_VALUE;                                 \
+    goto error;                                             \
+  }                                                         \
   if (IMAGE->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {   \
     REGION ##_REC[0] = PREGION[0];                          \
     REGION ##_REC[1] = 1;                                   \
@@ -188,6 +193,11 @@ do {                                                        \
 const size_t *REGION;                                       \
 size_t REGION ##_REC[3];                                    \
 do {                                                        \
+  if (PREGION == NULL)                                      \
+  {                                                         \
+    err = CL_INVALID_VALUE;                                 \
+    goto error;                                             \
+  }                                                         \
   if (IMAGE->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {   \
     REGION ##_REC[0] = PREGION[0];                          \
     REGION ##_REC[1] = 0;                                   \
