@@ -343,7 +343,7 @@ namespace ir {
       float *f32;
       double *f64;
       half *f16;
-      const Immediate *immVec[];
+      const Immediate **immVec;
       void *p;
     } data;     //!< Value to store
     Immediate operator+ (const Immediate &) const;
