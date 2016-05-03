@@ -4558,7 +4558,7 @@ namespace gbe
                 uint32_t srcElemNum = 0;
                 Value *srcValue = I.getOperand(n + 1);
                 ir::Type srcType = getVectorInfo(ctx, srcValue, srcElemNum);
-                GBE_ASSERT(!(srcType == ir::TYPE_S64 || srcType == ir::TYPE_DOUBLE));
+                GBE_ASSERT(!(srcType == ir::TYPE_DOUBLE));
 
                 uint32_t elemID = 0;
                 for (elemID = 0; elemID < srcElemNum; ++elemID) {
