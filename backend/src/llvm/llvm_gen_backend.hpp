@@ -83,12 +83,13 @@ namespace gbe
 
       if (it == map.end()) {
         int status;
-        const char *realName = abi::__cxa_demangle(symbol.c_str(), NULL, NULL, &status);
+        char *realName = abi::__cxa_demangle(symbol.c_str(), NULL, NULL, &status);
         if (status == 0) {
           std::string realFnName(realName), stripName;
           stripName = realFnName.substr(0, realFnName.find("("));
           it = map.find(stripName);
         }
+        free(realName);
       }
       // FIXME, should create a complete error reporting mechanism
       // when found error in beignet managed passes including Gen pass.
