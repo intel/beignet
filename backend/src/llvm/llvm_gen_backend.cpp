@@ -726,7 +726,7 @@ namespace gbe
     ir::PrintfSet::PrintfFmt* getPrintfInfo(CallInst* inst) {
       if (unit.printfs.find(inst) == unit.printfs.end())
         return NULL;
-      return &unit.printfs[inst];
+      return unit.printfs[inst];
     }
     private:
       void setDebugInfo_CTX(llvm::Instruction * insn); // store the debug infomation in context for subsequently passing to Gen insn

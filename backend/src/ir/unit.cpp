@@ -33,6 +33,7 @@ namespace ir {
   }
   Unit::~Unit(void) {
     for (const auto &pair : functions) GBE_DELETE(pair.second);
+    for (const auto &pair : printfs) GBE_DELETE(pair.second);
     delete profilingInfo;
   }
   Function *Unit::getFunction(const std::string &name) const {
