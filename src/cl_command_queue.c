@@ -102,6 +102,7 @@ cl_command_queue_delete(cl_command_queue queue)
   cl_mem_delete(queue->perf);
   cl_context_delete(queue->ctx);
   cl_free(queue->wait_events);
+  cl_free(queue->barrier_events);
   queue->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
   cl_free(queue);
 }
