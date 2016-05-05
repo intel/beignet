@@ -69,8 +69,10 @@ cl_set_varying_payload(const cl_kernel ker,
   if (id_offset[2] >= 0)
     TRY_ALLOC(ids[2], (uint32_t*) alloca(sizeof(uint32_t)*thread_n*simd_sz));
   TRY_ALLOC(block_ips, (uint16_t*) alloca(sizeof(uint16_t)*thread_n*simd_sz));
-  if (tid_offset >= 0)
+  if (tid_offset >= 0) {
     TRY_ALLOC(thread_ids, (uint32_t*) alloca(sizeof(uint32_t)*thread_n));
+    memset(thread_ids, 0, sizeof(uint32_t)*thread_n);
+  }
   /* 0xffff means that the lane is inactivated */
   memset(block_ips, 0xff, sizeof(int16_t)*thread_n*simd_sz);
 
