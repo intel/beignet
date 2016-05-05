@@ -673,9 +673,9 @@ namespace gbe
     /*! Get image information */
     void GET_IMAGE_INFO(uint32_t type, GenRegister *dst, uint32_t dst_num, uint32_t bti);
     /*! Calculate the timestamp */
-    void CALC_TIMESTAMP(GenRegister ts[4], int tsN, GenRegister tmp, uint32_t pointNum, uint32_t tsType);
+    void CALC_TIMESTAMP(GenRegister ts[5], int tsN, GenRegister tmp, uint32_t pointNum, uint32_t tsType);
     /*! Store the profiling info */
-    void STORE_PROFILING(uint32_t profilingType, uint32_t bti, GenRegister tmp0, GenRegister tmp1, GenRegister ts[4], int tsNum);
+    void STORE_PROFILING(uint32_t profilingType, uint32_t bti, GenRegister tmp0, GenRegister tmp1, GenRegister ts[5], int tsNum);
     /*! Printf */
     void PRINTF(GenRegister dst, uint8_t bti, GenRegister tmp0, GenRegister tmp1, GenRegister src[8],
                 int srcNum, uint16_t num, bool isContinue, uint32_t totalSize);
@@ -1863,7 +1863,7 @@ namespace gbe
       insn->dst(i + 1) = tmp[i];
   }
 
-  void Selection::Opaque::CALC_TIMESTAMP(GenRegister ts[4], int tsN, GenRegister tmp, uint32_t pointNum, uint32_t tsType) {
+  void Selection::Opaque::CALC_TIMESTAMP(GenRegister ts[5], int tsN, GenRegister tmp, uint32_t pointNum, uint32_t tsType) {
     SelectionInstruction *insn = NULL;
     if (!this->hasLongType()) {
       insn = this->appendInsn(SEL_OP_CALC_TIMESTAMP, tsN + 1, tsN);
@@ -1884,7 +1884,7 @@ namespace gbe
   }
 
   void Selection::Opaque::STORE_PROFILING(uint32_t profilingType, uint32_t bti,
-                GenRegister tmp0, GenRegister tmp1, GenRegister ts[4], int tsNum) {
+                GenRegister tmp0, GenRegister tmp1, GenRegister ts[5], int tsNum) {
     if (tsNum == 3) { // SIMD16 mode
       SelectionInstruction *insn = this->appendInsn(SEL_OP_STORE_PROFILING, 1, 3);
       for (int i = 0; i < 3; i++)
