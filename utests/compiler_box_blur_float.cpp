@@ -14,6 +14,9 @@ static void compiler_box_blur_float()
 
   /* Load the picture */
   tmp = cl_read_bmp("sample.bmp", &w, &h);
+  if(tmp == NULL)
+    return;
+
   sz = w * h * sizeof(float[4]);
   src = (float4*)malloc(sz);
 

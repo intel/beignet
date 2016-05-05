@@ -16,6 +16,8 @@ double benchmark_copy_buf(void)
 
   buf0 = (cl_char *)clEnqueueMapBuffer(queue, buf[0], CL_TRUE, CL_MAP_WRITE, 0, sizeof(char), 0, NULL, NULL, NULL);
 
+  OCL_ASSERT(buf0 != NULL);
+
   for (i=0; i < sz; i++) {
     buf0[i]=(rand() & 0xFF);
   }

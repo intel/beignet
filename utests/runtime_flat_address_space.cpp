@@ -56,7 +56,7 @@ main(int argc, char *argv[])
     dst_buffer = (int *)clEnqueueMapBuffer(queue, dst[j], CL_TRUE, CL_MAP_READ, 0, sizeof(int)*n, 0, NULL, NULL, &status);
     if (status != CL_SUCCESS)
       goto error;
-    for (uint32_t i = 0; i < n; ++i)
+    for (uint32_t i = 0; dst_buffer && i < n; ++i)
       if (dst_buffer[i] != int(i)) {
         fprintf(stderr, "run-time flat address space failed\n");
         exit(-1);

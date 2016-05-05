@@ -116,7 +116,7 @@ void sub_buffer_check(void)
 #endif
             for (int i = 0; i < 32; i++) {
 
-                if (((char *)mapped_ptr)[i] != sub_buf_content[i]) {
+                if (mapped_ptr && ((char *)mapped_ptr)[i] != sub_buf_content[i]) {
                     printf ("different index is %d\n", i);
                     OCL_ASSERT(0);
                 }

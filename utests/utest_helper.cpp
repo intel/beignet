@@ -241,6 +241,10 @@ cl_kernel_init(const char *file_name, const char *kernel_name, int format, const
       assert(0);
     } else if (format == SOURCE) {
       cl_file_map_t *fm = cl_file_map_new();
+      if(!fm) {
+        fprintf(stderr, "run out of memory\n");
+        goto error;
+      }
       FATAL_IF (cl_file_map_open(fm, ker_path) != CL_FILE_MAP_SUCCESS,
                 "Failed to open file \"%s\" with kernel \"%s\". Did you properly set OCL_KERNEL_PATH variable?",
                 file_name, kernel_name);
@@ -292,6 +296,10 @@ cl_kernel_compile(const char *file_name, const char *kernel_name, const char * c
     if (program) clReleaseProgram(program);
     ker_path = cl_do_kiss_path(file_name, device);
     cl_file_map_t *fm = cl_file_map_new();
+    if(!fm) {
+      fprintf(stderr, "run out of memory\n");
+      goto error;
+    }
     FATAL_IF (cl_file_map_open(fm, ker_path) != CL_FILE_MAP_SUCCESS,
                 "Failed to open file \"%s\" with kernel \"%s\". Did you properly set OCL_KERNEL_PATH variable?",
                 file_name, kernel_name);
@@ -339,6 +347,10 @@ cl_kernel_link(const char *file_name, const char *kernel_name, const char * link
     if (program) clReleaseProgram(program);
     ker_path = cl_do_kiss_path(file_name, device);
     cl_file_map_t *fm = cl_file_map_new();
+    if(!fm) {
+      fprintf(stderr, "run out of memory\n");
+      goto error;
+    }
     FATAL_IF (cl_file_map_open(fm, ker_path) != CL_FILE_MAP_SUCCESS,
                 "Failed to open file \"%s\" with kernel \"%s\". Did you properly set OCL_KERNEL_PATH variable?",
                 file_name, kernel_name);

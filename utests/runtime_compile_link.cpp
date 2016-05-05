@@ -12,6 +12,9 @@ int init_program(const char* name, cl_context ctx, cl_program *pg )
   char* ker_path = cl_do_kiss_path(name, device);
 
   cl_file_map_t *fm = cl_file_map_new();
+  if(!fm)
+    return CL_FALSE;
+
   err = cl_file_map_open(fm, ker_path);
   if(err != CL_FILE_MAP_SUCCESS)
     OCL_ASSERT(0);
@@ -20,7 +23,7 @@ int init_program(const char* name, cl_context ctx, cl_program *pg )
   *pg = clCreateProgramWithSource(ctx, 1, &src, NULL, &err);
   free(ker_path);
   cl_file_map_delete(fm);
-  return 0;
+  return CL_SUCCESS;
 
 }
 
@@ -31,15 +34,18 @@ void runtime_compile_link(void)
 
   const char* header_file_name="runtime_compile_link.h";
   cl_program foo_pg;
-  init_program(header_file_name, ctx, &foo_pg);
+  err = init_program(header_file_name, ctx, &foo_pg);
+  OCL_ASSERT(err==CL_SUCCESS);
 
   const char* myinc_file_name="include/runtime_compile_link_inc.h";
   cl_program myinc_pg;
-  init_program(myinc_file_name, ctx, &myinc_pg);
+  err = init_program(myinc_file_name, ctx, &myinc_pg);
+  OCL_ASSERT(err==CL_SUCCESS);
 
   const char* file_name_A="runtime_compile_link_a.cl";
   cl_program program_A;
-  init_program(file_name_A, ctx, &program_A);
+  err = init_program(file_name_A, ctx, &program_A);
+  OCL_ASSERT(err==CL_SUCCESS);
 
   cl_program input_headers[2] = { foo_pg, myinc_pg};
   const char * input_header_names[2] = {header_file_name, myinc_file_name}; 
@@ -55,7 +61,8 @@ void runtime_compile_link(void)
   OCL_ASSERT(err==CL_SUCCESS);
   const char* file_name_B="runtime_compile_link_b.cl";
   cl_program program_B;
-  init_program(file_name_B, ctx, &program_B);
+  err = init_program(file_name_B, ctx, &program_B);
+  OCL_ASSERT(err==CL_SUCCESS);
 
   err = clCompileProgram(program_B,
                                 0, NULL, // num_devices & device_list

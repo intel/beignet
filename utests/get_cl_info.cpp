@@ -181,8 +181,14 @@ void get_program_info(void)
     int sz;
     char *ker_path = (char *)malloc(4096 * sizeof(char));
     const char *kiss_path = getenv("OCL_KERNEL_PATH");
+    if(!kiss_path)
+      return;
+
     string line;
     string source_code;
+
+    if(strlen(kiss_path) > 4000)
+      return;
 
     sprintf(ker_path, "%s/%s", kiss_path, "compiler_if_else.cl");
 

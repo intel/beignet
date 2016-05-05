@@ -34,6 +34,11 @@ static void image_from_buffer(void)
   size_t buffer_sz = sizeof(uint32_t) * w * h;
   uint32_t* src_data;
   src_data = (uint32_t*)memalign(base_address_alignment, buffer_sz);
+  if(!src_data) {
+    fprintf(stderr, "run out of memory\n");
+    return;
+  }
+
   for (uint32_t j = 0; j < h; ++j)
     for (uint32_t i = 0; i < w; i++)
       src_data[j * w + i] = j * w + i;

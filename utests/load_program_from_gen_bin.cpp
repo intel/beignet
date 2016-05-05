@@ -18,6 +18,10 @@ static void test_load_program_from_gen_bin(void)
     char *ker_path = NULL;
 
     cl_file_map_t *fm = cl_file_map_new();
+    if(!fm) {
+      fprintf(stderr, "run out of memory\n");
+      return;
+    }
     ker_path = cl_do_kiss_path("compiler_ceil.cl", device);
     OCL_ASSERT (cl_file_map_open(fm, ker_path) == CL_FILE_MAP_SUCCESS);
 
