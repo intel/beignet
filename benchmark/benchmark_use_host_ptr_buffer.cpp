@@ -28,7 +28,6 @@ double benchmark_use_host_ptr_buffer(void)
   }
   gettimeofday(&stop,0);
 
-  clReleaseMemObject(buf[0]);
   free(buf_data[0]);
   buf_data[0] = NULL;
 

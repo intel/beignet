@@ -39,7 +39,6 @@ double benchmark_ ##J ##_buffer_ ##T(void) \
   OCL_UNMAP_BUFFER(1); \
   gettimeofday(&stop,0); \
  \
-  clReleaseMemObject(buf[0]); \
   free(buf_data[0]); \
   buf_data[0] = NULL; \
  \

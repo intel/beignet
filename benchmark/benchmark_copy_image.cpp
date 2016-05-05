@@ -54,7 +54,6 @@ double benchmark_ ##J ##_image_ ##T(void) \
   OCL_UNMAP_BUFFER_GTT(1); \
   gettimeofday(&stop,0); \
 \
-  clReleaseMemObject(buf[0]); \
   free(buf_data[0]); \
   buf_data[0] = NULL; \
 \
