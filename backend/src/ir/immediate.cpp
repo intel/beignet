@@ -276,6 +276,7 @@ using namespace ir;
         for(uint32_t i = 0; i < immVec.size(); i++)
           this->data.immVec[i] = immVec[i];
       }
+      defaultData = 0ull;
     }
 
 
