@@ -69,7 +69,7 @@ void runSummaryAtExit(void) {
 
 void signalHandler( int signum )
 {
-  const char* name = NULL;
+  const char* name = "";
 
   signalMap arr[] = {
     {"SIGILL",  SIGILL},

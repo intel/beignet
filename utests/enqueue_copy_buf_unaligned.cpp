@@ -77,7 +77,7 @@ void enqueue_copy_buf_unaligned(void)
     size_t i;
     size_t j;
     const size_t sz = 1024;
-    int offset = 0;
+    unsigned int offset = 0;
 
     OCL_CREATE_BUFFER(buf[0], 0, sz * sizeof(char), NULL);
     OCL_CREATE_BUFFER(buf[1], 0, sz * sizeof(char), NULL);

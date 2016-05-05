@@ -18,7 +18,7 @@ static void cpu(int gidx, int *dst) {
 
 void compiler_assignment_operation_in_if(void){
   const size_t n = 16;
-  int cpu_dst[16];
+  int cpu_dst[16] = {0};
 	
   // Setup kernel and buffers
   OCL_CREATE_KERNEL("compiler_assignment_operation_in_if");

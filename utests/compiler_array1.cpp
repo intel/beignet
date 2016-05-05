@@ -3,7 +3,7 @@
 static void cpu(int global_id, int *src, int *dst) {
   int final[16];
   for (int i = 0; i < 16; ++i) {
-    int array[16];
+    int array[16] = {0};
     for (int j = 0; j < src[0]; ++j)
       array[j] = 1+src[0];
     for (int j = src[0]; j < 16; ++j)
