@@ -13,6 +13,7 @@ void compiler_function_qualifiers(void)
   param_value = malloc(param_value_size);
   err = clGetKernelInfo(kernel, CL_KERNEL_ATTRIBUTES, param_value_size, param_value, NULL);
   OCL_ASSERT(err == CL_SUCCESS);
+  free(param_value);
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_function_qualifiers);

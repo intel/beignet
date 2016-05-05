@@ -69,6 +69,7 @@ static void compiler_fill_image_1d_array(void)
   for (uint32_t i = 0; i < w; i++) {
     OCL_ASSERT(dst[(array - 1)*w + i] == 0x0);
   }
+  free(src);
   free(dst);
 }
 

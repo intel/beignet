@@ -365,6 +365,7 @@ cl_kernel_link(const char *file_name, const char *kernel_name, const char * link
     program = clLinkProgram(ctx, 1, &device, link_opt, 1, input_programs, NULL, NULL, &status);
     OCL_ASSERT(program != NULL);
     OCL_ASSERT(status == CL_SUCCESS);
+    clReleaseProgram(input_programs[0]);
   }
   
   /* Create a kernel from the program */

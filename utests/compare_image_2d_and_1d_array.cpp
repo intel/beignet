@@ -84,6 +84,8 @@ static void compare_image_2d_and_1d_array(void)
 
   free(dst0);
   free(dst1);
+  free(image_data1);
+  free(image_data2);
   OCL_CALL(clReleaseSampler, sampler);
 }
 

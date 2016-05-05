@@ -157,6 +157,14 @@ void runtime_compile_link(void)
   }
   OCL_UNMAP_BUFFER(2);
   OCL_DESTROY_KERNEL_KEEP_PROGRAM(true);
+  clReleaseProgram(foo_pg);
+  clReleaseProgram(myinc_pg);
+  clReleaseProgram(program_A);
+  clReleaseProgram(program_B);
+  clReleaseProgram(linked_program);
+  clReleaseProgram(new_linked_program);
+  clReleaseProgram(program_with_binary);
+  free(binary);
 }
 
 MAKE_UTEST_FROM_FUNCTION(runtime_compile_link);

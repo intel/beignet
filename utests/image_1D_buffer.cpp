@@ -60,6 +60,7 @@ void image_1D_buffer(void)
   }
   OCL_UNMAP_BUFFER(0);
   OCL_UNMAP_BUFFER(1);
+  free(buf_content);
 }
 
 MAKE_UTEST_FROM_FUNCTION(image_1D_buffer);

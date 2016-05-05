@@ -88,6 +88,10 @@ static void test_load_program_from_gen_bin(void)
             OCL_ASSERT(((float *)buf_data[1])[i] == cpu_dst[i]);
         OCL_UNMAP_BUFFER(1);
     }
+  cl_file_map_delete(fm);
+  clReleaseProgram(bin_program);
+  free(binary);
+  free(ker_path);
 }
 
 MAKE_UTEST_FROM_FUNCTION(test_load_program_from_gen_bin);
