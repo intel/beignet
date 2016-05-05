@@ -743,13 +743,13 @@ namespace gbe
   static void updatePointerSource(Value *parent, Value *theUser, Value *source, SmallVector<Value *, 4> &pointers) {
     if (isa<SelectInst>(theUser)) {
       SelectInst *si = dyn_cast<SelectInst>(theUser);
-      if (si->getTrueValue() == parent)
+      if (si && si->getTrueValue() == parent)
         pointers[0] = source;
       else
         pointers[1] = source;
     } else if (isa<PHINode>(theUser)) {
       PHINode *phi = dyn_cast<PHINode>(theUser);
-      unsigned opNum = phi->getNumIncomingValues();
+      unsigned opNum = phi ? phi->getNumIncomingValues() : 0;
       for (unsigned j = 0; j < opNum; j++) {
         if (phi->getIncomingValue(j) == parent) {
           pointers[j] = source;
@@ -829,7 +829,7 @@ namespace gbe
             if (isa<SelectInst>(theUser)) capacity = 2;
             if (isa<PHINode>(theUser)) {
               PHINode *phi = dyn_cast<PHINode>(theUser);
-              capacity = phi->getNumIncomingValues();
+              capacity = phi ? phi->getNumIncomingValues() : 1;
             }
 
             SmallVector<Value *, 4> pointers;
@@ -915,7 +915,7 @@ namespace gbe
           } else if (isa<CallInst>(theUser)) {
             // atomic/read(write)image
             CallInst *ci = dyn_cast<CallInst>(theUser);
-            pointer = ci->getArgOperand(0);
+            pointer = ci ? ci->getArgOperand(0) : NULL;
           } else {
             theUser->dump();
             GBE_ASSERT(0 && "Unknown instruction operating on pointers\n");
@@ -1203,7 +1203,7 @@ namespace gbe
     MDNode *typeNameNode = NULL;
     MDNode *typeBaseNameNode = NULL;
     MDNode *node = getKernelFunctionMetadata(&F);
-    for(uint j = 0; j < node->getNumOperands() - 1; j++) {
+    for(uint j = 0;node && j < node->getNumOperands() - 1; j++) {
       MDNode *attrNode = dyn_cast_or_null<MDNode>(node->getOperand(1 + j));
       if (attrNode == NULL) break;
       MDString *attrName = dyn_cast_or_null<MDString>(attrNode->getOperand(0));
@@ -1219,7 +1219,9 @@ namespace gbe
     unsigned argID = 0;
     ir::FunctionArgument::InfoFromLLVM llvmInfo;
     for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I, argID++) {
-      llvmInfo.typeName= (cast<MDString>(typeNameNode->getOperand(1 + argID)))->getString();
+      if(typeNameNode) {
+        llvmInfo.typeName= (cast<MDString>(typeNameNode->getOperand(1 + argID)))->getString();
+      }
       if(typeBaseNameNode) {
         llvmInfo.typeBaseName= (cast<MDString>(typeBaseNameNode->getOperand(1 + argID)))->getString();
       }
@@ -1427,7 +1429,7 @@ namespace gbe
           const StructType * strTy = cast<StructType>(c->getType());
           uint32_t size = 0;
 
-          for(uint32_t op=0; op < strTy->getNumElements(); op++)
+          for(uint32_t op=0; strTy && op < strTy->getNumElements(); op++)
           {
             Type* elementType = strTy->getElementType(op);
             uint32_t align = 8 * getAlignmentByte(unit, elementType);
@@ -1449,6 +1451,8 @@ namespace gbe
             getSequentialData(cds, mem, offset);
           else {
             const ConstantArray *ca = dyn_cast<ConstantArray>(c);
+            if(!ca)
+              return;
             const ArrayType *arrTy = ca->getType();
             Type* elemTy = arrTy->getElementType();
             uint32_t elemSize = getTypeBitSize(unit, elemTy);
@@ -1950,7 +1954,7 @@ namespace gbe
       assert(node);
 
 
-    for(uint j = 0; j < node->getNumOperands() - 1; j++) {
+    for(uint j = 0; node && j < node->getNumOperands() - 1; j++) {
       MDNode *attrNode = dyn_cast_or_null<MDNode>(node->getOperand(1 + j));
       if (attrNode == NULL) break;
       MDString *attrName = dyn_cast_or_null<MDString>(attrNode->getOperand(0));
@@ -1973,7 +1977,7 @@ namespace gbe
         reqd_wg_sz[2] = z->getZExtValue();
         functionAttributes += attrName->getString();
         std::stringstream param;
-        char buffer[100];
+        char buffer[100] = {0};
         param <<"(";
         param << reqd_wg_sz[0];
         param << ",";
@@ -2024,7 +2028,7 @@ namespace gbe
         std::string typeName = getTypeName(ctx, stype, signValue);
 
         std::stringstream param;
-        char buffer[100];
+        char buffer[100] = {0};
         param <<"(";
         param << typeName;
         if(vtype->isVectorTy())
@@ -2050,7 +2054,7 @@ namespace gbe
         hint_wg_sz[2] = z->getZExtValue();
         functionAttributes += attrName->getString();
         std::stringstream param;
-        char buffer[100];
+        char buffer[100] = {0};
         param <<"(";
         param << hint_wg_sz[0];
         param << ",";
@@ -2080,17 +2084,25 @@ namespace gbe
       for (; I != E; ++I, ++argID) {
         const std::string &argName = I->getName().str();
         Type *type = I->getType();
+        if(addrSpaceNode) {
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
-        llvmInfo.addrSpace = (cast<ConstantInt>(addrSpaceNode->getOperand(1 + argID)))->getZExtValue();
+          llvmInfo.addrSpace = (cast<ConstantInt>(addrSpaceNode->getOperand(1 + argID)))->getZExtValue();
 #else
-        llvmInfo.addrSpace = (mdconst::extract<ConstantInt>(addrSpaceNode->getOperand(1 + argID)))->getZExtValue();
+          llvmInfo.addrSpace = (mdconst::extract<ConstantInt>(addrSpaceNode->getOperand(1 + argID)))->getZExtValue();
 #endif
-        llvmInfo.typeName = (cast<MDString>(typeNameNode->getOperand(1 + argID)))->getString();
+        }
+        if(typeNameNode) {
+          llvmInfo.typeName = (cast<MDString>(typeNameNode->getOperand(1 + argID)))->getString();
+        }
         if(typeBaseNameNode){
           llvmInfo.typeBaseName = (cast<MDString>(typeBaseNameNode->getOperand(1 + argID)))->getString();
         }
-        llvmInfo.accessQual = (cast<MDString>(accessQualNode->getOperand(1 + argID)))->getString();
-        llvmInfo.typeQual = (cast<MDString>(typeQualNode->getOperand(1 + argID)))->getString();
+        if(accessQualNode) {
+          llvmInfo.accessQual = (cast<MDString>(accessQualNode->getOperand(1 + argID)))->getString();
+        }
+        if(typeQualNode) {
+          llvmInfo.typeQual = (cast<MDString>(typeQualNode->getOperand(1 + argID)))->getString();
+        }
         if(argNameNode){
           llvmInfo.argName = (cast<MDString>(argNameNode->getOperand(1 + argID)))->getString();
         }
@@ -2137,6 +2149,8 @@ namespace gbe
           ctx.input(argName, ir::FunctionArgument::VALUE, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type), 0);
         else {
           PointerType *pointerType = dyn_cast<PointerType>(type);
+          if(!pointerType)
+            continue;
           Type *pointed = pointerType->getElementType();
           // By value structure
 #if LLVM_VERSION_MINOR <= 1

@@ -82,8 +82,12 @@ namespace gbe
           continue;
         }
 
-        if (call->getCalledFunction() &&
-            call->getCalledFunction()->getIntrinsicID() != 0)
+        llvm::Function * callFunc = call->getCalledFunction();
+        if(!callFunc) {
+          continue;
+        }
+
+        if (callFunc->getIntrinsicID() != 0)
           continue;
 
         std::string fnName = call->getCalledValue()->stripPointerCasts()->getName();

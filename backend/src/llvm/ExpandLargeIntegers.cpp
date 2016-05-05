@@ -156,7 +156,7 @@ static TypePair getExpandedIntTypes(Type *Ty) {
 
 // Return true if Val is an int which should be converted.
 static bool shouldConvert(const Value *Val) {
-  Type *Ty = Val->getType();
+  Type *Ty = Val ? Val->getType() : NULL;
   if (IntegerType *ITy = dyn_cast<IntegerType>(Ty))
     return !isLegalBitSize(ITy->getBitWidth());
   return false;
@@ -398,6 +398,8 @@ static void convertInstruction(Instruction *Inst, ConversionState &State,
     PHINode *Hi = IRB.CreatePHI(OpTys.Hi, N, Twine(Name + ".hi"));
     for (unsigned I = 0; I != N; ++I) {
       Value *InVal = Phi->getIncomingValue(I);
+      if(!InVal)
+        continue;
       BasicBlock *InBB = Phi->getIncomingBlock(I);
       // If the value hasn't already been converted then this is a
       // forward-reference PHI which needs to be patched up after RPO traversal.

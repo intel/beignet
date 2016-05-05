@@ -202,6 +202,9 @@ namespace gbe {
       values.push_back(cast<StoreInst>(merged[i])->getValueOperand());
     }
     StoreInst *st = cast<StoreInst>(merged[0]);
+    if(!st)
+      return;
+
     unsigned addrSpace = st->getPointerAddressSpace();
 
     unsigned align = st->getAlignment();
@@ -215,7 +218,10 @@ namespace gbe {
       parent = Builder.CreateInsertElement(parent, values[i], ConstantInt::get(IntegerType::get(st->getContext(), 32), i));
     }
 
-    Value *newPtr = Builder.CreateBitCast(st->getPointerOperand(), PointerType::get(vecTy, addrSpace));
+    Value * stPointer = st->getPointerOperand();
+    if(!stPointer)
+      return;
+    Value *newPtr = Builder.CreateBitCast(stPointer, PointerType::get(vecTy, addrSpace));
     StoreInst *newST = Builder.CreateStore(parent, newPtr);
     newST->setAlignment(align);
   }
@@ -227,6 +233,7 @@ namespace gbe {
       if(isa<LoadInst>(*BBI) || isa<StoreInst>(*BBI)) {
         bool isLoad = isa<LoadInst>(*BBI) ? true: false;
         Type *ty = getValueType(&*BBI);
+        if(!ty) continue;
         if(ty->isVectorTy()) continue;
         // TODO Support DWORD/WORD/BYTE LOAD for store support DWORD only now.
         if (!(ty->isFloatTy() || ty->isIntegerTy(32) ||

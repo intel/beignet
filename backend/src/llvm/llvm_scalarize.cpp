@@ -173,6 +173,8 @@ namespace gbe {
     }
 
     Type* GetBasicType(Type* type) {
+      if(!type)
+        return type;
       switch(type->getTypeID()) {
       case Type::VectorTyID:
       case Type::ArrayTyID:
@@ -184,14 +186,14 @@ namespace gbe {
     }
 
     int GetComponentCount(const Type* type)  {
-      if (type->getTypeID() == Type::VectorTyID)
+      if (type && type->getTypeID() == Type::VectorTyID)
         return llvm::dyn_cast<VectorType>(type)->getNumElements();
       else
         return 1;
     }
 
     int GetComponentCount(const Value* value) {
-      return GetComponentCount(value->getType());
+      return GetComponentCount(value ? value->getType() : NULL);
     }
 
     /* set to insert new instructions after the specified instruction.*/
@@ -236,7 +238,7 @@ namespace gbe {
   {
     assert(canGetComponent(v) && "getComponent called on unhandled vector");
 
-    if (v->getType()->isVectorTy()) {
+    if (v && v->getType() && v->getType()->isVectorTy()) {
       if (ConstantDataVector* c = dyn_cast<ConstantDataVector>(v)) {
         return c->getElementAsConstant(component);
       } else if (ConstantVector* c = dyn_cast<ConstantVector>(v)) {
@@ -337,7 +339,7 @@ namespace gbe {
   }
   bool Scalarize::canGetComponent(Value* v)
   {
-    if (v->getType()->isVectorTy()) {
+    if (v && v->getType() && v->getType()->isVectorTy()) {
       if (isa<ConstantDataVector>(v) || isa<ConstantVector>(v) || isa<ConstantAggregateZero>(v) || isa<UndefValue>(v)) {
         return true;
       } else {
@@ -541,13 +543,18 @@ namespace gbe {
     VectorValues& vVals = vectorVals[sv];
 
     int size = GetComponentCount(sv);
-    int srcSize = GetComponentCount(sv->getOperand(0)->getType());
+
+    Value* Op0 = sv->getOperand(0);
+    if(!Op0)
+      return false;
+
+    int srcSize = GetComponentCount(Op0->getType());
 
     for (int i = 0; i < size; ++i) {
       int select = sv->getMaskValue(i);
 
       if (select < 0) {
-        setComponent(vVals, i, UndefValue::get(GetBasicType(sv->getOperand(0))));
+        setComponent(vVals, i, UndefValue::get(GetBasicType(Op0)));
         continue;
       }
 
@@ -736,7 +743,7 @@ namespace gbe {
         //TODO: This is a implement for the non-constant index, we use an allocated new vector
         //to store the need vector elements.
         Value* foo = extr->getOperand(0);
-        Type* fooTy = foo->getType();
+        Type* fooTy = foo ? foo->getType() : NULL;
 
         Value* Alloc;
         if(vectorAlloca.find(foo) == vectorAlloca.end())
@@ -807,7 +814,10 @@ namespace gbe {
       return;
     ReversePostOrderTraversal<Function*> rpot(&F);
     BasicBlock::iterator instI = (*rpot.begin())->begin();
-    builder->SetInsertPoint(&*instI);
+    Instruction* instVal = &*instI;
+    if(instVal == nullptr)
+      return;
+    builder->SetInsertPoint(instVal);
 
     Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
 

@@ -222,7 +222,9 @@ namespace gbe
   {
     const uint32_t ptrSize = unit.getPointerSize();
     Value* parentPointer = GEPInst->getOperand(0);
-    CompositeType* CompTy = cast<CompositeType>(parentPointer->getType());
+    CompositeType* CompTy = parentPointer ? cast<CompositeType>(parentPointer->getType()) : NULL;
+    if(!CompTy)
+      return false;
 
     Value* currentAddrInst = 
       new PtrToIntInst(parentPointer, IntegerType::get(GEPInst->getContext(), ptrSize), "", GEPInst);
@@ -253,6 +255,9 @@ namespace gbe
           ConstantInt::get(IntegerType::get(GEPInst->getContext(), ptrSize), size);
 
         Value *operand = GEPInst->getOperand(op); 
+
+        if(!operand)
+          continue;
 
         //HACK TODO: Inserted by type replacement.. this code could break something????
         if(getTypeByteSize(unit, operand->getType())>4)

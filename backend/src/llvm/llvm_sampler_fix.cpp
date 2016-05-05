@@ -41,6 +41,8 @@ namespace gbe {
     }
 
     bool visitCallInst(CallInst *I) {
+      if(!I)
+        return false;
       Value *Callee = I->getCalledValue();
       const std::string fnName = Callee->getName();
       bool changed = false;

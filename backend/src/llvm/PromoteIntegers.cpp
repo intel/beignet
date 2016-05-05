@@ -129,7 +129,8 @@ static Type *getPromotedType(Type *Ty) {
 
 // Return true if Val is an int which should be converted.
 static bool shouldConvert(Value *Val) {
-  if (IntegerType *ITy = dyn_cast<IntegerType>(Val->getType())) {
+  Type *Ty = Val ? Val->getType() : NULL;
+  if (IntegerType *ITy = dyn_cast<IntegerType>(Ty)) {
     if (!isLegalSize(ITy->getBitWidth())) {
       return true;
     }
@@ -338,6 +339,8 @@ static Value *splitStore(StoreInst *Inst, ConversionState &State) {
 // original type cleared.
 static Value *getClearConverted(Value *Operand, Instruction *InsertPt,
                                 ConversionState &State) {
+  if(!Operand)
+    return Operand;
   Type *OrigType = Operand->getType();
   Instruction *OrigInst = dyn_cast<Instruction>(Operand);
   Operand = State.getConverted(Operand);

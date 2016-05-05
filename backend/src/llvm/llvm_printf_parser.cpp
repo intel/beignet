@@ -324,6 +324,9 @@ error:
     int param_num = 0;
 
     llvm::Constant* arg0 = dyn_cast<llvm::ConstantExpr>(*CI_FMT);
+    if(!arg0) {
+      return false;
+    }
     llvm::Constant* arg0_ptr = dyn_cast<llvm::Constant>(arg0->getOperand(0));
     if (!arg0_ptr) {
       return false;
@@ -428,7 +431,12 @@ error:
           continue;
         }
 
-        if (call->getCalledFunction() && call->getCalledFunction()->getIntrinsicID() != 0)
+        llvm::Function * callFunc = call->getCalledFunction();
+        if(!callFunc) {
+          continue;
+        }
+
+        if ( callFunc->getIntrinsicID() != 0)
           continue;
 
         Value *Callee = call->getCalledValue();
@@ -560,6 +568,9 @@ error:
         switch (slot.state.conversion_specifier) {
           case PRINTF_CONVERSION_S: {
             llvm::Constant* arg0 = dyn_cast<llvm::ConstantExpr>(arg);
+            if(!arg0) {
+              return false;
+            }
             llvm::Constant* arg0_ptr = dyn_cast<llvm::Constant>(arg0->getOperand(0));
             if (!arg0_ptr) {
               return false;

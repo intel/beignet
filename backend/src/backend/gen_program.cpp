@@ -87,6 +87,11 @@ namespace gbe {
     Kernel::printStatus(indent, outs);
 
     FILE *f = fopen("/dev/null", "w");
+    if(!f) {
+      outs << "could not open /dev/null !";
+      return;
+    }
+
     char *buf = new char[4096];
     setbuffer(f, buf, 4096);
     GenCompactInstruction * pCom = NULL;
@@ -147,6 +152,8 @@ namespace gbe {
     // when the function already provides the simd width we need to use (i.e.
     // non zero)
     const ir::Function *fn = unit.getFunction(name);
+    if(fn == NULL)
+      GBE_ASSERT(0);
     uint32_t codeGenNum = sizeof(codeGenStrategy) / sizeof(codeGenStrategy[0]);
     uint32_t codeGen = 0;
     GenContext *ctx = NULL;
@@ -189,14 +196,17 @@ namespace gbe {
       const uint32_t reservedSpillRegs = codeGenStrategy[codeGen].reservedSpillRegs;
 
       // Force the SIMD width now and try to compile
-      unit.getFunction(name)->setSimdWidth(simdWidth);
+      ir::Function *simdFn = unit.getFunction(name);
+      if(simdFn == NULL)
+        GBE_ASSERT(0);
+      simdFn->setSimdWidth(simdWidth);
       ctx->startNewCG(simdWidth, reservedSpillRegs, limitRegisterPressure);
       kernel = ctx->compileKernel();
       if (kernel != NULL) {
         GBE_ASSERT(ctx->getErrCode() == NO_ERROR);
         break;
       }
-      fn->getImageSet()->clearInfo();
+      simdFn->getImageSet()->clearInfo();
       // If we get a out of range if/endif error.
       // We need to set the context to if endif fix mode and restart the previous compile.
       if ( ctx->getErrCode() == OUT_OF_RANGE_IF_ENDIF && !ctx->getIFENDIFFix() ) {

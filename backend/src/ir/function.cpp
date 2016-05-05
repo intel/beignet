@@ -393,7 +393,7 @@ namespace ir {
   LabelIndex BasicBlock::getLabelIndex(void) const {
     const Instruction *first = this->getFirstInstruction();
     const LabelInstruction *label = cast<LabelInstruction>(first);
-    return label->getLabelIndex();
+    return label?label->getLabelIndex():LabelIndex(-1);
   }
 
 } /* namespace ir */
