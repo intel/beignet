@@ -114,4 +114,5 @@ int main(int argc, char *argv[])
   } while ((c = getopt_long (argc, argv, shortopts, longopts, NULL)) != -1);
 
   cl_ocl_destroy();
+  return 0;
 }

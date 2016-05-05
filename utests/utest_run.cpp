@@ -141,5 +141,6 @@ int main(int argc, char *argv[])
 
 clean:
   cl_ocl_destroy();
+  return 0;
 }
 
