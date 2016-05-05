@@ -1,0 +1,45 @@
+Stand Alone Unit Test HowTo
+====================
+
+Beignet provides an independent unit test suite covered most OpenCL language feautures,
+including more than 800 cases which could run in a few minutes, it should be useful for
+testing and comparing different OpenCL implementations.
+
+Prerequisite
+------------
+
+OpenCL ICD. Please check your OpenCL ICD existance by command
+`pkg-config --libs OpenCL`.
+
+Build Stand Alone Unit Test
+-----------------------------------
+The project uses CMake with three profiles:
+
+1. Debug (-g)
+2. RelWithDebInfo (-g with optimizations)
+3. Release (only optimizations)
+
+Basically, from the root directory of the project
+
+`> cd utest`
+
+`> cmake . # to configure`
+
+`> make`
+
+Once built, the 'utest_run' is generated in currenty directory.
+
+How to run
+----------
+
+You need to call setenv.sh in the utests/ directory to set some environment variables
+firstly as below:
+
+`> . setenv.sh`
+
+Then in `utests/`:
+
+`> ./utest_run`
+
+if the utest_run fail to run, please check /etc/vendors/OpenCL to confirm it calls the expected
+OpenCL driver, or export LD_LIBRARAY_PATH to establish the correct link.
