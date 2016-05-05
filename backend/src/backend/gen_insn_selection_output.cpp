@@ -95,13 +95,14 @@ namespace gbe
       assert(!"should not reach here");
   }
 
+#define OP_NAME_LENGTH 512
   void outputSelectionIR(GenContext &ctx, Selection* sel)
   {
     cout << "SELECTION IR begin:" << endl;
     cout << "WARNING: not completed yet, welcome for the FIX!" << endl;
     for (SelectionBlock &block : *sel->blockList) {
       for (SelectionInstruction &insn : block.insnList) {
-        char opname[512];
+        char opname[OP_NAME_LENGTH];
         if (insn.isLabel()) {
             cout << "  L" << insn.index << ":" << endl;
             continue;
@@ -137,6 +138,11 @@ namespace gbe
         }
 
         int n = strlen(opname);
+        if(n >= OP_NAME_LENGTH - 20) {
+          cout << "opname too long: " << opname << endl;
+          return;
+        }
+
         sprintf(&opname[n], "(%d)", insn.state.execWidth);
         cout << "    " << left << setw(20) << opname;
 

@@ -745,6 +745,7 @@ error:
   return p;
 }
 
+#define FILE_PATH_LENGTH  1024
 LOCAL cl_int
 cl_program_compile(cl_program            p,
                    cl_uint               num_input_headers,
@@ -795,11 +796,15 @@ cl_program_compile(cl_program            p,
     for (i = 0; i < num_input_headers; i++) {
       if(header_include_names[i] == NULL || input_headers[i] == NULL)
         continue;
-
-      char temp_path[255]="";
-      strncpy(temp_path, temp_header_path, strlen(temp_header_path));
+      char temp_path[FILE_PATH_LENGTH]="";
+      strncat(temp_path, temp_header_path, strlen(temp_header_path));
       strncat(temp_path, "/", 1);
       strncat(temp_path, header_include_names[i], strlen(header_include_names[i]));
+      if(strlen(temp_path) >= FILE_PATH_LENGTH - 1 ) {
+        err = CL_COMPILE_PROGRAM_FAILURE;
+        goto error;
+      }
+      temp_path[strlen(temp_path)+1] = '\0';
       char* dirc = strdup(temp_path);
       char* dir = dirname(dirc);
       mkdir(dir, 0755);
@@ -943,6 +948,7 @@ cl_program_get_kernel_names(cl_program p, size_t size, char *names, size_t *size
   len = strlen(ker_name);
   if(names) {
     strncpy(names, cl_kernel_get_name(p->ker[0]), size - 1);
+    names[size] = '\0';
     if(size < len - 1) {
       if(size_ret) *size_ret = size;
       return;
