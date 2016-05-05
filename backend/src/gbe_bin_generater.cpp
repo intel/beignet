@@ -226,6 +226,7 @@ void program_build_instance::serialize_program(void) throw(int)
         size_t bin_length = gbe_program_serialize_to_binary((gbe_program)gbe_prog, &llvm_binary, 1);
         oss.write(llvm_binary, bin_length);
         sz += bin_length;
+        free(llvm_binary);
       }
 
       for (size_t i = 0; i < sz; i++) {
@@ -258,6 +259,7 @@ void program_build_instance::serialize_program(void) throw(int)
         size_t bin_length = gbe_program_serialize_to_binary((gbe_program)gbe_prog, &llvm_binary, 1);
         ofs.write(llvm_binary, bin_length);
         sz+=bin_length;
+        free(llvm_binary);
       }
     }
 
