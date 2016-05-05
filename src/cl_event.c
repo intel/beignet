@@ -76,6 +76,11 @@ cl_event_is_gpu_command_type(cl_command_type type)
 int cl_event_flush(cl_event event)
 {
   int err = CL_SUCCESS;
+  if(!event) {
+    err = CL_INVALID_VALUE;
+    return err;
+  }
+
   assert(event->gpgpu_event != NULL);
   if (event->gpgpu) {
     err = cl_command_queue_flush_gpgpu(event->queue, event->gpgpu);
@@ -303,7 +308,7 @@ void cl_event_new_enqueue_callback(cl_event event,
 {
   enqueue_callback *cb, *node;
   user_event *user_events, *u_ev;
-  cl_command_queue queue = event->queue;
+  cl_command_queue queue = event ? event->queue : NULL;
   cl_int i;
   cl_int err = CL_SUCCESS;
 
@@ -362,9 +367,10 @@ void cl_event_new_enqueue_callback(cl_event event,
       /* Insert the user event to enqueue_callback's wait_user_events */
       TRY(cl_event_insert_user_event, &cb->wait_user_events, event_wait_list[i]);
       cl_event_add_ref(event_wait_list[i]);
-      cl_command_queue_insert_event(event->queue, event_wait_list[i]);
-      if(data->type == EnqueueBarrier){
-        cl_command_queue_insert_barrier_event(event->queue, event_wait_list[i]);
+      if(queue)
+        cl_command_queue_insert_event(queue, event_wait_list[i]);
+      if(queue && data->type == EnqueueBarrier){
+        cl_command_queue_insert_barrier_event(queue, event_wait_list[i]);
       }
     } else if(event_wait_list[i]->enqueue_cb != NULL) {
       user_events = event_wait_list[i]->enqueue_cb->wait_user_events;
@@ -386,20 +392,22 @@ void cl_event_new_enqueue_callback(cl_event event,
         /* Insert the user event to enqueue_callback's wait_user_events */
         TRY(cl_event_insert_user_event, &cb->wait_user_events, user_events->event);
         cl_event_add_ref(user_events->event);
-        cl_command_queue_insert_event(event->queue, user_events->event);
-        if(data->type == EnqueueBarrier){
+        if(queue)
+          cl_command_queue_insert_event(event->queue, user_events->event);
+        if(queue && data->type == EnqueueBarrier){
           cl_command_queue_insert_barrier_event(event->queue, user_events->event);
         }
         user_events = user_events->next;
       }
     }
   }
-  if(data->queue != NULL && event->gpgpu_event != NULL) {
+  if(event != NULL && event->queue != NULL && event->gpgpu_event != NULL) {
     event->gpgpu = cl_thread_gpgpu_take(event->queue);
     data->ptr = (void *)event->gpgpu_event;
   }
   cb->data = *data;
-  event->enqueue_cb = cb;
+  if(event)
+    event->enqueue_cb = cb;
 
 exit:
   return;
@@ -595,12 +603,12 @@ cl_int cl_event_marker_with_wait_list(cl_command_queue queue,
   if(num_events_in_wait_list > 0){
     if(cl_event_wait_events(num_events_in_wait_list, event_wait_list, queue) == CL_ENQUEUE_EXECUTE_DEFER) {
       data.type = EnqueueMarker;
-      cl_event_new_enqueue_callback(*event, &data, num_events_in_wait_list, event_wait_list);
+      cl_event_new_enqueue_callback(event?*event:NULL, &data, num_events_in_wait_list, event_wait_list);
       return CL_SUCCESS;
     }
   } else if(queue->wait_events_num > 0) {
     data.type = EnqueueMarker;
-    cl_event_new_enqueue_callback(*event, &data, queue->wait_events_num, queue->wait_events);
+    cl_event_new_enqueue_callback(event?*event:NULL, &data, queue->wait_events_num, queue->wait_events);
     return CL_SUCCESS;
   }
 

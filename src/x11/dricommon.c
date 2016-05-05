@@ -68,6 +68,9 @@ dri_state_do_drawable_hash(dri_state_t *state, XID drawable)
   }
 
   dri_drawable = dri_state_create_drawable(state, drawable);
+  if(dri_drawable == NULL)
+    return NULL;
+
   dri_drawable->x_drawable = drawable;
   dri_drawable->next = state->drawable_hash[index];
   state->drawable_hash[index] = dri_drawable;
@@ -283,7 +286,8 @@ getDRI2State(Display* dpy, int screen, char **driver_name)
         &internal_driver_name, &device_name))
     goto err_out;
 
-  fd = open(device_name, O_RDWR);
+  if(device_name != NULL )
+    fd = open(device_name, O_RDWR);
 
   if (fd < 0)
     goto err_out;

@@ -180,6 +180,9 @@ void intel_gpgpu_delete_all(intel_driver_t *drv)
 static void
 intel_gpgpu_delete(intel_gpgpu_t *gpgpu)
 {
+  if (gpgpu == NULL)
+    return;
+
   intel_driver_t *drv = gpgpu->drv;
   struct intel_gpgpu_node *p, *node;
 
@@ -205,7 +208,6 @@ intel_gpgpu_delete(intel_gpgpu_t *gpgpu)
       drv->gpgpu_list = drv->gpgpu_list->next;
       intel_gpgpu_delete_finished(node->gpgpu);
       cl_free(node);
-      node = p->next;
     }
   }
   if (gpgpu == NULL)

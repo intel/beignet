@@ -938,10 +938,10 @@ _cl_mem_new_image(cl_context ctx,
                     0, 0, 0);
 
   /* Copy the data if required */
-  if (flags & CL_MEM_COPY_HOST_PTR)
+  if (flags & CL_MEM_COPY_HOST_PTR && data)
     cl_mem_copy_image(cl_mem_image(mem), pitch, slice_pitch, data);
 
-  if (flags & CL_MEM_USE_HOST_PTR) {
+  if (flags & CL_MEM_USE_HOST_PTR && data) {
     mem->host_ptr = data;
     cl_mem_image(mem)->host_row_pitch = pitch;
     cl_mem_image(mem)->host_slice_pitch = slice_pitch;
@@ -1416,6 +1416,9 @@ cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
     ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_UNALIGN_SRC_OFFSET,
              cl_internal_copy_buf_unalign_src_offset_str,
              (size_t)cl_internal_copy_buf_unalign_src_offset_str_size, NULL);
+
+    if (!ker)
+      return CL_OUT_OF_RESOURCES;
 
     cl_kernel_set_arg(ker, 0, sizeof(cl_mem), &src_buf);
     cl_kernel_set_arg(ker, 1, sizeof(int), &dw_src_offset);

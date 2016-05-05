@@ -280,6 +280,9 @@ static void insert(cl_context context, const char *kernel_name, const char *buil
   }
   context_storage_node *p_context = find_context(context);
   kernel_storage_node *p_kernel = find_kernel(p_context, kernel_name, build_opt);
+  if(!p_kernel)
+    return;
+
   prev_context_pointer = p_context;
   prev_kernel_pointer = p_kernel;
   p_kernel->kernel_times[p_kernel->current_count++] = time;

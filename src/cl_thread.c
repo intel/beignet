@@ -75,6 +75,12 @@ static thread_spec_data * __create_thread_spec_data(cl_command_queue queue, int 
     if (i == thread_array_num) {
       thread_array_num *= 2;
       thread_slot_map = realloc(thread_slot_map, sizeof(int) * thread_array_num);
+
+      if(thread_slot_map == NULL) {
+        pthread_mutex_unlock(&thread_queue_map_lock);
+        return NULL;
+      }
+
       memset(thread_slot_map + thread_array_num/2, 0, sizeof(int) * (thread_array_num/2));
       thread_id = thread_array_num/2;
     }
@@ -91,6 +97,12 @@ static thread_spec_data * __create_thread_spec_data(cl_command_queue queue, int 
     thread_private->threads_data_num = thread_array_num;
     thread_private->threads_data = realloc(thread_private->threads_data,
                 thread_private->threads_data_num * sizeof(void *));
+
+    if(thread_private->threads_data == NULL) {
+      pthread_mutex_unlock(&thread_private->thread_data_lock);
+      return NULL;
+    }
+
     memset(thread_private->threads_data + old_num, 0,
            sizeof(void*) * (thread_private->threads_data_num - old_num));
   }
@@ -164,6 +176,8 @@ void* cl_thread_data_create(void)
 cl_gpgpu cl_get_thread_gpgpu(cl_command_queue queue)
 {
   thread_spec_data* spec = __create_thread_spec_data(queue, 1);
+  if(!spec)
+    return NULL;
 
   if (!spec->thread_magic && spec->thread_magic != thread_magic) {
     //We may get the slot from last thread. So free the resource.

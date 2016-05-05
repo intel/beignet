@@ -134,7 +134,7 @@ cl_intel_platform_enable_extension(cl_device_id device, uint32_t ext)
   }
 
   /* already enabled, skip. */
-  if (strstr(device->extensions, ext_str))
+  if (ext_str && strstr(device->extensions, ext_str))
     ext_str = NULL;
 
   if (ext_str) {
