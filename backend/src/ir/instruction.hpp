@@ -134,10 +134,10 @@ namespace ir {
   {
   public:
     /*! Initialize the instruction from a 8 bytes stream */
-    INLINE InstructionBase(const char *stream) {
-      opcode = Opcode(stream[0]);
+    INLINE InstructionBase(Opcode op, const char* opaque) {
+      opcode = op;
       for (uint32_t byte = 0; byte < opaqueSize; ++byte)
-        opaque[byte] = stream[byte+1];
+        this->opaque[byte] = opaque[byte];
     }
     /*! Uninitialized instruction */
     INLINE InstructionBase(void) {}
@@ -155,12 +155,12 @@ namespace ir {
   {
   public:
     /*! Initialize the instruction from a 8 bytes stream */
-    INLINE Instruction(const char *stream) : InstructionBase(stream) {
+    INLINE Instruction(const char *stream) : InstructionBase(Opcode(stream[0]), &stream[1]) {
       parent = NULL;
     }
     /*! Copy the private fields and give it the same parent */
     INLINE Instruction(const Instruction &other) :
-      InstructionBase(reinterpret_cast<const char*>(&other.opcode)) {
+      InstructionBase(other.opcode, other.opaque) {
       parent = other.parent;
     }
 
