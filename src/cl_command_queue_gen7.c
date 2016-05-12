@@ -89,7 +89,7 @@ cl_set_varying_payload(const cl_kernel ker,
       ids[2][curr] = k;
     block_ips[curr] = 0;
     if (thread_ids)
-      thread_ids[curr/simd_sz] = (k*local_wk_sz[2] + j*local_wk_sz[1] + i)/simd_sz;
+      thread_ids[curr/simd_sz] = curr/simd_sz;
   }
 
   /* Copy them to the curbe buffer */
