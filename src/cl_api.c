@@ -1348,6 +1348,26 @@ clGetKernelWorkGroupInfo(cl_kernel                   kernel,
 }
 
 cl_int
+clGetKernelSubGroupInfoKHR(cl_kernel                   kernel,
+                          cl_device_id                device,
+                          cl_kernel_work_group_info   param_name,
+                          size_t                      input_value_size,
+                          const void *                input_value,
+                          size_t                      param_value_size,
+                          void *                      param_value,
+                          size_t *                    param_value_size_ret)
+{
+  return cl_get_kernel_subgroup_info(kernel,
+                                     device,
+                                     param_name,
+                                     input_value_size,
+                                     input_value,
+                                     param_value_size,
+                                     param_value,
+                                     param_value_size_ret);
+}
+
+cl_int
 clWaitForEvents(cl_uint          num_events,
                 const cl_event * event_list)
 {

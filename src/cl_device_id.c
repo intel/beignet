@@ -27,6 +27,7 @@
 #include "cl_thread.h"
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
+#include "CL/cl_intel.h"
 #include "cl_gbe_loader.h"
 #include "cl_alloc.h"
 
@@ -1088,3 +1089,85 @@ error:
   return err;
 }
 
+LOCAL cl_int
+cl_get_kernel_subgroup_info(cl_kernel kernel,
+                            cl_device_id device,
+                            cl_kernel_work_group_info param_name,
+                            size_t input_value_size,
+                            const void* input_value,
+                            size_t param_value_size,
+                            void* param_value,
+                            size_t* param_value_size_ret)
+{
+  int err = CL_SUCCESS;
+  if(device != NULL)
+    if (kernel->program->ctx->device != device)
+      return CL_INVALID_DEVICE;
+
+  CHECK_KERNEL(kernel);
+  switch (param_name) {
+    case CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR:
+    {
+      int i, dim = 0;
+      size_t local_sz = 1;
+      if (param_value && param_value_size < sizeof(size_t))
+        return CL_INVALID_VALUE;
+      if (param_value_size_ret != NULL)
+        *param_value_size_ret = sizeof(size_t);
+      switch (input_value_size)
+      {
+        case sizeof(size_t)*1:
+        case sizeof(size_t)*2:
+        case sizeof(size_t)*3:
+          dim = input_value_size/sizeof(size_t);
+          break;
+        default: return CL_INVALID_VALUE;
+      }
+      if (input_value == NULL )
+        return CL_INVALID_VALUE;
+      for(i = 0; i < dim; i++)
+        local_sz *= ((size_t*)input_value)[i];
+      if (param_value) {
+        size_t simd_sz = cl_kernel_get_simd_width(kernel);
+        size_t sub_group_size = local_sz >= simd_sz? simd_sz : local_sz;
+        *(size_t*)param_value = sub_group_size;
+        return CL_SUCCESS;
+      }
+      break;
+    }
+    case CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE_KHR:
+    {
+      int i, dim = 0;
+      size_t local_sz = 1;
+      if (param_value && param_value_size < sizeof(size_t))
+        return CL_INVALID_VALUE;
+      if (param_value_size_ret != NULL)
+        *param_value_size_ret = sizeof(size_t);
+      switch (input_value_size)
+      {
+        case sizeof(size_t)*1:
+        case sizeof(size_t)*2:
+        case sizeof(size_t)*3:
+          dim = input_value_size/sizeof(size_t);
+          break;
+        default: return CL_INVALID_VALUE;
+      }
+      if (input_value == NULL )
+        return CL_INVALID_VALUE;
+      for(i = 0; i < dim; i++)
+        local_sz *= ((size_t*)input_value)[i];
+      if (param_value) {
+        size_t simd_sz = cl_kernel_get_simd_width(kernel);
+        size_t sub_group_num = (local_sz + simd_sz - 1) / simd_sz;
+        *(size_t*)param_value = sub_group_num;
+        return CL_SUCCESS;
+      }
+      break;
+    }
+    default:
+      return CL_INVALID_VALUE;
+  };
+
+error:
+  return err;
+}

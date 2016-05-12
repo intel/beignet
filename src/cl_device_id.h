@@ -149,6 +149,15 @@ extern cl_int cl_get_kernel_workgroup_info(cl_kernel kernel,
                                            size_t           param_value_size,
                                            void *           param_value,
                                            size_t *         param_value_size_ret);
+
+extern cl_int cl_get_kernel_subgroup_info(cl_kernel kernel,
+                                          cl_device_id     device,
+                                          cl_kernel_work_group_info   param_name,
+                                          size_t           input_value_size,
+                                          const void *     input_value,
+                                          size_t           param_value_size,
+                                          void *           param_value,
+                                          size_t *         param_value_size_ret);
 /* Returns the Gen device ID */
 extern cl_int cl_device_get_version(cl_device_id device, cl_int *ver);
 extern size_t cl_get_kernel_max_wg_sz(cl_kernel);
