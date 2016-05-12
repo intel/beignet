@@ -17,3 +17,21 @@
  */
 
 #include "ocl_simd.h"
+#include "ocl_workitem.h"
+
+uint get_max_sub_group_size(void)
+{
+  uint local_sz = get_local_size(0)*get_local_size(1)*get_local_size(2);
+  uint simd_sz = get_simd_size();
+  return local_sz > simd_sz ? simd_sz : local_sz;
+}
+
+uint get_sub_group_size(void)
+{
+  uint threadn = get_num_sub_groups();
+  uint threadid = get_sub_group_id();
+  if((threadid == (threadn - 1)) && (threadn > 1))
+    return (get_local_size(0)*get_local_size(1)*get_local_size(2)) % get_max_sub_group_size();
+  else
+    return get_max_sub_group_size();
+}
