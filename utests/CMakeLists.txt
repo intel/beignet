@@ -206,6 +206,10 @@ set (utests_sources
   builtin_global_id.cpp
   builtin_num_groups.cpp
   builtin_local_id.cpp
+  builtin_sub_group_size.cpp
+  builtin_max_sub_group_size.cpp
+  builtin_num_sub_groups.cpp
+  builtin_sub_group_id.cpp
   builtin_acos_asin.cpp
   builtin_pow.cpp
   builtin_exp.cpp
