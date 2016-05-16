@@ -2697,12 +2697,13 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           case ir::OP_SIMD_ANY:
             {
               const GenRegister constZero = GenRegister::immuw(0);;
-              const GenRegister regOne = GenRegister::uw1grf(ir::ocl::one);
+              const GenRegister constOne = GenRegister::retype(sel.selReg(sel.reg(ir::FAMILY_DWORD)), GEN_TYPE_UD);
               const GenRegister flag01 = GenRegister::flag(0, 1);
 
               sel.push();
                 int simdWidth = sel.curr.execWidth;
                 sel.curr.predicate = GEN_PREDICATE_NONE;
+                sel.MOV(constOne, GenRegister::immud(1));
                 sel.curr.execWidth = 1;
                 sel.curr.noMask = 1;
                 sel.MOV(flag01, constZero);
@@ -2719,19 +2720,21 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
                   sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
                 else
                   NOT_IMPLEMENTED;
-                sel.SEL(dst, regOne, constZero);
+                sel.SEL(dst, constOne, constZero);
               sel.pop();
             }
             break;
           case ir::OP_SIMD_ALL:
             {
               const GenRegister constZero = GenRegister::immuw(0);
+              const GenRegister constOne = GenRegister::retype(sel.selReg(sel.reg(ir::FAMILY_DWORD)), GEN_TYPE_UD);
               const GenRegister regOne = GenRegister::uw1grf(ir::ocl::one);
               const GenRegister flag01 = GenRegister::flag(0, 1);
 
               sel.push();
                 int simdWidth = sel.curr.execWidth;
                 sel.curr.predicate = GEN_PREDICATE_NONE;
+                sel.MOV(constOne, GenRegister::immud(1));
                 sel.curr.execWidth = 1;
                 sel.curr.noMask = 1;
                 sel.MOV(flag01, regOne);
@@ -2749,7 +2752,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
                   sel.curr.predicate = GEN_PREDICATE_ALIGN1_ALL8H;
                 else
                   NOT_IMPLEMENTED;
-                sel.SEL(dst, regOne, constZero);
+                sel.SEL(dst, constOne, constZero);
               sel.pop();
             }
             break;
