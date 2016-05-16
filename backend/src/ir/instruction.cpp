@@ -994,6 +994,33 @@ namespace ir {
         Register dst[1];
     };
 
+    class ALIGNED_INSTRUCTION SubGroupInstruction :
+      public BasePolicy,
+      public TupleSrcPolicy<SubGroupInstruction>,
+      public NDstPolicy<SubGroupInstruction, 1>
+    {
+      public:
+        INLINE SubGroupInstruction(WorkGroupOps opcode, Register dst,
+            Tuple srcTuple, uint8_t srcNum, Type type) {
+          this->opcode = OP_SUBGROUP;
+          this->workGroupOp = opcode;
+          this->type = type;
+          this->dst[0] = dst;
+          this->src = srcTuple;
+          this->srcNum = srcNum;
+        }
+        INLINE Type getType(void) const { return this->type; }
+        INLINE bool wellFormed(const Function &fn, std::string &whyNot) const;
+        INLINE void out(std::ostream &out, const Function &fn) const;
+        INLINE WorkGroupOps getWorkGroupOpcode(void) const { return this->workGroupOp; }
+
+        WorkGroupOps workGroupOp:5;
+        uint32_t srcNum:3;          //!< Source Number
+        Type type;                  //!< Type of the instruction
+        Tuple src;
+        Register dst[1];
+    };
+
     class ALIGNED_INSTRUCTION PrintfInstruction :
       public BasePolicy,
       public TupleSrcPolicy<PrintfInstruction>,
@@ -1505,6 +1532,52 @@ namespace ir {
       return true;
     }
 
+    INLINE bool SubGroupInstruction::wellFormed(const Function &fn, std::string &whyNot) const {
+      const RegisterFamily family = getFamily(this->type);
+
+      if (UNLIKELY(checkSpecialRegForWrite(dst[0], fn, whyNot) == false))
+        return false;
+      if (UNLIKELY(checkRegisterData(family, dst[0], fn, whyNot) == false))
+        return false;
+
+      switch (this->workGroupOp) {
+        case WORKGROUP_OP_ANY:
+        case WORKGROUP_OP_ALL:
+        case WORKGROUP_OP_REDUCE_ADD:
+        case WORKGROUP_OP_REDUCE_MIN:
+        case WORKGROUP_OP_REDUCE_MAX:
+        case WORKGROUP_OP_INCLUSIVE_ADD:
+        case WORKGROUP_OP_INCLUSIVE_MIN:
+        case WORKGROUP_OP_INCLUSIVE_MAX:
+        case WORKGROUP_OP_EXCLUSIVE_ADD:
+        case WORKGROUP_OP_EXCLUSIVE_MIN:
+        case WORKGROUP_OP_EXCLUSIVE_MAX:
+          if (this->srcNum != 1) {
+            whyNot = "Wrong number of source.";
+            return false;
+          }
+          break;
+        case WORKGROUP_OP_BROADCAST:
+          if (this->srcNum != 2) {
+            whyNot = "Wrong number of source.";
+            return false;
+          } else {
+            const RegisterFamily fam = fn.getPointerFamily();
+            for (uint32_t srcID = 1; srcID < this->srcNum; ++srcID) {
+              const Register regID = fn.getRegister(src, srcID);
+              if (UNLIKELY(checkRegisterData(fam, regID, fn, whyNot) == false))
+                return false;
+            }
+          }
+          break;
+        default:
+          whyNot = "No such sub group function.";
+          return false;
+      }
+
+      return true;
+    }
+
     INLINE bool PrintfInstruction::wellFormed(const Function &fn, std::string &whyNot) const {
       return true;
     }
@@ -1739,6 +1812,67 @@ namespace ir {
       out << "TheadID Map at SLM: " << this->slmAddr;
     }
 
+    INLINE void SubGroupInstruction::out(std::ostream &out, const Function &fn) const {
+      this->outOpcode(out);
+
+      switch (this->workGroupOp) {
+        case WORKGROUP_OP_ANY:
+          out << "_" << "ANY";
+          break;
+        case WORKGROUP_OP_ALL:
+          out << "_" << "ALL";
+          break;
+        case WORKGROUP_OP_REDUCE_ADD:
+          out << "_" << "REDUCE_ADD";
+          break;
+        case WORKGROUP_OP_REDUCE_MIN:
+          out << "_" << "REDUCE_MIN";
+          break;
+        case WORKGROUP_OP_REDUCE_MAX:
+          out << "_" << "REDUCE_MAX";
+          break;
+        case WORKGROUP_OP_INCLUSIVE_ADD:
+          out << "_" << "INCLUSIVE_ADD";
+          break;
+        case WORKGROUP_OP_INCLUSIVE_MIN:
+          out << "_" << "INCLUSIVE_MIN";
+          break;
+        case WORKGROUP_OP_INCLUSIVE_MAX:
+          out << "_" << "INCLUSIVE_MAX";
+          break;
+        case WORKGROUP_OP_EXCLUSIVE_ADD:
+          out << "_" << "EXCLUSIVE_ADD";
+          break;
+        case WORKGROUP_OP_EXCLUSIVE_MIN:
+          out << "_" << "EXCLUSIVE_MIN";
+          break;
+        case WORKGROUP_OP_EXCLUSIVE_MAX:
+          out << "_" << "EXCLUSIVE_MAX";
+          break;
+        case WORKGROUP_OP_BROADCAST:
+          out << "_" << "BROADCAST";
+          break;
+        default:
+          GBE_ASSERT(0);
+      }
+
+      out << " %" << this->getDst(fn, 0);
+      out << " %" << this->getSrc(fn, 0);
+
+      if (this->workGroupOp == WORKGROUP_OP_BROADCAST) {
+        do {
+          int localN = srcNum - 1;
+          GBE_ASSERT(localN);
+          out << " Local ID:";
+          out << " %" << this->getSrc(fn, 1);
+          localN--;
+          if (!localN)
+            break;
+        } while(0);
+      }
+
+    }
+
     INLINE void PrintfInstruction::out(std::ostream &out, const Function &fn) const {
       this->outOpcode(out);
     }
@@ -1902,6 +2036,10 @@ END_INTROSPECTION(VmeInstruction)
 START_INTROSPECTION(WorkGroupInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(WorkGroupInstruction)
+
+START_INTROSPECTION(SubGroupInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(SubGroupInstruction)
 
 START_INTROSPECTION(PrintfInstruction)
 #include "ir/instruction.hxx"
@@ -2117,6 +2255,8 @@ DECL_MEM_FN(StoreProfilingInstruction, uint32_t, getBTI(void), getBTI())
 DECL_MEM_FN(WorkGroupInstruction, Type, getType(void), getType())
 DECL_MEM_FN(WorkGroupInstruction, WorkGroupOps, getWorkGroupOpcode(void), getWorkGroupOpcode())
 DECL_MEM_FN(WorkGroupInstruction, uint32_t, getSlmAddr(void), getSlmAddr())
+DECL_MEM_FN(SubGroupInstruction, Type, getType(void), getType())
+DECL_MEM_FN(SubGroupInstruction, WorkGroupOps, getWorkGroupOpcode(void), getWorkGroupOpcode())
 DECL_MEM_FN(PrintfInstruction, uint32_t, getNum(void), getNum())
 DECL_MEM_FN(PrintfInstruction, uint32_t, getBti(void), getBti())
 DECL_MEM_FN(PrintfInstruction, Type, getType(const Function& fn, uint32_t ID), getType(fn, ID))
@@ -2416,6 +2556,10 @@ DECL_MEM_FN(MemInstruction, void,     setBtiReg(Register reg), setBtiReg(reg))
 
   Instruction WORKGROUP(WorkGroupOps opcode, uint32_t slmAddr, Register dst, Tuple srcTuple, uint8_t srcNum, Type type) {
     return internal::WorkGroupInstruction(opcode, slmAddr, dst, srcTuple, srcNum, type).convert();
+  }
+
+  Instruction SUBGROUP(WorkGroupOps opcode, Register dst, Tuple srcTuple, uint8_t srcNum, Type type) {
+    return internal::SubGroupInstruction(opcode, dst, srcTuple, srcNum, type).convert();
   }
 
   Instruction PRINTF(Register dst, Tuple srcTuple, Tuple typeTuple, uint8_t srcNum, uint8_t bti, uint16_t num) {

@@ -694,6 +694,9 @@ namespace gbe
                       GenRegister tmpData2, GenRegister slmOff,
                       vector<GenRegister> msg, uint32_t msgSizeReq,
                       GenRegister localBarrier);
+    /*! Sub Group Operations */
+    void SUBGROUP_OP(uint32_t wg_op, Reg dst, GenRegister src,
+                      GenRegister tmpData1, GenRegister tmpData2);
     /* common functions for both binary instruction and sel_cmp and compare instruction.
        It will handle the IMM or normal register assignment, and will try to avoid LOADI
        as much as possible. */
@@ -1993,6 +1996,23 @@ namespace gbe
     insn->src(3) = tmpData2;
     insn->src(4) = slmOff;
     insn->src(5) = localBarrier;
+  }
+
+  void Selection::Opaque::SUBGROUP_OP(uint32_t wg_op,
+                                       Reg dst,
+                                       GenRegister src,
+                                       GenRegister tmpData1,
+                                       GenRegister tmpData2)
+  {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_SUBGROUP_OP, 2, 2);
+
+    insn->extra.workgroupOp = wg_op;
+
+    insn->dst(0) = dst;
+    insn->dst(1) = tmpData1;
+
+    insn->src(0) = src;
+    insn->src(1) = tmpData2;
   }
 
   // Boiler plate to initialize the selection library at c++ pre-main
@@ -6399,6 +6419,101 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     DECL_CTOR(WorkGroupInstruction, 1, 1);
   };
 
+  /*! SubGroup instruction pattern */
+  class SubGroupInstructionPattern : public SelectionPattern
+  {
+  public:
+    SubGroupInstructionPattern(void) : SelectionPattern(1,1) {
+      for (uint32_t op = 0; op < ir::OP_INVALID; ++op)
+        if (ir::isOpcodeFrom<ir::SubGroupInstruction>(ir::Opcode(op)) == true)
+          this->opcodes.push_back(ir::Opcode(op));
+    }
+
+    /* SUBGROUP OP: ALL, ANY, REDUCE, SCAN INCLUSIVE, SCAN EXCLUSIVE
+     * Shared algorithm with workgroup inthread */
+    INLINE bool emitSGReduce(Selection::Opaque &sel, const ir::SubGroupInstruction &insn) const
+    {
+      using namespace ir;
+
+      GBE_ASSERT(insn.getSrcNum() == 1);
+
+      const WorkGroupOps workGroupOp = insn.getWorkGroupOpcode();
+      const Type type = insn.getType();
+      GenRegister dst = sel.selReg(insn.getDst(0), type);
+      GenRegister src = sel.selReg(insn.getSrc(0), type);
+      GenRegister tmpData1 = GenRegister::retype(sel.selReg(sel.reg(FAMILY_QWORD)), type);
+      GenRegister tmpData2 = GenRegister::retype(sel.selReg(sel.reg(FAMILY_QWORD)), type);
+
+      /* Perform workgroup op */
+      sel.SUBGROUP_OP(workGroupOp, dst, src, tmpData1, tmpData2);
+
+      return true;
+    }
+
+    /* SUBROUP OP: BROADCAST
+     * Shared algorithm with simd shuffle */
+    INLINE bool emitSGBroadcast(Selection::Opaque &sel, const ir::SubGroupInstruction &insn, SelectionDAG &dag) const
+    {
+      using namespace ir;
+
+      GBE_ASSERT(insn.getSrcNum() == 2);
+
+      const Type type = insn.getType();
+      const GenRegister src0 = sel.selReg(insn.getSrc(0), type);
+      const GenRegister dst = sel.selReg(insn.getDst(0), type);
+      GenRegister src1;
+
+      SelectionDAG *dag0 = dag.child[0];
+      SelectionDAG *dag1 = dag.child[1];
+      if (dag1 != NULL && dag1->insn.getOpcode() == OP_LOADI && canGetRegisterFromImmediate(dag1->insn)) {
+        const auto &childInsn = cast<LoadImmInstruction>(dag1->insn);
+        src1 = getRegisterFromImmediate(childInsn.getImmediate(), TYPE_U32);
+        if (dag0) dag0->isRoot = 1;
+      } else {
+        markAllChildren(dag);
+        src1 = sel.selReg(insn.getSrc(1), TYPE_U32);
+      }
+
+      sel.push(); {
+      if (src1.file == GEN_IMMEDIATE_VALUE) {
+          uint32_t offset = src1.value.ud % sel.curr.execWidth;
+          GenRegister reg = GenRegister::subphysicaloffset(src0, offset);
+          reg.vstride = GEN_VERTICAL_STRIDE_0;
+          reg.hstride = GEN_HORIZONTAL_STRIDE_0;
+          reg.width = GEN_WIDTH_1;
+          sel.MOV(dst, reg);
+      } else {
+        GenRegister shiftL = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+        sel.SHL(shiftL, src1, GenRegister::immud(0x2));
+        sel.SIMD_SHUFFLE(dst, src0, shiftL);
+      }
+      } sel.pop();
+
+      return true;
+    }
+
+    INLINE bool emit(Selection::Opaque &sel, SelectionDAG &dag) const
+    {
+      using namespace ir;
+      const ir::SubGroupInstruction &insn = cast<SubGroupInstruction>(dag.insn);
+      const WorkGroupOps workGroupOp = insn.getWorkGroupOpcode();
+
+      if (workGroupOp == WORKGROUP_OP_BROADCAST){
+        return emitSGBroadcast(sel, insn, dag);
+      }
+      else if (workGroupOp >= WORKGROUP_OP_ANY && workGroupOp <= WORKGROUP_OP_EXCLUSIVE_MAX){
+        if(emitSGReduce(sel, insn))
+          markAllChildren(dag);
+        else
+          return false;
+      }
+      else
+        GBE_ASSERT(0);
+
+      return true;
+    }
+  };
+
   /*! Sort patterns */
   INLINE bool cmp(const SelectionPattern *p0, const SelectionPattern *p1) {
     if (p0->insnNum != p1->insnNum)
@@ -6436,6 +6551,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     this->insert<CalcTimestampInstructionPattern>();
     this->insert<StoreProfilingInstructionPattern>();
     this->insert<WorkGroupInstructionPattern>();
+    this->insert<SubGroupInstructionPattern>();
     this->insert<NullaryInstructionPattern>();
     this->insert<WaitInstructionPattern>();
     this->insert<PrintfInstructionPattern>();

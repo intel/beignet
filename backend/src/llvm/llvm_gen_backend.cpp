@@ -695,6 +695,8 @@ namespace gbe
     void emitAtomicInst(CallInst &I, CallSite &CS, ir::AtomicOps opcode);
     // Emit workgroup instructions
     void emitWorkGroupInst(CallInst &I, CallSite &CS, ir::WorkGroupOps opcode);
+    // Emit subgroup instructions
+    void emitSubGroupInst(CallInst &I, CallSite &CS, ir::WorkGroupOps opcode);
 
     uint8_t appendSampler(CallSite::arg_iterator AI);
     uint8_t getImageID(CallInst &I);
@@ -3709,6 +3711,16 @@ namespace gbe
       case GEN_OCL_WORK_GROUP_SCAN_INCLUSIVE_ADD:
       case GEN_OCL_WORK_GROUP_SCAN_INCLUSIVE_MAX:
       case GEN_OCL_WORK_GROUP_SCAN_INCLUSIVE_MIN:
+      case GEN_OCL_SUB_GROUP_BROADCAST:
+      case GEN_OCL_SUB_GROUP_REDUCE_ADD:
+      case GEN_OCL_SUB_GROUP_REDUCE_MAX:
+      case GEN_OCL_SUB_GROUP_REDUCE_MIN:
+      case GEN_OCL_SUB_GROUP_SCAN_EXCLUSIVE_ADD:
+      case GEN_OCL_SUB_GROUP_SCAN_EXCLUSIVE_MAX:
+      case GEN_OCL_SUB_GROUP_SCAN_EXCLUSIVE_MIN:
+      case GEN_OCL_SUB_GROUP_SCAN_INCLUSIVE_ADD:
+      case GEN_OCL_SUB_GROUP_SCAN_INCLUSIVE_MAX:
+      case GEN_OCL_SUB_GROUP_SCAN_INCLUSIVE_MIN:
       case GEN_OCL_LRP:
         this->newRegister(&I);
         break;
@@ -3873,6 +3885,48 @@ namespace gbe
       src[2] = this->getRegister(*(AI++));
       const ir::Tuple srcTuple = ctx.arrayTuple(&src[0], 3);
       ctx.WORKGROUP(opcode, (uint32_t)f.gettidMapSLM(), getRegister(&I), srcTuple, 3, ty);
+    }
+
+    GBE_ASSERT(AI == AE);
+  }
+
+  void GenWriter::emitSubGroupInst(CallInst &I, CallSite &CS, ir::WorkGroupOps opcode) {
+    CallSite::arg_iterator AI = CS.arg_begin();
+    CallSite::arg_iterator AE = CS.arg_end();
+    GBE_ASSERT(AI != AE);
+
+    if (opcode == ir::WORKGROUP_OP_ALL || opcode == ir::WORKGROUP_OP_ANY) {
+      GBE_ASSERT(getType(ctx, (*AI)->getType()) == ir::TYPE_S32);
+      ir::Register src[3];
+      src[0] = this->getRegister(*(AI++));
+      const ir::Tuple srcTuple = ctx.arrayTuple(&src[0], 1);
+      ctx.SUBGROUP(opcode, getRegister(&I), srcTuple, 1, ir::TYPE_S32);
+    } else if (opcode == ir::WORKGROUP_OP_BROADCAST) {
+      int argNum = CS.arg_size();
+      std::vector<ir::Register> src(argNum);
+      for (int i = 0; i < argNum; i++) {
+        src[i] = this->getRegister(*(AI++));
+      }
+      const ir::Tuple srcTuple = ctx.arrayTuple(&src[0], argNum);
+      ctx.SUBGROUP(ir::WORKGROUP_OP_BROADCAST, getRegister(&I), srcTuple, argNum,
+          getType(ctx, (*CS.arg_begin())->getType()));
+    } else {
+      ConstantInt *sign = dyn_cast<ConstantInt>(AI);
+      GBE_ASSERT(sign);
+      bool isSign = sign->getZExtValue();
+      AI++;
+      ir::Type ty;
+      if (isSign) {
+        ty = getType(ctx, (*AI)->getType());
+
+      } else {
+        ty = getUnsignedType(ctx, (*AI)->getType());
+      }
+
+      ir::Register src[3];
+      src[0] = this->getRegister(*(AI++));
+      const ir::Tuple srcTuple = ctx.arrayTuple(&src[0], 1);
+      ctx.SUBGROUP(opcode, getRegister(&I), srcTuple, 1, ty);
     }
 
     GBE_ASSERT(AI == AE);
@@ -4670,6 +4724,26 @@ namespace gbe
             this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_INCLUSIVE_MAX); break;
           case GEN_OCL_WORK_GROUP_SCAN_INCLUSIVE_MIN:
             this->emitWorkGroupInst(I, CS, ir::WORKGROUP_OP_INCLUSIVE_MIN); break;
+          case GEN_OCL_SUB_GROUP_BROADCAST:
+            this->emitSubGroupInst(I, CS, ir::WORKGROUP_OP_BROADCAST); break;
+          case GEN_OCL_SUB_GROUP_REDUCE_ADD:
+            this->emitSubGroupInst(I, CS, ir::WORKGROUP_OP_REDUCE_ADD); break;
+          case GEN_OCL_SUB_GROUP_REDUCE_MAX:
+            this->emitSubGroupInst(I, CS, ir::WORKGROUP_OP_REDUCE_MAX); break;
+          case GEN_OCL_SUB_GROUP_REDUCE_MIN:
+            this->emitSubGroupInst(I, CS, ir::WORKGROUP_OP_REDUCE_MIN); break;
+          case GEN_OCL_SUB_GROUP_SCAN_EXCLUSIVE_ADD:
+            this->emitSubGroupInst(I, CS, ir::WORKGROUP_OP_EXCLUSIVE_ADD); break;
+          case GEN_OCL_SUB_GROUP_SCAN_EXCLUSIVE_MAX:
+            this->emitSubGroupInst(I, CS, ir::WORKGROUP_OP_EXCLUSIVE_MAX); break;
+          case GEN_OCL_SUB_GROUP_SCAN_EXCLUSIVE_MIN:
+            this->emitSubGroupInst(I, CS, ir::WORKGROUP_OP_EXCLUSIVE_MIN); break;
+          case GEN_OCL_SUB_GROUP_SCAN_INCLUSIVE_ADD:
+            this->emitSubGroupInst(I, CS, ir::WORKGROUP_OP_INCLUSIVE_ADD); break;
+          case GEN_OCL_SUB_GROUP_SCAN_INCLUSIVE_MAX:
+            this->emitSubGroupInst(I, CS, ir::WORKGROUP_OP_INCLUSIVE_MAX); break;
+          case GEN_OCL_SUB_GROUP_SCAN_INCLUSIVE_MIN:
+            this->emitSubGroupInst(I, CS, ir::WORKGROUP_OP_INCLUSIVE_MIN); break;
           case GEN_OCL_LRP:
           {
             const ir::Register dst  = this->getRegister(&I);

@@ -611,6 +611,15 @@ namespace ir {
     uint32_t getSlmAddr(void) const;
   };
 
+  /*! Related to Sub Group. */
+  class SubGroupInstruction : public Instruction {
+  public:
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+    Type getType(void) const;
+    WorkGroupOps getWorkGroupOpcode(void) const;
+  };
+
   /*! Printf instruction. */
   class PrintfInstruction : public Instruction {
   public:
@@ -850,6 +859,8 @@ namespace ir {
 
   /*! work group */
   Instruction WORKGROUP(WorkGroupOps opcode, uint32_t slmAddr, Register dst, Tuple srcTuple, uint8_t srcNum, Type type);
+  /*! sub group */
+  Instruction SUBGROUP(WorkGroupOps opcode, Register dst, Tuple srcTuple, uint8_t srcNum, Type type);
   /*! printf */
   Instruction PRINTF(Register dst, Tuple srcTuple, Tuple typeTuple, uint8_t srcNum, uint8_t bti, uint16_t num);
 } /* namespace ir */

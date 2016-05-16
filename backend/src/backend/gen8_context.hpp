@@ -77,6 +77,7 @@ namespace gbe
     virtual void emitF64DIVInstruction(const SelectionInstruction &insn);
 
     virtual void emitWorkGroupOpInstruction(const SelectionInstruction &insn);
+    virtual void emitSubGroupOpInstruction(const SelectionInstruction &insn);
 
     static GenRegister unpacked_ud(GenRegister reg, uint32_t offset = 0);
 

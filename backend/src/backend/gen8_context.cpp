@@ -1845,4 +1845,27 @@ namespace gbe
     }
   }
 
+  void Gen8Context::emitSubGroupOpInstruction(const SelectionInstruction &insn){
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    const GenRegister tmp = GenRegister::retype(ra->genReg(insn.dst(1)), dst.type);
+    const GenRegister theVal = GenRegister::retype(ra->genReg(insn.src(0)), dst.type);
+    GenRegister threadData = ra->genReg(insn.src(1));
+
+    uint32_t wg_op = insn.extra.workgroupOp;
+    uint32_t simd = p->curr.execWidth;
+
+    /* masked elements should be properly set to init value */
+    p->push(); {
+      p->curr.noMask = 1;
+      wgOpInitValue(p, tmp, wg_op);
+      p->curr.noMask = 0;
+      p->MOV(tmp, theVal);
+      p->curr.noMask = 1;
+      p->MOV(theVal, tmp);
+    } p->pop();
+
+    /* do some calculation within each thread */
+    wgOpPerformThread(dst, theVal, threadData, tmp, simd, wg_op, p);
+  }
+
 }
