@@ -223,7 +223,7 @@ void compiler_workgroup_scan_exclusive_add_long(void)
                               "compiler_workgroup_scan_exclusive_add_long");
   workgroup_generic(WG_SCAN_EXCLUSIVE_ADD, input, expected);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_scan_exclusive_add_long);
+MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_scan_exclusive_add_long);
 void compiler_workgroup_scan_exclusive_add_ulong(void)
 {
   cl_ulong *input = NULL;
@@ -232,7 +232,7 @@ void compiler_workgroup_scan_exclusive_add_ulong(void)
                               "compiler_workgroup_scan_exclusive_add_ulong");
   workgroup_generic(WG_SCAN_EXCLUSIVE_ADD, input, expected);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_scan_exclusive_add_ulong);
+MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_scan_exclusive_add_ulong);
 void compiler_workgroup_scan_exclusive_add_float(void)
 {
   cl_float *input = NULL;
@@ -272,7 +272,7 @@ void compiler_workgroup_scan_exclusive_max_long(void)
                               "compiler_workgroup_scan_exclusive_max_long");
   workgroup_generic(WG_SCAN_EXCLUSIVE_MAX, input, expected);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_scan_exclusive_max_long);
+MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_scan_exclusive_max_long);
 void compiler_workgroup_scan_exclusive_max_ulong(void)
 {
   cl_ulong *input = NULL;
@@ -281,7 +281,7 @@ void compiler_workgroup_scan_exclusive_max_ulong(void)
                               "compiler_workgroup_scan_exclusive_max_ulong");
   workgroup_generic(WG_SCAN_EXCLUSIVE_MAX, input, expected);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_scan_exclusive_max_ulong);
+MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_scan_exclusive_max_ulong);
 void compiler_workgroup_scan_exclusive_max_float(void)
 {
   cl_float *input = NULL;
@@ -321,7 +321,7 @@ void compiler_workgroup_scan_exclusive_min_long(void)
                               "compiler_workgroup_scan_exclusive_min_long");
   workgroup_generic(WG_SCAN_EXCLUSIVE_MIN, input, expected);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_scan_exclusive_min_long);
+MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_scan_exclusive_min_long);
 void compiler_workgroup_scan_exclusive_min_ulong(void)
 {
   cl_ulong *input = NULL;
@@ -330,7 +330,7 @@ void compiler_workgroup_scan_exclusive_min_ulong(void)
                               "compiler_workgroup_scan_exclusive_min_ulong");
   workgroup_generic(WG_SCAN_EXCLUSIVE_MIN, input, expected);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_scan_exclusive_min_ulong);
+MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_scan_exclusive_min_ulong);
 void compiler_workgroup_scan_exclusive_min_float(void)
 {
   cl_float *input = NULL;

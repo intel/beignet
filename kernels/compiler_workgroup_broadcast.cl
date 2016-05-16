@@ -16,7 +16,7 @@ kernel void compiler_workgroup_broadcast_1D_int(global int *src,
                                             wg_local_x);
   dst[index] = broadcast_val;
 }
-
+#if 0
 kernel void compiler_workgroup_broadcast_1D_long(global long *src,
                                                 global long *dst,
                                                 uint wg_local_x,
@@ -31,7 +31,7 @@ kernel void compiler_workgroup_broadcast_1D_long(global long *src,
                                             wg_local_x);
   dst[index] = broadcast_val;
 }
-
+#endif
 /*
  * Workgroup broadcast 2D functions
  */
@@ -53,7 +53,7 @@ kernel void compiler_workgroup_broadcast_2D_int(global int *src,
                                             wg_local_y);
   dst[index] = broadcast_val;
 }
-
+#if 0
 kernel void compiler_workgroup_broadcast_2D_long(global long *src,
                                                 global long *dst,
                                                 uint wg_local_x,
@@ -72,7 +72,7 @@ kernel void compiler_workgroup_broadcast_2D_long(global long *src,
                                             wg_local_y);
   dst[index] = broadcast_val;
 }
-
+#endif
 /*
  * Workgroup broadcast 3D functions
  */
@@ -97,7 +97,7 @@ kernel void compiler_workgroup_broadcast_3D_int(global int *src,
                                             wg_local_z);
   dst[index] = broadcast_val;
 }
-
+#if 0
 kernel void compiler_workgroup_broadcast_3D_long(global long *src,
                                                 global long *dst,
                                                 uint wg_local_x,
@@ -119,3 +119,4 @@ kernel void compiler_workgroup_broadcast_3D_long(global long *src,
                                             wg_local_z);
   dst[index] = broadcast_val;
 }
+#endif

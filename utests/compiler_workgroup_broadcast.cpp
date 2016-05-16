@@ -258,7 +258,7 @@ void compiler_workgroup_broadcast_1D_long(void)
                               "compiler_workgroup_broadcast_1D_long");
   workgroup_generic(WG_BROADCAST_1D, input, expected);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_broadcast_1D_long);
+MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_broadcast_1D_long);
 
 /*
  * Workgroup broadcast 2D functions
@@ -281,7 +281,7 @@ void compiler_workgroup_broadcast_2D_long(void)
                               "compiler_workgroup_broadcast_2D_long");
   workgroup_generic(WG_BROADCAST_2D, input, expected);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_broadcast_2D_long);
+MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_broadcast_2D_long);
 
 
 /*
@@ -305,4 +305,4 @@ void compiler_workgroup_broadcast_3D_long(void)
                               "compiler_workgroup_broadcast_3D_long");
   workgroup_generic(WG_BROADCAST_3D, input, expected);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_broadcast_3D_long);
+MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_broadcast_3D_long);
