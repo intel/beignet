@@ -601,7 +601,7 @@ cl_program_build(cl_program p, const char *options)
     }
     /* Create all the kernels */
     TRY (cl_program_load_gen_program, p);
-  } else if (p->source_type == FROM_BINARY) {
+  } else if (p->source_type == FROM_BINARY && p->binary_type != CL_PROGRAM_BINARY_TYPE_EXECUTABLE) {
     p->opaque = interp_program_new_from_binary(p->ctx->device->device_id, p->binary, p->binary_sz);
     if (UNLIKELY(p->opaque == NULL)) {
       err = CL_BUILD_PROGRAM_FAILURE;
