@@ -856,8 +856,13 @@ intel_update_device_info(cl_device_id device)
   else if (IS_CHERRYVIEW(device->device_id))
     printf(CHV_CONFIG_WARNING);
 #else
-  if (IS_CHERRYVIEW(device->device_id))
+  if (IS_CHERRYVIEW(device->device_id)) {
+#if defined(__ANDROID__)
+    device->max_compute_unit = 12;
+#else
     printf(CHV_CONFIG_WARNING);
+#endif
+  }
 #endif
 
 #ifdef HAS_SUBSLICE_TOTAL
@@ -869,8 +874,13 @@ intel_update_device_info(cl_device_id device)
   else if (IS_CHERRYVIEW(device->device_id))
     printf(CHV_CONFIG_WARNING);
 #else
-  if (IS_CHERRYVIEW(device->device_id))
+  if (IS_CHERRYVIEW(device->device_id)) {
+#if defined(__ANDROID__)
+    device->sub_slice_count = 2;
+#else
     printf(CHV_CONFIG_WARNING);
+#endif
+  }
 #endif
   //We should get the device memory dynamically, but the
   //mapablce mem size usage is unknown. Just ignore it.
