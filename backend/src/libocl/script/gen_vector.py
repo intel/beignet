@@ -327,9 +327,9 @@ class builtinProto():
                     formatStr += '({0} {1} *)param{2} + {3:2d}'.format(ptype[2], ptype[0], n, j)
                 else:
                     if (self.functionName == 'select' and n == 2):
-                        formatStr += '({0})(param{1}.s{2:x} & (({0})1 << (sizeof({0})*8 - 1)))'.format(ptype[0], n, j)
+                        formatStr += '({0})(param{1}.s{2:X} & (({0})1 << (sizeof({0})*8 - 1)))'.format(ptype[0], n, j)
                     else:
-                        formatStr += 'param{0}.s{1:x}'.format(n, j)
+                        formatStr += 'param{0}.s{1:X}'.format(n, j)
 
             formatStr += ')'
 

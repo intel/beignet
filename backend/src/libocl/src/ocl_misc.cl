@@ -62,12 +62,12 @@
     y.s7 = ((TYPE *) &x)[mask.s7 & (vec_step(x) - 1)]; \
     y.s8 = ((TYPE *) &x)[mask.s8 & (vec_step(x) - 1)]; \
     y.s9 = ((TYPE *) &x)[mask.s9 & (vec_step(x) - 1)]; \
-    y.sa = ((TYPE *) &x)[mask.sa & (vec_step(x) - 1)]; \
-    y.sb = ((TYPE *) &x)[mask.sb & (vec_step(x) - 1)]; \
-    y.sc = ((TYPE *) &x)[mask.sc & (vec_step(x) - 1)]; \
-    y.sd = ((TYPE *) &x)[mask.sd & (vec_step(x) - 1)]; \
-    y.se = ((TYPE *) &x)[mask.se & (vec_step(x) - 1)]; \
-    y.sf = ((TYPE *) &x)[mask.sf & (vec_step(x) - 1)]; \
+    y.sA = ((TYPE *) &x)[mask.sA & (vec_step(x) - 1)]; \
+    y.sB = ((TYPE *) &x)[mask.sB & (vec_step(x) - 1)]; \
+    y.sC = ((TYPE *) &x)[mask.sC & (vec_step(x) - 1)]; \
+    y.sD = ((TYPE *) &x)[mask.sD & (vec_step(x) - 1)]; \
+    y.sE = ((TYPE *) &x)[mask.sE & (vec_step(x) - 1)]; \
+    y.sF = ((TYPE *) &x)[mask.sF & (vec_step(x) - 1)]; \
     return y; \
   }
 
@@ -164,12 +164,12 @@ DEF(ulong)
     z.s7 = mask.s7 < 16 ? ((TYPE *)&x)[mask.s7] : ((TYPE *)&y)[mask.s7 & 15]; \
     z.s8 = mask.s8 < 16 ? ((TYPE *)&x)[mask.s8] : ((TYPE *)&y)[mask.s8 & 15]; \
     z.s9 = mask.s9 < 16 ? ((TYPE *)&x)[mask.s9] : ((TYPE *)&y)[mask.s9 & 15]; \
-    z.sa = mask.sa < 16 ? ((TYPE *)&x)[mask.sa] : ((TYPE *)&y)[mask.sa & 15]; \
-    z.sb = mask.sb < 16 ? ((TYPE *)&x)[mask.sb] : ((TYPE *)&y)[mask.sb & 15]; \
-    z.sc = mask.sc < 16 ? ((TYPE *)&x)[mask.sc] : ((TYPE *)&y)[mask.sc & 15]; \
-    z.sd = mask.sd < 16 ? ((TYPE *)&x)[mask.sd] : ((TYPE *)&y)[mask.sd & 15]; \
-    z.se = mask.se < 16 ? ((TYPE *)&x)[mask.se] : ((TYPE *)&y)[mask.se & 15]; \
-    z.sf = mask.sf < 16 ? ((TYPE *)&x)[mask.sf] : ((TYPE *)&y)[mask.sf & 15]; \
+    z.sA = mask.sA < 16 ? ((TYPE *)&x)[mask.sA] : ((TYPE *)&y)[mask.sA & 15]; \
+    z.sB = mask.sB < 16 ? ((TYPE *)&x)[mask.sB] : ((TYPE *)&y)[mask.sB & 15]; \
+    z.sC = mask.sC < 16 ? ((TYPE *)&x)[mask.sC] : ((TYPE *)&y)[mask.sC & 15]; \
+    z.sD = mask.sD < 16 ? ((TYPE *)&x)[mask.sD] : ((TYPE *)&y)[mask.sD & 15]; \
+    z.sE = mask.sE < 16 ? ((TYPE *)&x)[mask.sE] : ((TYPE *)&y)[mask.sE & 15]; \
+    z.sF = mask.sF < 16 ? ((TYPE *)&x)[mask.sF] : ((TYPE *)&y)[mask.sF & 15]; \
     return z; \
   }
 
