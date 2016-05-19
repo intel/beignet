@@ -483,10 +483,12 @@ namespace ir {
                         AddressSpace AS,
                         uint32_t _valueNum,
                         bool dwAligned,
-                        AddressMode AM)
+                        AddressMode AM,
+                        bool ifBlock = false)
                       : MemInstruction(AM, AS, dwAligned, type, offset),
                         valueNum(_valueNum),
-                        values(dstValues)
+                        values(dstValues),
+                        ifBlock(ifBlock)
         {
           this->opcode = OP_LOAD;
         }
@@ -519,9 +521,11 @@ namespace ir {
         }
         INLINE bool wellFormed(const Function &fn, std::string &why) const;
         INLINE void out(std::ostream &out, const Function &fn) const;
+        INLINE bool isBlock() const { return ifBlock; }
 
         uint8_t         valueNum;
         Tuple             values;
+        bool             ifBlock;
     };
     class ALIGNED_INSTRUCTION StoreInstruction :
       public MemInstruction,
@@ -534,12 +538,14 @@ namespace ir {
                          AddressSpace addrSpace,
                          uint32_t valueNum,
                          bool dwAligned,
-                         AddressMode AM)
+                         AddressMode AM,
+                         bool ifBlock = false)
           : MemInstruction(AM, addrSpace, dwAligned, type, offset)
         {
           this->opcode = OP_STORE;
           this->values = values;
           this->valueNum = valueNum;
+          this->ifBlock = ifBlock;
         }
         INLINE unsigned getValueNum()      const { return valueNum; }
         INLINE Register getValue(const Function &fn, unsigned id) const {
@@ -565,9 +571,12 @@ namespace ir {
         }
         INLINE bool wellFormed(const Function &fn, std::string &why) const;
         INLINE void out(std::ostream &out, const Function &fn) const;
+        INLINE bool isBlock() const { return ifBlock; }
+
         Register      dst[0];
         uint8_t     valueNum;
         Tuple         values;
+        bool         ifBlock;
     };
 
     class ALIGNED_INSTRUCTION SampleInstruction : // TODO
@@ -1655,6 +1664,8 @@ namespace ir {
     }
 
     INLINE void LoadInstruction::out(std::ostream &out, const Function &fn) const {
+      if(ifBlock)
+        out<< "BLOCK";
       this->outOpcode(out);
       out << "." << type << "." << AS << (dwAligned ? "." : ".un") << "aligned";
       out << " {";
@@ -1672,6 +1683,8 @@ namespace ir {
     }
 
     INLINE void StoreInstruction::out(std::ostream &out, const Function &fn) const {
+      if(ifBlock)
+        out<< "BLOCK";
       this->outOpcode(out);
       out << "." << type << "." << AS << (dwAligned ? "." : ".un") << "aligned";
       out << " %" << this->getSrc(fn, 0) << " {";
@@ -2221,7 +2234,9 @@ DECL_MEM_FN(MemInstruction, bool,     isAligned(void), isAligned())
 DECL_MEM_FN(MemInstruction, unsigned, getAddressIndex(void), getAddressIndex())
 DECL_MEM_FN(AtomicInstruction, AtomicOps, getAtomicOpcode(void), getAtomicOpcode())
 DECL_MEM_FN(StoreInstruction, uint32_t, getValueNum(void), getValueNum())
+DECL_MEM_FN(StoreInstruction, bool, isBlock(void), isBlock())
 DECL_MEM_FN(LoadInstruction, uint32_t, getValueNum(void), getValueNum())
+DECL_MEM_FN(LoadInstruction, bool, isBlock(void), isBlock())
 DECL_MEM_FN(LoadImmInstruction, Type, getType(void), getType())
 DECL_MEM_FN(LabelInstruction, LabelIndex, getLabelIndex(void), getLabelIndex())
 DECL_MEM_FN(BranchInstruction, bool, isPredicated(void), isPredicated())
@@ -2475,9 +2490,10 @@ DECL_MEM_FN(MemInstruction, void,     setBtiReg(Register reg), setBtiReg(reg))
                    uint32_t valueNum, \
                    bool dwAligned, \
                    AddressMode AM, \
-                   unsigned SurfaceIndex) \
+                   unsigned SurfaceIndex, \
+                   bool isBlock) \
   { \
-    internal::CLASS insn = internal::CLASS(type,tuple,offset,space,valueNum,dwAligned,AM); \
+    internal::CLASS insn = internal::CLASS(type,tuple,offset,space,valueNum,dwAligned,AM, isBlock); \
     insn.setSurfaceIndex(SurfaceIndex);\
     return insn.convert(); \
   } \

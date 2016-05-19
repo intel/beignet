@@ -117,11 +117,16 @@ namespace ir {
         if (insn.getOpcode() == ir::OP_SIMD_ID)
           uniform = false;
 
+        // do not change dst uniform for block read
+        if (insn.getOpcode() == ir::OP_LOAD && ir::cast<ir::LoadInstruction>(insn).isBlock())
+          uniform = false;
+
         for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
           const Register reg = insn.getSrc(srcID);
           if (!fn.isUniformRegister(reg))
             uniform = false;
         }
+
         // A destination is a killed value
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
           const Register reg = insn.getDst(dstID);

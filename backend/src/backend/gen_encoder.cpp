@@ -258,7 +258,7 @@ namespace gbe
     else
       NOT_SUPPORTED;
   }
-#if 0
+
   static void setOBlockRW(GenEncoder *p,
                           GenNativeInstruction *insn,
                           uint32_t bti,
@@ -275,7 +275,6 @@ namespace gbe
     insn->bits3.gen7_oblock_rw.block_size = size == 2 ? 2 : 3;
     insn->bits3.gen7_oblock_rw.header_present = 1;
   }
-#endif
 
   static void setDWordScatterMessgae(GenEncoder *p,
                                      GenNativeInstruction *insn,
@@ -1242,6 +1241,40 @@ namespace gbe
      this->setSrc1(insn, GenRegister::immud(0));
       // here dst_num is the register that will be write-back: in terms of 32byte register
      setScratchMessage(this, insn, offset, block_size, channel_mode, GEN_SCRATCH_READ, 1, dst_num);
+  }
+
+  void GenEncoder::OBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t size) {
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    const uint32_t msg_length = 1;
+    const uint32_t response_length = size / 2; // Size is in owords
+    this->setHeader(insn);
+    this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
+    this->setSrc0(insn, GenRegister::ud8grf(header.nr, 0));
+    this->setSrc1(insn, GenRegister::immud(0));
+    setOBlockRW(this,
+                insn,
+                bti,
+                size,
+                GEN7_OBLOCK_READ,
+                msg_length,
+                response_length);
+  }
+
+  void GenEncoder::OBWRITE(GenRegister header, uint32_t bti, uint32_t size) {
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    const uint32_t msg_length = 1 + size / 2; // Size is in owords
+    const uint32_t response_length = 0;
+    this->setHeader(insn);
+    this->setSrc0(insn, GenRegister::ud8grf(header.nr, 0));
+    this->setSrc1(insn, GenRegister::immud(0));
+    this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UW));
+    setOBlockRW(this,
+                insn,
+                bti,
+                size,
+                GEN7_OBLOCK_WRITE,
+                msg_length,
+                response_length);
   }
 
   void GenEncoder::EOT(uint32_t msg) {

@@ -188,7 +188,8 @@ namespace gbe
            this->opcode == SEL_OP_BYTE_GATHER  ||
            this->opcode == SEL_OP_SAMPLE ||
            this->opcode == SEL_OP_VME ||
-           this->opcode == SEL_OP_DWORD_GATHER;
+           this->opcode == SEL_OP_DWORD_GATHER ||
+           this->opcode == SEL_OP_OBREAD;
   }
 
   bool SelectionInstruction::modAcc(void) const {
@@ -210,7 +211,8 @@ namespace gbe
            this->opcode == SEL_OP_WRITE64       ||
            this->opcode == SEL_OP_ATOMIC        ||
            this->opcode == SEL_OP_BYTE_SCATTER  ||
-           this->opcode == SEL_OP_TYPED_WRITE;
+           this->opcode == SEL_OP_TYPED_WRITE ||
+           this->opcode == SEL_OP_OBWRITE;
   }
 
   bool SelectionInstruction::isBranch(void) const {
@@ -697,6 +699,11 @@ namespace gbe
     /*! Sub Group Operations */
     void SUBGROUP_OP(uint32_t wg_op, Reg dst, GenRegister src,
                       GenRegister tmpData1, GenRegister tmpData2);
+    /*! Oblock read */
+    void OBREAD(GenRegister dst, GenRegister addr, GenRegister header, uint32_t bti, uint32_t size);
+    /*! Oblock write */
+    void OBWRITE(GenRegister addr, GenRegister value, GenRegister header, uint32_t bti, uint32_t size);
+
     /* common functions for both binary instruction and sel_cmp and compare instruction.
        It will handle the IMM or normal register assignment, and will try to avoid LOADI
        as much as possible. */
@@ -2014,6 +2021,40 @@ namespace gbe
     insn->src(0) = src;
     insn->src(1) = tmpData2;
   }
+  void Selection::Opaque::OBREAD(GenRegister dst,
+                                 GenRegister addr,
+                                 GenRegister header,
+                                 uint32_t bti,
+                                 uint32_t size) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_OBREAD, 1, 2);
+    insn->dst(0) = dst;
+    insn->src(0) = addr;
+    insn->src(1) = header;
+    insn->setbti(bti);
+    insn->extra.elem = size / sizeof(int[4]); // number of owords
+  }
+
+  void Selection::Opaque::OBWRITE(GenRegister addr,
+                                  GenRegister value,
+                                  GenRegister header,
+                                  uint32_t bti,
+                                  uint32_t size) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_OBWRITE, 0, 3);
+    SelectionVector *vector = this->appendVector();
+    insn->src(0) = header;
+    insn->src(1) = value;
+    insn->src(2) = addr;
+    insn->state = this->curr;
+    insn->setbti(bti);
+    insn->extra.elem = size / sizeof(int[4]); // number of owords
+
+    // We need to put the header and the data together
+    vector->regNum = 2;
+    vector->reg = &insn->src(0);
+    vector->offsetID = 0;
+    vector->isSrc = 1;
+  }
+
 
   // Boiler plate to initialize the selection library at c++ pre-main
   static SelectionLibrary *selLib = NULL;
@@ -4001,6 +4042,18 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       }
     }
 
+    void emitOWordRead(Selection::Opaque &sel,
+                       const ir::LoadInstruction &insn,
+                       GenRegister address,
+                       ir::BTI bti) const
+    {
+      using namespace ir;
+      const GenRegister header = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+      const GenRegister value = sel.selReg(insn.getValue(0), TYPE_U32);
+      const uint32_t simdWidth = sel.ctx.getSimdWidth();
+      sel.OBREAD(value, address, header, bti.imm, simdWidth * sizeof(int));
+    }
+
     // check whether all binded table index point to constant memory
     INLINE bool isAllConstant(const ir::BTI &bti) const {
       if (bti.isConst && bti.imm == BTI_CONSTANT)
@@ -4036,7 +4089,9 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       const uint32_t elemSize = getByteScatterGatherSize(sel, type);
       bool allConstant = isAllConstant(bti);
 
-      if (allConstant) {
+      if (insn.isBlock())
+        this->emitOWordRead(sel, insn, address, bti);
+      else if (allConstant) {
         // XXX TODO read 64bit constant through constant cache
         // Per HW Spec, constant cache messages can read at least DWORD data.
         // So, byte/short data type, we have to read through data cache.
@@ -4163,6 +4218,18 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       }
     }
 
+    void emitOWordWrite(Selection::Opaque &sel,
+                        const ir::StoreInstruction &insn,
+                        GenRegister address,
+                        ir::BTI bti) const
+    {
+      using namespace ir;
+      const GenRegister header = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+      const GenRegister value = sel.selReg(insn.getValue(0), TYPE_U32);
+      const uint32_t simdWidth = sel.ctx.getSimdWidth();
+      sel.OBWRITE(address, value, header, bti.imm, simdWidth * sizeof(int));
+    }
+
     virtual bool emit(Selection::Opaque  &sel, SelectionDAG &dag) const
     {
       using namespace ir;
@@ -4184,7 +4251,9 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         assert(0 && "stateless not supported yet");
       }
 
-      if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
+      if (insn.isBlock())
+        this->emitOWordWrite(sel, insn, address, bti);
+      else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_QWORD)
         this->emitWrite64(sel, insn, address, bti);
       else if (insn.isAligned() == true && elemSize == GEN_BYTE_SCATTER_DWORD)
         this->emitUntypedWrite(sel, insn, address,  bti);

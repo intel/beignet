@@ -267,6 +267,10 @@ namespace gbe
     virtual bool canHandleLong(uint32_t opcode, GenRegister dst, GenRegister src0,
                             GenRegister src1 = GenRegister::null());
     virtual void handleDouble(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src0, GenRegister src1 = GenRegister::null());
+    /*! OBlock read */
+    void OBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t elemSize);
+    /*! OBlock write */
+    void OBWRITE(GenRegister header, uint32_t bti, uint32_t elemSize);
 
     GBE_CLASS(GenEncoder); //!< Use custom allocators
     virtual void alu3(uint32_t opcode, GenRegister dst,

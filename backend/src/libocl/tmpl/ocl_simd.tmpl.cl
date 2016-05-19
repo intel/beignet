@@ -133,3 +133,57 @@ RANGE_OP(scan_exclusive, max, float, true)
 RANGE_OP(scan_exclusive, max, double, true)
 
 #undef RANGE_OP
+PURE CONST uint __gen_ocl_sub_group_block_read_mem(const global uint* p);
+OVERLOADABLE uint intel_sub_group_block_read(const global uint* p)
+{
+  return __gen_ocl_sub_group_block_read_mem(p);
+}
+OVERLOADABLE uint2 intel_sub_group_block_read2(const global uint* p)
+{
+  return (uint2)(intel_sub_group_block_read(p),
+                 intel_sub_group_block_read(p + get_simd_size()));
+}
+OVERLOADABLE uint4 intel_sub_group_block_read4(const global uint* p)
+{
+  return (uint4)(intel_sub_group_block_read(p),
+                 intel_sub_group_block_read(p + get_simd_size()),
+                 intel_sub_group_block_read(p + get_simd_size() * 2),
+                 intel_sub_group_block_read(p + get_simd_size() * 3));
+
+}
+OVERLOADABLE uint8 intel_sub_group_block_read8(const global uint* p)
+{
+  return (uint8)(intel_sub_group_block_read(p),
+                 intel_sub_group_block_read(p + get_simd_size()),
+                 intel_sub_group_block_read(p + get_simd_size() * 2),
+                 intel_sub_group_block_read(p + get_simd_size() * 3),
+                 intel_sub_group_block_read(p + get_simd_size() * 4),
+                 intel_sub_group_block_read(p + get_simd_size() * 5),
+                 intel_sub_group_block_read(p + get_simd_size() * 6),
+                 intel_sub_group_block_read(p + get_simd_size() * 7));
+}
+
+OVERLOADABLE void intel_sub_group_block_write2(const global uint* p, uint2 data)
+{
+  intel_sub_group_block_write(p, data.s0);
+  intel_sub_group_block_write(p + get_simd_size(), data.s1);
+}
+OVERLOADABLE void intel_sub_group_block_write4(const global uint* p,uint4 data)
+{
+  intel_sub_group_block_write(p, data.s0);
+  intel_sub_group_block_write(p + get_simd_size(), data.s1);
+  intel_sub_group_block_write(p + get_simd_size() * 2, data.s2);
+  intel_sub_group_block_write(p + get_simd_size() * 3, data.s3);
+
+}
+OVERLOADABLE void intel_sub_group_block_write8(const global uint* p,uint8 data)
+{
+  intel_sub_group_block_write(p, data.s0);
+  intel_sub_group_block_write(p + get_simd_size(), data.s1);
+  intel_sub_group_block_write(p + get_simd_size() * 2, data.s2);
+  intel_sub_group_block_write(p + get_simd_size() * 3, data.s3);
+  intel_sub_group_block_write(p + get_simd_size() * 4, data.s4);
+  intel_sub_group_block_write(p + get_simd_size() * 5, data.s5);
+  intel_sub_group_block_write(p + get_simd_size() * 6, data.s6);
+  intel_sub_group_block_write(p + get_simd_size() * 7, data.s7);
+}

@@ -187,6 +187,8 @@ namespace gbe
     void scratchRead(const GenRegister dst, const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode);
     unsigned beforeMessage(const SelectionInstruction &insn, GenRegister bti, GenRegister flagTemp, GenRegister btiTmp, unsigned desc);
     void afterMessage(const SelectionInstruction &insn, GenRegister bti, GenRegister flagTemp, GenRegister btiTmp, unsigned jip0);
+    void emitOBReadInstruction(const SelectionInstruction &insn);
+    void emitOBWriteInstruction(const SelectionInstruction &insn);
 
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);

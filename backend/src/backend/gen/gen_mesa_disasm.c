@@ -432,6 +432,14 @@ static const char *data_port_data_cache_category[] = {
   "scratch",
 };
 
+static const char *data_port_data_cache_block_size[] = {
+  "1 OWORD LOW",
+  "1 OWORD HIGH",
+  "2 OWORD",
+  "4 OWORD",
+  "8 OWORD",
+};
+
 static const char *data_port_scratch_block_size[] = {
   "1 register",
   "2 registers",
@@ -576,6 +584,7 @@ static int gen_version;
 #define MSG_GW_ACKREQ(inst)        GEN_BITS_FIELD(inst, bits3.gen7_msg_gw.ackreq)
 #define GENERIC_MSG_LENGTH(inst)   GEN_BITS_FIELD(inst, bits3.generic_gen5.msg_length)
 #define GENERIC_RESPONSE_LENGTH(inst) GEN_BITS_FIELD(inst, bits3.generic_gen5.response_length)
+#define OWORD_RW_BLOCK_SIZE(inst)    GEN_BITS_FIELD(inst, bits3.gen7_oblock_rw.block_size)
 
 static int is_special_acc(const void* inst)
 {
@@ -1481,6 +1490,12 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
                    UNTYPED_RW_BTI(inst),
                    data_port_data_cache_data_size[BYTE_RW_DATA_SIZE(inst)],
                    data_port_data_cache_byte_scattered_simd_mode[BYTE_RW_SIMD_MODE(inst)],
+                   data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
+                   data_port_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
+            else if(UNTYPED_RW_MSG_TYPE(inst) == 0 || UNTYPED_RW_MSG_TYPE(inst) == 8)
+              format(file, " (bti: %d, data size: %s, %s, %s)",
+                   UNTYPED_RW_BTI(inst),
+                   data_port_data_cache_block_size[OWORD_RW_BLOCK_SIZE(inst)],
                    data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
                    data_port_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
             else

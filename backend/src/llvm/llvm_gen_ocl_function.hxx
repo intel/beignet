@@ -202,7 +202,7 @@ DECL_LLVM_GEN_FUNCTION(WORK_GROUP_SCAN_INCLUSIVE_MIN, __gen_ocl_work_group_scan_
 DECL_LLVM_GEN_FUNCTION(WORK_GROUP_ALL, __gen_ocl_work_group_all)
 DECL_LLVM_GEN_FUNCTION(WORK_GROUP_ANY, __gen_ocl_work_group_any)
 
-// work group function
+// sub group function
 DECL_LLVM_GEN_FUNCTION(SUB_GROUP_BROADCAST, __gen_ocl_sub_group_broadcast)
 
 DECL_LLVM_GEN_FUNCTION(SUB_GROUP_REDUCE_ADD, __gen_ocl_sub_group_reduce_add)
@@ -216,6 +216,9 @@ DECL_LLVM_GEN_FUNCTION(SUB_GROUP_SCAN_EXCLUSIVE_MIN, __gen_ocl_sub_group_scan_ex
 DECL_LLVM_GEN_FUNCTION(SUB_GROUP_SCAN_INCLUSIVE_ADD, __gen_ocl_sub_group_scan_inclusive_add)
 DECL_LLVM_GEN_FUNCTION(SUB_GROUP_SCAN_INCLUSIVE_MAX, __gen_ocl_sub_group_scan_inclusive_max)
 DECL_LLVM_GEN_FUNCTION(SUB_GROUP_SCAN_INCLUSIVE_MIN, __gen_ocl_sub_group_scan_inclusive_min)
+
+DECL_LLVM_GEN_FUNCTION(SUB_GROUP_BLOCK_READ_MEM, __gen_ocl_sub_group_block_read_mem)
+DECL_LLVM_GEN_FUNCTION(SUB_GROUP_BLOCK_WRITE_MEM, __gen_ocl_sub_group_block_write_mem)
 
 // common function
 DECL_LLVM_GEN_FUNCTION(LRP, __gen_ocl_lrp)

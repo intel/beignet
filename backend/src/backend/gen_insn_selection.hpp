@@ -175,6 +175,8 @@ namespace gbe
     INLINE uint32_t getbti() const {
       GBE_ASSERT(isRead() || isWrite());
       switch (opcode) {
+        case SEL_OP_OBREAD:
+        case SEL_OP_OBWRITE:
         case SEL_OP_DWORD_GATHER: return extra.function;
         case SEL_OP_SAMPLE: return extra.rdbti;
         case SEL_OP_VME: return extra.vme_bti;
@@ -188,6 +190,8 @@ namespace gbe
     INLINE void setbti(uint32_t bti) {
       GBE_ASSERT(isRead() || isWrite());
       switch (opcode) {
+        case SEL_OP_OBREAD:
+        case SEL_OP_OBWRITE:
         case SEL_OP_DWORD_GATHER: extra.function = bti; return;
         case SEL_OP_SAMPLE: extra.rdbti = bti; return;
         case SEL_OP_VME: extra.vme_bti = bti; return;

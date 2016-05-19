@@ -3487,6 +3487,58 @@ namespace gbe
     p->pop();
   }
 
+  void GenContext::emitOBReadInstruction(const SelectionInstruction &insn) {
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    const GenRegister addr = GenRegister::toUniform(ra->genReg(insn.src(0)), GEN_TYPE_UD);
+    GenRegister header = GenRegister::retype(ra->genReg(insn.src(1)), GEN_TYPE_UD);
+
+    p->push();
+      // Copy r0 into the header first
+      p->curr.execWidth = 8;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->MOV(header, GenRegister::ud8grf(0, 0));
+
+      // Update the header with the current address
+      p->curr.execWidth = 1;
+      p->SHR(GenRegister::offset(header, 0, 2*4), addr, GenRegister::immud(4));
+
+      // Put zero in the general state base address
+      p->MOV(GenRegister::offset(header, 0, 5*4), GenRegister::immud(0));
+
+    p->pop();
+    // Now read the data
+    p->OBREAD(dst, header, insn.getbti(), insn.extra.elem);
+  }
+
+  void GenContext::emitOBWriteInstruction(const SelectionInstruction &insn) {
+    const GenRegister addr = GenRegister::toUniform(ra->genReg(insn.src(2)), GEN_TYPE_UD);
+    GenRegister header;
+    if (simdWidth == 8)
+      header = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_UD);
+    else
+      header = GenRegister::retype(GenRegister::Qn(ra->genReg(insn.src(0)),1), GEN_TYPE_UD);
+
+    p->push();
+      // Copy r0 into the header first
+      p->curr.execWidth = 8;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->curr.noMask = 1;
+      p->MOV(header, GenRegister::ud8grf(0,0));
+
+      // Update the header with the current address
+      p->curr.execWidth = 1;
+      p->SHR(GenRegister::offset(header, 0, 2*4), addr, GenRegister::immud(4));
+
+      // Put zero in the general state base address
+      p->MOV(GenRegister::offset(header, 0, 5*4), GenRegister::immud(0));
+
+    p->pop();
+    // Now write the data
+    p->OBWRITE(header, insn.getbti(), insn.extra.elem);
+  }
+
+
   BVAR(OCL_OUTPUT_REG_ALLOC, false);
   BVAR(OCL_OUTPUT_ASM, false);
 

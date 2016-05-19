@@ -356,6 +356,8 @@ namespace ir {
     }
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
+    /*! Return true if the given instruction is block write */
+    bool isBlock() const;
   };
 
   /*! Load instruction. The source is simply the address where to get the data.
@@ -372,6 +374,8 @@ namespace ir {
     }
     /*! Return true if the given instruction is an instance of this class */
     static bool isClassOf(const Instruction &insn);
+    /*! Return true if the given instruction is block read */
+    bool isBlock() const;
   };
 
   /*! Load immediate instruction loads an typed immediate value into the given
@@ -827,10 +831,10 @@ namespace ir {
   /*! ret */
   Instruction RET(void);
   /*! load.type.space {dst1,...,dst_valueNum} offset value, {bti} */
-  Instruction LOAD(Type type, Tuple dst, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, AddressMode, unsigned SurfaceIndex);
+  Instruction LOAD(Type type, Tuple dst, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, AddressMode, unsigned SurfaceIndex, bool isBlock = false);
   Instruction LOAD(Type type, Tuple dst, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, AddressMode, Register bti);
   /*! store.type.space offset {src1,...,src_valueNum} value {bti}*/
-  Instruction STORE(Type type, Tuple src, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, AddressMode, unsigned SurfaceIndex);
+  Instruction STORE(Type type, Tuple src, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, AddressMode, unsigned SurfaceIndex, bool isBlock = false);
   Instruction STORE(Type type, Tuple src, Register offset, AddressSpace space, uint32_t valueNum, bool dwAligned, AddressMode, Register bti);
   /*! loadi.type dst value */
   Instruction LOADI(Type type, Register dst, ImmediateIndex value);

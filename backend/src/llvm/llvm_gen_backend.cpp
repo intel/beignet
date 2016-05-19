@@ -697,6 +697,8 @@ namespace gbe
     void emitWorkGroupInst(CallInst &I, CallSite &CS, ir::WorkGroupOps opcode);
     // Emit subgroup instructions
     void emitSubGroupInst(CallInst &I, CallSite &CS, ir::WorkGroupOps opcode);
+    // Emit subgroup instructions
+    void emitBlockReadWriteMemInst(CallInst &I, CallSite &CS, bool isWrite);
 
     uint8_t appendSampler(CallSite::arg_iterator AI);
     uint8_t getImageID(CallInst &I);
@@ -3724,6 +3726,9 @@ namespace gbe
       case GEN_OCL_LRP:
         this->newRegister(&I);
         break;
+      case GEN_OCL_SUB_GROUP_BLOCK_READ_MEM:
+        this->newRegister(&I, NULL, false);
+        break;
       case GEN_OCL_PRINTF:
         this->newRegister(&I);  // fall through
       case GEN_OCL_PUTS:
@@ -3738,6 +3743,7 @@ namespace gbe
       case GEN_OCL_CALC_TIMESTAMP:
       case GEN_OCL_STORE_PROFILING:
       case GEN_OCL_DEBUGWAIT:
+      case GEN_OCL_SUB_GROUP_BLOCK_WRITE_MEM:
         break;
       case GEN_OCL_NOT_FOUND:
       default:
@@ -3927,6 +3933,61 @@ namespace gbe
       src[0] = this->getRegister(*(AI++));
       const ir::Tuple srcTuple = ctx.arrayTuple(&src[0], 1);
       ctx.SUBGROUP(opcode, getRegister(&I), srcTuple, 1, ty);
+    }
+
+    GBE_ASSERT(AI == AE);
+  }
+
+  void GenWriter::emitBlockReadWriteMemInst(CallInst &I, CallSite &CS, bool isWrite) {
+    CallSite::arg_iterator AI = CS.arg_begin();
+    CallSite::arg_iterator AE = CS.arg_end();
+    GBE_ASSERT(AI != AE);
+
+    Value *llvmPtr = *(AI++);
+    Value *llvmValues;
+    ir::AddressSpace addrSpace = addressSpaceLLVMToGen(llvmPtr->getType()->getPointerAddressSpace());
+    GBE_ASSERT(addrSpace == ir::MEM_GLOBAL);
+    ir::Register pointer = this->getRegister(llvmPtr);
+
+    ir::Register ptr;
+    ir::Register btiReg;
+    unsigned SurfaceIndex = 0xff;
+
+    ir::AddressMode AM;
+    if (legacyMode) {
+      Value *bti = getBtiRegister(llvmPtr);
+      Value *ptrBase = getPointerBase(llvmPtr);
+      ir::Register baseReg = this->getRegister(ptrBase);
+      if (isa<ConstantInt>(bti)) {
+        AM = ir::AM_StaticBti;
+        SurfaceIndex = cast<ConstantInt>(bti)->getZExtValue();
+        addrSpace = btiToGen(SurfaceIndex);
+      } else {
+        AM = ir::AM_DynamicBti;
+        addrSpace = ir::MEM_MIXED;
+        btiReg = this->getRegister(bti);
+      }
+      const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
+      ptr = ctx.reg(pointerFamily);
+      ctx.SUB(ir::TYPE_U32, ptr, pointer, baseReg);
+    } else {
+      AM = ir::AM_Stateless;
+      ptr = pointer;
+    }
+
+    ir::Type type = ir::TYPE_U32;
+    GBE_ASSERT(AM != ir::AM_DynamicBti);
+
+    if(isWrite){
+      llvmValues = *(AI++);
+      const ir::Register values = getRegister(llvmValues);
+      const ir::Tuple tuple = ctx.arrayTuple(&values, 1);
+      ctx.STORE(type, tuple, ptr, addrSpace, 1, true, AM, SurfaceIndex, true);
+    } else {
+      llvmValues = &I;
+      const ir::Register values = getRegister(llvmValues);
+      const ir::Tuple tuple = ctx.arrayTuple(&values, 1);
+      ctx.LOAD(type, tuple, ptr, addrSpace, 1, true, AM, SurfaceIndex, true);
     }
 
     GBE_ASSERT(AI == AE);
@@ -4756,6 +4817,10 @@ namespace gbe
             ctx.LRP(ir::TYPE_FLOAT, dst, src0, src1, src2);
             break;
           }
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_MEM:
+            this->emitBlockReadWriteMemInst(I, CS, false); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_MEM:
+            this->emitBlockReadWriteMemInst(I, CS, true); break;
           default: break;
         }
       }

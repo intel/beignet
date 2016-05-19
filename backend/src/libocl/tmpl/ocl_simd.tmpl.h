@@ -132,3 +132,14 @@ OVERLOADABLE double sub_group_scan_exclusive_max(double x);
 OVERLOADABLE float intel_sub_group_shuffle(float x, uint c);
 OVERLOADABLE int intel_sub_group_shuffle(int x, uint c);
 OVERLOADABLE uint intel_sub_group_shuffle(uint x, uint c);
+
+/* blocak read/write */
+OVERLOADABLE uint intel_sub_group_block_read(const global uint* p);
+OVERLOADABLE uint2 intel_sub_group_block_read2(const global uint* p);
+OVERLOADABLE uint4 intel_sub_group_block_read4(const global uint* p);
+OVERLOADABLE uint8 intel_sub_group_block_read8(const global uint* p);
+
+OVERLOADABLE void intel_sub_group_block_write(const __global uint* p, uint data);
+OVERLOADABLE void intel_sub_group_block_write2(const __global uint* p, uint2 data);
+OVERLOADABLE void intel_sub_group_block_write4(const __global uint* p, uint4 data);
+OVERLOADABLE void intel_sub_group_block_write8(const __global uint* p, uint8 data);
