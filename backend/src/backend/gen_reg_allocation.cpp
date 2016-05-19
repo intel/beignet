@@ -49,10 +49,11 @@ namespace gbe
    */
   struct GenRegInterval {
     INLINE GenRegInterval(ir::Register reg) :
-      reg(reg), minID(INT_MAX), maxID(-INT_MAX), conflictReg(0) {}
+      reg(reg), minID(INT_MAX), maxID(-INT_MAX), conflictReg(0), b3OpAlign(0) {}
     ir::Register reg;     //!< (virtual) register of the interval
     int32_t minID, maxID; //!< Starting and ending points
     ir::Register conflictReg; // < has banck conflict with this register
+    bool b3OpAlign;
   };
 
   typedef struct GenRegIntervalKey {
@@ -1050,6 +1051,9 @@ namespace gbe
         }
       }
     }
+    if (interval.b3OpAlign != 0) {
+      alignment = (alignment + 15) & ~15;
+    }
     while ((grfOffset = ctx.allocate(size, alignment, direction)) == -1) {
       const bool success = this->expireGRF(interval);
       if (success == false) {
@@ -1138,6 +1142,9 @@ namespace gbe
               reg == ir::ocl::groupid1 ||
               reg == ir::ocl::groupid2)
             continue;
+          if (is3SrcOp) {
+              this->intervals[reg].b3OpAlign = 1;
+          }
           this->intervals[reg].minID = std::min(this->intervals[reg].minID, insnID);
           this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, insnID);
         }
