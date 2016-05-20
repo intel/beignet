@@ -89,6 +89,7 @@ set (GBE_SRC
     llvm/ExpandUtils.cpp
     llvm/PromoteIntegers.cpp
     llvm/ExpandLargeIntegers.cpp
+    llvm/llvm_device_enqueue.cpp
     llvm/StripAttributes.cpp
     llvm/llvm_to_gen.cpp
     llvm/llvm_loadstore_optimization.cpp

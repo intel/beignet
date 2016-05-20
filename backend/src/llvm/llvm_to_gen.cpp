@@ -272,10 +272,21 @@ namespace gbe
     if (!cl_mod) return false;
 
     OUTPUT_BITCODE(BEFORE_LINK, (*cl_mod));
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+    legacy::PassManager passes__;
+#else
+    PassManager passes__;
+#endif
+    //run ExpandConstantExprPass before collectDeviceEnqueueInfo
+    //to simplify the analyze of block.
+    passes__.add(createExpandConstantExprPass());    // constant prop may generate ConstantExpr
+    passes__.run(*cl_mod);
+    /* Must call before materialize when link */
+    collectDeviceEnqueueInfo(cl_mod, unit);
 
     std::unique_ptr<Module> M;
 
-    /* Before do any thing, we first filter in all CL functions in bitcode. */ 
+    /* Before do any thing, we first filter in all CL functions in bitcode. */
     M.reset(runBitCodeLinker(cl_mod, strictMath));
     if (!module)
       delete cl_mod;

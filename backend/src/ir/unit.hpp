@@ -92,6 +92,7 @@ namespace ir {
   public:
     typedef map<std::string, Function*> FunctionSet;
     map<llvm::CallInst*, PrintfSet::PrintfFmt> printfs;
+    vector<std::string> blockFuncs;
     /*! Create an empty unit */
     Unit(PointerSize pointerSize = POINTER_32_BITS);
     /*! Release everything (*including* the function pointers) */
