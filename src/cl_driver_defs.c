@@ -34,6 +34,7 @@ LOCAL cl_buffer_alloc_cb *cl_buffer_alloc = NULL;
 LOCAL cl_buffer_alloc_userptr_cb *cl_buffer_alloc_userptr = NULL;
 LOCAL cl_buffer_set_softpin_offset_cb *cl_buffer_set_softpin_offset = NULL;
 LOCAL cl_buffer_set_bo_use_full_range_cb *cl_buffer_set_bo_use_full_range = NULL;
+LOCAL cl_buffer_disable_reuse_cb *cl_buffer_disable_reuse = NULL;
 LOCAL cl_buffer_set_tiling_cb *cl_buffer_set_tiling = NULL;
 LOCAL cl_buffer_alloc_from_texture_cb *cl_buffer_alloc_from_texture = NULL;
 LOCAL cl_buffer_release_from_texture_cb *cl_buffer_release_from_texture = NULL;
@@ -99,4 +100,6 @@ LOCAL cl_gpgpu_unmap_printf_buffer_cb *cl_gpgpu_unmap_printf_buffer = NULL;
 LOCAL cl_gpgpu_set_printf_info_cb *cl_gpgpu_set_printf_info = NULL;
 LOCAL cl_gpgpu_get_printf_info_cb *cl_gpgpu_get_printf_info = NULL;
 LOCAL cl_gpgpu_release_printf_buffer_cb *cl_gpgpu_release_printf_buffer = NULL;
+LOCAL cl_gpgpu_set_kernel_cb *cl_gpgpu_set_kernel = NULL;
+LOCAL cl_gpgpu_get_kernel_cb *cl_gpgpu_get_kernel = NULL;
 

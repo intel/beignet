@@ -117,7 +117,7 @@ typedef enum gpu_command_status {
 typedef struct cl_gpgpu_kernel {
   const char *name;        /* kernel name and bo name */
   uint32_t grf_blocks;     /* register blocks kernel wants (in 8 reg blocks) */
-  uint32_t curbe_sz;         /* total size of all curbes */
+  uint32_t curbe_sz;       /* total size of all curbes */
   cl_buffer bo;            /* kernel code in the proper addr space */
   int32_t barrierID;       /* barrierID for _this_ kernel */
   uint32_t use_slm:1;      /* For gen7 (automatic barrier management) */
@@ -140,6 +140,12 @@ extern cl_gpgpu_sync_cb *cl_gpgpu_sync;
 /* Bind a regular unformatted buffer */
 typedef void (cl_gpgpu_bind_buf_cb)(cl_gpgpu, cl_buffer, uint32_t offset, uint32_t internal_offset, size_t size, uint8_t bti);
 extern cl_gpgpu_bind_buf_cb *cl_gpgpu_bind_buf;
+
+typedef void (cl_gpgpu_set_kernel_cb)(cl_gpgpu, void *);
+extern cl_gpgpu_set_kernel_cb *cl_gpgpu_set_kernel;
+
+typedef void* (cl_gpgpu_get_kernel_cb)(cl_gpgpu);
+extern cl_gpgpu_get_kernel_cb *cl_gpgpu_get_kernel;
 
 /* bind samplers defined in both kernel and kernel args. */
 typedef void (cl_gpgpu_bind_sampler_cb)(cl_gpgpu, uint32_t *samplers, size_t sampler_sz);
@@ -289,7 +295,6 @@ typedef void (cl_gpgpu_walker_cb)(cl_gpgpu,
                                   const size_t global_wk_sz[3],
                                   const size_t local_wk_sz[3]);
 extern cl_gpgpu_walker_cb *cl_gpgpu_walker;
-
 /**************************************************************************
  * Buffer
  **************************************************************************/
@@ -300,14 +305,17 @@ extern cl_buffer_alloc_cb *cl_buffer_alloc;
 typedef cl_buffer (cl_buffer_alloc_userptr_cb)(cl_buffer_mgr, const char*, void *, size_t, unsigned long);
 extern cl_buffer_alloc_userptr_cb *cl_buffer_alloc_userptr;
 
-typedef cl_buffer (cl_buffer_set_softpin_offset_cb)(cl_buffer, uint64_t);
+typedef int (cl_buffer_set_softpin_offset_cb)(cl_buffer, uint64_t);
 extern cl_buffer_set_softpin_offset_cb *cl_buffer_set_softpin_offset;
 
-typedef cl_buffer (cl_buffer_set_bo_use_full_range_cb)(cl_buffer, uint32_t);
+typedef int (cl_buffer_set_bo_use_full_range_cb)(cl_buffer, uint32_t);
 extern cl_buffer_set_bo_use_full_range_cb *cl_buffer_set_bo_use_full_range;
 
+typedef int (cl_buffer_disable_reuse_cb)(cl_buffer);
+extern cl_buffer_disable_reuse_cb *cl_buffer_disable_reuse;
+
 /* Set a buffer's tiling mode */
-typedef cl_buffer (cl_buffer_set_tiling_cb)(cl_buffer, int tiling, size_t stride);
+typedef int (cl_buffer_set_tiling_cb)(cl_buffer, int tiling, size_t stride);
 extern cl_buffer_set_tiling_cb *cl_buffer_set_tiling;
 
 #include "cl_context.h"

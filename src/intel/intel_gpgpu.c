@@ -2127,6 +2127,18 @@ intel_gpgpu_get_printf_info(intel_gpgpu_t *gpgpu)
   return gpgpu->printf_info;
 }
 
+static void
+intel_gpgpu_set_kernel(intel_gpgpu_t *gpgpu, void * kernel)
+{
+  gpgpu->kernel = kernel;
+}
+
+static void*
+intel_gpgpu_get_kernel(intel_gpgpu_t *gpgpu)
+{
+  return gpgpu->kernel;
+}
+
 LOCAL void
 intel_set_gpgpu_callbacks(int device_id)
 {
@@ -2161,6 +2173,8 @@ intel_set_gpgpu_callbacks(int device_id)
   cl_gpgpu_release_printf_buffer = (cl_gpgpu_release_printf_buffer_cb *)intel_gpgpu_release_printf_buf;
   cl_gpgpu_set_printf_info = (cl_gpgpu_set_printf_info_cb *)intel_gpgpu_set_printf_info;
   cl_gpgpu_get_printf_info = (cl_gpgpu_get_printf_info_cb *)intel_gpgpu_get_printf_info;
+  cl_gpgpu_set_kernel = (cl_gpgpu_set_kernel_cb *)intel_gpgpu_set_kernel;
+  cl_gpgpu_get_kernel = (cl_gpgpu_get_kernel_cb *)intel_gpgpu_get_kernel;
 
   if (IS_BROADWELL(device_id) || IS_CHERRYVIEW(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen8;

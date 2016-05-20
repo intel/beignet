@@ -52,6 +52,7 @@ struct intel_gpgpu
   uint32_t target_buf_offset[max_buf_n];/* internal offset for buffers binded for the call */
   uint32_t binded_offset[max_buf_n];    /* their offsets in the curbe buffer */
   uint32_t binded_n;                    /* number of buffers binded */
+  void *kernel;                         /* cl_kernel with this gpgpu */
 
   unsigned long img_bitmap;              /* image usage bitmap. */
   unsigned int img_index_base;          /* base index for image surface.*/
