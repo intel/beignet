@@ -229,7 +229,8 @@ set (utests_sources
   compiler_get_sub_group_id.cpp
   compiler_sub_group_shuffle.cpp
   runtime_pipe_query.cpp
-  compiler_pipe_builtin.cpp)
+  compiler_pipe_builtin.cpp
+  compiler_device_enqueue.cpp)
 
 if (LLVM_VERSION_NODOT VERSION_GREATER 34)
   SET(utests_sources
