@@ -78,7 +78,7 @@ int cl_event_flush(cl_event event)
   int err = CL_SUCCESS;
   assert(event->gpgpu_event != NULL);
   if (event->gpgpu) {
-    err = cl_command_queue_flush_gpgpu(event->queue, event->gpgpu);
+    err = cl_command_queue_flush_gpgpu(event->queue, event->gpgpu, 1);
     cl_gpgpu_delete(event->gpgpu);
     event->gpgpu = NULL;
   }

@@ -862,6 +862,7 @@ intel_setup_callbacks(void)
   cl_buffer_alloc_userptr = (cl_buffer_alloc_userptr_cb*) intel_buffer_alloc_userptr;
   cl_buffer_set_softpin_offset = (cl_buffer_set_softpin_offset_cb *) drm_intel_bo_set_softpin_offset;
   cl_buffer_set_bo_use_full_range = (cl_buffer_set_bo_use_full_range_cb *) drm_intel_bo_use_48b_address_range;
+  cl_buffer_disable_reuse = (cl_buffer_disable_reuse_cb *) drm_intel_bo_disable_reuse;
   cl_buffer_set_tiling = (cl_buffer_set_tiling_cb *) intel_buffer_set_tiling;
 #if defined(HAS_EGL)
   cl_buffer_alloc_from_texture = (cl_buffer_alloc_from_texture_cb *) intel_alloc_buffer_from_texture;

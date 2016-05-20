@@ -172,5 +172,8 @@ extern cl_kernel cl_context_get_static_kernel_from_bin(cl_context ctx, cl_int in
 
 /* Get the SVM from pointer, return NULL if pointer is not from SVM */
 extern cl_mem cl_context_get_svm_from_ptr(cl_context ctx, const void *p);
+/* Get the mem from pointer, return NULL if pointer is not from mem*/
+extern cl_mem cl_context_get_mem_from_ptr(cl_context ctx, const void *p);
+
 #endif /* __CL_CONTEXT_H__ */
 

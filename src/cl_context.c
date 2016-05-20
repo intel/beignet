@@ -329,12 +329,27 @@ unlock:
   return cl_kernel_dup(ker);
 }
 
+
 cl_mem
 cl_context_get_svm_from_ptr(cl_context ctx, const void * p)
 {
   cl_mem buf = ctx->svm_buffers;
   while(buf) {
     assert(buf->host_ptr && buf->is_svm);
+    if((size_t)buf->host_ptr <= (size_t)p &&
+       (size_t)p < ((size_t)buf->host_ptr + buf->size))
+      return buf;
+    buf = buf->next;
+  }
+  return NULL;
+}
+
+cl_mem
+cl_context_get_mem_from_ptr(cl_context ctx, const void * p)
+{
+  cl_mem buf = ctx->buffers;
+  while(buf) {
+    if(buf->host_ptr == NULL) continue;
     if((size_t)buf->host_ptr <= (size_t)p &&
        (size_t)p < ((size_t)buf->host_ptr + buf->size))
       return buf;

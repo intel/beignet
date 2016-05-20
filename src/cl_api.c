@@ -2297,7 +2297,7 @@ clEnqueueFillImage(cl_command_queue   command_queue,
       cl_event_get_timestamp(*event, CL_PROFILING_COMMAND_SUBMIT);
     }
 
-    err = cl_command_queue_flush(command_queue);
+    err = cl_command_queue_flush(command_queue, 1);
   }
 
   if(b_output_kernel_perf)
@@ -2375,7 +2375,7 @@ clEnqueueFillBuffer(cl_command_queue   command_queue,
       cl_event_get_timestamp(*event, CL_PROFILING_COMMAND_SUBMIT);
     }
 
-    err = cl_command_queue_flush(command_queue);
+    err = cl_command_queue_flush(command_queue, 1);
   }
 
   if(b_output_kernel_perf)
@@ -2463,7 +2463,7 @@ clEnqueueCopyBuffer(cl_command_queue     command_queue,
       cl_event_get_timestamp(*event, CL_PROFILING_COMMAND_SUBMIT);
     }
 
-    err = cl_command_queue_flush(command_queue);
+    err = cl_command_queue_flush(command_queue, 1);
   }
 
   if(b_output_kernel_perf)
@@ -2567,7 +2567,7 @@ clEnqueueCopyBufferRect(cl_command_queue     command_queue,
       cl_event_get_timestamp(*event, CL_PROFILING_COMMAND_SUBMIT);
     }
 
-    err = cl_command_queue_flush(command_queue);
+    err = cl_command_queue_flush(command_queue, 1);
   }
 
   if(b_output_kernel_perf)
@@ -2816,7 +2816,7 @@ clEnqueueCopyImage(cl_command_queue      command_queue,
       cl_event_get_timestamp(*event, CL_PROFILING_COMMAND_SUBMIT);
     }
 
-    err = cl_command_queue_flush(command_queue);
+    err = cl_command_queue_flush(command_queue, 1);
   }
 
   if(b_output_kernel_perf)
@@ -2882,7 +2882,7 @@ clEnqueueCopyImageToBuffer(cl_command_queue  command_queue,
       cl_event_get_timestamp(*event, CL_PROFILING_COMMAND_SUBMIT);
     }
 
-    err = cl_command_queue_flush(command_queue);
+    err = cl_command_queue_flush(command_queue, 1);
   }
 
   if(b_output_kernel_perf)
@@ -2948,7 +2948,7 @@ clEnqueueCopyBufferToImage(cl_command_queue  command_queue,
       cl_event_get_timestamp(*event, CL_PROFILING_COMMAND_SUBMIT);
     }
 
-    err = cl_command_queue_flush(command_queue);
+    err = cl_command_queue_flush(command_queue, 1);
   }
 
   if(b_output_kernel_perf)
@@ -3480,7 +3480,7 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
       cl_event_get_timestamp(*event, CL_PROFILING_COMMAND_SUBMIT);
     }
 
-    err = cl_command_queue_flush(command_queue);
+    err = cl_command_queue_flush(command_queue, 1);
   }
 
   if(b_output_kernel_perf)

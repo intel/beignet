@@ -25,6 +25,7 @@
 #include "cl_mem.h"
 #include "cl_utils.h"
 #include "cl_alloc.h"
+#include "cl_device_enqueue.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -397,7 +398,9 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   /* Bind user images */
   cl_command_queue_bind_image(queue, ker, &max_bti);
   /* Bind all exec infos */
-  cl_command_queue_bind_exec_info(queue, ker, max_bti);
+  cl_command_queue_bind_exec_info(queue, ker, &max_bti);
+  /* Bind device enqueue buffer */
+  cl_device_enqueue_bind_buffer(gpgpu, ker, &max_bti, &kernel);
   /* Bind all samplers */
   cl_gpgpu_bind_sampler(gpgpu, ker->samplers, ker->sampler_sz);
 

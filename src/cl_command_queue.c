@@ -31,6 +31,7 @@
 #include "cl_khr_icd.h"
 #include "cl_event.h"
 #include "performance.h"
+#include "cl_device_enqueue.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -186,25 +187,30 @@ cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k, uint32_t *max
 }
 
 LOCAL cl_int
-cl_command_queue_bind_exec_info(cl_command_queue queue, cl_kernel k, uint32_t max_bti)
+cl_command_queue_bind_exec_info(cl_command_queue queue, cl_kernel k, uint32_t *max_bti)
 {
   uint32_t i;
-  size_t mem_offset, bti = max_bti;
-  cl_mem svm_mem;
+  size_t mem_offset, bti = *max_bti;
+  cl_mem mem;
 
   GET_QUEUE_THREAD_GPGPU(queue);
 
   for (i = 0; i < k->exec_info_n; i++) {
     void *ptr = k->exec_info[i];
-    if((svm_mem = cl_context_get_svm_from_ptr(k->program->ctx, ptr)) != NULL) {
-      mem_offset = (size_t)ptr - (size_t)svm_mem->host_ptr;
+    mem = cl_context_get_svm_from_ptr(k->program->ctx, ptr);
+    if(mem == NULL)
+      mem = cl_context_get_mem_from_ptr(k->program->ctx, ptr);
+
+    if(mem) {
+      mem_offset = (size_t)ptr - (size_t)mem->host_ptr;
       /* only need realloc in surface state, don't need realloc in curbe */
-      cl_gpgpu_bind_buf(gpgpu, svm_mem->bo, -1, svm_mem->offset + mem_offset, svm_mem->size, bti++);
+      cl_gpgpu_bind_buf(gpgpu, mem->bo, -1, mem->offset + mem_offset, mem->size, bti++);
       if(bti == BTI_WORKAROUND_IMAGE_OFFSET)
-        bti = max_bti + BTI_WORKAROUND_IMAGE_OFFSET;
+        bti = *max_bti + BTI_WORKAROUND_IMAGE_OFFSET;
       assert(bti < BTI_MAX_ID);
     }
   }
+  *max_bti = bti;
 
   return CL_SUCCESS;
 }
@@ -243,6 +249,7 @@ cl_command_queue_ND_range_wrap(cl_command_queue queue,
     global_wk_sz[1]%local_wk_sz[1],
     global_wk_sz[2]%local_wk_sz[2]
   };
+  count = (global_wk_sz_rem[0] ? 2 : 1) * (global_wk_sz_rem[1] ? 2 : 1) * (global_wk_sz_rem[2] ? 2 : 1);
 
   const size_t *global_wk_all[2] = {global_wk_sz_div, global_wk_sz_rem};
   /* Go through the at most 8 cases and euque if there is work items left */
@@ -262,9 +269,10 @@ cl_command_queue_ND_range_wrap(cl_command_queue queue,
         };
         if(local_wk_sz_use[0] == 0 || local_wk_sz_use[1] == 0 || local_wk_sz_use[2] == 0) continue;
         TRY (cl_command_queue_ND_range_gen7, queue, ker, work_dim, global_wk_off,global_dim_off, global_wk_sz,global_wk_sz_use,local_wk_sz, local_wk_sz_use);
+
         /* TODO: need to handle events for multiple enqueue, now is a workaroud for uniform group size */
         if(!(global_wk_sz_rem[0] == 0 && global_wk_sz_rem[1] == 0 && global_wk_sz_rem[2] == 0))
-          err = cl_command_queue_flush(queue);
+          err = cl_command_queue_flush(queue, --count == 0);
       }
       if(work_dim < 2)
         break;
@@ -303,7 +311,7 @@ error:
 }
 
 LOCAL int
-cl_command_queue_flush_gpgpu(cl_command_queue queue, cl_gpgpu gpgpu)
+cl_command_queue_flush_gpgpu(cl_command_queue queue, cl_gpgpu gpgpu, cl_bool last_flush_of_enqueue)
 {
   void* printf_info = cl_gpgpu_get_printf_info(gpgpu);
 
@@ -320,15 +328,19 @@ cl_command_queue_flush_gpgpu(cl_command_queue queue, cl_gpgpu gpgpu)
     interp_release_printf_info(printf_info);
     cl_gpgpu_set_printf_info(gpgpu, NULL);
   }
+
+  if(last_flush_of_enqueue)
+    cl_device_enqueue_parse_result(queue, gpgpu);
+
   return CL_SUCCESS;
 }
 
 LOCAL cl_int
-cl_command_queue_flush(cl_command_queue queue)
+cl_command_queue_flush(cl_command_queue queue, cl_bool last_flush_of_enqueue)
 {
   int err;
   GET_QUEUE_THREAD_GPGPU(queue);
-  err = cl_command_queue_flush_gpgpu(queue, gpgpu);
+  err = cl_command_queue_flush_gpgpu(queue, gpgpu, last_flush_of_enqueue);
   // We now keep a list of uncompleted events and check if they compelte
   // every flush. This can make sure all events created have chance to be
   // update status, so the callback functions or reference can be handled.
@@ -340,6 +352,7 @@ cl_command_queue_flush(cl_command_queue queue)
     set_current_event(queue, NULL);
   }
   cl_invalid_thread_gpgpu(queue);
+
   return err;
 }
 
