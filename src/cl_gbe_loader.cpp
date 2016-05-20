@@ -44,6 +44,7 @@ gbe_program_delete_cb *interp_program_delete = NULL;
 gbe_program_get_kernel_num_cb *interp_program_get_kernel_num = NULL;
 gbe_program_get_kernel_by_name_cb *interp_program_get_kernel_by_name = NULL;
 gbe_program_get_kernel_cb *interp_program_get_kernel = NULL;
+gbe_program_get_device_enqueue_kernel_name_cb *interp_program_get_device_enqueue_kernel_name = NULL;
 gbe_kernel_get_name_cb *interp_kernel_get_name = NULL;
 gbe_kernel_get_attributes_cb *interp_kernel_get_attributes = NULL;
 gbe_kernel_get_code_cb *interp_kernel_get_code = NULL;
@@ -72,6 +73,7 @@ gbe_dup_printfset_cb* interp_dup_printfset = NULL;
 gbe_release_printf_info_cb* interp_release_printf_info = NULL;
 gbe_output_printf_cb* interp_output_printf = NULL;
 gbe_kernel_get_arg_info_cb *interp_kernel_get_arg_info = NULL;
+gbe_kernel_use_device_enqueue_cb *interp_kernel_use_device_enqueue = NULL;
 
 struct GbeLoaderInitializer
 {
@@ -131,6 +133,10 @@ struct GbeLoaderInitializer
 
     interp_program_get_kernel = *(gbe_program_get_kernel_cb**)dlsym(dlhInterp, "gbe_program_get_kernel");
     if (interp_program_get_kernel == NULL)
+      return false;
+
+    interp_program_get_device_enqueue_kernel_name = *(gbe_program_get_device_enqueue_kernel_name_cb**)dlsym(dlhInterp, "gbe_program_get_device_enqueue_kernel_name");
+    if (interp_program_get_device_enqueue_kernel_name == NULL)
       return false;
 
     interp_kernel_get_name = *(gbe_kernel_get_name_cb**)dlsym(dlhInterp, "gbe_kernel_get_name");
@@ -243,6 +249,10 @@ struct GbeLoaderInitializer
 
     interp_kernel_get_arg_info = *(gbe_kernel_get_arg_info_cb**)dlsym(dlhInterp, "gbe_kernel_get_arg_info");
     if (interp_kernel_get_arg_info == NULL)
+      return false;
+
+    interp_kernel_use_device_enqueue = *(gbe_kernel_use_device_enqueue_cb**)dlsym(dlhInterp, "gbe_kernel_use_device_enqueue");
+    if (interp_kernel_use_device_enqueue == NULL)
       return false;
 
     return true;

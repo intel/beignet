@@ -90,7 +90,6 @@ namespace gbe {
     name(name), args(NULL), argNum(0), curbeSize(0), stackSize(0), useSLM(false),
         slmSize(0), ctx(NULL), samplerSet(NULL), imageSet(NULL), printfSet(NULL),
         useDeviceEnqueue(false) {}
-
   Kernel::~Kernel(void) {
     if(ctx) GBE_DELETE(ctx);
     if(samplerSet) GBE_DELETE(samplerSet);
@@ -1018,6 +1017,12 @@ if(sizeof(int*) == 8) {
     return program->getKernelNum();
   }
 
+  const static char* programGetDeviceEnqueueKernelName(gbe_program gbeProgram, uint32_t index) {
+    if (gbeProgram == NULL) return 0;
+    const gbe::Program *program = (const gbe::Program*) gbeProgram;
+    return program->getDeviceEnqueueKernelName(index);
+  }
+
   static gbe_kernel programGetKernelByName(gbe_program gbeProgram, const char *name) {
     if (gbeProgram == NULL) return NULL;
     const gbe::Program *program = (gbe::Program*) gbeProgram;
@@ -1168,6 +1173,12 @@ if(sizeof(int*) == 8) {
     return ps->getPrintfNum();
   }
 
+  static uint32_t kernelUseDeviceEnqueue(gbe_kernel gbeKernel) {
+    if (gbeKernel == NULL) return 0;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) gbeKernel;
+    return kernel->getUseDeviceEnqueue();
+  }
+
   static void* kernelDupPrintfSet(gbe_kernel gbeKernel) {
     if (gbeKernel == NULL) return NULL;
     const gbe::Kernel *kernel = (const gbe::Kernel*) gbeKernel;
@@ -1247,6 +1258,7 @@ GBE_EXPORT_SYMBOL gbe_program_delete_cb *gbe_program_delete = NULL;
 GBE_EXPORT_SYMBOL gbe_program_get_kernel_num_cb *gbe_program_get_kernel_num = NULL;
 GBE_EXPORT_SYMBOL gbe_program_get_kernel_by_name_cb *gbe_program_get_kernel_by_name = NULL;
 GBE_EXPORT_SYMBOL gbe_program_get_kernel_cb *gbe_program_get_kernel = NULL;
+GBE_EXPORT_SYMBOL gbe_program_get_device_enqueue_kernel_name_cb *gbe_program_get_device_enqueue_kernel_name = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_name_cb *gbe_kernel_get_name = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_attributes_cb *gbe_kernel_get_attributes = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_code_cb *gbe_kernel_get_code = NULL;
@@ -1275,6 +1287,7 @@ GBE_EXPORT_SYMBOL gbe_dup_printfset_cb *gbe_dup_printfset = NULL;
 GBE_EXPORT_SYMBOL gbe_get_printf_buf_bti_cb *gbe_get_printf_buf_bti = NULL;
 GBE_EXPORT_SYMBOL gbe_release_printf_info_cb *gbe_release_printf_info = NULL;
 GBE_EXPORT_SYMBOL gbe_output_printf_cb *gbe_output_printf = NULL;
+GBE_EXPORT_SYMBOL gbe_kernel_use_device_enqueue_cb *gbe_kernel_use_device_enqueue = NULL;
 
 #ifdef GBE_COMPILER_AVAILABLE
 namespace gbe
@@ -1294,6 +1307,7 @@ namespace gbe
       gbe_program_clean_llvm_resource = gbe::programCleanLlvmResource;
       gbe_program_delete = gbe::programDelete;
       gbe_program_get_kernel_num = gbe::programGetKernelNum;
+      gbe_program_get_device_enqueue_kernel_name = gbe::programGetDeviceEnqueueKernelName;
       gbe_program_get_kernel_by_name = gbe::programGetKernelByName;
       gbe_program_get_kernel = gbe::programGetKernel;
       gbe_kernel_get_name = gbe::kernelGetName;
@@ -1324,6 +1338,7 @@ namespace gbe
       gbe_dup_printfset = gbe::kernelDupPrintfSet;
       gbe_release_printf_info = gbe::kernelReleasePrintfSet;
       gbe_output_printf = gbe::kernelOutputPrintf;
+      gbe_kernel_use_device_enqueue = gbe::kernelUseDeviceEnqueue;
       genSetupCallBacks();
     }
 

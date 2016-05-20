@@ -44,6 +44,7 @@ extern gbe_program_delete_cb *interp_program_delete;
 extern gbe_program_get_kernel_num_cb *interp_program_get_kernel_num;
 extern gbe_program_get_kernel_by_name_cb *interp_program_get_kernel_by_name;
 extern gbe_program_get_kernel_cb *interp_program_get_kernel;
+extern gbe_program_get_device_enqueue_kernel_name_cb *interp_program_get_device_enqueue_kernel_name;
 extern gbe_kernel_get_name_cb *interp_kernel_get_name;
 extern gbe_kernel_get_attributes_cb *interp_kernel_get_attributes;
 extern gbe_kernel_get_code_cb *interp_kernel_get_code;
@@ -72,6 +73,7 @@ extern gbe_dup_printfset_cb* interp_dup_printfset;
 extern gbe_release_printf_info_cb* interp_release_printf_info;
 extern gbe_output_printf_cb* interp_output_printf;
 extern gbe_kernel_get_arg_info_cb *interp_kernel_get_arg_info;
+extern gbe_kernel_use_device_enqueue_cb * interp_kernel_use_device_enqueue;
 
 int CompilerSupported();
 #ifdef __cplusplus
