@@ -546,6 +546,12 @@ namespace ir {
     }
     /*! Output the control flow graph to .dot file */
     void outputCFG();
+    /*! Does it use device enqueue */
+    INLINE bool getUseDeviceEnqueue(void) const { return this->useDeviceEnqueue; }
+    /*! Change the device enqueue infor of the function */
+    INLINE bool setUseDeviceEnqueue(bool useDeviceEnqueue) {
+      return this->useDeviceEnqueue = useDeviceEnqueue;
+    }
   private:
     friend class Context;           //!< Can freely modify a function
     std::string name;               //!< Function name
@@ -573,6 +579,7 @@ namespace ir {
     std::string functionAttributes; //!< function attribute qualifiers combined.
     int32_t wgBroadcastSLM;         //!< Used for broadcast the workgroup value.
     int32_t tidMapSLM;              //!< Used to store the map between groupid and hw thread.
+    bool useDeviceEnqueue;          //!< Has device enqueue?
     GBE_CLASS(Function);            //!< Use custom allocator
   };
 

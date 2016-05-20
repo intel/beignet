@@ -44,7 +44,7 @@ namespace ir {
 
   Function::Function(const std::string &name, const Unit &unit, Profile profile) :
     name(name), unit(unit), profile(profile), simdWidth(0), useSLM(false), slmSize(0), stackSize(0),
-    wgBroadcastSLM(-1), tidMapSLM(-1)
+    wgBroadcastSLM(-1), tidMapSLM(-1), useDeviceEnqueue(false)
   {
     initProfile(*this);
     samplerSet = GBE_NEW(SamplerSet);

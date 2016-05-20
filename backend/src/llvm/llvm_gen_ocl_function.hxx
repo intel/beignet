@@ -198,3 +198,8 @@ DECL_LLVM_GEN_FUNCTION(WORK_GROUP_ANY, __gen_ocl_work_group_any)
 DECL_LLVM_GEN_FUNCTION(GET_PIPE, __gen_ocl_get_pipe)
 DECL_LLVM_GEN_FUNCTION(GET_RID, __gen_ocl_get_rid)
 DECL_LLVM_GEN_FUNCTION(MAKE_RID, __gen_ocl_make_rid)
+
+//Enqueue function
+DECL_LLVM_GEN_FUNCTION(ENQUEUE_SET_NDRANGE_INFO, __gen_ocl_set_ndrange_info)
+DECL_LLVM_GEN_FUNCTION(ENQUEUE_GET_NDRANGE_INFO, __gen_ocl_get_ndrange_info)
+DECL_LLVM_GEN_FUNCTION(ENQUEUE_GET_ENQUEUE_INFO_ADDR, __gen_ocl_get_enqueue_info_addr)

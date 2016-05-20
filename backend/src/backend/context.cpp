@@ -369,6 +369,7 @@ namespace gbe
     if(this->kernel != NULL) {
       this->kernel->scratchSize = this->alignScratchSize(scratchAllocator->getMaxScatchMemUsed());
       this->kernel->ctx = this;
+      this->kernel->setUseDeviceEnqueue(fn.getUseDeviceEnqueue());
     }
     return this->kernel;
   }
