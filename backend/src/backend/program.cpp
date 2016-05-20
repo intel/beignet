@@ -553,6 +553,7 @@ namespace gbe {
     // FIXME we haven't implement those builtin functions,
     // so disable it currently.
     args.push_back("-fno-builtin");
+    args.push_back("-fblocks");
     args.push_back("-disable-llvm-optzns");
     if(bFastMath)
       args.push_back("-D __FAST_RELAXED_MATH__=1");

@@ -53,7 +53,7 @@ FOREACH(M ${OCL_COPY_HEADERS})
 ENDFOREACH(M) 
 
 SET (OCL_COPY_MODULES ocl_workitem ocl_atom ocl_async ocl_sync ocl_memcpy
-                      ocl_memset ocl_misc ocl_vload ocl_geometric ocl_image ocl_work_group ocl_pipe)
+                      ocl_memset ocl_misc ocl_vload ocl_geometric ocl_image ocl_work_group ocl_pipe ocl_enqueue)
 FOREACH(M ${OCL_COPY_MODULES})
     COPY_THE_HEADER(${M})
     COPY_THE_SOURCE(${M})
@@ -129,14 +129,13 @@ FOREACH(M ${OCL_BASH_GENERATED_MODULES})
     GENERATE_SOURCE_BASH(${M})
 ENDFOREACH(M) 
 
-
 if(NOT SPIRTARGET)
   set(SPIRTARGET spir)
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(SPIRTARGET spir64)
   endif()
 endif()
-SET (CLANG_OCL_FLAGS -fno-builtin -ffp-contract=off -cl-kernel-arg-info -triple ${SPIRTARGET} -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND -cl-std=CL2.0)
+SET (CLANG_OCL_FLAGS -fno-builtin -ffp-contract=off -cl-kernel-arg-info -fblocks -triple ${SPIRTARGET} -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND -cl-std=CL2.0)
 MACRO(ADD_CL_TO_BC_TARGET _file)
     # CMake seems can not add pattern rule, use MACRO to replace.
     STRING(REGEX REPLACE "${LIBOCL_BINARY_DIR}/src/\(o.*\)\\.cl" "${OCL_OBJECT_DIR}/\\1.bc" output_name ${_file})

@@ -41,6 +41,7 @@
 #include "ocl_simd.h"
 #include "ocl_work_group.h"
 #include "ocl_pipe.h"
+#include "ocl_enqueue.h"
 #pragma OPENCL EXTENSION cl_khr_fp64 : disable
 #pragma OPENCL EXTENSION cl_khr_fp16 : disable
 #endif
