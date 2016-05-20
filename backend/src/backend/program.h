@@ -105,6 +105,7 @@ enum gbe_curbe_type {
   GBE_CURBE_THREAD_ID,
   GBE_CURBE_CONSTANT_ADDRSPACE,
   GBE_CURBE_STACK_SIZE,
+  GBE_CURBE_ENQUEUE_BUF_POINTER,
   GBE_GEN_REG,
 };
 
@@ -278,6 +279,9 @@ extern gbe_program_get_kernel_by_name_cb *gbe_program_get_kernel_by_name;
 typedef gbe_kernel (gbe_program_get_kernel_cb)(gbe_program, uint32_t ID);
 extern gbe_program_get_kernel_cb *gbe_program_get_kernel;
 
+typedef const char* (gbe_program_get_device_enqueue_kernel_name_cb)(gbe_program, uint32_t ID);
+extern gbe_program_get_device_enqueue_kernel_name_cb *gbe_program_get_device_enqueue_kernel_name;
+
 /*! Get the kernel name */
 typedef const char *(gbe_kernel_get_name_cb)(gbe_kernel);
 extern gbe_kernel_get_name_cb *gbe_kernel_get_name;
@@ -350,6 +354,9 @@ extern gbe_kernel_use_slm_cb *gbe_kernel_use_slm;
 /*! Get slm size needed for kernel local variables */
 typedef int32_t (gbe_kernel_get_slm_size_cb)(gbe_kernel);
 extern gbe_kernel_get_slm_size_cb *gbe_kernel_get_slm_size;
+
+typedef uint32_t (gbe_kernel_use_device_enqueue_cb)(gbe_kernel);
+extern gbe_kernel_use_device_enqueue_cb *gbe_kernel_use_device_enqueue;
 
 /*mutex to lock global llvmcontext access.*/
 extern void acquireLLVMContextLock();
