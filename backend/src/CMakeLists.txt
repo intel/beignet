@@ -1,6 +1,6 @@
-set (OCL_BITCODE_BIN "${BEIGNET_INSTALL_DIR}beignet.bc")
+set (OCL_BITCODE_BIN "${BEIGNET_INSTALL_DIR}/beignet.bc")
 set (OCL_HEADER_DIR "${BEIGNET_INSTALL_DIR}/include")
-set (OCL_PCH_OBJECT "${BEIGNET_INSTALL_DIR}beignet.pch")
+set (OCL_PCH_OBJECT "${BEIGNET_INSTALL_DIR}/beignet.pch")
 set (GBE_OBJECT_DIR "${BEIGNET_INSTALL_DIR}/libgbe.so")
 set (INTERP_OBJECT_DIR "${BEIGNET_INSTALL_DIR}/libgbeinterp.so")
 
