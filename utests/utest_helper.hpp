@@ -35,6 +35,10 @@
 #include <cstdio>
 #include <cstdlib>
 
+#if defined(__ANDROID__)
+#define __thread
+#endif
+
 #ifdef HAS_EGL
 #define EGL_WINDOW_WIDTH 256
 #define EGL_WINDOW_HEIGHT 256

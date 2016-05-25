@@ -89,7 +89,12 @@ int main(int argc, char *argv[])
 
       case 'j':
         try {
+#if defined(__ANDROID__)
+          std::cout << "Do not support multithread in android, use single thread instead." << std::endl;
+          UTest::run(optarg);
+#else
           UTest::runMultiThread(optarg);
+#endif
         }
         catch (Exception e){
           std::cout << "  " << e.what() << "    [SUCCESS]" << std::endl;

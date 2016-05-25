@@ -38,9 +38,6 @@ static int *thread_slot_map = NULL;
 static int thread_magic_num = 1;
 static pthread_mutex_t thread_queue_map_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static __thread int thread_id = -1;
-static __thread int thread_magic = -1;
-
 typedef struct _thread_spec_data {
   cl_gpgpu gpgpu ;
   int valid;
@@ -56,18 +53,42 @@ typedef struct _queue_thread_private {
   pthread_mutex_t thread_data_lock;
 } queue_thread_private;
 
+static pthread_once_t key_once = PTHREAD_ONCE_INIT;
+static pthread_key_t thread_id_key;
+static pthread_key_t thread_magic_key;
+
+static void create_thread_key()
+{
+  pthread_key_create(&thread_id_key, NULL);
+  pthread_key_create(&thread_magic_key, NULL);
+}
+
 static thread_spec_data * __create_thread_spec_data(cl_command_queue queue, int create)
 {
   queue_thread_private *thread_private = ((queue_thread_private *)(queue->thread_data));
   thread_spec_data* spec = NULL;
   int i = 0;
+  int *id = NULL, *magic = NULL;
 
-  if (thread_id == -1) {
+  pthread_once(&key_once, create_thread_key);
+  id = pthread_getspecific(thread_id_key);
+  if(id == NULL) {
+    id = (int *)malloc(sizeof(int));
+    *id = -1;
+    pthread_setspecific(thread_id_key, id);
+  }
+  magic = pthread_getspecific(thread_magic_key);
+  if(magic == NULL) {
+    magic = (int *)malloc(sizeof(int));
+    *magic = -1;
+    pthread_setspecific(thread_magic_key, magic);
+  }
 
+  if (*id == -1) {
     pthread_mutex_lock(&thread_queue_map_lock);
     for (i = 0; i < thread_array_num; i++) {
       if (thread_slot_map[i] == 0) {
-        thread_id = i;
+        *id = i;
         break;
       }
     }
@@ -82,12 +103,12 @@ static thread_spec_data * __create_thread_spec_data(cl_command_queue queue, int 
       }
 
       memset(thread_slot_map + thread_array_num/2, 0, sizeof(int) * (thread_array_num/2));
-      thread_id = thread_array_num/2;
+      *id = thread_array_num/2;
     }
 
-    thread_slot_map[thread_id] = 1;
+    thread_slot_map[*id] = 1;
 
-    thread_magic = thread_magic_num++;
+    *magic = thread_magic_num++;
     pthread_mutex_unlock(&thread_queue_map_lock);
   }
 
@@ -107,12 +128,12 @@ static thread_spec_data * __create_thread_spec_data(cl_command_queue queue, int 
            sizeof(void*) * (thread_private->threads_data_num - old_num));
   }
 
-  assert(thread_id != -1 && thread_id < thread_array_num);
-  spec = thread_private->threads_data[thread_id];
+  assert(*id != -1 && *id < thread_array_num);
+  spec = thread_private->threads_data[*id];
   if (!spec && create) {
        spec = CALLOC(thread_spec_data);
-       spec->thread_magic = thread_magic;
-       thread_private->threads_data[thread_id] = spec;
+       spec->thread_magic = *magic;
+       thread_private->threads_data[*id] = spec;
   }
 
   pthread_mutex_unlock(&thread_private->thread_data_lock);
@@ -123,28 +144,32 @@ static thread_spec_data * __create_thread_spec_data(cl_command_queue queue, int 
 cl_event get_current_event(cl_command_queue queue)
 {
   thread_spec_data* spec = __create_thread_spec_data(queue, 1);
-  assert(spec && spec->thread_magic == thread_magic);
+  int *magic = pthread_getspecific(thread_magic_key);
+  assert(spec && spec->thread_magic == *magic);
   return spec->current_event;
 }
 
 cl_event get_last_event(cl_command_queue queue)
 {
   thread_spec_data* spec = __create_thread_spec_data(queue, 1);
-  assert(spec && spec->thread_magic == thread_magic);
+  int *magic = pthread_getspecific(thread_magic_key);
+  assert(spec && spec->thread_magic == *magic);
   return spec->last_event;
 }
 
 void set_current_event(cl_command_queue queue, cl_event e)
 {
   thread_spec_data* spec = __create_thread_spec_data(queue, 1);
-  assert(spec && spec->thread_magic == thread_magic);
+  int *magic = pthread_getspecific(thread_magic_key);
+  assert(spec && spec->thread_magic == *magic);
   spec->current_event = e;
 }
 
 void set_last_event(cl_command_queue queue, cl_event e)
 {
   thread_spec_data* spec = __create_thread_spec_data(queue, 1);
-  assert(spec && spec->thread_magic == thread_magic);
+  int *magic = pthread_getspecific(thread_magic_key);
+  assert(spec && spec->thread_magic == *magic);
   spec->last_event = e;
 }
 
@@ -178,8 +203,9 @@ cl_gpgpu cl_get_thread_gpgpu(cl_command_queue queue)
   thread_spec_data* spec = __create_thread_spec_data(queue, 1);
   if(!spec)
     return NULL;
+  int *magic = pthread_getspecific(thread_magic_key);
 
-  if (!spec->thread_magic && spec->thread_magic != thread_magic) {
+  if (!spec->thread_magic && spec->thread_magic != *magic) {
     //We may get the slot from last thread. So free the resource.
     spec->valid = 0;
   }
@@ -204,8 +230,9 @@ cl_gpgpu cl_get_thread_gpgpu(cl_command_queue queue)
 void cl_set_thread_batch_buf(cl_command_queue queue, void* buf)
 {
   thread_spec_data* spec = __create_thread_spec_data(queue, 1);
+  int *magic = pthread_getspecific(thread_magic_key);
 
-  assert(spec && spec->thread_magic == thread_magic);
+  assert(spec && spec->thread_magic == *magic);
 
   if (spec->thread_batch_buf) {
     cl_gpgpu_unref_batch_buf(spec->thread_batch_buf);
@@ -215,19 +242,21 @@ void cl_set_thread_batch_buf(cl_command_queue queue, void* buf)
 
 void* cl_get_thread_batch_buf(cl_command_queue queue) {
   thread_spec_data* spec = __create_thread_spec_data(queue, 1);
+  int *magic = pthread_getspecific(thread_magic_key);
 
-  assert(spec && spec->thread_magic == thread_magic);
+  assert(spec && spec->thread_magic == *magic);
 
   return spec->thread_batch_buf;
 }
 
 void cl_invalid_thread_gpgpu(cl_command_queue queue)
 {
+  int *id = pthread_getspecific(thread_id_key);
   queue_thread_private *thread_private = ((queue_thread_private *)(queue->thread_data));
   thread_spec_data* spec = NULL;
 
   pthread_mutex_lock(&thread_private->thread_data_lock);
-  spec = thread_private->threads_data[thread_id];
+  spec = thread_private->threads_data[*id];
   assert(spec);
   pthread_mutex_unlock(&thread_private->thread_data_lock);
 
@@ -243,11 +272,12 @@ void cl_invalid_thread_gpgpu(cl_command_queue queue)
 
 cl_gpgpu cl_thread_gpgpu_take(cl_command_queue queue)
 {
+  int *id = pthread_getspecific(thread_id_key);
   queue_thread_private *thread_private = ((queue_thread_private *)(queue->thread_data));
   thread_spec_data* spec = NULL;
 
   pthread_mutex_lock(&thread_private->thread_data_lock);
-  spec = thread_private->threads_data[thread_id];
+  spec = thread_private->threads_data[*id];
   assert(spec);
   pthread_mutex_unlock(&thread_private->thread_data_lock);
 
