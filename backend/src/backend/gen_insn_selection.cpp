@@ -1219,7 +1219,7 @@ namespace gbe
     }
     // FIXME, this longjmp check is too hacky. We need to support instruction
     // insertion at code emission stage in the future.
-    insn->extra.longjmp = ctx.getFunction().getDistance(start, end) > 8000;
+    insn->extra.longjmp = ctx.getFunction().getDistance(start, end) > 3000;
     return insn->extra.longjmp ? 2 : 1;
   }
 
