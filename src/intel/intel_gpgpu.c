@@ -2243,11 +2243,15 @@ intel_gpgpu_read_ts_reg_gen7(drm_intel_bufmgr *bufmgr)
      i386 system. It seems the kernel readq bug. So shift 32 bit in x86_64, and only remain
      32 bits data in i386.
   */
-#ifdef __i386__
-  return result & 0x0ffffffff;
-#else
-  return result >> 32;
-#endif  /* __i386__  */
+  struct utsname buf;
+  uname(&buf);
+  /* In some systems, the user space is 32 bit, but kernel is 64 bit, so can't use the
+   * compiler's flag to determine the kernel'a architecture, use uname to get it. */
+  /* x86_64 in linux, amd64 in bsd */
+  if(strcmp(buf.machine, "x86_64") == 0 || strcmp(buf.machine, "amd64") == 0)
+    return result >> 32;
+  else
+    return result & 0x0ffffffff;
 }
 
 /* baytrail's result should clear high 4 bits */
