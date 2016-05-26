@@ -189,7 +189,8 @@ namespace gbe
            this->opcode == SEL_OP_SAMPLE ||
            this->opcode == SEL_OP_VME ||
            this->opcode == SEL_OP_DWORD_GATHER ||
-           this->opcode == SEL_OP_OBREAD;
+           this->opcode == SEL_OP_OBREAD ||
+           this->opcode == SEL_OP_MBREAD;
   }
 
   bool SelectionInstruction::modAcc(void) const {
@@ -212,7 +213,8 @@ namespace gbe
            this->opcode == SEL_OP_ATOMIC        ||
            this->opcode == SEL_OP_BYTE_SCATTER  ||
            this->opcode == SEL_OP_TYPED_WRITE ||
-           this->opcode == SEL_OP_OBWRITE;
+           this->opcode == SEL_OP_OBWRITE ||
+           this->opcode == SEL_OP_MBWRITE;
   }
 
   bool SelectionInstruction::isBranch(void) const {
@@ -703,6 +705,10 @@ namespace gbe
     void OBREAD(GenRegister dst, GenRegister addr, GenRegister header, uint32_t bti, uint32_t size);
     /*! Oblock write */
     void OBWRITE(GenRegister addr, GenRegister value, GenRegister header, uint32_t bti, uint32_t size);
+    /*! Media block read */
+    void MBREAD(GenRegister* dsts, GenRegister coordx, GenRegister coordy, GenRegister header, GenRegister* tmp, uint32_t bti, uint32_t vec_size);
+    /*! Media block write */
+    void MBWRITE(GenRegister coordx, GenRegister coordy, GenRegister* values, GenRegister header, GenRegister* tmp, uint32_t bti, uint32_t vec_size);
 
     /* common functions for both binary instruction and sel_cmp and compare instruction.
        It will handle the IMM or normal register assignment, and will try to avoid LOADI
@@ -2055,6 +2061,63 @@ namespace gbe
     vector->isSrc = 1;
   }
 
+  void Selection::Opaque::MBREAD(GenRegister* dsts,
+                                 GenRegister coordx,
+                                 GenRegister coordy,
+                                 GenRegister header,
+                                 GenRegister* tmp,
+                                 uint32_t bti,
+                                 uint32_t vec_size) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_MBREAD, vec_size * 2, 3);
+    SelectionVector *vector = this->appendVector();
+    SelectionVector *vectortmp = this->appendVector();
+    for (uint32_t i = 0; i < vec_size; ++i) {
+      insn->dst(i) = dsts[i];
+      insn->dst(i + vec_size) = tmp[i];
+    }
+    insn->src(0) = coordx;
+    insn->src(1) = coordy;
+    insn->src(2) = header;
+    insn->setbti(bti);
+    insn->extra.elem = vec_size; // vector size
+
+    vector->regNum = vec_size;
+    vector->reg = &insn->dst(0);
+    vector->offsetID = 0;
+    vector->isSrc = 0;
+    vectortmp->regNum = vec_size;
+    vectortmp->reg = &insn->dst(vec_size);
+    vectortmp->offsetID = 0;
+    vectortmp->isSrc = 0;
+
+  }
+
+  void Selection::Opaque::MBWRITE(GenRegister coordx,
+                                  GenRegister coordy,
+                                  GenRegister* values,
+                                  GenRegister header,
+                                  GenRegister* tmp,
+                                  uint32_t bti,
+                                  uint32_t vec_size) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_MBWRITE, 1 + vec_size, 2 + vec_size);
+    SelectionVector *vector = this->appendVector();
+    insn->src(0) = coordx;
+    insn->src(1) = coordy;
+    for (uint32_t i = 0; i < vec_size; ++i)
+      insn->src(2 + i) = values[i];
+    insn->dst(0) = header;
+    for (uint32_t i = 0; i < vec_size; ++i)
+      insn->dst(1 + i) = tmp[i];
+    insn->state = this->curr;
+    insn->setbti(bti);
+    insn->extra.elem = vec_size; // vector size
+
+    // We need to put the header and the data together
+    vector->regNum = 1 + vec_size;
+    vector->reg = &insn->dst(0);
+    vector->offsetID = 0;
+    vector->isSrc = 0;
+  }
 
   // Boiler plate to initialize the selection library at c++ pre-main
   static SelectionLibrary *selLib = NULL;
@@ -6583,6 +6646,52 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     }
   };
 
+  /*! Media Block Read pattern */
+  DECL_PATTERN(MediaBlockReadInstruction)
+  {
+    bool emitOne(Selection::Opaque &sel, const ir::MediaBlockReadInstruction &insn, bool &markChildren) const
+    {
+      using namespace ir;
+      uint32_t vec_size = insn.getVectorSize();
+      vector<GenRegister> valuesVec;
+      vector<GenRegister> tmpVec;
+      for (uint32_t i = 0; i < vec_size; ++i) {
+        valuesVec.push_back(sel.selReg(insn.getDst(i), TYPE_U32));
+        tmpVec.push_back(sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32));
+      }
+      const GenRegister coordx = sel.selReg(insn.getSrc(0), TYPE_U32);
+      const GenRegister coordy = sel.selReg(insn.getSrc(1), TYPE_U32);
+      const GenRegister header = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+      sel.MBREAD(&valuesVec[0], coordx, coordy, header, &tmpVec[0], insn.getImageIndex(), insn.getVectorSize());
+      return true;
+    }
+    DECL_CTOR(MediaBlockReadInstruction, 1, 1);
+  };
+
+  /*! Media Block Write pattern */
+  DECL_PATTERN(MediaBlockWriteInstruction)
+  {
+    bool emitOne(Selection::Opaque &sel, const ir::MediaBlockWriteInstruction &insn, bool &markChildren) const
+    {
+      using namespace ir;
+      uint32_t vec_size = insn.getVectorSize();
+      const GenRegister coordx = sel.selReg(insn.getSrc(0), TYPE_U32);
+      const GenRegister coordy = sel.selReg(insn.getSrc(1), TYPE_U32);
+      vector<GenRegister> valuesVec;
+      vector<GenRegister> tmpVec;
+      for(uint32_t i = 0; i < vec_size; i++)
+      {
+        valuesVec.push_back(sel.selReg(insn.getSrc(2 + i), TYPE_U32));
+        tmpVec.push_back(GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), TYPE_U32));
+      }
+      const GenRegister header = GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), TYPE_U32);
+      sel.MBWRITE(coordx, coordy, &valuesVec[0], header, &tmpVec[0], insn.getImageIndex(), vec_size);
+      return true;
+    }
+    DECL_CTOR(MediaBlockWriteInstruction, 1, 1);
+  };
+
+
   /*! Sort patterns */
   INLINE bool cmp(const SelectionPattern *p0, const SelectionPattern *p1) {
     if (p0->insnNum != p1->insnNum)
@@ -6624,6 +6733,8 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     this->insert<NullaryInstructionPattern>();
     this->insert<WaitInstructionPattern>();
     this->insert<PrintfInstructionPattern>();
+    this->insert<MediaBlockReadInstructionPattern>();
+    this->insert<MediaBlockWriteInstructionPattern>();
 
     // Sort all the patterns with the number of instructions they output
     for (uint32_t op = 0; op < ir::OP_INVALID; ++op)

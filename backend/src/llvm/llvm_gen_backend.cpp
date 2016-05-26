@@ -699,6 +699,7 @@ namespace gbe
     void emitSubGroupInst(CallInst &I, CallSite &CS, ir::WorkGroupOps opcode);
     // Emit subgroup instructions
     void emitBlockReadWriteMemInst(CallInst &I, CallSite &CS, bool isWrite);
+    void emitBlockReadWriteImageInst(CallInst &I, CallSite &CS, bool isWrite, uint8_t vec_size);
 
     uint8_t appendSampler(CallSite::arg_iterator AI);
     uint8_t getImageID(CallInst &I);
@@ -3724,10 +3725,12 @@ namespace gbe
       case GEN_OCL_SUB_GROUP_SCAN_INCLUSIVE_MAX:
       case GEN_OCL_SUB_GROUP_SCAN_INCLUSIVE_MIN:
       case GEN_OCL_LRP:
-        this->newRegister(&I);
-        break;
       case GEN_OCL_SUB_GROUP_BLOCK_READ_MEM:
-        this->newRegister(&I, NULL, false);
+      case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE:
+      case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE2:
+      case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE4:
+      case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE8:
+        this->newRegister(&I);
         break;
       case GEN_OCL_PRINTF:
         this->newRegister(&I);  // fall through
@@ -3744,6 +3747,10 @@ namespace gbe
       case GEN_OCL_STORE_PROFILING:
       case GEN_OCL_DEBUGWAIT:
       case GEN_OCL_SUB_GROUP_BLOCK_WRITE_MEM:
+      case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE:
+      case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE2:
+      case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE4:
+      case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE8:
         break;
       case GEN_OCL_NOT_FOUND:
       default:
@@ -3992,6 +3999,39 @@ namespace gbe
 
     GBE_ASSERT(AI == AE);
   }
+
+  void GenWriter::emitBlockReadWriteImageInst(CallInst &I, CallSite &CS, bool isWrite, uint8_t vec_size) {
+    CallSite::arg_iterator AI = CS.arg_begin();
+    CallSite::arg_iterator AE = CS.arg_end();
+    GBE_ASSERT(AI != AE);
+
+    const uint8_t imageID = getImageID(I);
+    AI++;
+
+    if(isWrite){
+      vector<ir::Register> srcTupleData;
+      srcTupleData.push_back(getRegister(*(AI++)));
+      srcTupleData.push_back(getRegister(*(AI++)));
+      for(int i = 0;i < vec_size; i++)
+        srcTupleData.push_back(getRegister(*(AI), i));
+      AI++;
+      const ir::Tuple srctuple = ctx.arrayTuple(&srcTupleData[0], 2 + vec_size);
+      ctx.MBWRITE(imageID, srctuple, 2 + vec_size, vec_size);
+    } else {
+      ir::Register src[2];
+      src[0] = getRegister(*(AI++));
+      src[1] = getRegister(*(AI++));
+      vector<ir::Register> dstTupleData;
+      for(int i = 0;i < vec_size; i++)
+        dstTupleData.push_back(getRegister(&I, i));
+      const ir::Tuple srctuple = ctx.arrayTuple(src, 2);
+      const ir::Tuple dsttuple = ctx.arrayTuple(&dstTupleData[0], vec_size);
+      ctx.MBREAD(imageID, dsttuple, vec_size, srctuple, 2);
+    }
+
+    GBE_ASSERT(AI == AE);
+  }
+
 
   /* append a new sampler. should be called before any reference to
    * a sampler_t value. */
@@ -4821,6 +4861,22 @@ namespace gbe
             this->emitBlockReadWriteMemInst(I, CS, false); break;
           case GEN_OCL_SUB_GROUP_BLOCK_WRITE_MEM:
             this->emitBlockReadWriteMemInst(I, CS, true); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE:
+            this->emitBlockReadWriteImageInst(I, CS, false, 1); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE2:
+            this->emitBlockReadWriteImageInst(I, CS, false, 2); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE4:
+            this->emitBlockReadWriteImageInst(I, CS, false, 4); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE8:
+            this->emitBlockReadWriteImageInst(I, CS, false, 8); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE:
+            this->emitBlockReadWriteImageInst(I, CS, true, 1); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE2:
+            this->emitBlockReadWriteImageInst(I, CS, true, 2); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE4:
+            this->emitBlockReadWriteImageInst(I, CS, true, 4); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE8:
+            this->emitBlockReadWriteImageInst(I, CS, true, 8); break;
           default: break;
         }
       }

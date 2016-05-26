@@ -189,6 +189,8 @@ namespace gbe
     void afterMessage(const SelectionInstruction &insn, GenRegister bti, GenRegister flagTemp, GenRegister btiTmp, unsigned jip0);
     void emitOBReadInstruction(const SelectionInstruction &insn);
     void emitOBWriteInstruction(const SelectionInstruction &insn);
+    void emitMBReadInstruction(const SelectionInstruction &insn);
+    void emitMBWriteInstruction(const SelectionInstruction &insn);
 
     /*! Implements base class */
     virtual Kernel *allocateKernel(void);

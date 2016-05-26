@@ -163,6 +163,11 @@ OVERLOADABLE uint8 intel_sub_group_block_read8(const global uint* p)
                  intel_sub_group_block_read(p + get_simd_size() * 7));
 }
 
+void __gen_ocl_sub_group_block_write_mem(const global uint* p, uint data);
+OVERLOADABLE void intel_sub_group_block_write(const global uint* p, uint data)
+{
+  __gen_ocl_sub_group_block_write_mem(p, data);
+}
 OVERLOADABLE void intel_sub_group_block_write2(const global uint* p, uint2 data)
 {
   intel_sub_group_block_write(p, data.s0);
@@ -186,4 +191,45 @@ OVERLOADABLE void intel_sub_group_block_write8(const global uint* p,uint8 data)
   intel_sub_group_block_write(p + get_simd_size() * 5, data.s5);
   intel_sub_group_block_write(p + get_simd_size() * 6, data.s6);
   intel_sub_group_block_write(p + get_simd_size() * 7, data.s7);
+}
+
+PURE CONST uint __gen_ocl_sub_group_block_read_image(image2d_t p, int x, int y);
+PURE CONST uint2 __gen_ocl_sub_group_block_read_image2(image2d_t p, int x, int y);
+PURE CONST uint4 __gen_ocl_sub_group_block_read_image4(image2d_t p, int x, int y);
+PURE CONST uint8 __gen_ocl_sub_group_block_read_image8(image2d_t p, int x, int y);
+OVERLOADABLE uint intel_sub_group_block_read(image2d_t p, int2 cord)
+{
+  return __gen_ocl_sub_group_block_read_image(p, cord.x, cord.y);
+}
+OVERLOADABLE uint2 intel_sub_group_block_read2(image2d_t p, int2 cord)
+{
+  return __gen_ocl_sub_group_block_read_image2(p, cord.x, cord.y);
+}
+OVERLOADABLE uint4 intel_sub_group_block_read4(image2d_t p, int2 cord)
+{
+  return __gen_ocl_sub_group_block_read_image4(p, cord.x, cord.y);
+}
+OVERLOADABLE uint8 intel_sub_group_block_read8(image2d_t p, int2 cord)
+{
+  return __gen_ocl_sub_group_block_read_image8(p, cord.x, cord.y);
+}
+void __gen_ocl_sub_group_block_write_image(image2d_t p, int x, int y, uint data);
+void __gen_ocl_sub_group_block_write_image2(image2d_t p, int x, int y, uint2 data);
+void __gen_ocl_sub_group_block_write_image4(image2d_t p, int x, int y, uint4 data);
+void __gen_ocl_sub_group_block_write_image8(image2d_t p, int x, int y, uint8 data);
+OVERLOADABLE void intel_sub_group_block_write(image2d_t p, int2 cord, uint data)
+{
+  __gen_ocl_sub_group_block_write_image(p, cord.x, cord.y, data);
+}
+OVERLOADABLE void intel_sub_group_block_write2(image2d_t p, int2 cord, uint2 data)
+{
+  __gen_ocl_sub_group_block_write_image2(p, cord.x, cord.y, data);
+}
+OVERLOADABLE void intel_sub_group_block_write4(image2d_t p, int2 cord, uint4 data)
+{
+  __gen_ocl_sub_group_block_write_image4(p, cord.x, cord.y, data);
+}
+OVERLOADABLE void intel_sub_group_block_write8(image2d_t p, int2 cord, uint8 data)
+{
+  __gen_ocl_sub_group_block_write_image8(p, cord.x, cord.y, data);
 }

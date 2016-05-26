@@ -118,7 +118,8 @@ namespace ir {
           uniform = false;
 
         // do not change dst uniform for block read
-        if (insn.getOpcode() == ir::OP_LOAD && ir::cast<ir::LoadInstruction>(insn).isBlock())
+        if ((insn.getOpcode() == ir::OP_LOAD && ir::cast<ir::LoadInstruction>(insn).isBlock()) ||
+            insn.getOpcode() == ir::OP_MBREAD)
           uniform = false;
 
         for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {

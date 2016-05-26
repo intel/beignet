@@ -3538,6 +3538,158 @@ namespace gbe
     p->OBWRITE(header, insn.getbti(), insn.extra.elem);
   }
 
+  void GenContext::emitMBReadInstruction(const SelectionInstruction &insn) {
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    const GenRegister coordx = GenRegister::toUniform(ra->genReg(insn.src(0)),GEN_TYPE_D);
+    const GenRegister coordy = GenRegister::toUniform(ra->genReg(insn.src(1)),GEN_TYPE_D);
+    GenRegister header, offsetx, offsety, blocksizereg;
+    if (simdWidth == 8)
+      header = GenRegister::retype(ra->genReg(insn.dst(0)), GEN_TYPE_UD);
+    else
+      header = GenRegister::retype(GenRegister::Qn(ra->genReg(insn.src(2)),1), GEN_TYPE_UD);
+
+    offsetx = GenRegister::offset(header, 0, 0*4);
+    offsety = GenRegister::offset(header, 0, 1*4);
+    blocksizereg = GenRegister::offset(header, 0, 2*4);
+    size_t vec_size = insn.extra.elem;
+    uint32_t blocksize = 0x1F | (vec_size-1) << 16;
+
+    if (simdWidth == 8)
+    {
+      p->push();
+        // Copy r0 into the header first
+        p->curr.execWidth = 8;
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        p->curr.noMask = 1;
+        p->MOV(header, GenRegister::ud8grf(0,0));
+
+        // Update the header with the coord
+        p->curr.execWidth = 1;
+        p->MOV(offsetx, coordx);
+        p->MOV(offsety, coordy);
+        // Update block width and height
+        p->MOV(blocksizereg, GenRegister::immud(blocksize));
+        // Now read the data
+        p->curr.execWidth = 8;
+        p->MBREAD(dst, header, insn.getbti(), vec_size);
+      p->pop();
+
+    }
+    else
+    {
+      const GenRegister tmp = ra->genReg(insn.dst(vec_size));
+      p->push();
+        // Copy r0 into the header first
+        p->curr.execWidth = 8;
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        p->curr.noMask = 1;
+        p->MOV(header, GenRegister::ud8grf(0,0));
+
+        // First half
+        // Update the header with the coord
+        p->curr.execWidth = 1;
+        p->MOV(offsetx, coordx);
+        p->MOV(offsety, coordy);
+        // Update block width and height
+        p->MOV(blocksizereg, GenRegister::immud(blocksize));
+        // Now read the data
+        p->curr.execWidth = 8;
+        p->MBREAD(tmp, header, insn.getbti(), vec_size);
+
+        // Second half
+        // Update the header with the coord
+        p->curr.execWidth = 1;
+        p->ADD(offsetx, offsetx, GenRegister::immud(32));
+
+        const GenRegister tmp2 = GenRegister::offset(tmp, vec_size);
+        // Now read the data
+        p->curr.execWidth = 8;
+        p->MBREAD(tmp2, header, insn.getbti(), vec_size);
+
+        // Move the reg to fit vector rule.
+        for (uint32_t i = 0; i < vec_size; i++) {
+          p->MOV(GenRegister::offset(dst, i * 2), GenRegister::offset(tmp, i));
+          p->MOV(GenRegister::offset(dst, i * 2 + 1),
+                 GenRegister::offset(tmp2, i));
+        }
+      p->pop();
+    }
+  }
+
+  void GenContext::emitMBWriteInstruction(const SelectionInstruction &insn) {
+    const GenRegister coordx = GenRegister::toUniform(ra->genReg(insn.src(0)), GEN_TYPE_D);
+    const GenRegister coordy = GenRegister::toUniform(ra->genReg(insn.src(1)), GEN_TYPE_D);
+    const GenRegister header = GenRegister::retype(ra->genReg(insn.dst(0)), GEN_TYPE_UD);
+    GenRegister offsetx, offsety, blocksizereg;
+    size_t vec_size = insn.extra.elem;
+    uint32_t blocksize = 0x1F | (vec_size-1) << 16;
+
+    offsetx = GenRegister::offset(header, 0, 0*4);
+    offsety = GenRegister::offset(header, 0, 1*4);
+    blocksizereg = GenRegister::offset(header, 0, 2*4);
+
+    if (simdWidth == 8)
+    {
+      p->push();
+        // Copy r0 into the header first
+        p->curr.execWidth = 8;
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        p->curr.noMask = 1;
+        p->MOV(header, GenRegister::ud8grf(0,0));
+
+        // Update the header with the coord
+        p->curr.execWidth = 1;
+        p->MOV(offsetx, coordx);
+        p->MOV(offsety, coordy);
+        // Update block width and height
+        p->MOV(blocksizereg, GenRegister::immud(blocksize));
+        p->curr.execWidth = 8;
+        // Mov what we need into msgs
+        for(uint32_t i = 0; i < vec_size; i++)
+          p->MOV(ra->genReg(insn.dst(1 + i)), ra->genReg(insn.src(2 + i)));
+        // Now read the data
+        p->MBWRITE(header, insn.getbti(), vec_size);
+      p->pop();
+
+    }
+    else
+    {
+      p->push();
+        // Copy r0 into the header first
+        p->curr.execWidth = 8;
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        p->curr.noMask = 1;
+        p->MOV(header, GenRegister::ud8grf(0,0));
+
+        // First half
+        // Update the header with the coord
+        p->curr.execWidth = 1;
+        p->MOV(offsetx, coordx);
+        p->MOV(offsety, coordy);
+        // Update block width and height
+        p->MOV(blocksizereg, GenRegister::immud(blocksize));
+        // Now read the data
+        p->curr.execWidth = 8;
+        // Mov what we need into msgs
+        for(uint32_t i = 0; i < vec_size; i++)
+          p->MOV(GenRegister::offset(header, 1 + i), ra->genReg(insn.src(2 + i)));
+        p->MBWRITE(header, insn.getbti(), vec_size);
+
+        // Second half
+        // Update the header with the coord
+        p->curr.execWidth = 1;
+        p->ADD(offsetx, offsetx, GenRegister::immud(32));
+
+        p->curr.execWidth = 8;
+        // Mov what we need into msgs
+        for(uint32_t i = 0; i < vec_size; i++)
+          p->MOV(GenRegister::offset(header, 1 + i), GenRegister::Qn(ra->genReg(insn.src(2 + i)), 1));
+        // Now write the data
+        p->MBWRITE(header, insn.getbti(), vec_size);
+
+      p->pop();
+    }
+  }
 
   BVAR(OCL_OUTPUT_REG_ALLOC, false);
   BVAR(OCL_OUTPUT_ASM, false);

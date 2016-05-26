@@ -608,6 +608,22 @@ union Gen8NativeInstruction
         uint32_t jip:32;
       } gen8_branch;
 
+      /*! Data port Media block read / write */
+      struct {
+        uint32_t bti:8;
+        uint32_t ver_line_stride_offset:1;
+        uint32_t ver_line_stride:1;
+        uint32_t ver_line_stride_override:1;
+        uint32_t ignored:3;
+        uint32_t msg_type:4;
+        uint32_t category:1;
+        uint32_t header_present:1;
+        uint32_t response_length:5;
+        uint32_t msg_length:4;
+        uint32_t pad2:2;
+        uint32_t end_of_thread:1;
+      } gen7_mblock_rw;
+
       int d;
       uint32_t ud;
       float f;

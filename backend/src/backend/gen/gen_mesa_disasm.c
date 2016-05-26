@@ -1476,6 +1476,15 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
                  SAMPLER_MSG_TYPE(inst),
                  SAMPLER_SIMD_MODE(inst));
           break;
+        case GEN_SFID_DATAPORT_RENDER:
+            if(UNTYPED_RW_MSG_TYPE(inst) == 4 || UNTYPED_RW_MSG_TYPE(inst) == 10)
+              format(file, " (bti: %d, %s, %s)",
+                     UNTYPED_RW_BTI(inst),
+                     data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
+                     data_port1_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
+            else
+              format(file, " not implemented");
+            break;
         case GEN_SFID_DATAPORT_DATA:
           if(UNTYPED_RW_CATEGORY(inst) == 0) {
             if(UNTYPED_RW_MSG_TYPE(inst) == 5 || UNTYPED_RW_MSG_TYPE(inst) == 13)
@@ -1510,12 +1519,18 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
           }
           break;
         case GEN_SFID_DATAPORT1_DATA:
-          format(file, " (bti: %d, rgba: %d, %s, %s, %s)",
-                 UNTYPED_RW_BTI(inst),
-                 UNTYPED_RW_RGBA(inst),
-                 data_port_data_cache_simd_mode[UNTYPED_RW_SIMD_MODE(inst)],
-                 data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
-                 data_port1_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
+            if(UNTYPED_RW_MSG_TYPE(inst) == 4 || UNTYPED_RW_MSG_TYPE(inst) == 10)
+              format(file, " (bti: %d, %s, %s)",
+                     UNTYPED_RW_BTI(inst),
+                     data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
+                     data_port1_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
+            else
+              format(file, " (bti: %d, rgba: %d, %s, %s, %s)",
+                     UNTYPED_RW_BTI(inst),
+                     UNTYPED_RW_RGBA(inst),
+                     data_port_data_cache_simd_mode[UNTYPED_RW_SIMD_MODE(inst)],
+                     data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
+                     data_port1_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
           break;
         case GEN_SFID_DATAPORT_CONSTANT:
           format(file, " (bti: %d, %s)",

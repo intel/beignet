@@ -42,6 +42,10 @@ namespace gbe
     virtual void setSrc1(GenNativeInstruction *insn, GenRegister reg);
     virtual void alu3(uint32_t opcode, GenRegister dst,
                        GenRegister src0, GenRegister src1, GenRegister src2);
+    /*! MBlock read */
+    virtual void MBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t elemSize);
+    /*! MBlock write */
+    virtual void MBWRITE(GenRegister header, uint32_t bti, uint32_t elemSize);
   };
 }
 #endif /* __GBE_GEN7_ENCODER_HPP__ */

@@ -682,7 +682,21 @@ namespace gbe {
             *CI = InsertToVector(call, *CI);
             break;
           }
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE2:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE4:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE8:
+          {
+            ++CI;
+            ++CI;
+            if ((*CI)->getType()->isVectorTy())
+              *CI = InsertToVector(call, *CI);
+            break;
+          }
           case GEN_OCL_VME:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE2:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE4:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE8:
             setAppendPoint(call);
             extractFromVector(call);
             break;
