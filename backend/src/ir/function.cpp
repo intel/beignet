@@ -62,8 +62,8 @@ namespace ir {
     return unit.getPointerFamily();
   }
 
-  void Function::addLoop(const vector<LabelIndex> &bbs, const vector<std::pair<LabelIndex, LabelIndex>> &exits) {
-    loops.push_back(GBE_NEW(Loop, bbs, exits));
+  void Function::addLoop(LabelIndex preheader, const vector<LabelIndex> &bbs, const vector<std::pair<LabelIndex, LabelIndex>> &exits) {
+    loops.push_back(GBE_NEW(Loop, preheader, bbs, exits));
   }
 
   void Function::checkEmptyLabels(void) {

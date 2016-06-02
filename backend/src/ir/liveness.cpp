@@ -217,19 +217,38 @@ namespace ir {
     if(loops.size() == 0) return;
 
     for (auto l : loops) {
+      const BasicBlock &preheader = fn.getBlock(l->preheader);
+      BlockInfo *preheaderInfo = liveness[&preheader];
       for (auto x : l->exits) {
         const BasicBlock &a = fn.getBlock(x.first);
         const BasicBlock &b = fn.getBlock(x.second);
         BlockInfo * exiting = liveness[&a];
         BlockInfo * exit = liveness[&b];
         std::vector<Register> toExtend;
+        std::vector<Register> toExtendCand;
 
-        if(b.getPredecessorSet().size() > 1) {
+        if(b.getPredecessorSet().size() <= 1) {
+          // the exits only have one predecessor
           for (auto p : exit->upwardUsed)
-            toExtend.push_back(p);
+            toExtendCand.push_back(p);
         } else {
-          std::set_intersection(exiting->liveOut.begin(), exiting->liveOut.end(), exit->upwardUsed.begin(), exit->upwardUsed.end(), std::back_inserter(toExtend));
+          // the exits have more than one predecessors
+          std::set_intersection(exiting->liveOut.begin(),
+                                exiting->liveOut.end(),
+                                exit->upwardUsed.begin(),
+                                exit->upwardUsed.end(),
+                                std::back_inserter(toExtendCand));
         }
+        // toExtendCand may contain some virtual register defined before loop,
+        // which need to be excluded. Because what we need is registers defined
+        // in the loop. Such kind of registers must be in live-out of the loop's
+        // preheader. So we do the subtraction here.
+        std::set_difference(toExtendCand.begin(),
+                            toExtendCand.end(),
+                            preheaderInfo->liveOut.begin(),
+                            preheaderInfo->liveOut.end(),
+                            std::back_inserter(toExtend));
+
         if (toExtend.size() == 0) continue;
         for(auto r : toExtend)
           extentRegs.insert(r);

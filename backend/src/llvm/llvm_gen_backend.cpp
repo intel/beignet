@@ -2737,35 +2737,6 @@ namespace gbe
     std::vector<std::pair<Loop*, int>> lp;
 
     findAllLoops(LI, lp);
-#if GBE_DEBUG
-    // check two loops' interference
-    for(unsigned int i = 0; i < lp.size(); i++) {
-        SmallVector<Loop::Edge, 8> exitBBs;
-        lp[i].first->getExitEdges(exitBBs);
-
-      const std::vector<BasicBlock*> &inBBs = lp[i].first->getBlocks();
-      std::vector<ir::LabelIndex> bbs1;
-      for(auto x : inBBs) {
-        bbs1.push_back(labelMap[x]);
-      }
-      std::sort(bbs1.begin(), bbs1.end());
-      for(unsigned int j = i+1; j < lp.size(); j++) {
-        if(! lp[i].first->contains(lp[j].first)) {
-          const std::vector<BasicBlock*> &inBBs2 = lp[j].first->getBlocks();
-          std::vector<ir::LabelIndex> bbs2;
-          std::vector<ir::LabelIndex> bbs3;
-
-          for(auto x : inBBs2) {
-            bbs2.push_back(labelMap[x]);
-          }
-
-          std::sort(bbs2.begin(), bbs2.end());
-          std::set_intersection(bbs1.begin(), bbs1.end(), bbs2.begin(), bbs2.end(), std::back_inserter(bbs3));
-          GBE_ASSERT(bbs3.size() < 1);
-        }
-      }
-    }
-#endif
 
     for (auto loop : lp) {
       loopBBs.clear();
@@ -2776,6 +2747,11 @@ namespace gbe
         GBE_ASSERT(labelMap.find(b) != labelMap.end());
         loopBBs.push_back(labelMap[b]);
       }
+      BasicBlock *preheader = loop.first->getLoopPreheader();
+      ir::LabelIndex preheaderBB(0);
+      if (preheader) {
+        preheaderBB = labelMap[preheader];
+      }
 
       SmallVector<Loop::Edge, 8> exitBBs;
       loop.first->getExitEdges(exitBBs);
@@ -2784,7 +2760,7 @@ namespace gbe
         GBE_ASSERT(labelMap.find(b.second) != labelMap.end());
         loopExits.push_back(std::make_pair(labelMap[b.first], labelMap[b.second]));
       }
-      fn.addLoop(loopBBs, loopExits);
+      fn.addLoop(preheaderBB, loopBBs, loopExits);
     }
   }
 
