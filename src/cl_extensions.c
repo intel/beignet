@@ -48,6 +48,8 @@ void check_opt1_extension(cl_extensions_t *extensions)
 #endif
     if (id == EXT_ID(khr_image2d_from_buffer))
       extensions->extensions[id].base.ext_enabled = 1;
+    if (id == EXT_ID(khr_3d_image_writes))
+      extensions->extensions[id].base.ext_enabled = 1;
   }
 }
 
