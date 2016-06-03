@@ -744,6 +744,13 @@ _cl_mem_new_image(cl_context ctx,
   size_t sz = 0, aligned_pitch = 0, aligned_slice_pitch = 0, aligned_h = 0;
   size_t origin_width = w;  // for image1d buffer work around.
   cl_image_tiling_t tiling = CL_NO_TILE;
+  int enable_true_hostptr = 0;
+
+  // can't use BVAR (backend/src/sys/cvar.hpp) here as it's C++
+  const char *env = getenv("OCL_IMAGE_HOSTPTR");
+  if (env != NULL) {
+    sscanf(env, "%i", &enable_true_hostptr);
+  }
 
   /* Check flags consistency */
   if (UNLIKELY((flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR)) && data == NULL)) {
@@ -846,7 +853,7 @@ _cl_mem_new_image(cl_context ctx,
 #undef DO_IMAGE_ERROR
 
   uint8_t enableUserptr = 0;
-  if (ctx->device->host_unified_memory && data != NULL && (flags & CL_MEM_USE_HOST_PTR)) {
+  if (enable_true_hostptr && ctx->device->host_unified_memory && data != NULL && (flags & CL_MEM_USE_HOST_PTR)) {
     int cacheline_size = 0;
     cl_get_device_info(ctx->device, CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, sizeof(cacheline_size), &cacheline_size, NULL);
     if (ALIGN((unsigned long)data, cacheline_size) == (unsigned long)data &&
