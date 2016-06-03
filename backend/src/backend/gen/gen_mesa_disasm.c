@@ -405,6 +405,8 @@ static const char *math_function_gen8[16] = {
   [GEN_MATH_FUNCTION_FDIV] = "fdiv",
   [GEN_MATH_FUNCTION_POW] = "pow",
   [GEN_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER] = "intdivmod",
+  [GEN_MATH_FUNCTION_INT_DIV_QUOTIENT] = "intdiv",
+  [GEN_MATH_FUNCTION_INT_DIV_REMAINDER] = "intmod",
   [GEN8_MATH_FUNCTION_INVM] = "invm",
   [GEN8_MATH_FUNCTION_RSQRTM] = "rsqrtm",
 };
