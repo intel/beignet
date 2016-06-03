@@ -97,7 +97,7 @@ namespace gbe
     void doLocalCopyPropagation();
     void addToReplaceInfoMap(SelectionInstruction& insn);
     void changeInsideReplaceInfoMap(const SelectionInstruction& insn, GenRegister& var);
-    void removeFromReplaceInfoMap(const GenRegister& var);
+    void removeFromReplaceInfoMap(const SelectionInstruction& insn, const GenRegister& var);
     void doReplacement(ReplaceInfo* info);
     bool CanBeReplaced(const ReplaceInfo* info, const SelectionInstruction& insn, const GenRegister& var);
     void cleanReplaceInfoMap();
@@ -127,14 +127,15 @@ namespace gbe
     replaceInfoMap.clear();
   }
 
-  void SelBasicBlockOptimizer::removeFromReplaceInfoMap(const GenRegister& var)
+  void SelBasicBlockOptimizer::removeFromReplaceInfoMap(const SelectionInstruction& insn, const GenRegister& var)
   {
     for (ReplaceInfoMap::iterator pos = replaceInfoMap.begin(); pos != replaceInfoMap.end(); ++pos) {
       ReplaceInfo* info = pos->second;
       if (info->intermedia.reg() == var.reg()) {   //intermedia is overwritten
         if (info->intermedia.quarter == var.quarter && info->intermedia.subnr == var.subnr) {
-          //the whole intermedia is overwritten, so, do replacement for the scanned IRs
-          doReplacement(info);
+          // We need to check the if intermedia is fully overwritten, they may be in some prediction state.
+          if (CanBeReplaced(info, insn, var))
+            doReplacement(info);
         }
         replaceInfoMap.erase(pos);
         delete info;
@@ -199,7 +200,11 @@ namespace gbe
     if (info->insn.state.noMask == 0 && insn.state.noMask == 1)
       return false;
 
-    if (info->insn.state.predicate != insn.state.predicate && info->insn.state.predicate != GEN_PREDICATE_NONE)
+    // If insn is in no prediction state, it will overwrite the info insn.
+    if (info->insn.state.predicate != insn.state.predicate && insn.state.predicate != GEN_PREDICATE_NONE)
+      return false;
+
+    if (info->insn.state.inversePredicate != insn.state.inversePredicate)
       return false;
 
     if (info->intermedia.type == var.type && info->intermedia.quarter == var.quarter && info->intermedia.subnr == var.subnr) {
@@ -235,7 +240,7 @@ namespace gbe
         changeInsideReplaceInfoMap(insn, insn.src(i));
 
       for (uint8_t i = 0; i < insn.dstNum; ++i)
-        removeFromReplaceInfoMap(insn.dst(i));
+        removeFromReplaceInfoMap(insn, insn.dst(i));
 
       if (insn.opcode == SEL_OP_MOV)
         addToReplaceInfoMap(insn);
