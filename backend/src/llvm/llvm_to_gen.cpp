@@ -26,6 +26,8 @@
 
 #include "llvm/llvm_gen_backend.hpp"
 #include "llvm/llvm_to_gen.hpp"
+#include <llvm/IR/DiagnosticInfo.h>
+#include <llvm/IR/DiagnosticPrinter.h>
 #include "sys/cvar.hpp"
 #include "sys/platform.hpp"
 #include "ir/unit.hpp"
@@ -249,8 +251,36 @@ namespace gbe
   BVAR(OCL_OUTPUT_LLVM_AFTER_LINK, false);
   BVAR(OCL_OUTPUT_LLVM_AFTER_GEN, false);
 
+  class gbeDiagnosticContext
+  {
+  public:
+    gbeDiagnosticContext() : _str(""), messages(_str), printer(messages), _has_errors(false) {}
+    void process(const llvm::DiagnosticInfo &diagnostic)
+    {
+      if (diagnostic.getSeverity() != DS_Remark) { // avoid noise from function inlining remarks
+        diagnostic.print(printer);
+      }
+      if (diagnostic.getSeverity() == DS_Error) {
+        _has_errors = true;
+      }
+    }
+    std::string str(){return messages.str();}
+    bool has_errors(){return _has_errors;}
+  private:
+    std::string _str;
+    llvm::raw_string_ostream messages;
+    llvm::DiagnosticPrinterRawOStream printer;
+    bool _has_errors;
+  };
+  
+  void gbeDiagnosticHandler(const llvm::DiagnosticInfo &diagnostic, void *context)
+  {
+    gbeDiagnosticContext *dc = reinterpret_cast<gbeDiagnosticContext*>(context);
+    dc->process(diagnostic);
+  }
+
   bool llvmToGen(ir::Unit &unit, const char *fileName,const void* module,
-                 int optLevel, bool strictMath, int profiling)
+                 int optLevel, bool strictMath, int profiling, std::string &errors)
   {
     std::string errInfo;
     std::unique_ptr<llvm::raw_fd_ostream> o = NULL;
@@ -287,6 +317,9 @@ namespace gbe
 
     Module &mod = *M.get();
     DataLayout DL(&mod);
+    
+    gbeDiagnosticContext dc;
+    mod.getContext().setDiagnosticHandler(&gbeDiagnosticHandler,&dc);
 
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
     mod.setDataLayout(DL);
@@ -345,6 +378,12 @@ namespace gbe
       passes.add(createCFGOnlyPrinterPass());
     passes.add(createGenPass(unit));
     passes.run(mod);
+    errors = dc.str();
+    if(dc.has_errors()){
+      unit.setValid(false);
+      delete libraryInfo;
+      return true;
+    }
 
     // Print the code extra optimization passes
     OUTPUT_BITCODE(AFTER_GEN, mod);

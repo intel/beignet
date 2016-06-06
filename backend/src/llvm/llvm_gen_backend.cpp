@@ -513,6 +513,7 @@ namespace gbe
     Function *Func;
     const Module *TheModule;
     int btiBase;
+    bool has_errors;
     /*! legacyMode is for hardware before BDW,
      * which do not support stateless memory access */
     bool legacyMode;
@@ -528,6 +529,7 @@ namespace gbe
         LI(0),
         TheModule(0),
         btiBase(BTI_RESERVED_NUM),
+        has_errors(false),
         legacyMode(true)
     {
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=7
@@ -2921,6 +2923,9 @@ namespace gbe
     pass = PASS_EMIT_REGISTERS;
     for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I)
       visit(*I);
+    
+    // Abort if this found an error (otherwise emitBasicBlock will assert)
+    if(has_errors){return;}
 
     // First create all the labels (one per block) ...
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
@@ -3760,11 +3765,8 @@ namespace gbe
         break;
       case GEN_OCL_NOT_FOUND:
       default:
-        std::cerr << "Caller instruction: " << std::endl;
-        I.dump();
-        std::cerr << "Callee function: " << std::endl;
-        Callee->dump();
-        GBE_ASSERT(0);
+        has_errors = true;
+        Func->getContext().emitError(&I,"function '" + fnName + "' not found or cannot be inlined");
     };
   }
 

@@ -122,7 +122,7 @@ namespace gbe {
   bool Program::buildFromLLVMFile(const char *fileName, const void* module, std::string &error, int optLevel) {
     ir::Unit *unit = new ir::Unit();
     llvm::Module * cloned_module = NULL;
-    bool ret = true;
+    bool ret = false;
     if(module){
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
       cloned_module = llvm::CloneModule((llvm::Module*)module).release();
@@ -133,7 +133,7 @@ namespace gbe {
     bool strictMath = true;
     if (fast_relaxed_math || !OCL_STRICT_CONFORMANCE)
       strictMath = false;
-    if (llvmToGen(*unit, fileName, module, optLevel, strictMath, OCL_PROFILING_LOG) == false) {
+    if (llvmToGen(*unit, fileName, module, optLevel, strictMath, OCL_PROFILING_LOG, error) == false) {
       if (fileName)
         error = std::string(fileName) + " not found";
       delete unit;
@@ -146,15 +146,19 @@ namespace gbe {
       unit = new ir::Unit();
       if(cloned_module){
         //suppose file exists and llvmToGen will not return false.
-        llvmToGen(*unit, fileName, cloned_module, 0, strictMath, OCL_PROFILING_LOG);
+        llvmToGen(*unit, fileName, cloned_module, 0, strictMath, OCL_PROFILING_LOG, error);
       }else{
         //suppose file exists and llvmToGen will not return false.
-        llvmToGen(*unit, fileName, module, 0, strictMath, OCL_PROFILING_LOG);
+        llvmToGen(*unit, fileName, module, 0, strictMath, OCL_PROFILING_LOG, error);
       }
     }
-    assert(unit->getValid());
-    if (!this->buildFromUnit(*unit, error))
-      ret = false;
+    if(unit->getValid()){
+      std::string error2;
+      if (this->buildFromUnit(*unit, error2)){
+        ret = true;
+      }
+      error = error + error2;
+    }
     delete unit;
     if(cloned_module){
       delete (llvm::Module*) cloned_module;
