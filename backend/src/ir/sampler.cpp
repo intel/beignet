@@ -65,12 +65,14 @@ namespace ir {
 #define IN_UPDATE_SZ(elt) DESERIALIZE_IN(elt, ins, total_size)
 
   /*! Implements the serialization. */
-  size_t SamplerSet::serializeToBin(std::ostream& outs) {
-    size_t ret_size = 0;
+  uint32_t SamplerSet::serializeToBin(std::ostream& outs) {
+    uint32_t ret_size = 0;
+    uint32_t sz = 0;
 
     OUT_UPDATE_SZ(magic_begin);
 
-    OUT_UPDATE_SZ(samplerMap.size());
+    sz = samplerMap.size();
+    OUT_UPDATE_SZ(sz);
     for (map<uint32_t, uint32_t>::iterator it = samplerMap.begin(); it != samplerMap.end(); ++it) {
       OUT_UPDATE_SZ(it->first);
       OUT_UPDATE_SZ(it->second);
@@ -82,10 +84,10 @@ namespace ir {
     return ret_size;
   }
 
-  size_t SamplerSet::deserializeFromBin(std::istream& ins) {
-    size_t total_size = 0;
+  uint32_t SamplerSet::deserializeFromBin(std::istream& ins) {
+    uint32_t total_size = 0;
     uint32_t magic;
-    size_t sampler_map_sz = 0;
+    uint32_t sampler_map_sz = 0;
 
     IN_UPDATE_SZ(magic);
     if (magic != magic_begin)
@@ -105,7 +107,7 @@ namespace ir {
     if (magic != magic_end)
       return 0;
 
-    size_t total_bytes;
+    uint32_t total_bytes;
     IN_UPDATE_SZ(total_bytes);
     if (total_bytes + sizeof(total_size) != total_size)
       return 0;

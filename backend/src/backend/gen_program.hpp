@@ -46,7 +46,7 @@ namespace gbe
     /*! Set the instruction stream (to be implemented) */
     virtual void setCode(const char *, size_t size);
     /*! Implements get the code size */
-    virtual size_t getCodeSize(void) const;
+    virtual uint32_t getCodeSize(void) const;
     /*! Implements printStatus*/
     virtual void printStatus(int indent, std::ostream& outs);
     uint32_t deviceID;      //!< Current device ID

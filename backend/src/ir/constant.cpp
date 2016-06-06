@@ -43,31 +43,34 @@ namespace ir {
 #define OUT_UPDATE_SZ(elt) SERIALIZE_OUT(elt, outs, ret_size)
 #define IN_UPDATE_SZ(elt) DESERIALIZE_IN(elt, ins, total_size)
 
-  size_t ConstantSet::serializeToBin(std::ostream& outs) {
-    size_t ret_size = 0;
+  uint32_t ConstantSet::serializeToBin(std::ostream& outs) {
+    uint32_t ret_size = 0;
 
     OUT_UPDATE_SZ(magic_begin);
 
     /* output the const data. */
-    OUT_UPDATE_SZ((data.size()*sizeof(char)));
+    uint32_t sz = data.size()*sizeof(char);
+    OUT_UPDATE_SZ(sz);
     if(data.size() > 0) {
-      outs.write(data.data(), data.size()*sizeof(char));
-      ret_size += data.size()*sizeof(char);
+      outs.write(data.data(), sz);
+      ret_size += sz;
     }
 
-    OUT_UPDATE_SZ(constants.size());
-    for (size_t i = 0; i < constants.size(); ++i) {
+    sz = constants.size();
+    OUT_UPDATE_SZ(sz);
+    for (uint32_t i = 0; i < constants.size(); ++i) {
       Constant& cnst = constants[i];
-      size_t bytes = sizeof(cnst.getName().size())        //name length self
-                     + cnst.getName().size()*sizeof(char) //name
-                     + sizeof(cnst.getSize())             //size
-                     + sizeof(cnst.getAlignment())        //alignment
-                     + sizeof(cnst.getOffset());	        //offset
+      sz = cnst.getName().size()*sizeof(char);
+      uint32_t bytes = sizeof(sz)        //name length self
+                       + sz              //name
+                       + sizeof(cnst.getSize())             //size
+                       + sizeof(cnst.getAlignment())        //alignment
+                       + sizeof(cnst.getOffset());	        //offset
       OUT_UPDATE_SZ(bytes);
 
-      OUT_UPDATE_SZ(cnst.getName().size());
-      outs.write(cnst.getName().c_str(), cnst.getName().size());
-      ret_size += sizeof(char)*cnst.getName().size();
+      OUT_UPDATE_SZ(sz);
+      outs.write(cnst.getName().c_str(), sz);
+      ret_size += sz;
       OUT_UPDATE_SZ(cnst.getSize());
       OUT_UPDATE_SZ(cnst.getAlignment());
       OUT_UPDATE_SZ(cnst.getOffset());
@@ -79,10 +82,10 @@ namespace ir {
     return ret_size;
   }
 
-  size_t ConstantSet::deserializeFromBin(std::istream& ins) {
-    size_t total_size = 0;
-    size_t global_data_sz = 0;
-    size_t const_num;
+  uint32_t ConstantSet::deserializeFromBin(std::istream& ins) {
+    uint32_t total_size = 0;
+    uint32_t global_data_sz = 0;
+    uint32_t const_num;
     uint32_t magic;
 
     IN_UPDATE_SZ(magic);
@@ -90,18 +93,18 @@ namespace ir {
       return 0;
 
     IN_UPDATE_SZ(global_data_sz);
-    for (size_t i = 0; i < global_data_sz; i++) {
+    for (uint32_t i = 0; i < global_data_sz; i++) {
       char elt;
       IN_UPDATE_SZ(elt);
       data.push_back(elt);
     }
 
     IN_UPDATE_SZ(const_num);
-    for (size_t i = 0; i < const_num; i++) {
-      size_t bytes;
+    for (uint32_t i = 0; i < const_num; i++) {
+      uint32_t bytes;
       IN_UPDATE_SZ(bytes);
 
-      size_t name_len;
+      uint32_t name_len;
       IN_UPDATE_SZ(name_len);
 
       char* c_name = new char[name_len+1];
@@ -129,7 +132,7 @@ namespace ir {
     if (magic != magic_end)
       return 0;
 
-    size_t total_bytes;
+    uint32_t total_bytes;
     IN_UPDATE_SZ(total_bytes);
     if (total_bytes + sizeof(total_size) != total_size)
       return 0;

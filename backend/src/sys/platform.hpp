@@ -339,12 +339,12 @@ public:
   INLINE Serializable(const Serializable&) = default;
   INLINE Serializable& operator= (const Serializable&) = default;
 
-  virtual size_t serializeToBin(std::ostream& outs) = 0;
-  virtual size_t deserializeFromBin(std::istream& ins) = 0;
+  virtual uint32_t serializeToBin(std::ostream& outs) = 0;
+  virtual uint32_t deserializeFromBin(std::istream& ins) = 0;
 
   /* These two will follow LLVM's ABI. */
-  virtual size_t serializeToLLVM(void) { return 0;/* not implemented now. */}
-  virtual size_t deserializeFromLLVM(void) { return 0;/* not implemented now. */}
+  virtual uint32_t serializeToLLVM(void) { return 0;/* not implemented now. */}
+  virtual uint32_t deserializeFromLLVM(void) { return 0;/* not implemented now. */}
 
   virtual void printStatus(int indent = 0, std::ostream& outs = std::cout) { }
 

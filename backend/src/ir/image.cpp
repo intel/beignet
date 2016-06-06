@@ -107,12 +107,14 @@ namespace ir {
 #define IN_UPDATE_SZ(elt) DESERIALIZE_IN(elt, ins, total_size)
 
   /*! Implements the serialization. */
-  size_t ImageSet::serializeToBin(std::ostream& outs) {
-    size_t ret_size = 0;
+  uint32_t ImageSet::serializeToBin(std::ostream& outs) {
+    uint32_t ret_size = 0;
+    uint32_t sz = 0;
 
     OUT_UPDATE_SZ(magic_begin);
 
-    OUT_UPDATE_SZ(regMap.size());
+    sz = regMap.size();
+    OUT_UPDATE_SZ(sz);
     for (map<Register, struct ImageInfo *>::const_iterator it = regMap.begin(); it != regMap.end(); ++it) {
       OUT_UPDATE_SZ(it->first);
       OUT_UPDATE_SZ(it->second->arg_idx);
@@ -125,7 +127,8 @@ namespace ir {
       OUT_UPDATE_SZ(it->second->dimOrderSlot);
     }
 
-    OUT_UPDATE_SZ(indexMap.size());
+    sz = indexMap.size();
+    OUT_UPDATE_SZ(sz);
     for (map<uint32_t, struct ImageInfo *>::iterator it = indexMap.begin(); it != indexMap.end(); ++it) {
       OUT_UPDATE_SZ(it->first);
       OUT_UPDATE_SZ(it->second->arg_idx);
@@ -144,17 +147,17 @@ namespace ir {
     return ret_size;
   }
 
-  size_t ImageSet::deserializeFromBin(std::istream& ins) {
-    size_t total_size = 0;
+  uint32_t ImageSet::deserializeFromBin(std::istream& ins) {
+    uint32_t total_size = 0;
     uint32_t magic;
-    size_t image_map_sz = 0;
+    uint32_t image_map_sz = 0;
 
     IN_UPDATE_SZ(magic);
     if (magic != magic_begin)
       return 0;
 
     IN_UPDATE_SZ(image_map_sz); //regMap
-    for (size_t i = 0; i < image_map_sz; i++) {
+    for (uint32_t i = 0; i < image_map_sz; i++) {
       ir::Register reg;
       ImageInfo *img_info = GBE_NEW(struct ImageInfo);;
 
@@ -193,7 +196,7 @@ namespace ir {
     if (magic != magic_end)
       return 0;
 
-    size_t total_bytes;
+    uint32_t total_bytes;
     IN_UPDATE_SZ(total_bytes);
     if (total_bytes + sizeof(total_size) != total_size)
       return 0;

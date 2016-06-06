@@ -198,17 +198,17 @@ namespace gbe {
 #define OUT_UPDATE_SZ(elt) SERIALIZE_OUT(elt, outs, ret_size)
 #define IN_UPDATE_SZ(elt) DESERIALIZE_IN(elt, ins, total_size)
 
-  size_t Program::serializeToBin(std::ostream& outs) {
-    size_t ret_size = 0;
-    size_t ker_num = kernels.size();
-    int has_constset = 0;
+  uint32_t Program::serializeToBin(std::ostream& outs) {
+    uint32_t ret_size = 0;
+    uint32_t ker_num = kernels.size();
+    uint32_t has_constset = 0;
 
     OUT_UPDATE_SZ(magic_begin);
 
     if (constantSet) {
       has_constset = 1;
       OUT_UPDATE_SZ(has_constset);
-      size_t sz = constantSet->serializeToBin(outs);
+      uint32_t sz = constantSet->serializeToBin(outs);
       if (!sz)
         return 0;
 
@@ -219,7 +219,7 @@ namespace gbe {
 
     OUT_UPDATE_SZ(ker_num);
     for (map<std::string, Kernel*>::iterator it = kernels.begin(); it != kernels.end(); ++it) {
-      size_t sz = it->second->serializeToBin(outs);
+      uint32_t sz = it->second->serializeToBin(outs);
       if (!sz)
         return 0;
 
@@ -232,10 +232,10 @@ namespace gbe {
     return ret_size;
   }
 
-  size_t Program::deserializeFromBin(std::istream& ins) {
-    size_t total_size = 0;
+  uint32_t Program::deserializeFromBin(std::istream& ins) {
+    uint32_t total_size = 0;
     int has_constset = 0;
-    size_t ker_num;
+    uint32_t ker_num;
     uint32_t magic;
 
     IN_UPDATE_SZ(magic);
@@ -245,19 +245,18 @@ namespace gbe {
     IN_UPDATE_SZ(has_constset);
     if(has_constset) {
       constantSet = new ir::ConstantSet;
-      size_t sz = constantSet->deserializeFromBin(ins);
+      uint32_t sz = constantSet->deserializeFromBin(ins);
 
-      if (sz == 0) {
+      if (sz == 0)
         return 0;
-      }
 
       total_size += sz;
     }
 
     IN_UPDATE_SZ(ker_num);
 
-    for (size_t i = 0; i < ker_num; i++) {
-      size_t ker_serial_sz;
+    for (uint32_t i = 0; i < ker_num; i++) {
+      uint32_t ker_serial_sz;
       std::string ker_name; // Just a empty name here.
       Kernel* ker = allocateKernel(ker_name);
 
@@ -272,7 +271,7 @@ namespace gbe {
     if (magic != magic_end)
       return 0;
 
-    size_t total_bytes;
+    uint32_t total_bytes;
     IN_UPDATE_SZ(total_bytes);
     if (total_bytes + sizeof(total_size) != total_size)
       return 0;
@@ -280,15 +279,17 @@ namespace gbe {
     return total_size;
   }
 
-  size_t Kernel::serializeToBin(std::ostream& outs) {
+  uint32_t Kernel::serializeToBin(std::ostream& outs) {
     unsigned int i;
-    size_t ret_size = 0;
+    uint32_t ret_size = 0;
     int has_samplerset = 0;
     int has_imageset = 0;
+    uint32_t sz = 0;
 
     OUT_UPDATE_SZ(magic_begin);
 
-    OUT_UPDATE_SZ(name.size());
+    sz = name.size();
+    OUT_UPDATE_SZ(sz);
     outs.write(name.c_str(), name.size());
     ret_size += sizeof(char)*name.size();
 
@@ -302,25 +303,30 @@ namespace gbe {
 
       OUT_UPDATE_SZ(arg.info.addrSpace);
 
-      OUT_UPDATE_SZ(arg.info.typeName.size());
+      sz = arg.info.typeName.size();
+      OUT_UPDATE_SZ(sz);
       outs.write(arg.info.typeName.c_str(), arg.info.typeName.size());
       ret_size += sizeof(char)*arg.info.typeName.size();
 
-      OUT_UPDATE_SZ(arg.info.accessQual.size());
+      sz = arg.info.accessQual.size();
+      OUT_UPDATE_SZ(sz);
       outs.write(arg.info.accessQual.c_str(), arg.info.accessQual.size());
       ret_size += sizeof(char)*arg.info.accessQual.size();
 
-      OUT_UPDATE_SZ(arg.info.typeQual.size());
+      sz = arg.info.typeQual.size();
+      OUT_UPDATE_SZ(sz);
       outs.write(arg.info.typeQual.c_str(), arg.info.typeQual.size());
       ret_size += sizeof(char)*arg.info.typeQual.size();
 
-      OUT_UPDATE_SZ(arg.info.argName.size());
+      sz = arg.info.argName.size();
+      OUT_UPDATE_SZ(sz);
       outs.write(arg.info.argName.c_str(), arg.info.argName.size());
       ret_size += sizeof(char)*arg.info.argName.size();
     }
 
-    OUT_UPDATE_SZ(patches.size());
-    for (size_t i = 0; i < patches.size(); ++i) {
+    sz = patches.size();
+    OUT_UPDATE_SZ(sz);
+    for (uint32_t i = 0; i < patches.size(); ++i) {
       const PatchInfo& patch = patches[i];
       unsigned int tmp;
       tmp = patch.type;
@@ -344,7 +350,7 @@ namespace gbe {
     if (!samplerSet->empty()) {   //samplerSet is always valid, allocated in Function::Function
       has_samplerset = 1;
       OUT_UPDATE_SZ(has_samplerset);
-      size_t sz = samplerSet->serializeToBin(outs);
+      uint32_t sz = samplerSet->serializeToBin(outs);
       if (!sz)
         return 0;
 
@@ -357,7 +363,7 @@ namespace gbe {
     if (!imageSet->empty()) {   //imageSet is always valid, allocated in Function::Function
       has_imageset = 1;
       OUT_UPDATE_SZ(has_imageset);
-      size_t sz = imageSet->serializeToBin(outs);
+      uint32_t sz = imageSet->serializeToBin(outs);
       if (!sz)
         return 0;
 
@@ -378,19 +384,19 @@ namespace gbe {
     return ret_size;
   }
 
-  size_t Kernel::deserializeFromBin(std::istream& ins) {
-    size_t total_size = 0;
+  uint32_t Kernel::deserializeFromBin(std::istream& ins) {
+    uint32_t total_size = 0;
     int has_samplerset = 0;
     int has_imageset = 0;
-    size_t code_size = 0;
+    uint32_t code_size = 0;
     uint32_t magic = 0;
-    size_t patch_num = 0;
+    uint32_t patch_num = 0;
 
     IN_UPDATE_SZ(magic);
     if (magic != magic_begin)
       return 0;
 
-    size_t name_len;
+    uint32_t name_len;
     IN_UPDATE_SZ(name_len);
     char* c_name = new char[name_len+1];
     ins.read(c_name, name_len*sizeof(char));
@@ -410,7 +416,7 @@ namespace gbe {
 
       IN_UPDATE_SZ(arg.info.addrSpace);
 
-      size_t len;
+      uint32_t len;
       char* a_name = NULL;
 
       IN_UPDATE_SZ(len);
@@ -473,7 +479,7 @@ namespace gbe {
     IN_UPDATE_SZ(has_samplerset);
     if (has_samplerset) {
       samplerSet = GBE_NEW(ir::SamplerSet);
-      size_t sz = samplerSet->deserializeFromBin(ins);
+      uint32_t sz = samplerSet->deserializeFromBin(ins);
       if (sz == 0) {
         return 0;
       }
@@ -486,7 +492,7 @@ namespace gbe {
     IN_UPDATE_SZ(has_imageset);
     if (has_imageset) {
       imageSet = GBE_NEW(ir::ImageSet);
-      size_t sz = imageSet->deserializeFromBin(ins);
+      uint32_t sz = imageSet->deserializeFromBin(ins);
       if (sz == 0) {
         return 0;
       }
@@ -508,7 +514,7 @@ namespace gbe {
     if (magic != magic_end)
       return 0;
 
-    size_t total_bytes;
+    uint32_t total_bytes;
     IN_UPDATE_SZ(total_bytes);
     if (total_bytes + sizeof(total_size) != total_size)
       return 0;

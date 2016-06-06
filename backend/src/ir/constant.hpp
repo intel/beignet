@@ -119,8 +119,8 @@ namespace ir {
     */
 
     /*! Implements the serialization. */
-    virtual size_t serializeToBin(std::ostream& outs);
-    virtual size_t deserializeFromBin(std::istream& ins);
+    virtual uint32_t serializeToBin(std::ostream& outs);
+    virtual uint32_t deserializeFromBin(std::istream& ins);
 
   private:
     vector<char> data;         //!< The constant data serialized in one array

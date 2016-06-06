@@ -90,7 +90,7 @@ namespace gbe {
     /*! Set the instruction stream.*/
     virtual void setCode(const char *, size_t size) = 0;
     /*! Return the instruction stream size (to be implemented) */
-    virtual size_t getCodeSize(void) const = 0;
+    virtual uint32_t getCodeSize(void) const = 0;
     /*! Get the kernel name */
     INLINE const char *getName(void) const { return name.c_str(); }
     /*! Return the number of arguments for the kernel call */
@@ -225,8 +225,8 @@ namespace gbe {
     */
 
     /*! Implements the serialization. */
-    virtual size_t serializeToBin(std::ostream& outs);
-    virtual size_t deserializeFromBin(std::istream& ins);
+    virtual uint32_t serializeToBin(std::ostream& outs);
+    virtual uint32_t deserializeFromBin(std::istream& ins);
     virtual void printStatus(int indent, std::ostream& outs);
 
   protected:
@@ -247,7 +247,7 @@ namespace gbe {
     ir::ImageSet *imageSet;    //!< Copy from the corresponding function.
     ir::PrintfSet *printfSet;  //!< Copy from the corresponding function.
     ir::ProfilingInfo *profilingInfo;  //!< Copy from the corresponding function.
-    size_t compileWgSize[3];   //!< required work group size by kernel attribute.
+    uint32_t compileWgSize[3]; //!< required work group size by kernel attribute.
     std::string functionAttributes; //!< function attribute qualifiers combined.
     GBE_CLASS(Kernel);         //!< Use custom allocators
   };
@@ -312,8 +312,8 @@ namespace gbe {
     */
 
     /*! Implements the serialization. */
-    virtual size_t serializeToBin(std::ostream& outs);
-    virtual size_t deserializeFromBin(std::istream& ins);
+    virtual uint32_t serializeToBin(std::ostream& outs);
+    virtual uint32_t deserializeFromBin(std::istream& ins);
     virtual void printStatus(int indent, std::ostream& outs);
     uint32_t fast_relaxed_math : 1;
 

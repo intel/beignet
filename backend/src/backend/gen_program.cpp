@@ -80,7 +80,7 @@ namespace gbe {
     insns = (GenInstruction *)ins;
     insnNum = size / sizeof(GenInstruction);
   }
-  size_t GenKernel::getCodeSize(void) const { return insnNum * sizeof(GenInstruction); }
+  uint32_t GenKernel::getCodeSize(void) const { return insnNum * sizeof(GenInstruction); }
 
   void GenKernel::printStatus(int indent, std::ostream& outs) {
 #ifdef GBE_COMPILER_AVAILABLE
