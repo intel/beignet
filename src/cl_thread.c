@@ -145,7 +145,7 @@ cl_event get_current_event(cl_command_queue queue)
 {
   thread_spec_data* spec = __create_thread_spec_data(queue, 1);
   int *magic = pthread_getspecific(thread_magic_key);
-  assert(spec && spec->thread_magic == *magic);
+  assert(spec && magic && spec->thread_magic == *magic);
   return spec->current_event;
 }
 
@@ -153,7 +153,7 @@ cl_event get_last_event(cl_command_queue queue)
 {
   thread_spec_data* spec = __create_thread_spec_data(queue, 1);
   int *magic = pthread_getspecific(thread_magic_key);
-  assert(spec && spec->thread_magic == *magic);
+  assert(spec && magic && spec->thread_magic == *magic);
   return spec->last_event;
 }
 
@@ -161,7 +161,7 @@ void set_current_event(cl_command_queue queue, cl_event e)
 {
   thread_spec_data* spec = __create_thread_spec_data(queue, 1);
   int *magic = pthread_getspecific(thread_magic_key);
-  assert(spec && spec->thread_magic == *magic);
+  assert(spec && magic && spec->thread_magic == *magic);
   spec->current_event = e;
 }
 
@@ -169,7 +169,7 @@ void set_last_event(cl_command_queue queue, cl_event e)
 {
   thread_spec_data* spec = __create_thread_spec_data(queue, 1);
   int *magic = pthread_getspecific(thread_magic_key);
-  assert(spec && spec->thread_magic == *magic);
+  assert(spec && magic && spec->thread_magic == *magic);
   spec->last_event = e;
 }
 
@@ -204,6 +204,7 @@ cl_gpgpu cl_get_thread_gpgpu(cl_command_queue queue)
   if(!spec)
     return NULL;
   int *magic = pthread_getspecific(thread_magic_key);
+  assert(magic);
 
   if (!spec->thread_magic && spec->thread_magic != *magic) {
     //We may get the slot from last thread. So free the resource.
@@ -232,7 +233,7 @@ void cl_set_thread_batch_buf(cl_command_queue queue, void* buf)
   thread_spec_data* spec = __create_thread_spec_data(queue, 1);
   int *magic = pthread_getspecific(thread_magic_key);
 
-  assert(spec && spec->thread_magic == *magic);
+  assert(spec && magic && spec->thread_magic == *magic);
 
   if (spec->thread_batch_buf) {
     cl_gpgpu_unref_batch_buf(spec->thread_batch_buf);
@@ -244,7 +245,7 @@ void* cl_get_thread_batch_buf(cl_command_queue queue) {
   thread_spec_data* spec = __create_thread_spec_data(queue, 1);
   int *magic = pthread_getspecific(thread_magic_key);
 
-  assert(spec && spec->thread_magic == *magic);
+  assert(spec && magic && spec->thread_magic == *magic);
 
   return spec->thread_batch_buf;
 }
@@ -256,6 +257,7 @@ void cl_invalid_thread_gpgpu(cl_command_queue queue)
   thread_spec_data* spec = NULL;
 
   pthread_mutex_lock(&thread_private->thread_data_lock);
+  assert(id);
   spec = thread_private->threads_data[*id];
   assert(spec);
   pthread_mutex_unlock(&thread_private->thread_data_lock);
@@ -277,6 +279,7 @@ cl_gpgpu cl_thread_gpgpu_take(cl_command_queue queue)
   thread_spec_data* spec = NULL;
 
   pthread_mutex_lock(&thread_private->thread_data_lock);
+  assert(id);
   spec = thread_private->threads_data[*id];
   assert(spec);
   pthread_mutex_unlock(&thread_private->thread_data_lock);
