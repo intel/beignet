@@ -235,15 +235,15 @@ namespace gbe {
     GBHI_BXT = 6,
     GBHI_MAX,
   };
-
+#define GEN_BINARY_VERSION  1
   static const unsigned char gen_binary_header[GBHI_MAX][GEN_BINARY_HEADER_LENGTH]= \
-                                             {{0, 'G','E', 'N', 'C', 'B', 'Y', 'T'},
-                                              {0, 'G','E', 'N', 'C', 'I', 'V', 'B'},
-                                              {0, 'G','E', 'N', 'C', 'H', 'S', 'W'},
-                                              {0, 'G','E', 'N', 'C', 'C', 'H', 'V'},
-                                              {0, 'G','E', 'N', 'C', 'B', 'D', 'W'},
-                                              {0, 'G','E', 'N', 'C', 'S', 'K', 'L'},
-                                              {0, 'G','E', 'N', 'C', 'B', 'X', 'T'}
+                                             {{GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'B', 'Y', 'T'},
+                                              {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'I', 'V', 'B'},
+                                              {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'H', 'S', 'W'},
+                                              {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'C', 'H', 'V'},
+                                              {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'B', 'D', 'W'},
+                                              {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'S', 'K', 'L'},
+                                              {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'B', 'X', 'T'}
                                               };
 
 #define FILL_GEN_HEADER(binary, index)  do {int i = 0; do {*(binary+i) = gen_binary_header[index][i]; i++; }while(i < GEN_BINARY_HEADER_LENGTH);}while(0)
@@ -258,9 +258,15 @@ namespace gbe {
   static bool genHeaderCompare(const unsigned char *BufPtr, GEN_BINARY_HEADER_INDEX index)
   {
     bool matched = true;
-    for (int i =0; i < GEN_BINARY_HEADER_LENGTH; ++i)
+    for (int i = 1; i < GEN_BINARY_HEADER_LENGTH; ++i)
     {
       matched = matched && (BufPtr[i] == gen_binary_header[index][i]);
+    }
+    if(matched) {
+      if(BufPtr[0] != gen_binary_header[index][0]) {
+        std::cout << "Beignet binary format have been changed, please generate binary again.\n";
+        matched = false;
+      }
     }
     return matched;
   }

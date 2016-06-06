@@ -187,7 +187,7 @@ static const unsigned char binary_type_header[BHI_MAX][BINARY_HEADER_LENGTH]=  \
                                               {{'B','C', 0xC0, 0xDE},
                                                {1, 'B', 'C', 0xC0, 0xDE},
                                                {2, 'B', 'C', 0xC0, 0xDE},
-                                               {0, 'G','E', 'N', 'C'},
+                                               {1, 'G','E', 'N', 'C'},
                                                {'C','I', 'S', 'A'},
                                                };
 
@@ -196,9 +196,17 @@ LOCAL cl_bool headerCompare(const unsigned char *BufPtr, BINARY_HEADER_INDEX ind
   bool matched = true;
   int length = (index == BHI_SPIR || index == BHI_CMRT) ? BINARY_HEADER_LENGTH -1 :BINARY_HEADER_LENGTH;
   int i = 0;
-  for (i = 0; i < length; ++i)
+  if(index == BHI_GEN_BINARY)
+    i = 1;
+  for (; i < length; ++i)
   {
     matched = matched && (BufPtr[i] == binary_type_header[index][i]);
+  }
+  if(index == BHI_GEN_BINARY && matched) {
+    if(BufPtr[0] != binary_type_header[index][0]) {
+      DEBUGP(DL_WARNING, "Beignet binary format have been changed, please generate binary again.\n");
+      matched = false;
+    }
   }
   return matched;
 }
