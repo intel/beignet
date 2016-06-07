@@ -2201,7 +2201,7 @@ LOCAL cl_mem cl_mem_new_libva_image(cl_context ctx,
   image->w = width;
   image->h = height;
   image->image_type = CL_MEM_OBJECT_IMAGE2D;
-  image->depth = 2;
+  image->depth = 1;
   image->fmt = fmt;
   image->intel_fmt = intel_fmt;
   image->bpp = bpp;
@@ -2299,7 +2299,7 @@ LOCAL cl_mem cl_mem_new_image_from_fd(cl_context ctx,
   image->w = width;
   image->h = height;
   image->image_type = CL_MEM_OBJECT_IMAGE2D;
-  image->depth = 0;
+  image->depth = 1;
   image->fmt = fmt;
   image->intel_fmt = intel_fmt;
   image->bpp = bpp;
