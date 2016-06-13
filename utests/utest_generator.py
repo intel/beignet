@@ -4,8 +4,8 @@ import os,sys,re
 
 FLT_MAX_POSI='0x1.fffffep127f'
 FLT_MIN_NEGA='-0x1.fffffep127f'
-FLT_MIN_POSI='ldexp(1.0, -126)'
-FLT_MAX_NEGA='ldexp(-1.0, -126)'
+FLT_MIN_POSI='ldexpf(1.0, -126)'
+FLT_MAX_NEGA='ldexpf(-1.0, -126)'
 
 paraTypeList={'float':'%e','int':'%d','double':'%lf','uint':'%d','string':'%s'}
 

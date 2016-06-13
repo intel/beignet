@@ -5,7 +5,7 @@
 #define udebug 0
 
 #define FLT_MAX 0x1.fffffep127f
-#define FLT_MIN ldexp(1.0,-126)
+#define FLT_MIN ldexpf(1.0,-126)
 #define FLT_ULP  (1.0e-6f)
 
 #define printf_c(...) \
