@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <iomanip>
 #include <algorithm>
+#include <cmath>
 
 #include "utest_helper.hpp"
 
