@@ -702,9 +702,9 @@ namespace gbe
     void SUBGROUP_OP(uint32_t wg_op, Reg dst, GenRegister src,
                       GenRegister tmpData1, GenRegister tmpData2);
     /*! Oblock read */
-    void OBREAD(GenRegister dst, GenRegister addr, GenRegister header, uint32_t bti, uint32_t size);
+    void OBREAD(GenRegister* dsts, uint32_t vec_size, GenRegister addr, GenRegister header, uint32_t bti, GenRegister* tmp, uint32_t tmp_size);
     /*! Oblock write */
-    void OBWRITE(GenRegister addr, GenRegister value, GenRegister header, uint32_t bti, uint32_t size);
+    void OBWRITE(GenRegister addr, GenRegister* values, uint32_t vec_size, GenRegister header, uint32_t bti, GenRegister* tmp, uint32_t tmp_size);
     /*! Media block read */
     void MBREAD(GenRegister* dsts, GenRegister coordx, GenRegister coordy, GenRegister header, GenRegister* tmp, uint32_t bti, uint32_t vec_size);
     /*! Media block write */
@@ -2027,38 +2027,54 @@ namespace gbe
     insn->src(0) = src;
     insn->src(1) = tmpData2;
   }
-  void Selection::Opaque::OBREAD(GenRegister dst,
+  void Selection::Opaque::OBREAD(GenRegister* dsts,
+                                 uint32_t vec_size,
                                  GenRegister addr,
                                  GenRegister header,
                                  uint32_t bti,
-                                 uint32_t size) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_OBREAD, 1, 2);
-    insn->dst(0) = dst;
+                                 GenRegister* tmp,
+                                 uint32_t tmp_size) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_OBREAD, 1 + vec_size + tmp_size, 1);
+    SelectionVector *vector = this->appendVector();
+    insn->dst(0) = header;
+    for (uint32_t i = 0; i < vec_size; ++i)
+      insn->dst(1 + i) = dsts[i];
+    for (uint32_t i = 0; i < tmp_size; ++i)
+      insn->dst(1 + i + vec_size) = tmp[i];
     insn->src(0) = addr;
-    insn->src(1) = header;
     insn->setbti(bti);
-    insn->extra.elem = size / sizeof(int[4]); // number of owords
+    insn->extra.elem = vec_size; // number of vector size
+
+    // tmp regs for OWORD read dst
+    vector->regNum = tmp_size;
+    vector->reg = &insn->dst(1 + vec_size);
+    vector->offsetID = 1 + vec_size;
+    vector->isSrc = 0;
   }
 
   void Selection::Opaque::OBWRITE(GenRegister addr,
-                                  GenRegister value,
+                                  GenRegister* values,
+                                  uint32_t vec_size,
                                   GenRegister header,
                                   uint32_t bti,
-                                  uint32_t size) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_OBWRITE, 0, 3);
+                                  GenRegister* tmp,
+                                  uint32_t tmp_size) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_OBWRITE, tmp_size + 1, vec_size + 1);
     SelectionVector *vector = this->appendVector();
-    insn->src(0) = header;
-    insn->src(1) = value;
-    insn->src(2) = addr;
-    insn->state = this->curr;
+    insn->src(0) = addr;
+    for (uint32_t i = 0; i < vec_size; ++i)
+      insn->src(i + 1) = values[i];
+    insn->dst(0) = header;
+    for (uint32_t i = 0; i < tmp_size; ++i)
+      insn->dst(i + 1) = tmp[i];
     insn->setbti(bti);
-    insn->extra.elem = size / sizeof(int[4]); // number of owords
+    insn->extra.elem = vec_size; // number of vector_size
 
-    // We need to put the header and the data together
-    vector->regNum = 2;
-    vector->reg = &insn->src(0);
+    // tmp regs for OWORD read dst
+    vector->regNum = tmp_size + 1;
+    vector->reg = &insn->dst(0);
     vector->offsetID = 0;
-    vector->isSrc = 1;
+    vector->isSrc = 0;
   }
 
   void Selection::Opaque::MBREAD(GenRegister* dsts,
@@ -4113,10 +4129,19 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
                        ir::BTI bti) const
     {
       using namespace ir;
-      const GenRegister header = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-      const GenRegister value = sel.selReg(insn.getValue(0), TYPE_U32);
+      const uint32_t vec_size = insn.getValueNum();
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
-      sel.OBREAD(value, address, header, bti.imm, simdWidth * sizeof(int));
+      const GenRegister header = GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), TYPE_U32);
+      vector<GenRegister> valuesVec;
+      for(uint32_t i = 0; i < vec_size; i++)
+        valuesVec.push_back(sel.selReg(insn.getValue(i), TYPE_U32));
+      // check tmp_size for OWORD read need, max 8 OWROD thus 4 regs
+      uint32_t tmp_size = simdWidth * vec_size / 8;
+      tmp_size = tmp_size > 4 ? 4 : tmp_size;
+      vector<GenRegister> tmpVec;
+      for(uint32_t i = 0; i < tmp_size; i++)
+        tmpVec.push_back(GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), TYPE_U32));
+      sel.OBREAD(&valuesVec[0], vec_size, address, header, bti.imm, &tmpVec[0], tmp_size);
     }
 
     // check whether all binded table index point to constant memory
@@ -4289,10 +4314,19 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
                         ir::BTI bti) const
     {
       using namespace ir;
-      const GenRegister header = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-      const GenRegister value = sel.selReg(insn.getValue(0), TYPE_U32);
+      const uint32_t vec_size = insn.getValueNum();
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
-      sel.OBWRITE(address, value, header, bti.imm, simdWidth * sizeof(int));
+      const GenRegister header = GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), TYPE_U32);
+      vector<GenRegister> valuesVec;
+      for(uint32_t i = 0; i < vec_size; i++)
+        valuesVec.push_back(sel.selReg(insn.getValue(i), TYPE_U32));
+      // check tmp_size for OWORD write need, max 8 OWROD thus 4 regs
+      uint32_t tmp_size = simdWidth * vec_size / 8;
+      tmp_size = tmp_size > 4 ? 4 : tmp_size;
+      vector<GenRegister> tmpVec;
+      for(uint32_t i = 0; i < tmp_size; i++)
+        tmpVec.push_back(GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), TYPE_U32));
+      sel.OBWRITE(address, &valuesVec[0], vec_size, header, bti.imm, &tmpVec[0], tmp_size);
     }
 
     virtual bool emit(Selection::Opaque  &sel, SelectionDAG &dag) const

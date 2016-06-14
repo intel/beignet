@@ -269,10 +269,10 @@ namespace gbe
   {
     const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA;
     p->setMessageDescriptor(insn, sfid, msg_length, response_length);
-    assert(size == 2 || size == 4);
+    assert(size == 2 || size == 4 || size == 8);
     insn->bits3.gen7_oblock_rw.msg_type = msg_type;
     insn->bits3.gen7_oblock_rw.bti = bti;
-    insn->bits3.gen7_oblock_rw.block_size = size == 2 ? 2 : 3;
+    insn->bits3.gen7_oblock_rw.block_size = size == 2 ? 2 : (size == 4 ? 3 : 4);
     insn->bits3.gen7_oblock_rw.header_present = 1;
   }
 
@@ -1261,7 +1261,7 @@ namespace gbe
   void GenEncoder::OBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t size) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     const uint32_t msg_length = 1;
-    const uint32_t response_length = size / 2; // Size is in owords
+    const uint32_t response_length = size / 2; // Size is in regs
     this->setHeader(insn);
     this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
     this->setSrc0(insn, GenRegister::ud8grf(header.nr, 0));

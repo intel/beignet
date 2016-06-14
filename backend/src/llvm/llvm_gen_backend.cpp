@@ -698,7 +698,7 @@ namespace gbe
     // Emit subgroup instructions
     void emitSubGroupInst(CallInst &I, CallSite &CS, ir::WorkGroupOps opcode);
     // Emit subgroup instructions
-    void emitBlockReadWriteMemInst(CallInst &I, CallSite &CS, bool isWrite);
+    void emitBlockReadWriteMemInst(CallInst &I, CallSite &CS, bool isWrite, uint8_t vec_size);
     void emitBlockReadWriteImageInst(CallInst &I, CallSite &CS, bool isWrite, uint8_t vec_size);
 
     uint8_t appendSampler(CallSite::arg_iterator AI);
@@ -3726,6 +3726,9 @@ namespace gbe
       case GEN_OCL_SUB_GROUP_SCAN_INCLUSIVE_MIN:
       case GEN_OCL_LRP:
       case GEN_OCL_SUB_GROUP_BLOCK_READ_MEM:
+      case GEN_OCL_SUB_GROUP_BLOCK_READ_MEM2:
+      case GEN_OCL_SUB_GROUP_BLOCK_READ_MEM4:
+      case GEN_OCL_SUB_GROUP_BLOCK_READ_MEM8:
       case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE:
       case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE2:
       case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE4:
@@ -3747,6 +3750,9 @@ namespace gbe
       case GEN_OCL_STORE_PROFILING:
       case GEN_OCL_DEBUGWAIT:
       case GEN_OCL_SUB_GROUP_BLOCK_WRITE_MEM:
+      case GEN_OCL_SUB_GROUP_BLOCK_WRITE_MEM2:
+      case GEN_OCL_SUB_GROUP_BLOCK_WRITE_MEM4:
+      case GEN_OCL_SUB_GROUP_BLOCK_WRITE_MEM8:
       case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE:
       case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE2:
       case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE4:
@@ -3945,13 +3951,12 @@ namespace gbe
     GBE_ASSERT(AI == AE);
   }
 
-  void GenWriter::emitBlockReadWriteMemInst(CallInst &I, CallSite &CS, bool isWrite) {
+  void GenWriter::emitBlockReadWriteMemInst(CallInst &I, CallSite &CS, bool isWrite, uint8_t vec_size) {
     CallSite::arg_iterator AI = CS.arg_begin();
     CallSite::arg_iterator AE = CS.arg_end();
     GBE_ASSERT(AI != AE);
 
     Value *llvmPtr = *(AI++);
-    Value *llvmValues;
     ir::AddressSpace addrSpace = addressSpaceLLVMToGen(llvmPtr->getType()->getPointerAddressSpace());
     GBE_ASSERT(addrSpace == ir::MEM_GLOBAL);
     ir::Register pointer = this->getRegister(llvmPtr);
@@ -3986,15 +3991,18 @@ namespace gbe
     GBE_ASSERT(AM != ir::AM_DynamicBti);
 
     if(isWrite){
-      llvmValues = *(AI++);
-      const ir::Register values = getRegister(llvmValues);
-      const ir::Tuple tuple = ctx.arrayTuple(&values, 1);
-      ctx.STORE(type, tuple, ptr, addrSpace, 1, true, AM, SurfaceIndex, true);
+      Value *llvmValues = *(AI++);
+      vector<ir::Register> srcTupleData;
+      for(int i = 0;i < vec_size; i++)
+        srcTupleData.push_back(getRegister(llvmValues, i));
+      const ir::Tuple tuple = ctx.arrayTuple(&srcTupleData[0], vec_size);
+      ctx.STORE(type, tuple, ptr, addrSpace, vec_size, true, AM, SurfaceIndex, true);
     } else {
-      llvmValues = &I;
-      const ir::Register values = getRegister(llvmValues);
-      const ir::Tuple tuple = ctx.arrayTuple(&values, 1);
-      ctx.LOAD(type, tuple, ptr, addrSpace, 1, true, AM, SurfaceIndex, true);
+      vector<ir::Register> dstTupleData;
+      for(int i = 0;i < vec_size; i++)
+        dstTupleData.push_back(getRegister(&I, i));
+      const ir::Tuple tuple = ctx.arrayTuple(&dstTupleData[0], vec_size);
+      ctx.LOAD(type, tuple, ptr, addrSpace, vec_size, true, AM, SurfaceIndex, true);
     }
 
     GBE_ASSERT(AI == AE);
@@ -4858,9 +4866,21 @@ namespace gbe
             break;
           }
           case GEN_OCL_SUB_GROUP_BLOCK_READ_MEM:
-            this->emitBlockReadWriteMemInst(I, CS, false); break;
+            this->emitBlockReadWriteMemInst(I, CS, false, 1); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_MEM2:
+            this->emitBlockReadWriteMemInst(I, CS, false, 2); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_MEM4:
+            this->emitBlockReadWriteMemInst(I, CS, false, 4); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_MEM8:
+            this->emitBlockReadWriteMemInst(I, CS, false, 8); break;
           case GEN_OCL_SUB_GROUP_BLOCK_WRITE_MEM:
-            this->emitBlockReadWriteMemInst(I, CS, true); break;
+            this->emitBlockReadWriteMemInst(I, CS, true, 1); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_MEM2:
+            this->emitBlockReadWriteMemInst(I, CS, true, 2); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_MEM4:
+            this->emitBlockReadWriteMemInst(I, CS, true, 4); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_MEM8:
+            this->emitBlockReadWriteMemInst(I, CS, true, 8); break;
           case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE:
             this->emitBlockReadWriteImageInst(I, CS, false, 1); break;
           case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE2:

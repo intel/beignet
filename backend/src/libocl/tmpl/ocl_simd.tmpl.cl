@@ -134,63 +134,46 @@ RANGE_OP(scan_exclusive, max, double, true)
 
 #undef RANGE_OP
 PURE CONST uint __gen_ocl_sub_group_block_read_mem(const global uint* p);
+PURE CONST uint2 __gen_ocl_sub_group_block_read_mem2(const global uint* p);
+PURE CONST uint4 __gen_ocl_sub_group_block_read_mem4(const global uint* p);
+PURE CONST uint8 __gen_ocl_sub_group_block_read_mem8(const global uint* p);
 OVERLOADABLE uint intel_sub_group_block_read(const global uint* p)
 {
   return __gen_ocl_sub_group_block_read_mem(p);
 }
 OVERLOADABLE uint2 intel_sub_group_block_read2(const global uint* p)
 {
-  return (uint2)(intel_sub_group_block_read(p),
-                 intel_sub_group_block_read(p + get_simd_size()));
+  return __gen_ocl_sub_group_block_read_mem2(p);
 }
 OVERLOADABLE uint4 intel_sub_group_block_read4(const global uint* p)
 {
-  return (uint4)(intel_sub_group_block_read(p),
-                 intel_sub_group_block_read(p + get_simd_size()),
-                 intel_sub_group_block_read(p + get_simd_size() * 2),
-                 intel_sub_group_block_read(p + get_simd_size() * 3));
+  return __gen_ocl_sub_group_block_read_mem4(p);
 
 }
 OVERLOADABLE uint8 intel_sub_group_block_read8(const global uint* p)
 {
-  return (uint8)(intel_sub_group_block_read(p),
-                 intel_sub_group_block_read(p + get_simd_size()),
-                 intel_sub_group_block_read(p + get_simd_size() * 2),
-                 intel_sub_group_block_read(p + get_simd_size() * 3),
-                 intel_sub_group_block_read(p + get_simd_size() * 4),
-                 intel_sub_group_block_read(p + get_simd_size() * 5),
-                 intel_sub_group_block_read(p + get_simd_size() * 6),
-                 intel_sub_group_block_read(p + get_simd_size() * 7));
+  return __gen_ocl_sub_group_block_read_mem8(p);
 }
-
 void __gen_ocl_sub_group_block_write_mem(const global uint* p, uint data);
+void __gen_ocl_sub_group_block_write_mem2(const global uint* p, uint2 data);
+void __gen_ocl_sub_group_block_write_mem4(const global uint* p, uint4 data);
+void __gen_ocl_sub_group_block_write_mem8(const global uint* p, uint8 data);
 OVERLOADABLE void intel_sub_group_block_write(const global uint* p, uint data)
 {
   __gen_ocl_sub_group_block_write_mem(p, data);
 }
 OVERLOADABLE void intel_sub_group_block_write2(const global uint* p, uint2 data)
 {
-  intel_sub_group_block_write(p, data.s0);
-  intel_sub_group_block_write(p + get_simd_size(), data.s1);
+  __gen_ocl_sub_group_block_write_mem2(p, data);
 }
 OVERLOADABLE void intel_sub_group_block_write4(const global uint* p,uint4 data)
 {
-  intel_sub_group_block_write(p, data.s0);
-  intel_sub_group_block_write(p + get_simd_size(), data.s1);
-  intel_sub_group_block_write(p + get_simd_size() * 2, data.s2);
-  intel_sub_group_block_write(p + get_simd_size() * 3, data.s3);
+  __gen_ocl_sub_group_block_write_mem4(p, data);
 
 }
 OVERLOADABLE void intel_sub_group_block_write8(const global uint* p,uint8 data)
 {
-  intel_sub_group_block_write(p, data.s0);
-  intel_sub_group_block_write(p + get_simd_size(), data.s1);
-  intel_sub_group_block_write(p + get_simd_size() * 2, data.s2);
-  intel_sub_group_block_write(p + get_simd_size() * 3, data.s3);
-  intel_sub_group_block_write(p + get_simd_size() * 4, data.s4);
-  intel_sub_group_block_write(p + get_simd_size() * 5, data.s5);
-  intel_sub_group_block_write(p + get_simd_size() * 6, data.s6);
-  intel_sub_group_block_write(p + get_simd_size() * 7, data.s7);
+  __gen_ocl_sub_group_block_write_mem8(p, data);
 }
 
 PURE CONST uint __gen_ocl_sub_group_block_read_image(image2d_t p, int x, int y);

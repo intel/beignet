@@ -3488,11 +3488,17 @@ namespace gbe
   }
 
   void GenContext::emitOBReadInstruction(const SelectionInstruction &insn) {
-    const GenRegister dst = ra->genReg(insn.dst(0));
+    const GenRegister dst= GenRegister::retype(ra->genReg(insn.dst(1)), GEN_TYPE_UD);
     const GenRegister addr = GenRegister::toUniform(ra->genReg(insn.src(0)), GEN_TYPE_UD);
-    GenRegister header = GenRegister::retype(ra->genReg(insn.src(1)), GEN_TYPE_UD);
+    const GenRegister header = GenRegister::retype(ra->genReg(insn.dst(0)), GEN_TYPE_UD);
+    const GenRegister headeraddr = GenRegister::offset(header, 0, 2*4);
+    const uint32_t vec_size = insn.extra.elem;
+    const GenRegister tmp = GenRegister::retype(ra->genReg(insn.dst(1 + vec_size)), GEN_TYPE_UD);
+    const uint32_t simdWidth = p->curr.execWidth;
 
+    // Make header
     p->push();
+    {
       // Copy r0 into the header first
       p->curr.execWidth = 8;
       p->curr.predicate = GEN_PREDICATE_NONE;
@@ -3501,23 +3507,81 @@ namespace gbe
 
       // Update the header with the current address
       p->curr.execWidth = 1;
-      p->SHR(GenRegister::offset(header, 0, 2*4), addr, GenRegister::immud(4));
+      p->SHR(headeraddr, addr, GenRegister::immud(4));
 
       // Put zero in the general state base address
-      p->MOV(GenRegister::offset(header, 0, 5*4), GenRegister::immud(0));
-
+      p->MOV(GenRegister::offset(header, 0, 5 * 4), GenRegister::immud(0));
+    }
     p->pop();
-    // Now read the data
-    p->OBREAD(dst, header, insn.getbti(), insn.extra.elem);
+    // Now read the data, oword block read can only work with simd16 and no mask
+    if (vec_size == 1) {
+      p->push();
+      {
+        p->curr.execWidth = 16;
+        p->curr.noMask = 1;
+        p->OBREAD(dst, header, insn.getbti(), simdWidth / 4);
+      }
+      p->pop();
+    } else if (vec_size == 2) {
+      p->push();
+      {
+        p->curr.execWidth = 16;
+        p->curr.noMask = 1;
+        p->OBREAD(tmp, header, insn.getbti(), simdWidth / 2);
+      }
+      p->pop();
+      p->MOV(ra->genReg(insn.dst(1)), GenRegister::offset(tmp, 0));
+      p->MOV(ra->genReg(insn.dst(2)), GenRegister::offset(tmp, simdWidth / 8));
+    } else if (vec_size == 4 || vec_size == 8) {
+      if (simdWidth == 8) {
+        for (uint32_t i = 0; i < vec_size / 4; i++) {
+          if (i > 0) {
+            p->push();
+            {
+              // Update the address in header
+              p->curr.execWidth = 1;
+              p->ADD(headeraddr, headeraddr, GenRegister::immud(8));
+            }
+            p->pop();
+          }
+          p->push();
+          {
+            p->curr.execWidth = 16;
+            p->curr.noMask = 1;
+            p->OBREAD(tmp, header, insn.getbti(), 8);
+          }
+          p->pop();
+          for (uint32_t j = 0; j < 4; j++)
+            p->MOV(ra->genReg(insn.dst(1 + j + i * 4)), GenRegister::offset(tmp, j));
+        }
+      } else {
+        for (uint32_t i = 0; i < vec_size / 2; i++) {
+          if (i > 0) {
+            p->push();
+            {
+              // Update the address in header
+              p->curr.execWidth = 1;
+              p->ADD(headeraddr, headeraddr, GenRegister::immud(8));
+            }
+            p->pop();
+          }
+          p->OBREAD(tmp, header, insn.getbti(), 8);
+          for (uint32_t j = 0; j < 2; j++)
+            p->MOV(ra->genReg(insn.dst(1 + j + i * 2)), GenRegister::offset(tmp, j*2));
+        }
+      }
+    } else NOT_SUPPORTED;
   }
 
   void GenContext::emitOBWriteInstruction(const SelectionInstruction &insn) {
-    const GenRegister addr = GenRegister::toUniform(ra->genReg(insn.src(2)), GEN_TYPE_UD);
-    GenRegister header;
-    if (simdWidth == 8)
-      header = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_UD);
-    else
-      header = GenRegister::retype(GenRegister::Qn(ra->genReg(insn.src(0)),1), GEN_TYPE_UD);
+    const GenRegister addr = GenRegister::toUniform(ra->genReg(insn.src(0)), GEN_TYPE_UD);
+    const GenRegister header = GenRegister::retype(ra->genReg(insn.dst(0)), GEN_TYPE_UD);
+    const GenRegister headeraddr = GenRegister::offset(header, 0, 2*4);
+    const uint32_t vec_size = insn.extra.elem;
+    const GenRegister tmp = GenRegister::offset(header, 1);
+    const uint32_t simdWidth = p->curr.execWidth;
+    uint32_t tmp_size = simdWidth * vec_size / 8;
+    tmp_size = tmp_size > 4 ? 4 : tmp_size;
 
     p->push();
       // Copy r0 into the header first
@@ -3528,14 +3592,72 @@ namespace gbe
 
       // Update the header with the current address
       p->curr.execWidth = 1;
-      p->SHR(GenRegister::offset(header, 0, 2*4), addr, GenRegister::immud(4));
+      p->SHR(headeraddr, addr, GenRegister::immud(4));
 
       // Put zero in the general state base address
       p->MOV(GenRegister::offset(header, 0, 5*4), GenRegister::immud(0));
 
     p->pop();
-    // Now write the data
-    p->OBWRITE(header, insn.getbti(), insn.extra.elem);
+    // Now write the data, oword block write can only work with simd16 and no mask
+    if (vec_size == 1) {
+      p->MOV(tmp, ra->genReg(insn.src(1)));
+      p->push();
+      {
+        p->curr.execWidth = 16;
+        p->curr.noMask = 1;
+        p->OBWRITE(header, insn.getbti(), simdWidth / 4);
+      }
+      p->pop();
+    } else if (vec_size == 2) {
+      p->MOV(GenRegister::offset(tmp, 0), ra->genReg(insn.src(1))) ;
+      p->MOV(GenRegister::offset(tmp, simdWidth / 8), ra->genReg(insn.src(2))) ;
+      p->push();
+      {
+        p->curr.execWidth = 16;
+        p->curr.noMask = 1;
+        p->OBWRITE(header, insn.getbti(), simdWidth / 2);
+      }
+      p->pop();
+    } else if (vec_size == 4 || vec_size == 8) {
+      if (simdWidth == 8) {
+        for (uint32_t i = 0; i < vec_size / 4; i++) {
+          for (uint32_t j = 0; j < 4; j++)
+            p->MOV(GenRegister::offset(tmp, j), ra->genReg(insn.src(1 + j + i*4))) ;
+          if (i > 0) {
+            p->push();
+            {
+              // Update the address in header
+              p->curr.execWidth = 1;
+              p->ADD(headeraddr, headeraddr, GenRegister::immud(8));
+            }
+            p->pop();
+          }
+          p->push();
+          {
+            p->curr.execWidth = 16;
+            p->curr.noMask = 1;
+            p->OBWRITE(header, insn.getbti(), 8);
+          }
+          p->pop();
+        }
+      } else {
+        for (uint32_t i = 0; i < vec_size / 2; i++) {
+          for (uint32_t j = 0; j < 2; j++)
+            p->MOV(GenRegister::offset(tmp, j * 2), ra->genReg(insn.src(1 + j + i*2))) ;
+          if (i > 0) {
+            p->push();
+            {
+              // Update the address in header
+              p->curr.execWidth = 1;
+              p->ADD(headeraddr, headeraddr, GenRegister::immud(8));
+            }
+            p->pop();
+          }
+          p->OBWRITE(header, insn.getbti(), 8);
+        }
+      }
+    } else NOT_SUPPORTED;
+
   }
 
   void GenContext::emitMBReadInstruction(const SelectionInstruction &insn) {
