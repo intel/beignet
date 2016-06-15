@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from __future__ import print_function
-import os,sys,re
+import os,sys,re,string
 
 FLT_MAX_POSI='0x1.fffffep127f'
 FLT_MIN_NEGA='-0x1.fffffep127f'
@@ -247,7 +247,7 @@ which can print more values and information to assist debuging the issue.
   def argvector(self,paraN,index):
     vector=re.findall(r"[0-9]+",self.inputtype[paraN][index])
     if vector:
-      vector=vector[0]
+      vector=string.atoi(vector[0])
     else:
       vector=1
     return vector
@@ -272,10 +272,17 @@ which can print more values and information to assist debuging the issue.
 #####Cpu values analyse
   def GenInputValues(self,index):
     #namesuffix=self.inputtype[0][index]
+    vlen = self.argvector(self.inputtype.__len__()-1,index)
     for i in range(0,self.values.__len__()):
-      self.cpplines += [ "const %s input_data%d[] = {%s};" %(self.argtype(i,index),i+1,str(self.values[i]).strip('[]').replace('\'','')) ]
+      vals = []
+      for j in range(0, vlen):
+        if (len(vals) >= 128):	#avoid too many data
+          vals = vals[0:128]
+          break
+        vals += self.values[i]
+      self.cpplines += [ "const %s input_data%d[] = {%s};" %(self.argtype(i,index),i+1,str(vals).strip('[]').replace('\'','')) ]
     self.cpplines += [ "const int count_input = sizeof(input_data1) / sizeof(input_data1[0]);" ]
-    self.cpplines += [ "const int vector = %s;\n"%(self.argvector(self.inputtype.__len__()-1,index)) ]
+    self.cpplines += [ "const int vector = %s;\n"%(vlen) ]
 
 #####Cpu Function
   def GenCpuCompilerMath(self,index):
@@ -340,7 +347,7 @@ static void %s_%s(void)
   OCL_CREATE_KERNEL(\"%s_%s\");
   OCL_CREATE_BUFFER(buf[0], CL_MEM_READ_WRITE, count_input * sizeof(%s), NULL); 
 
-  globals[0] = count_input;
+  globals[0] = count_input / vector;
   locals[0] = 1;
  '''%(self.fileName,namesuffix,\
      self.retType(index),\
@@ -422,8 +429,8 @@ static void %s_%s(void)
       clhead += ' __global %s *src%d,'%(self.argtype(i,index),i+1)
       clvalueDef +=   '  %s x%d = (%s) ('%(self.inputtype[i][index],i+1,self.inputtype[i][index])
       tmp = 'src%d[i * (*vector) + '%(i+1)
-      for j in range(0,int(self.argvector(i,index))):
-        clvalueDef += tmp + ((int(self.argvector(i-1,index)) == j+1 ) and '%d]);\n'%(j) or '%d],'%(j))
+      for j in range(0,self.argvector(i,index)):
+        clvalueDef += tmp + ((self.argvector(i-1,index) == j+1 ) and '%d]);\n'%(j) or '%d],'%(j))
       clcomputer += (self.values.__len__() == i+1) and 'x%d);'%(i+1) or 'x%d,'%(i+1)
       
     clhead += ' __global int *vector) {\n'
