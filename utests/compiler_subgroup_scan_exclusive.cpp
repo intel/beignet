@@ -140,7 +140,7 @@ static void subgroup_generic(WG_FUNCTION wg_func,
   globals[0] = WG_GLOBAL_SIZE;
   locals[0] = WG_LOCAL_SIZE;
   size_t SIMD_SIZE = 0;
-  OCL_CALL(clGetKernelSubGroupInfoKHR,kernel,device,CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR,sizeof(size_t)*1,locals,sizeof(size_t),&SIMD_SIZE,NULL);
+  OCL_CALL(utestclGetKernelSubGroupInfoKHR,kernel,device,CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR,sizeof(size_t)*1,locals,sizeof(size_t),&SIMD_SIZE,NULL);
 
   /* input and expected data */
   generate_data(wg_func, input, expected, SIMD_SIZE);
@@ -208,6 +208,8 @@ static void subgroup_generic(WG_FUNCTION wg_func,
  */
 void compiler_subgroup_scan_exclusive_add_int(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_int *input = NULL;
   cl_int *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_exclusive",
@@ -217,6 +219,8 @@ void compiler_subgroup_scan_exclusive_add_int(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_exclusive_add_int);
 void compiler_subgroup_scan_exclusive_add_uint(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_exclusive",
@@ -226,6 +230,8 @@ void compiler_subgroup_scan_exclusive_add_uint(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_exclusive_add_uint);
 void compiler_subgroup_scan_exclusive_add_long(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_long *input = NULL;
   cl_long *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_exclusive",
@@ -235,6 +241,8 @@ void compiler_subgroup_scan_exclusive_add_long(void)
 MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_subgroup_scan_exclusive_add_long);
 void compiler_subgroup_scan_exclusive_add_ulong(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_ulong *input = NULL;
   cl_ulong *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_exclusive",
@@ -244,6 +252,8 @@ void compiler_subgroup_scan_exclusive_add_ulong(void)
 MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_subgroup_scan_exclusive_add_ulong);
 void compiler_subgroup_scan_exclusive_add_float(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_float *input = NULL;
   cl_float *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_exclusive",
@@ -257,6 +267,8 @@ MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_exclusive_add_float);
  */
 void compiler_subgroup_scan_exclusive_max_int(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_int *input = NULL;
   cl_int *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_exclusive",
@@ -266,6 +278,8 @@ void compiler_subgroup_scan_exclusive_max_int(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_exclusive_max_int);
 void compiler_subgroup_scan_exclusive_max_uint(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_exclusive",
@@ -275,6 +289,8 @@ void compiler_subgroup_scan_exclusive_max_uint(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_exclusive_max_uint);
 void compiler_subgroup_scan_exclusive_max_long(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_long *input = NULL;
   cl_long *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_exclusive",
@@ -284,6 +300,8 @@ void compiler_subgroup_scan_exclusive_max_long(void)
 MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_subgroup_scan_exclusive_max_long);
 void compiler_subgroup_scan_exclusive_max_ulong(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_ulong *input = NULL;
   cl_ulong *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_exclusive",
@@ -293,6 +311,8 @@ void compiler_subgroup_scan_exclusive_max_ulong(void)
 MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_subgroup_scan_exclusive_max_ulong);
 void compiler_subgroup_scan_exclusive_max_float(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_float *input = NULL;
   cl_float *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_exclusive",
@@ -306,6 +326,8 @@ MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_exclusive_max_float);
  */
 void compiler_subgroup_scan_exclusive_min_int(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_int *input = NULL;
   cl_int *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_exclusive",
@@ -315,6 +337,8 @@ void compiler_subgroup_scan_exclusive_min_int(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_exclusive_min_int);
 void compiler_subgroup_scan_exclusive_min_uint(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_exclusive",
@@ -324,6 +348,8 @@ void compiler_subgroup_scan_exclusive_min_uint(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_exclusive_min_uint);
 void compiler_subgroup_scan_exclusive_min_long(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_long *input = NULL;
   cl_long *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_exclusive",
@@ -333,6 +359,8 @@ void compiler_subgroup_scan_exclusive_min_long(void)
 MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_subgroup_scan_exclusive_min_long);
 void compiler_subgroup_scan_exclusive_min_ulong(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_ulong *input = NULL;
   cl_ulong *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_exclusive",
@@ -342,6 +370,8 @@ void compiler_subgroup_scan_exclusive_min_ulong(void)
 MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_subgroup_scan_exclusive_min_ulong);
 void compiler_subgroup_scan_exclusive_min_float(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_float *input = NULL;
   cl_float *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_exclusive",

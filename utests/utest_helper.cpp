@@ -54,6 +54,7 @@ __thread void *buf_data[MAX_BUFFER_N] = {};
 __thread size_t globals[3] = {};
 __thread size_t locals[3] = {};
 float ULPSIZE_FAST_MATH = 10000.;
+__attribute__ ((visibility ("internal"))) clGetKernelSubGroupInfoKHR_cb* utestclGetKernelSubGroupInfoKHR = NULL;
 
 #ifdef HAS_EGL
 Display    *xDisplay;
@@ -874,3 +875,24 @@ int cl_check_beignet(void)
   free(device_version_str);
   return 1;
 }
+
+int cl_check_subgroups(void)
+{
+  std::string extStr;
+  size_t param_value_size;
+  OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_EXTENSIONS, 0, 0, &param_value_size);
+  std::vector<char> param_value(param_value_size);
+  OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_EXTENSIONS, param_value_size,
+           param_value.empty() ? NULL : &param_value.front(), &param_value_size);
+  if (!param_value.empty())
+    extStr = std::string(&param_value.front(), param_value_size-1);
+
+  if (std::strstr(extStr.c_str(), "cl_intel_subgroups") == NULL) {
+    printf("No cl_intel_subgroups, Skip!");
+    return 0;
+  }
+  if(utestclGetKernelSubGroupInfoKHR == NULL)
+    utestclGetKernelSubGroupInfoKHR  = (clGetKernelSubGroupInfoKHR_cb*) clGetExtensionFunctionAddress("clGetKernelSubGroupInfoKHR");
+  return 1;
+}
+

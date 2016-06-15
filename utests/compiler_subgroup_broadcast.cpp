@@ -101,7 +101,7 @@ static void subgroup_generic(T* input,
   globals[0] = WG_GLOBAL_SIZE;
   locals[0] = WG_LOCAL_SIZE;
   size_t SIMD_SIZE = 0;
-  OCL_CALL(clGetKernelSubGroupInfoKHR,kernel,device,CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR,sizeof(size_t)*1,locals,sizeof(size_t),&SIMD_SIZE,NULL);
+  OCL_CALL(utestclGetKernelSubGroupInfoKHR,kernel,device,CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR,sizeof(size_t)*1,locals,sizeof(size_t),&SIMD_SIZE,NULL);
 
   cl_uint SIMD_ID = 10;
   /* input and expected data */
@@ -154,6 +154,8 @@ static void subgroup_generic(T* input,
  */
 void compiler_subgroup_broadcast_imm_int(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_int *input = NULL;
   cl_int *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_broadcast",
@@ -163,6 +165,8 @@ void compiler_subgroup_broadcast_imm_int(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_broadcast_imm_int);
 void compiler_subgroup_broadcast_int(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_int *input = NULL;
   cl_int *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_broadcast",
@@ -172,6 +176,8 @@ void compiler_subgroup_broadcast_int(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_broadcast_int);
 void compiler_subgroup_broadcast_long(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_int *input = NULL;
   cl_int *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_broadcast",

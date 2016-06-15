@@ -2,6 +2,8 @@
 
 void compiler_get_max_sub_group_size(void)
 {
+  if(!cl_check_subgroups())
+    return;
   const size_t n = 256;
 
   // Setup kernel and buffers

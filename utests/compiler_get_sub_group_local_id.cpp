@@ -2,6 +2,8 @@
 
 void compiler_get_sub_group_local_id(void)
 {
+  if(!cl_check_subgroups())
+    return;
   const size_t n = 256;
 
   // Setup kernel and buffers

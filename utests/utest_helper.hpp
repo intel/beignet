@@ -287,5 +287,13 @@ extern int cl_check_double(void);
 
 /* Check is beignet device. */
 extern int cl_check_beignet(void);
-#endif /* __UTEST_HELPER_HPP__ */
 
+/* Check is intel subgroups enabled. */
+extern int cl_check_subgroups(void);
+
+typedef cl_int(clGetKernelSubGroupInfoKHR_cb)(cl_kernel, cl_device_id,
+                                              cl_kernel_sub_group_info, size_t,
+                                              const void *, size_t, void *,
+                                              size_t *);
+extern clGetKernelSubGroupInfoKHR_cb* utestclGetKernelSubGroupInfoKHR;
+#endif /* __UTEST_HELPER_HPP__ */

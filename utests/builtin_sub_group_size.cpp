@@ -13,6 +13,8 @@ Now define local and global size as following:
 #include "utest_helper.hpp"
 static void builtin_sub_group_size(void)
 {
+  if(!cl_check_subgroups())
+    return;
 
   // Setup kernel and buffers
   size_t dim, i,local_sz = 1,buf_len = 1;
@@ -40,7 +42,7 @@ static void builtin_sub_group_size(void)
       locals[i - 1] = 0;
     }
 
-    OCL_CALL(clGetKernelSubGroupInfoKHR,kernel,device,CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR,sizeof(size_t)*dim,locals,sizeof(size_t),&max_sub_sz,NULL);
+    OCL_CALL(utestclGetKernelSubGroupInfoKHR,kernel,device,CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR,sizeof(size_t)*dim,locals,sizeof(size_t),&max_sub_sz,NULL);
     // Run the kernel
     OCL_NDRANGE( dim );
     clFinish(queue);

@@ -2,6 +2,8 @@
 
 void compiler_sub_group_shuffle(void)
 {
+  if(!cl_check_subgroups())
+    return;
   const size_t n = 32;
   const int32_t buf_size = 4 * n + 1;
 

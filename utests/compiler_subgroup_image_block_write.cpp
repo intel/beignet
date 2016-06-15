@@ -96,7 +96,7 @@ static void subgroup_generic(T* input,
   globals[0] = WG_GLOBAL_SIZE;
   locals[0] = WG_LOCAL_SIZE;
   size_t SIMD_SIZE = 0;
-  OCL_CALL(clGetKernelSubGroupInfoKHR,kernel,device,CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR,sizeof(size_t)*1,locals,sizeof(size_t),&SIMD_SIZE,NULL);
+  OCL_CALL(utestclGetKernelSubGroupInfoKHR,kernel,device,CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR,sizeof(size_t)*1,locals,sizeof(size_t),&SIMD_SIZE,NULL);
 
   size_t buf_sz = VEC_SIZE * WG_GLOBAL_SIZE;
   /* input and expected data */
@@ -157,6 +157,8 @@ static void subgroup_generic(T* input,
  */
 void compiler_subgroup_image_block_write1(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_image_block_write",
@@ -166,6 +168,8 @@ void compiler_subgroup_image_block_write1(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_image_block_write1);
 void compiler_subgroup_image_block_write2(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_image_block_write",
@@ -175,6 +179,8 @@ void compiler_subgroup_image_block_write2(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_image_block_write2);
 void compiler_subgroup_image_block_write4(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_image_block_write",
@@ -184,6 +190,8 @@ void compiler_subgroup_image_block_write4(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_image_block_write4);
 void compiler_subgroup_image_block_write8(void)
 {
+  if(!cl_check_subgroups())
+    return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_image_block_write",
