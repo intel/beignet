@@ -12,7 +12,6 @@ configure_file (
 #do not involve libocl if the standalone compiler is given,
 if (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
 add_subdirectory(libocl)
-add_dependencies(beignet_bitcode libocl)
 endif ()
 
 set (LOCAL_GBE_OBJECT_DIR "${CMAKE_CURRENT_BINARY_DIR}/libgbe.so" PARENT_SCOPE)
