@@ -50,7 +50,10 @@ namespace gbe
         break;
       }
     }
-    assert(findBC);
+    if (!findBC) {
+      printf("Fatal Error: ocl lib %s does not exist\n", bitCodeFiles.c_str());
+      return NULL;
+    }
 
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
     oclLib = getLazyIRFileModule(FilePath, Err, ctx);
@@ -138,7 +141,8 @@ namespace gbe
     std::set<std::string> materializedFuncs;
     std::vector<GlobalValue *> Gvs;
     Module* clonedLib = createOclBitCodeModule(ctx, strictMath);
-    assert(clonedLib && "Can not create the beignet bitcode\n");
+    if (clonedLib == NULL)
+      return NULL;
 
     std::vector<const char *> kernels;
     std::vector<const char *> builtinFuncs;
