@@ -2143,9 +2143,11 @@ namespace gbe
     const ir::BasicBlock *insnBlock = insn.getParent();
     const ir::Liveness &liveness = this->ctx.getLiveness();
     const ir::Liveness::LiveOut &liveOut = liveness.getLiveOut(insnBlock);
-    const ir::Register reg = insn.getDst(0);
-    if (liveOut.contains(reg))
-      return true;
+    for(uint32_t i = 0; i < insn.getDstNum(); i++) {
+      const ir::Register reg = insn.getDst(i);
+      if (liveOut.contains(reg))
+        return true;
+    }
 
     // The instruction is only used in the current basic block
     return false;
