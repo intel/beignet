@@ -112,8 +112,12 @@ cl_program_delete(cl_program p)
   /* Free the program as allocated by the compiler */
   if (p->opaque) {
     if (CompilerSupported())
-      compiler_program_clean_llvm_resource(p->opaque);
-    interp_program_delete(p->opaque);
+      //For static variables release, gbeLoader may have been released, so
+      //compiler_program_clean_llvm_resource and interp_program_delete may be NULL.
+      if(compiler_program_clean_llvm_resource)
+        compiler_program_clean_llvm_resource(p->opaque);
+    if(interp_program_delete)
+      interp_program_delete(p->opaque);
   }
 
   p->magic = CL_MAGIC_DEAD_HEADER; /* For safety */

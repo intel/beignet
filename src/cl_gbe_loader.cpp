@@ -320,6 +320,11 @@ struct GbeLoaderInitializer
 
     if (dlhInterp != NULL)
       dlclose(dlhInterp);
+
+    //When destroy, set the release relative functions
+    //to NULL to avoid dangling pointer visit.
+    compiler_program_clean_llvm_resource = NULL;
+    interp_program_delete = NULL;
   }
 
   bool compilerLoaded;
