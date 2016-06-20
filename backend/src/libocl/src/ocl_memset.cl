@@ -21,7 +21,7 @@
 void __gen_memset_ ##NAME## _align (DST_SPACE uchar* dst, uchar val, size_t size) { \
   size_t index = 0; \
   uint v = (val << 24) | (val << 16) | (val << 8) | val; \
-  while((index + 4) >= size) { \
+  while((index + 4) <= size) { \
     *((DST_SPACE uint *)(dst + index)) = v; \
     index += 4; \
   } \
