@@ -120,6 +120,8 @@ namespace ir {
       for (auto &y : x->bbs)
         y = labelMap[y];
 
+      x->preheader = labelMap[x->preheader];
+
       for (auto &z : x->exits) {
         z.first = labelMap[z.first];
         z.second = labelMap[z.second];

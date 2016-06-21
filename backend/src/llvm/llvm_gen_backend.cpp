@@ -2752,7 +2752,7 @@ namespace gbe
         GBE_ASSERT(labelMap.find(b) != labelMap.end());
         loopBBs.push_back(labelMap[b]);
       }
-      BasicBlock *preheader = loop.first->getLoopPreheader();
+      BasicBlock *preheader = loop.first->getLoopPredecessor();
       ir::LabelIndex preheaderBB(0);
       if (preheader) {
         preheaderBB = labelMap[preheader];
