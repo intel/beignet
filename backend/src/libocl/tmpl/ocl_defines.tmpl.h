@@ -36,5 +36,6 @@
 #define cl_khr_gl_sharing
 #define cl_khr_spir
 #define cl_khr_fp16
+#define cl_khr_3d_image_writes
 
 #endif /* end of __OCL_COMMON_DEF_H__ */
