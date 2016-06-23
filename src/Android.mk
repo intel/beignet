@@ -7,7 +7,7 @@ include $(LOCAL_PATH)/../Android.common.mk
 ocl_config_file = $(LOCAL_PATH)/OCLConfig.h
 $(shell echo "// the configured options and settings for LIBCL" > $(ocl_config_file))
 $(shell echo "#define LIBCL_DRIVER_VERSION_MAJOR 1" >> $(ocl_config_file))
-$(shell echo "#define LIBCL_DRIVER_VERSION_MINOR 1" >> $(ocl_config_file))
+$(shell echo "#define LIBCL_DRIVER_VERSION_MINOR 2" >> $(ocl_config_file))
 $(shell echo "#define LIBCL_C_VERSION_MAJOR 1" >> $(ocl_config_file))
 $(shell echo "#define LIBCL_C_VERSION_MINOR 2" >> $(ocl_config_file))
 
