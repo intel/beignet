@@ -175,8 +175,6 @@ LOCAL_SRC_FILES:= \
   compiler_private_const.cpp \
   compiler_private_data_overflow.cpp \
   compiler_getelementptr_bitcast.cpp \
-  compiler_sub_group_any.cpp \
-  compiler_sub_group_all.cpp \
   compiler_time_stamp.cpp \
   compiler_double_precision.cpp \
   load_program_from_gen_bin.cpp \
