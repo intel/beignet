@@ -2765,7 +2765,7 @@ namespace gbe
         GBE_ASSERT(labelMap.find(b.second) != labelMap.end());
         loopExits.push_back(std::make_pair(labelMap[b.first], labelMap[b.second]));
       }
-      fn.addLoop(preheaderBB, loopBBs, loopExits);
+      fn.addLoop(preheaderBB, loop.second, loopBBs, loopExits);
     }
   }
 

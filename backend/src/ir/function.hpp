@@ -273,9 +273,14 @@ namespace ir {
   struct Loop : public NonCopyable
   {
   public:
-    Loop(LabelIndex pre, const vector<LabelIndex> &in, const vector<std::pair<LabelIndex, LabelIndex>> &exit) :
-    preheader(pre), bbs(in), exits(exit) {}
+    Loop(LabelIndex pre,
+         int paren,
+         const vector<LabelIndex> &in,
+         const vector<std::pair<LabelIndex, LabelIndex>> &exit) :
+         preheader(pre), parent(paren), bbs(in), exits(exit) {}
+
     LabelIndex preheader;
+    int parent;
     vector<LabelIndex> bbs;
     vector<std::pair<LabelIndex, LabelIndex>> exits;
     GBE_STRUCT(Loop);
@@ -523,8 +528,12 @@ namespace ir {
     /*! Push stack size. */
     INLINE void pushStackSize(uint32_t step) { this->stackSize += step; }
     /*! add the loop info for later liveness analysis */
-    void addLoop(LabelIndex preheader, const vector<LabelIndex> &bbs, const vector<std::pair<LabelIndex, LabelIndex>> &exits);
+    void addLoop(LabelIndex preheader,
+                 int parent,
+                 const vector<LabelIndex> &bbs,
+                 const vector<std::pair<LabelIndex, LabelIndex>> &exits);
     INLINE const vector<Loop * > &getLoops() { return loops; }
+    int getLoopDepth(LabelIndex Block) const;
     vector<BasicBlock *> &getBlocks() { return blocks; }
     /*! Get surface starting address register from bti */
     Register getSurfaceBaseReg(uint8_t bti) const;

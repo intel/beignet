@@ -62,8 +62,38 @@ namespace ir {
     return unit.getPointerFamily();
   }
 
-  void Function::addLoop(LabelIndex preheader, const vector<LabelIndex> &bbs, const vector<std::pair<LabelIndex, LabelIndex>> &exits) {
-    loops.push_back(GBE_NEW(Loop, preheader, bbs, exits));
+  void Function::addLoop(LabelIndex preheader,
+                        int parent,
+                        const vector<LabelIndex> &bbs,
+                        const vector<std::pair<LabelIndex, LabelIndex>> &exits) {
+    loops.push_back(GBE_NEW(Loop, preheader, parent, bbs, exits));
+  }
+
+  int Function::getLoopDepth(LabelIndex Block) const{
+    if (loops.size() == 0) return 0;
+
+    int LoopIndex = -1;
+    int LoopDepth = 0;
+    // get innermost loop
+    for (int Idx = loops.size()-1; Idx >= 0; Idx--) {
+      Loop *lp = loops[Idx];
+      vector<LabelIndex> &Blocks = lp->bbs;
+      bool Found = (std::find(Blocks.begin(), Blocks.end(), Block) != Blocks.end());
+      if (Found) {
+        LoopIndex = Idx;
+        break;
+      }
+    }
+
+    if (LoopIndex != -1) {
+      int LoopId = LoopIndex;
+      do {
+        LoopId = loops[LoopId]->parent;
+        LoopDepth++;
+      } while(LoopId != -1);
+    }
+
+    return LoopDepth;
   }
 
   void Function::checkEmptyLabels(void) {

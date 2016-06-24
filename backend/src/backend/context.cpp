@@ -48,6 +48,10 @@ namespace gbe
     /*! Free the given register file piece */
     void deallocate(int32_t offset);
 
+    /*! check whether a super register is in free list,
+     *  a super register means a 32byte register, Gen
+     *  often has 128 super registers*/
+    bool isSuperRegisterFree(int32_t offset);
     /*! Spilt a block into 2 blocks */
     void splitBlock(int32_t offset, int32_t subOffset);
 
@@ -65,6 +69,7 @@ namespace gbe
      *  If the colascing was done, the left block is deleted
      */
     void coalesce(Block *left, Block *right);
+    void dumpFreeList();
     /*! the maximum offset */
     int32_t maxOffset;
     /*! Head and tail of the free list */
@@ -118,6 +123,30 @@ namespace gbe
       this->deleteBlock(this->head);
       this->head = next;
     }
+  }
+
+  void SimpleAllocator::dumpFreeList() {
+    Block *s = head;
+    printf("register free list:\n");
+    while (s) {
+      printf("blk: %d(r%d.%d) (%d)\n", s->offset, s->offset/GEN_REG_SIZE, s->offset % GEN_REG_SIZE, s->size);
+      s = s->next;
+    }
+    printf("free list end\n");
+  }
+
+  bool SimpleAllocator::isSuperRegisterFree(int32_t offset) {
+    assert((offset % GEN_REG_SIZE) == 0);
+    Block *s = head;
+    while (s) {
+      if (s->offset <= offset && (s->offset+s->size) >= offset+GEN_REG_SIZE) {
+        return true;
+      }
+      if (s->offset > offset)
+        return false;
+      s = s->next;
+    }
+    return false;
   }
 
   int32_t SimpleAllocator::allocate(int32_t size, int32_t alignment, bool bFwd)
@@ -370,6 +399,10 @@ namespace gbe
 
   int32_t Context::allocate(int32_t size, int32_t alignment, bool bFwd) {
     return registerAllocator->allocate(size, alignment, bFwd);
+  }
+
+  bool Context::isSuperRegisterFree(int offset) {
+    return registerAllocator->isSuperRegisterFree(offset);
   }
 
   void Context::deallocate(int32_t offset) { registerAllocator->deallocate(offset); }

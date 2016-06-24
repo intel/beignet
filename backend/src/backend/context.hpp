@@ -86,6 +86,7 @@ namespace gbe
     }
     /*! Allocate some memory in the register file */
     int32_t allocate(int32_t size, int32_t alignment, bool bFwd = true);
+    bool isSuperRegisterFree(int offset);
     /*! Deallocate previously allocated memory */
     void deallocate(int32_t offset);
     /*! Spilt a block into 2 blocks, for some registers allocate together but  deallocate seperate */
