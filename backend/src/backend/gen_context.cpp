@@ -3697,7 +3697,7 @@ namespace gbe
       p->pop();
 
     }
-    else
+    else if (simdWidth == 16)
     {
       const GenRegister tmp = ra->genReg(insn.dst(vec_size));
       p->push();
@@ -3735,7 +3735,7 @@ namespace gbe
                  GenRegister::offset(tmp2, i));
         }
       p->pop();
-    }
+    } else NOT_IMPLEMENTED;
   }
 
   void GenContext::emitMBWriteInstruction(const SelectionInstruction &insn) {

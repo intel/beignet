@@ -2084,12 +2084,14 @@ namespace gbe
                                  GenRegister* tmp,
                                  uint32_t bti,
                                  uint32_t vec_size) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_MBREAD, vec_size * 2, 3);
+
+    uint32_t simdWidth = curr.execWidth;
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_MBREAD, vec_size * simdWidth / 8, 3);
     SelectionVector *vector = this->appendVector();
-    SelectionVector *vectortmp = this->appendVector();
     for (uint32_t i = 0; i < vec_size; ++i) {
       insn->dst(i) = dsts[i];
-      insn->dst(i + vec_size) = tmp[i];
+      if(simdWidth == 16)
+        insn->dst(i + vec_size) = tmp[i];
     }
     insn->src(0) = coordx;
     insn->src(1) = coordy;
@@ -2101,11 +2103,15 @@ namespace gbe
     vector->reg = &insn->dst(0);
     vector->offsetID = 0;
     vector->isSrc = 0;
-    vectortmp->regNum = vec_size;
-    vectortmp->reg = &insn->dst(vec_size);
-    vectortmp->offsetID = 0;
-    vectortmp->isSrc = 0;
 
+    if(simdWidth == 16)
+    {
+      SelectionVector *vectortmp = this->appendVector();
+      vectortmp->regNum = vec_size;
+      vectortmp->reg = &insn->dst(vec_size);
+      vectortmp->offsetID = vec_size;
+      vectortmp->isSrc = 0;
+    }
   }
 
   void Selection::Opaque::MBWRITE(GenRegister coordx,
@@ -6689,16 +6695,21 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     {
       using namespace ir;
       uint32_t vec_size = insn.getVectorSize();
+      uint32_t simdWidth = sel.curr.execWidth;
       vector<GenRegister> valuesVec;
       vector<GenRegister> tmpVec;
       for (uint32_t i = 0; i < vec_size; ++i) {
         valuesVec.push_back(sel.selReg(insn.getDst(i), TYPE_U32));
-        tmpVec.push_back(sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32));
+        if(simdWidth == 16)
+          tmpVec.push_back(sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32));
       }
       const GenRegister coordx = sel.selReg(insn.getSrc(0), TYPE_U32);
       const GenRegister coordy = sel.selReg(insn.getSrc(1), TYPE_U32);
       const GenRegister header = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-      sel.MBREAD(&valuesVec[0], coordx, coordy, header, &tmpVec[0], insn.getImageIndex(), insn.getVectorSize());
+      GenRegister *tmp = NULL;
+      if(simdWidth == 16)
+        tmp = &tmpVec[0];
+      sel.MBREAD(&valuesVec[0], coordx, coordy, header, tmp, insn.getImageIndex(), insn.getVectorSize());
       return true;
     }
     DECL_CTOR(MediaBlockReadInstruction, 1, 1);
