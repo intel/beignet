@@ -3279,6 +3279,7 @@ internal_clGetExtensionFunctionAddress(const char *func_name)
   EXTFUNC(clRetainAcceleratorINTEL)
   EXTFUNC(clReleaseAcceleratorINTEL)
   EXTFUNC(clGetAcceleratorInfoINTEL)
+  EXTFUNC(clGetKernelSubGroupInfoKHR)
   return NULL;
 }
 
