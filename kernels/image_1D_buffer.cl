@@ -1,4 +1,4 @@
-__kernel void image_1D_buffer(image1d_buffer_t image1, image1d_buffer_t image2)
+__kernel void image_1D_buffer(__read_only image1d_buffer_t image1, __write_only image1d_buffer_t image2)
 {
    int x = get_global_id(0);
 
