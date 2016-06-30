@@ -390,7 +390,7 @@ intel_driver_share_buffer_from_fd(intel_driver_t *driver, int fd, int size)
                                                   fd,
                                                   size);
   if (bo == NULL) {
-    fprintf(stderr, "drm_intel_bo_gem_create_from_prime create bo(size %d) from fd %d failed: %s\n", fd, size, strerror(errno));
+    fprintf(stderr, "drm_intel_bo_gem_create_from_prime create bo(size %d) from fd %d failed: %s\n", size, fd, strerror(errno));
     return NULL;
   }
   return bo;
