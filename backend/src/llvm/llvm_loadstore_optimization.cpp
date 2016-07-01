@@ -257,7 +257,7 @@ namespace gbe {
     unsigned size = toBeDeleted.size();
     if (reorder) {
       unsigned i = 0;
-      while (toBeDeleted[i] == &*safe && i < size) {
+      while (i < size && toBeDeleted[i] == &*safe) {
         ++i;
         ++safe;
       }
