@@ -2189,14 +2189,16 @@ LOCAL cl_mem cl_mem_new_libva_image(cl_context ctx,
   }
 
   mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, 0, 0, 0, NULL, NULL, &err);
-  if (mem == NULL || err != CL_SUCCESS) {
-    err = CL_OUT_OF_HOST_MEMORY;
+  if (mem == NULL || err != CL_SUCCESS)
     goto error;
-  }
 
   image = cl_mem_image(mem);
 
   mem->bo = cl_buffer_get_image_from_libva(ctx, bo_name, image);
+  if (mem->bo == NULL) {
+    err = CL_MEM_OBJECT_ALLOCATION_FAILURE;
+    goto error;
+  }
 
   image->w = width;
   image->h = height;
@@ -2287,14 +2289,17 @@ LOCAL cl_mem cl_mem_new_image_from_fd(cl_context ctx,
   }
 
   mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, 0, 0, 0, NULL, NULL, &err);
-  if (mem == NULL || err != CL_SUCCESS) {
-    err = CL_OUT_OF_HOST_MEMORY;
+  if (mem == NULL || err != CL_SUCCESS)
     goto error;
-  }
 
   image = cl_mem_image(mem);
 
   mem->bo = cl_buffer_get_image_from_fd(ctx, fd, image_sz, image);
+  if (mem->bo == NULL) {
+    err = CL_MEM_OBJECT_ALLOCATION_FAILURE;
+    goto error;
+  }
+  mem->size = image_sz;
 
   image->w = width;
   image->h = height;

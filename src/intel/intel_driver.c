@@ -730,6 +730,9 @@ cl_buffer intel_share_image_from_libva(cl_context ctx,
 
   intel_bo = intel_driver_share_buffer_from_name((intel_driver_t *)ctx->drv, "shared from libva", bo_name);
 
+  if (intel_bo == NULL)
+    return NULL;
+
   drm_intel_bo_get_tiling(intel_bo, &intel_tiling, &intel_swizzle_mode);
   image->tiling = get_cl_tiling(intel_tiling);
 
@@ -759,6 +762,9 @@ cl_buffer intel_share_image_from_fd(cl_context ctx,
   uint32_t intel_tiling, intel_swizzle_mode;
 
   intel_bo = intel_driver_share_buffer_from_fd((intel_driver_t *)ctx->drv, fd, image_size);
+
+  if (intel_bo == NULL)
+    return NULL;
 
   drm_intel_bo_get_tiling(intel_bo, &intel_tiling, &intel_swizzle_mode);
   image->tiling = get_cl_tiling(intel_tiling);
