@@ -175,6 +175,16 @@ namespace gbe
   {
      GenNativeInstruction *insn = this->next(opcode);
      Gen7NativeInstruction *gen7_insn = &insn->gen7_insn;
+     int execution_size = 0;
+     if (this->curr.execWidth == 1) {
+       execution_size = GEN_WIDTH_1;
+     } else if (this->curr.execWidth == 8) {
+       execution_size = GEN_WIDTH_8;
+     } else if (this->curr.execWidth == 16) {
+       // Gen7 does not support SIMD16 alu3, still need to use SIMD8
+       execution_size = GEN_WIDTH_8;
+     } else
+       NOT_IMPLEMENTED;
 
      assert(dest.file == GEN_GENERAL_REGISTER_FILE);
      assert(dest.nr < 128);
@@ -182,11 +192,11 @@ namespace gbe
      assert(dest.type = GEN_TYPE_F);
      gen7_insn->bits1.da3src.dest_reg_file = 0;
      gen7_insn->bits1.da3src.dest_reg_nr = dest.nr;
-     gen7_insn->bits1.da3src.dest_subreg_nr = dest.subnr / 16;
+     gen7_insn->bits1.da3src.dest_subreg_nr = dest.subnr / 4;
      gen7_insn->bits1.da3src.dest_writemask = 0xf;
      this->setHeader(insn);
      gen7_insn->header.access_mode = GEN_ALIGN_16;
-     gen7_insn->header.execution_size = GEN_WIDTH_8;
+     gen7_insn->header.execution_size = execution_size;
 
      assert(src0.file == GEN_GENERAL_REGISTER_FILE);
      assert(src0.address_mode == GEN_ADDRESS_DIRECT);
