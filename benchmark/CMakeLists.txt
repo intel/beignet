@@ -32,3 +32,4 @@ TARGET_LINK_LIBRARIES(benchmarks cl m)
 
 ADD_EXECUTABLE(benchmark_run benchmark_run.cpp)
 TARGET_LINK_LIBRARIES(benchmark_run benchmarks)
+ADD_CUSTOM_TARGET(benchmark DEPENDS benchmarks benchmark_run)

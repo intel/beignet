@@ -375,3 +375,4 @@ ADD_DEPENDENCIES (utests utest_generator)
 
 ADD_EXECUTABLE(flat_address_space runtime_flat_address_space.cpp)
 TARGET_LINK_LIBRARIES(flat_address_space utests)
+ADD_CUSTOM_TARGET(utest DEPENDS utest_run utests flat_address_space)
