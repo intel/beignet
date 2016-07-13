@@ -55,7 +55,7 @@ namespace gbe
     virtual void setDst(GenNativeInstruction *insn, GenRegister dest);
     virtual void setSrc0(GenNativeInstruction *insn, GenRegister reg);
     virtual void setSrc1(GenNativeInstruction *insn, GenRegister reg);
-    virtual bool disableCompact() { return true; }
+    virtual uint32_t getCompactVersion() { return 8; }
     virtual void alu3(uint32_t opcode, GenRegister dst,
                        GenRegister src0, GenRegister src1, GenRegister src2);
     virtual bool canHandleLong(uint32_t opcode, GenRegister dst, GenRegister src0,

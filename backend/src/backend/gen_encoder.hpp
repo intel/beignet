@@ -261,7 +261,7 @@ namespace gbe
     virtual void setSrc0(GenNativeInstruction *insn, GenRegister reg) = 0;
     virtual void setSrc1(GenNativeInstruction *insn, GenRegister reg) = 0;
     GenCompactInstruction *nextCompact(uint32_t opcode);
-    virtual bool disableCompact() { return false; }
+    virtual uint32_t getCompactVersion() { return 7; }
     GenNativeInstruction *next(uint32_t opcode);
     uint32_t n_instruction(void) const { return store.size(); }
     virtual bool canHandleLong(uint32_t opcode, GenRegister dst, GenRegister src0,
