@@ -97,10 +97,16 @@ namespace gbe {
     GenCompactInstruction * pCom = NULL;
     GenInstruction insn[2];
 
+    uint32_t insn_version = 0;
+    if (IS_GEN7(deviceID) || IS_GEN75(deviceID))
+      insn_version = 7;
+    else if (IS_GEN8(deviceID) || IS_GEN9(deviceID))
+      insn_version = 8;
+
     for (uint32_t i = 0; i < insnNum;) {
       pCom = (GenCompactInstruction*)(insns+i);
       if(pCom->bits1.cmpt_control == 1) {
-        decompactInstruction(pCom, &insn);
+        decompactInstruction(pCom, &insn, insn_version);
         gen_disasm(f, &insn, deviceID, 1);
         i++;
       } else {

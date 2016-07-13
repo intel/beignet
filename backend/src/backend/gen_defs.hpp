@@ -492,6 +492,32 @@ struct GenInstruction {
 
 union GenCompactInstruction {
   struct GenInstruction low;
+  /* Gen8+ src3 compact inst */
+  struct {
+    struct {
+      uint32_t opcode:7;
+      uint32_t pad:1;
+      uint32_t control_index:2;
+      uint32_t src_index:2;
+      uint32_t dst_reg_nr:7;
+      uint32_t pad1:9;
+      uint32_t src0_rep_ctrl:1;
+      uint32_t compact_control:1;
+      uint32_t debug_control:1;
+      uint32_t saturate:1;
+    } bits1;
+    struct {
+      uint32_t src1_rep_ctrl:1;
+      uint32_t src2_rep_ctrl:1;
+      uint32_t src0_subnr:3;
+      uint32_t src1_subnr:3;
+      uint32_t src2_subnr:3;
+      uint32_t src0_reg_nr:7;
+      uint32_t src1_reg_nr:7;
+      uint32_t src2_reg_nr:7;
+    } bits2;
+  } src3Insn;
+  /* Normal src2 compact inst */
   struct {
     struct {
       uint32_t opcode:7;

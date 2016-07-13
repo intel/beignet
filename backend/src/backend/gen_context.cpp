@@ -3888,6 +3888,12 @@ namespace gbe
   }
 
   void GenContext::outputAssembly(FILE *file, GenKernel* genKernel) {
+    /* get gen version for the instruction compact */
+    uint32_t insn_version = 0;
+    if (IS_GEN7(deviceID) || IS_GEN75(deviceID))
+      insn_version = 7;
+    else if (IS_GEN8(deviceID) || IS_GEN9(deviceID))
+      insn_version = 8;
     fprintf(file, "%s's disassemble begin:\n", genKernel->getName());
     ir::LabelIndex curLabel = (ir::LabelIndex)0;
     GenCompactInstruction * pCom = NULL;
@@ -3910,7 +3916,7 @@ namespace gbe
       fprintf(file, "    (%8i)  ", insnID);
       pCom = (GenCompactInstruction*)&p->store[insnID];
       if(pCom->bits1.cmpt_control == 1) {
-        decompactInstruction(pCom, &insn);
+        decompactInstruction(pCom, &insn, insn_version);
         gen_disasm(file, &insn, deviceID, 1);
         insnID++;
       } else {

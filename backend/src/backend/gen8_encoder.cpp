@@ -37,6 +37,7 @@ static const uint32_t untypedRWMask[] = {
 
 namespace gbe
 {
+  extern bool compactAlu3(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src0, GenRegister src1, GenRegister src2);
   void Gen8Encoder::setHeader(GenNativeInstruction *insn) {
     Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
     if (this->curr.execWidth == 8)
@@ -490,6 +491,8 @@ namespace gbe
                               GenRegister src1,
                               GenRegister src2)
   {
+     if(compactAlu3(this, opcode, dest, src0, src1, src2))
+       return;
      GenNativeInstruction *insn = this->next(opcode);
      Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
 

@@ -62,6 +62,13 @@ namespace gbe {
     {0b0101000000100000000, 31},
   };
 
+  static compact_table_entry src3_control_table[] = {
+    {0b100000000110000000000001, 0},
+    {0b000000000110000000000001, 1},
+    {0b000000001000000000000001, 2},
+    {0b000000001000000000100001, 3},
+  };
+
   static compact_table_entry data_type_table[] = {
     {0b000000001000001100, 20},
     {0b001000000000000001, 0},
@@ -95,6 +102,41 @@ namespace gbe {
     {0b001111011110111101, 18},
     {0b001111111110111100, 19},
     {0b001111111110111101, 28},
+  };
+
+  static compact_table_entry gen8_data_type_table[] = {
+    {0b001000000000000000001, 0},
+    {0b001000000000001000000, 1},
+    {0b001000000000001000001, 2},
+    {0b001000000000011000001, 3},
+    {0b001000000000101011101, 4},
+    {0b001000000010111011101, 5},
+    {0b001000000011101000001, 6},
+    {0b001000000011101000101, 7},
+    {0b001000000011101011101, 8},
+    {0b001000001000001000001, 9},
+    {0b001000011000001000000, 10},
+    {0b001000011000001000001, 11},
+    {0b001000101000101000101, 12},
+    {0b001000111000101000100, 13},
+    {0b001000111000101000101, 14},
+    {0b001011100011101011101, 15},
+    {0b001011101011100011101, 16},
+    {0b001011101011101011100, 17},
+    {0b001011101011101011101, 18},
+    {0b001011111011101011100, 19},
+    {0b000000000010000001100, 20},
+    {0b001000000000001011101, 21},
+    {0b001000000000101000101, 22},
+    {0b001000001000001000000, 23},
+    {0b001000101000101000100, 24},
+    {0b001000111000100000100, 25},
+    {0b001001001001000001001, 26},
+    {0b001010111011101011101, 27},
+    {0b001011111011101011101, 28},
+    {0b001001111001101001100, 29},
+    {0b001001001001001001000, 30},
+    {0b001001011001001001000, 31},
   };
 
   static compact_table_entry data_type_decompact[] = {
@@ -224,6 +266,25 @@ namespace gbe {
     };
     uint32_t data;
   };
+  union Src3ControlBits{
+    struct {
+      uint32_t access_mode:1;
+      uint32_t dependency_control:2;
+      uint32_t nibble_control:1;
+      uint32_t quarter_control:2;
+      uint32_t thread_control:2;
+      uint32_t predicate_control:4;
+      uint32_t predicate_inverse:1;
+      uint32_t execution_size:3;
+      uint32_t conditional_modifier:4;
+      uint32_t acc_wr_control:1;
+      uint32_t flag_sub_reg_nr:1;
+      uint32_t flag_reg_nr:1;
+      uint32_t mask_control:1;
+    };
+    uint32_t data;
+  };
+
   union DataTypeBits{
     struct {
       uint32_t dest_reg_file:2;
@@ -238,6 +299,21 @@ namespace gbe {
     };
     uint32_t data;
   };
+  union Gen8DataTypeBits{
+    struct {
+      uint32_t dest_reg_file:2;
+      uint32_t dest_reg_type:4;
+      uint32_t src0_reg_file:2;
+      uint32_t src0_reg_type:4;
+      uint32_t src1_reg_file:2;
+      uint32_t src1_reg_type:4;
+      uint32_t dest_horiz_stride:2;
+      uint32_t dest_address_mode:1;
+      uint32_t pad:11;
+    };
+    uint32_t data;
+  };
+
   union SubRegBits {
     struct {
       uint32_t dest_subreg_nr:5;
@@ -260,48 +336,157 @@ namespace gbe {
     uint32_t data;
   };
 
-  void decompactInstruction(GenCompactInstruction * p, void *insn) {
-    Gen7NativeInstruction *pOut = (union Gen7NativeInstruction *) insn;
+  void decompactInstruction(GenCompactInstruction * p, void *insn, uint32_t insn_version) {
     GenNativeInstruction *pNative = (union GenNativeInstruction *) insn;
+    Gen7NativeInstruction *pOut = (union Gen7NativeInstruction *) insn;
+    /* src3 compact insn */
+    if(p->bits1.opcode == GEN_OPCODE_MAD || p->bits1.opcode == GEN_OPCODE_LRP) {
+#define NO_SWIZZLE ((0<<0) | (1<<2) | (2<<4) | (3<<6))
+      assert(insn_version == 8);
+      Gen8NativeInstruction *pOut = (union Gen8NativeInstruction *) insn;
+      memset(pOut, 0, sizeof(Gen8NativeInstruction));
+      union Src3ControlBits control_bits;
+      control_bits.data = src3_control_table[(uint32_t)p->src3Insn.bits1.control_index].bit_pattern;
+      pOut->header.opcode = p->bits1.opcode;
 
-    memset(pOut, 0, sizeof(Gen7NativeInstruction));
-    union ControlBits control_bits;
-    control_bits.data = control_table[(uint32_t)p->bits1.control_index].bit_pattern;
-    pNative->low.low = (uint32_t)p->bits1.opcode | ((control_bits.data & 0xffff) << 8);
-    pOut->header.destreg_or_condmod = p->bits1.destreg_or_condmod;
-    pOut->header.saturate = control_bits.saturate;
-    pOut->header.acc_wr_control = p->bits1.acc_wr_control;
-    pOut->header.cmpt_control = p->bits1.cmpt_control;
-    pOut->header.debug_control = p->bits1.debug_control;
+      pOut->bits1.da1.flag_sub_reg_nr = control_bits.flag_sub_reg_nr;
+      pOut->bits1.da1.flag_reg_nr = control_bits.flag_reg_nr;
+      pOut->header.nib_ctrl = control_bits.nibble_control;
+      pOut->header.execution_size = control_bits.execution_size;
+      pOut->header.predicate_control = control_bits.predicate_control;
+      pOut->header.predicate_inverse = control_bits.predicate_inverse;
+      pOut->header.thread_control = control_bits.thread_control;
+      pOut->header.quarter_control = control_bits.quarter_control;
+      pOut->header.dependency_control = control_bits.dependency_control;
+      pOut->header.access_mode = control_bits.access_mode;
+      pOut->header.acc_wr_control = control_bits.acc_wr_control;
+      pOut->header.destreg_or_condmod = control_bits.conditional_modifier;
+      pOut->bits1.da1.mask_control= control_bits.mask_control;
+      pOut->header.cmpt_control = p->bits1.cmpt_control;
+      pOut->header.debug_control = p->bits1.debug_control;
+      pOut->header.saturate = p->src3Insn.bits1.saturate;
 
-    union DataTypeBits data_type_bits;
-    union SubRegBits subreg_bits;
-    union SrcRegBits src0_bits;
-    data_type_bits.data = data_type_decompact[(uint32_t)p->bits1.data_type_index].bit_pattern;
-    subreg_bits.data = subreg_table[(uint32_t)p->bits1.sub_reg_index].bit_pattern;
-    src0_bits.data = srcreg_table[p->bits1.src0_index_lo | p->bits2.src0_index_hi << 2].bit_pattern;
+      /* dst */
+      pOut->bits1.da3src.dest_reg_nr = p->src3Insn.bits1.dst_reg_nr;
+      pOut->bits1.da3src.dest_writemask = 0xf;
 
-    pNative->low.high |= data_type_bits.data & 0x7fff;
-    pOut->bits1.da1.dest_horiz_stride = data_type_bits.dest_horiz_stride;
-    pOut->bits1.da1.dest_address_mode = data_type_bits.dest_address_mode;
-    pOut->bits1.da1.dest_reg_nr = p->bits2.dest_reg_nr;
-    pOut->bits1.da1.dest_subreg_nr = subreg_bits.dest_subreg_nr;
+      pOut->bits2.da3src.src0_swizzle = NO_SWIZZLE;
+      pOut->bits2.da3src.src0_subreg_nr = p->src3Insn.bits2.src0_subnr;
+      pOut->bits2.da3src.src0_reg_nr = p->src3Insn.bits2.src0_reg_nr;
+      pOut->bits1.da3src.src0_negate = p->src3Insn.bits1.src_index == 1;
+      pOut->bits2.da3src.src0_rep_ctrl = p->src3Insn.bits1.src0_rep_ctrl;
 
-    pOut->bits2.da1.src0_subreg_nr = subreg_bits.src0_subreg_nr;
-    pOut->bits2.da1.src0_reg_nr = p->bits2.src0_reg_nr;
-    pNative->high.low |= (src0_bits.data << 13);
-    pOut->bits2.da1.flag_sub_reg_nr = control_bits.flag_sub_reg_nr;
-    pOut->bits2.da1.flag_reg_nr = control_bits.flag_reg_nr;
+      pOut->bits2.da3src.src1_swizzle = NO_SWIZZLE;
+      pOut->bits2.da3src.src1_subreg_nr_low = (p->src3Insn.bits2.src1_subnr) & 0x3;
+      pOut->bits3.da3src.src1_subreg_nr_high = (p->src3Insn.bits2.src1_subnr) >> 2;
+      pOut->bits2.da3src.src1_rep_ctrl = p->src3Insn.bits2.src1_rep_ctrl;
+      pOut->bits3.da3src.src1_reg_nr = p->src3Insn.bits2.src1_reg_nr;
+      pOut->bits1.da3src.src1_negate = p->src3Insn.bits1.src_index == 2;
 
-    if(data_type_bits.src1_reg_file == GEN_IMMEDIATE_VALUE) {
-      uint32_t imm = (uint32_t)p->bits2.src1_reg_nr | (p->bits2.src1_index<<8);
-      pOut->bits3.ud = imm & 0x1000 ? (imm | 0xfffff000) : imm;
+      pOut->bits3.da3src.src2_swizzle = NO_SWIZZLE;
+      pOut->bits3.da3src.src2_subreg_nr = p->src3Insn.bits2.src2_subnr;
+      pOut->bits3.da3src.src2_rep_ctrl = p->src3Insn.bits2.src2_rep_ctrl;
+      pOut->bits3.da3src.src2_reg_nr = p->src3Insn.bits2.src2_reg_nr;
+      pOut->bits1.da3src.src2_negate = p->src3Insn.bits1.src_index == 3;
+#undef NO_SWIZZLE
     } else {
-      union SrcRegBits src1_bits;
-      src1_bits.data = srcreg_table[p->bits2.src1_index].bit_pattern;
-      pOut->bits3.da1.src1_subreg_nr = subreg_bits.src1_subreg_nr;
-      pOut->bits3.da1.src1_reg_nr = p->bits2.src1_reg_nr;
-      pNative->high.high |= (src1_bits.data << 13);
+      if (insn_version == 7) {
+        memset(pOut, 0, sizeof(Gen7NativeInstruction));
+        union ControlBits control_bits;
+        control_bits.data = control_table[(uint32_t)p->bits1.control_index].bit_pattern;
+        pNative->low.low = (uint32_t)p->bits1.opcode | ((control_bits.data & 0xffff) << 8);
+        pOut->header.destreg_or_condmod = p->bits1.destreg_or_condmod;
+        pOut->header.saturate = control_bits.saturate;
+        pOut->header.acc_wr_control = p->bits1.acc_wr_control;
+        pOut->header.cmpt_control = p->bits1.cmpt_control;
+        pOut->header.debug_control = p->bits1.debug_control;
+
+        union DataTypeBits data_type_bits;
+        union SubRegBits subreg_bits;
+        union SrcRegBits src0_bits;
+        data_type_bits.data = data_type_decompact[(uint32_t)p->bits1.data_type_index].bit_pattern;
+        subreg_bits.data = subreg_table[(uint32_t)p->bits1.sub_reg_index].bit_pattern;
+        src0_bits.data = srcreg_table[p->bits1.src0_index_lo | p->bits2.src0_index_hi << 2].bit_pattern;
+
+        pNative->low.high |= data_type_bits.data & 0x7fff;
+        pOut->bits1.da1.dest_horiz_stride = data_type_bits.dest_horiz_stride;
+        pOut->bits1.da1.dest_address_mode = data_type_bits.dest_address_mode;
+        pOut->bits1.da1.dest_reg_nr = p->bits2.dest_reg_nr;
+        pOut->bits1.da1.dest_subreg_nr = subreg_bits.dest_subreg_nr;
+
+        pOut->bits2.da1.src0_subreg_nr = subreg_bits.src0_subreg_nr;
+        pOut->bits2.da1.src0_reg_nr = p->bits2.src0_reg_nr;
+        pNative->high.low |= (src0_bits.data << 13);
+        pOut->bits2.da1.flag_sub_reg_nr = control_bits.flag_sub_reg_nr;
+        pOut->bits2.da1.flag_reg_nr = control_bits.flag_reg_nr;
+
+        if(data_type_bits.src1_reg_file == GEN_IMMEDIATE_VALUE) {
+          uint32_t imm = (uint32_t)p->bits2.src1_reg_nr | (p->bits2.src1_index<<8);
+          pOut->bits3.ud = imm & 0x1000 ? (imm | 0xfffff000) : imm;
+        } else {
+          union SrcRegBits src1_bits;
+          src1_bits.data = srcreg_table[p->bits2.src1_index].bit_pattern;
+          pOut->bits3.da1.src1_subreg_nr = subreg_bits.src1_subreg_nr;
+          pOut->bits3.da1.src1_reg_nr = p->bits2.src1_reg_nr;
+          pNative->high.high |= (src1_bits.data << 13);
+        }
+      } else if (insn_version == 8) {
+        Gen8NativeInstruction *pOut = (union Gen8NativeInstruction *) insn;
+        memset(pOut, 0, sizeof(Gen8NativeInstruction));
+        union ControlBits control_bits;
+        control_bits.data = control_table[(uint32_t)p->bits1.control_index].bit_pattern;
+        pOut->header.opcode = p->bits1.opcode;
+
+        pOut->bits1.da1.flag_sub_reg_nr = control_bits.flag_sub_reg_nr;
+        pOut->bits1.da1.flag_reg_nr = control_bits.flag_reg_nr;
+        pOut->header.saturate = control_bits.saturate;
+        pOut->header.execution_size= control_bits.execution_size;
+        pOut->header.predicate_control= control_bits.predicate_control;
+        pOut->header.predicate_inverse= control_bits.predicate_inverse;
+        pOut->header.thread_control= control_bits.thread_control;
+        pOut->header.quarter_control= control_bits.quarter_control;
+        pOut->header.dependency_control = control_bits.dependency_control;
+        pOut->header.access_mode= control_bits.access_mode;
+        pOut->bits1.da1.mask_control= control_bits.mask_control;
+
+        pOut->header.destreg_or_condmod = p->bits1.destreg_or_condmod;
+        pOut->header.acc_wr_control = p->bits1.acc_wr_control;
+        pOut->header.cmpt_control = p->bits1.cmpt_control;
+        pOut->header.debug_control = p->bits1.debug_control;
+
+        union Gen8DataTypeBits data_type_bits;
+        union SubRegBits subreg_bits;
+        union SrcRegBits src0_bits;
+        data_type_bits.data = gen8_data_type_table[(uint32_t)p->bits1.data_type_index].bit_pattern;
+        subreg_bits.data = subreg_table[(uint32_t)p->bits1.sub_reg_index].bit_pattern;
+        src0_bits.data = srcreg_table[p->bits1.src0_index_lo | p->bits2.src0_index_hi << 2].bit_pattern;
+
+        pOut->bits1.da1.dest_reg_file = data_type_bits.dest_reg_file;
+        pOut->bits1.da1.dest_reg_type = data_type_bits.dest_reg_type;
+        pOut->bits1.da1.dest_horiz_stride = data_type_bits.dest_horiz_stride;
+        pOut->bits1.da1.dest_address_mode = data_type_bits.dest_address_mode;
+        pOut->bits1.da1.dest_reg_nr = p->bits2.dest_reg_nr;
+        pOut->bits1.da1.dest_subreg_nr = subreg_bits.dest_subreg_nr;
+
+        pOut->bits1.da1.src0_reg_file = data_type_bits.src0_reg_file;
+        pOut->bits1.da1.src0_reg_type = data_type_bits.src0_reg_type;
+        pOut->bits2.da1.src0_subreg_nr = subreg_bits.src0_subreg_nr;
+        pOut->bits2.da1.src0_reg_nr = p->bits2.src0_reg_nr;
+        pNative->high.low |= (src0_bits.data << 13);
+
+        pOut->bits2.da1.src1_reg_file = data_type_bits.src1_reg_file;
+        pOut->bits2.da1.src1_reg_type = data_type_bits.src1_reg_type;
+        if(data_type_bits.src1_reg_file == GEN_IMMEDIATE_VALUE) {
+          uint32_t imm = (uint32_t)p->bits2.src1_reg_nr | (p->bits2.src1_index<<8);
+          pOut->bits3.ud = imm & 0x1000 ? (imm | 0xfffff000) : imm;
+        } else {
+          union SrcRegBits src1_bits;
+          src1_bits.data = srcreg_table[p->bits2.src1_index].bit_pattern;
+          pOut->bits3.da1.src1_subreg_nr = subreg_bits.src1_subreg_nr;
+          pOut->bits3.da1.src1_reg_nr = p->bits2.src1_reg_nr;
+          pNative->high.high |= (src1_bits.data << 13);
+        }
+      }
     }
   }
 
@@ -349,6 +534,50 @@ namespace gbe {
     return r->index;
   }
 
+  int compactControlBitsSrc3(GenEncoder *p, uint32_t quarter, uint32_t execWidth) {
+
+    const GenInstructionState *s = &p->curr;
+    // some quick check
+    if(s->nibControl != 0)
+      return -1;
+    if(s->predicate != GEN_PREDICATE_NONE)
+      return -1;
+    if(s->inversePredicate != 0)
+      return -1;
+    if(s->flag == 1)
+      return -1;
+    if(s->subFlag != 0)
+      return -1;
+
+    Src3ControlBits b;
+    b.data = 0;
+
+    if (execWidth == 8)
+      b.execution_size = GEN_WIDTH_8;
+    else if (execWidth == 16)
+      b.execution_size = GEN_WIDTH_16;
+    else if (execWidth == 4)
+      return -1;
+    else if (execWidth == 1)
+      return -1;
+    else
+      NOT_IMPLEMENTED;
+
+    b.mask_control = s->noMask;
+    b.quarter_control = quarter;
+    b.access_mode = 1;
+
+    compact_table_entry key;
+    key.bit_pattern = b.data;
+
+    compact_table_entry *r = (compact_table_entry *)bsearch(&key, src3_control_table,
+      sizeof(src3_control_table)/sizeof(compact_table_entry), sizeof(compact_table_entry), cmp_key);
+    if (r == NULL)
+      return -1;
+    return r->index;
+  }
+
+
   int compactDataTypeBits(GenEncoder *p, GenRegister *dst, GenRegister *src0, GenRegister *src1) {
 
     // compact does not support any indirect acess
@@ -358,35 +587,65 @@ namespace gbe {
     if(src0->file == GEN_IMMEDIATE_VALUE)
       return -1;
 
-    DataTypeBits b;
-    b.data = 0;
+    compact_table_entry *r;
+    if(p->getCompactVersion() == 7) {
+      DataTypeBits b;
+      b.data = 0;
 
-    b.dest_horiz_stride = dst->hstride == GEN_HORIZONTAL_STRIDE_0 ? GEN_HORIZONTAL_STRIDE_1 : dst->hstride;
-    b.dest_address_mode = dst->address_mode;
-    b.dest_reg_file = dst->file;
-    b.dest_reg_type = dst->type;
+      b.dest_horiz_stride = dst->hstride == GEN_HORIZONTAL_STRIDE_0 ? GEN_HORIZONTAL_STRIDE_1 : dst->hstride;
+      b.dest_address_mode = dst->address_mode;
+      b.dest_reg_file = dst->file;
+      b.dest_reg_type = dst->type;
 
-    b.src0_reg_file = src0->file;
-    b.src0_reg_type = src0->type;
+      b.src0_reg_file = src0->file;
+      b.src0_reg_type = src0->type;
 
-    if(src1) {
-      b.src1_reg_type = src1->type;
-      b.src1_reg_file = src1->file;
-    } else {
-      // default to zero
-      b.src1_reg_type = 0;
-      b.src1_reg_file = 0;
+      if(src1) {
+        b.src1_reg_type = src1->type;
+        b.src1_reg_file = src1->file;
+      } else {
+        // default to zero
+        b.src1_reg_type = 0;
+        b.src1_reg_file = 0;
+      }
+
+      compact_table_entry key;
+      key.bit_pattern = b.data;
+
+      r = (compact_table_entry *)bsearch(&key, data_type_table, sizeof(data_type_table)/sizeof(compact_table_entry),
+                                         sizeof(compact_table_entry), cmp_key);
+    } else if(p->getCompactVersion() == 8) {
+      Gen8DataTypeBits b;
+      b.data = 0;
+
+      b.dest_horiz_stride = dst->hstride == GEN_HORIZONTAL_STRIDE_0 ? GEN_HORIZONTAL_STRIDE_1 : dst->hstride;
+      b.dest_address_mode = dst->address_mode;
+      b.dest_reg_file = dst->file;
+      b.dest_reg_type = dst->type;
+
+      b.src0_reg_file = src0->file;
+      b.src0_reg_type = src0->type;
+
+      if(src1) {
+        b.src1_reg_type = src1->type;
+        b.src1_reg_file = src1->file;
+      } else {
+        // default to zero
+        b.src1_reg_type = 0;
+        b.src1_reg_file = 0;
+      }
+
+      compact_table_entry key;
+      key.bit_pattern = b.data;
+
+      r = (compact_table_entry *)bsearch(&key, gen8_data_type_table, sizeof(gen8_data_type_table)/sizeof(compact_table_entry),
+                                         sizeof(compact_table_entry), cmp_key);
     }
-
-    compact_table_entry key;
-    key.bit_pattern = b.data;
-
-    compact_table_entry *r = (compact_table_entry *)bsearch(&key, data_type_table,
-                             sizeof(data_type_table)/sizeof(compact_table_entry), sizeof(compact_table_entry), cmp_key);
     if (r == NULL)
       return -1;
     return r->index;
   }
+
   int compactSubRegBits(GenEncoder *p, GenRegister *dst, GenRegister *src0, GenRegister *src1) {
     SubRegBits b;
     b.data = 0;
@@ -440,9 +699,6 @@ namespace gbe {
   }
 
   bool compactAlu1(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src, uint32_t condition, bool split) {
-    if(p->getCompactVersion() == 8)
-      return false;
-
     if(split) {
       // TODO support it
       return false;
@@ -478,9 +734,6 @@ namespace gbe {
   }
 
   bool compactAlu2(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src0, GenRegister src1, uint32_t condition, bool split) {
-    if(p->getCompactVersion() == 8)
-      return false;
-
     if(split) {
       // TODO support it
       return false;
@@ -527,5 +780,45 @@ namespace gbe {
       insn->bits2.src1_reg_nr = src1_imm ? (src1.value.ud & 0xff): src1.nr;
       return true;
     }
+  }
+
+  bool compactAlu3(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src0, GenRegister src1, GenRegister src2)
+  {
+    if(p->getCompactVersion() < 8)
+      return false;
+    if(opcode != GEN_OPCODE_MAD && opcode != GEN_OPCODE_LRP)
+      return false;
+    assert(src0.file == GEN_GENERAL_REGISTER_FILE);
+    assert(src0.address_mode == GEN_ADDRESS_DIRECT);
+    assert(src0.nr < 128);
+    assert(src1.file == GEN_GENERAL_REGISTER_FILE);
+    assert(src1.address_mode == GEN_ADDRESS_DIRECT);
+    assert(src1.nr < 128);
+    assert(src2.file == GEN_GENERAL_REGISTER_FILE);
+    assert(src2.address_mode == GEN_ADDRESS_DIRECT);
+    assert(src2.nr < 128);
+
+    int control_index = compactControlBitsSrc3(p, p->curr.quarterControl, p->curr.execWidth);
+    if( control_index == -1) return false;
+    if( src0.negation + src1.negation + src2.negation > 1)
+      return false;
+
+    GenCompactInstruction *insn = p->nextCompact(opcode);
+    insn->src3Insn.bits1.control_index = control_index;
+    insn->src3Insn.bits1.compact_control = 1;
+    insn->src3Insn.bits1.src_index = src0.negation ? 1 : (src1.negation ? 2: (src2.negation ? 3 : 0));
+    insn->src3Insn.bits1.dst_reg_nr = dst.nr ;
+    insn->src3Insn.bits1.src0_rep_ctrl = src0.vstride == GEN_VERTICAL_STRIDE_0;
+    insn->src3Insn.bits1.saturate = p->curr.saturate;
+    /* bits2 */
+    insn->src3Insn.bits2.src1_rep_ctrl = src1.vstride == GEN_VERTICAL_STRIDE_0;
+    insn->src3Insn.bits2.src2_rep_ctrl = src2.vstride == GEN_VERTICAL_STRIDE_0;
+    insn->src3Insn.bits2.src0_subnr = src0.subnr/4;
+    insn->src3Insn.bits2.src1_subnr = src1.subnr/4;
+    insn->src3Insn.bits2.src2_subnr = src2.subnr/4;
+    insn->src3Insn.bits2.src0_reg_nr = src0.nr;
+    insn->src3Insn.bits2.src1_reg_nr = src1.nr;
+    insn->src3Insn.bits2.src2_reg_nr = src2.nr;
+    return true;
   }
 };
