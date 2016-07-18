@@ -127,6 +127,7 @@ void *multithread(void * arg)
     sem_post(&tag);
 
     const  UTest &utest = (*UTest::utestList)[SerialNumber];
+    if (utest.fn == NULL || utest.haveIssue || utest.isBenchMark) continue;
    // printf("thread%lu  %d, utests.name is %s\n",PhtreadNumber, SerialNumber,utest.name);
 
     UTest::do_run(utest);
