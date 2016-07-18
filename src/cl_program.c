@@ -965,7 +965,7 @@ cl_program_get_kernel_names(cl_program p, size_t size, char *names, size_t *size
   len = strlen(ker_name);
   if(names) {
     strncpy(names, cl_kernel_get_name(p->ker[0]), size - 1);
-    names[size] = '\0';
+    names[size - 1] = '\0';
     if(size < len - 1) {
       if(size_ret) *size_ret = size;
       return;
