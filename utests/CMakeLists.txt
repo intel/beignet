@@ -277,6 +277,9 @@ set (utests_sources
   compiler_get_max_sub_group_size.cpp
   compiler_get_sub_group_local_id.cpp
   compiler_sub_group_shuffle.cpp
+  compiler_sub_group_shuffle_down.cpp
+  compiler_sub_group_shuffle_up.cpp
+  compiler_sub_group_shuffle_xor.cpp
   builtin_global_linear_id.cpp
   builtin_local_linear_id.cpp
   compiler_mix.cpp
