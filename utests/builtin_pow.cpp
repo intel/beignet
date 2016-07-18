@@ -10,6 +10,9 @@
   printf( __VA_ARGS__ );\
   printf("\033[0m");\
 }
+
+namespace {
+
 const float ori_data[] = {-20.5, -1, -0.9, -0.01, 0, 0.01, 0.9, 1.0, 20.5};
 const int count_input_ori = sizeof(ori_data) / sizeof(ori_data[0]);
 const int count_input = count_input_ori * count_input_ori;
@@ -59,7 +62,8 @@ static void builtin_pow(void)
 
   clEnqueueWriteBuffer( queue, buf[1], CL_TRUE, 0, count_input * sizeof(float), input_data1, 0, NULL, NULL);
   clEnqueueWriteBuffer( queue, buf[2], CL_TRUE, 0, count_input * sizeof(float), input_data2, 0, NULL, NULL);
-  clEnqueueWriteBuffer( queue, buf[3], CL_TRUE, 0, sizeof(int), &max_function, 0, NULL, NULL);
+  int maxfunc = max_function;
+  clEnqueueWriteBuffer( queue, buf[3], CL_TRUE, 0, sizeof(int), &maxfunc, 0, NULL, NULL);
 
    // Run the kernel
   OCL_NDRANGE( 1 );
@@ -100,3 +104,4 @@ static void builtin_pow(void)
 }
 
 MAKE_UTEST_FROM_FUNCTION(builtin_pow)
+}

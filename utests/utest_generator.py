@@ -280,9 +280,9 @@ which can print more values and information to assist debuging the issue.
           vals = vals[0:128]
           break
         vals += self.values[i]
-      self.cpplines += [ "const %s input_data%d[] = {%s};" %(self.argtype(i,index),i+1,str(vals).strip('[]').replace('\'','')) ]
+      self.cpplines += [ "%s input_data%d[] = {%s};" %(self.argtype(i,index),i+1,str(vals).strip('[]').replace('\'','')) ]
     self.cpplines += [ "const int count_input = sizeof(input_data1) / sizeof(input_data1[0]);" ]
-    self.cpplines += [ "const int vector = %s;\n"%(vlen) ]
+    self.cpplines += [ "int vector = %s;\n"%(vlen) ]
 
 #####Cpu Function
   def GenCpuCompilerMath(self,index):
@@ -457,6 +457,8 @@ static void %s_%s(void)
       #The head:
       self.cpplines += [self.Head]
 
+      self.cpplines += ["namespace {\n"]
+
       #Parameters:
       self.GenInputValues(i)
 
@@ -468,6 +470,8 @@ static void %s_%s(void)
 
       #utest function
       self.utestFunc(i)
+
+      self.cpplines += ["}\n"]
 
       #kernel cl
       self.genCL(i)

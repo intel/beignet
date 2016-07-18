@@ -10,7 +10,9 @@
   printf("\033[0m");\
 }
 
-const float input_data[] = {-30, -1, -0.92, -0.5, -0.09, 0, 0.09, 0.5, 0.92, 1, 30};
+namespace {
+
+float input_data[] = {-30, -1, -0.92, -0.5, -0.09, 0, 0.09, 0.5, 0.92, 1, 30};
 const int count_input = sizeof(input_data) / sizeof(input_data[0]);
 const int max_function = 5;
 
@@ -44,7 +46,8 @@ static void builtin_acos_asin(void)
   locals[0] = 1;
 
   clEnqueueWriteBuffer( queue, buf[1], CL_TRUE, 0, count_input * sizeof(float), input_data, 0, NULL, NULL);
-  clEnqueueWriteBuffer( queue, buf[2], CL_TRUE, 0, sizeof(int), &max_function , 0, NULL, NULL);
+  int maxfunc = max_function;
+  clEnqueueWriteBuffer( queue, buf[2], CL_TRUE, 0, sizeof(int), &maxfunc, 0, NULL, NULL);
 
    // Run the kernel
   OCL_NDRANGE( 1 );
@@ -85,3 +88,4 @@ static void builtin_acos_asin(void)
 }
 
 MAKE_UTEST_FROM_FUNCTION(builtin_acos_asin)
+}
