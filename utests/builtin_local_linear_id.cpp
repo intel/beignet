@@ -30,6 +30,8 @@ dimension:3
 #include "utest_helper.hpp"
 static void builtin_local_linear_id(void)
 {
+  if (!cl_check_ocl20())
+    return;
 
   // Setup kernel and buffers
   int dim, i, buf_len=1;

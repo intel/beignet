@@ -296,4 +296,7 @@ typedef cl_int(clGetKernelSubGroupInfoKHR_cb)(cl_kernel, cl_device_id,
                                               const void *, size_t, void *,
                                               size_t *);
 extern clGetKernelSubGroupInfoKHR_cb* utestclGetKernelSubGroupInfoKHR;
+
+/* Check is cl version 2.0. */
+extern int cl_check_ocl20(void);
 #endif /* __UTEST_HELPER_HPP__ */

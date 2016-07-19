@@ -29,6 +29,8 @@ dimension:3
 #include "utest_helper.hpp"
 static void builtin_global_linear_id(void)
 {
+  if (!cl_check_ocl20())
+    return;
 
   // Setup kernel and buffers
   int dim, err, i, buf_len=1;

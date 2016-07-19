@@ -896,3 +896,32 @@ int cl_check_subgroups(void)
   return 1;
 }
 
+int cl_check_ocl20(void)
+{
+  size_t param_value_size;
+  size_t ret_sz;
+  OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_OPENCL_C_VERSION, 0, 0, &param_value_size);
+  if(param_value_size == 0) {
+    printf("Not OpenCL 2.0 device, ");
+    if(cl_check_beignet()) {
+      printf("Beignet extension test!");
+      return 1;
+    }
+    return 0;
+  }
+  char* device_version_str = (char* )malloc(param_value_size * sizeof(char) );
+  OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_OPENCL_C_VERSION, param_value_size, (void*)device_version_str, &ret_sz);
+  OCL_ASSERT(ret_sz == param_value_size);
+
+  if(!strstr(device_version_str, "2.0")) {
+    free(device_version_str);
+    printf("Not OpenCL 2.0 device, ");
+    if(cl_check_beignet()) {
+      printf("Beignet extension test!");
+      return 1;
+    }
+    return 0;
+  }
+  free(device_version_str);
+  return 1;
+}
