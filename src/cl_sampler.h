@@ -21,14 +21,13 @@
 #define __CL_SAMPLER_H__
 
 #include "CL/cl.h"
+#include "cl_base_object.h"
 #include "../backend/src/ocl_common_defines.h"
 #include <stdint.h>
 
 /* How to access images */
 struct _cl_sampler {
-  DEFINE_ICD(dispatch)
-  uint64_t magic;            /* To identify it as a sampler object */
-  volatile int ref_n;        /* This object is reference counted */
+  _cl_base_object base;
   cl_sampler prev, next;     /* We chain the samplers in the allocator */
   cl_context ctx;            /* Context it belongs to */
   cl_bool normalized_coords; /* Are coordinates normalized? */
@@ -36,6 +35,9 @@ struct _cl_sampler {
   cl_filter_mode filter;     /* LINEAR / NEAREST mostly */
   uint32_t clkSamplerValue;
 };
+
+#define CL_OBJECT_SAMPLER_MAGIC 0x686a0ecba79ce32fLL
+#define CL_OBJECT_IS_SAMPLER(obj) (((cl_base_object)obj)->magic == CL_OBJECT_SAMPLER_MAGIC)
 
 /* Create a new sampler object */
 extern cl_sampler cl_sampler_new(cl_context,

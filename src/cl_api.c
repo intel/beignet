@@ -811,7 +811,8 @@ clGetSamplerInfo(cl_sampler       sampler,
   CHECK_SAMPLER (sampler);
 
   if (param_name == CL_SAMPLER_REFERENCE_COUNT) {
-    FILL_GETINFO_RET (cl_uint, 1, (cl_uint*)&sampler->ref_n, CL_SUCCESS);
+    cl_uint ref = CL_OBJECT_GET_REF(sampler);
+    FILL_GETINFO_RET (cl_uint, 1, &ref, CL_SUCCESS);
   } else if (param_name == CL_SAMPLER_CONTEXT) {
     FILL_GETINFO_RET (cl_context, 1, &sampler->ctx, CL_SUCCESS);
   } else if (param_name == CL_SAMPLER_NORMALIZED_COORDS) {

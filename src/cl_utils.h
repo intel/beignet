@@ -227,7 +227,7 @@ do {                                                        \
     err = CL_INVALID_SAMPLER;                               \
     goto error;                                             \
   }                                                         \
-  if (UNLIKELY(SAMPLER->magic != CL_MAGIC_SAMPLER_HEADER)) {\
+  if (UNLIKELY(!CL_OBJECT_IS_SAMPLER(SAMPLER))) {          \
     err = CL_INVALID_SAMPLER;                               \
     goto error;                                             \
   }                                                         \

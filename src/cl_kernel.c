@@ -156,7 +156,7 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
       return CL_INVALID_ARG_VALUE;
 
     cl_sampler s = *(cl_sampler*)value;
-    if(s->magic != CL_MAGIC_SAMPLER_HEADER)
+    if(!CL_OBJECT_IS_SAMPLER(s))
       return CL_INVALID_SAMPLER;
   } else {
     // should be image, GLOBAL_PTR, CONSTANT_PTR

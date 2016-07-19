@@ -82,9 +82,7 @@ cl_sampler_new(cl_context ctx,
 
   /* Allocate and inialize the structure itself */
   TRY_ALLOC (sampler, CALLOC(struct _cl_sampler));
-  SET_ICD(sampler->dispatch)
-  sampler->ref_n = 1;
-  sampler->magic = CL_MAGIC_SAMPLER_HEADER;
+  CL_OBJECT_INIT_BASE(sampler, CL_OBJECT_SAMPLER_MAGIC);
   sampler->normalized_coords = normalized_coords;
   sampler->address = address;
   sampler->filter = filter;
@@ -116,7 +114,7 @@ cl_sampler_delete(cl_sampler sampler)
 {
   if (UNLIKELY(sampler == NULL))
     return;
-  if (atomic_dec(&sampler->ref_n) > 1)
+  if (CL_OBJECT_DEC_REF(sampler) > 1)
     return;
 
   assert(sampler->ctx);
@@ -130,6 +128,7 @@ cl_sampler_delete(cl_sampler sampler)
   pthread_mutex_unlock(&sampler->ctx->sampler_lock);
   cl_context_delete(sampler->ctx);
 
+  CL_OBJECT_DESTROY_BASE(sampler);
   cl_free(sampler);
 }
 
@@ -137,6 +136,6 @@ LOCAL void
 cl_sampler_add_ref(cl_sampler sampler)
 {
   assert(sampler);
-  atomic_inc(&sampler->ref_n);
+  CL_OBJECT_INC_REF(sampler);
 }
 
