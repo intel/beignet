@@ -23,12 +23,12 @@
 #include "CL/cl.h"
 #include "cl_internals.h"
 #include "cl_extensions.h"
-#include "cl_khr_icd.h"
+#include "cl_base_object.h"
 #include "src/OCLConfig.h"
 #include "src/git_sha1.h"
 
 struct _cl_platform_id {
-  DEFINE_ICD(dispatch)
+  _cl_base_object base;
   const char *profile;
   const char *version;
   const char *name;
@@ -43,6 +43,9 @@ struct _cl_platform_id {
   size_t icd_suffix_khr_sz;
   struct cl_extensions *internal_extensions;
 };
+
+#define CL_OBJECT_PLATFORM_MAGIC 0xaacdbb00123ccd85LL
+#define CL_OBJECT_IS_PLATFORM(obj) (((cl_base_object)obj)->magic == CL_OBJECT_PLATFORM_MAGIC)
 
 /* Return the default platform */
 extern cl_platform_id cl_get_platform_default(void);

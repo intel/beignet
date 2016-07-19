@@ -31,7 +31,6 @@
     .JOIN(FIELD,_sz) = sizeof(STRING),
 
 static struct _cl_platform_id intel_platform_data = {
-  INIT_ICD(dispatch)
   DECL_INFO_STRING(profile, "FULL_PROFILE")
   DECL_INFO_STRING(version, LIBCL_VERSION_STRING)
   DECL_INFO_STRING(name, "Intel Gen OCL Driver")
@@ -51,6 +50,7 @@ cl_get_platform_default(void)
     return intel_platform;
 
   intel_platform = &intel_platform_data;
+  CL_OBJECT_INIT_BASE(intel_platform, CL_OBJECT_PLATFORM_MAGIC);
   cl_intel_platform_extension_init(intel_platform);
   return intel_platform;
 }
