@@ -3567,7 +3567,8 @@ clGetAcceleratorInfoINTEL(cl_accelerator_intel           accel,
   CHECK_ACCELERATOR_INTEL(accel);
 
   if (param_name == CL_ACCELERATOR_REFERENCE_COUNT_INTEL) {
-    FILL_GETINFO_RET (cl_uint, 1, (cl_uint*)&accel->ref_n, CL_SUCCESS);
+    cl_uint ref = CL_OBJECT_GET_REF(accel);
+    FILL_GETINFO_RET (cl_uint, 1, &ref, CL_SUCCESS);
   } else if (param_name == CL_ACCELERATOR_CONTEXT_INTEL) {
     FILL_GETINFO_RET (cl_context, 1, &accel->ctx, CL_SUCCESS);
   } else if (param_name == CL_ACCELERATOR_TYPE_INTEL) {

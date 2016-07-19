@@ -239,7 +239,7 @@ do {                                                                            
     err = CL_INVALID_ACCELERATOR_INTEL;                                         \
     goto error;                                                                 \
   }                                                                             \
-  if (UNLIKELY(ACCELERATOR_INTEL->magic != CL_MAGIC_ACCELERATOR_INTEL_HEADER)) {\
+  if (UNLIKELY(!CL_OBJECT_IS_ACCELERATOR_INTEL(ACCELERATOR_INTEL))) {          \
     err = CL_INVALID_ACCELERATOR_INTEL;                                         \
     goto error;                                                                 \
   }                                                                             \

@@ -19,9 +19,7 @@ cl_accelerator_intel_new(cl_context ctx,
 
   /* Allocate and inialize the structure itself */
   TRY_ALLOC(accel, CALLOC(struct _cl_accelerator_intel));
-  SET_ICD(accel->dispatch)
-  accel->ref_n = 1;
-  accel->magic = CL_MAGIC_ACCELERATOR_INTEL_HEADER;
+  CL_OBJECT_INIT_BASE(accel, CL_OBJECT_ACCELERATOR_INTEL_MAGIC);
 
   if (accel_type != CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL) {
     err = CL_INVALID_ACCELERATOR_TYPE_INTEL;
@@ -60,7 +58,7 @@ error:
 LOCAL void
 cl_accelerator_intel_add_ref(cl_accelerator_intel accel)
 {
-  atomic_inc(&accel->ref_n);
+  CL_OBJECT_INC_REF(accel);
 }
 
 LOCAL void
@@ -68,7 +66,7 @@ cl_accelerator_intel_delete(cl_accelerator_intel accel)
 {
   if (UNLIKELY(accel == NULL))
     return;
-  if (atomic_dec(&accel->ref_n) > 1)
+  if (CL_OBJECT_DEC_REF(accel) > 1)
     return;
 
   /* Remove the accelerator_intel in the context accelerator_intel list */
@@ -82,5 +80,6 @@ cl_accelerator_intel_delete(cl_accelerator_intel accel)
   pthread_mutex_unlock(&accel->ctx->accelerator_intel_lock);
 
   cl_context_delete(accel->ctx);
+  CL_OBJECT_DESTROY_BASE(accel);
   cl_free(accel);
 }
