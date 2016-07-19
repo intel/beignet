@@ -45,14 +45,16 @@ cl_kernel_delete(cl_kernel k)
 #ifdef HAS_CMRT
   if (k->cmrt_kernel != NULL) {
     cmrt_destroy_kernel(k);
-    k->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
+    CL_OBJECT_DESTROY_BASE(k);
     cl_free(k);
     return;
   }
 #endif
 
   /* We are not done with the kernel */
-  if (atomic_dec(&k->ref_n) > 1) return;
+  if (CL_OBJECT_DEC_REF(k) > 1)
+    return;
+
   /* Release one reference on all bos we own */
   if (k->bo)       cl_buffer_unreference(k->bo);
   /* This will be true for kernels created by clCreateKernel */
@@ -68,7 +70,8 @@ cl_kernel_delete(cl_kernel k)
   }
   if (k->image_sz)
     cl_free(k->images);
-  k->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
+
+  CL_OBJECT_DESTROY_BASE(k);
   cl_free(k);
 }
 
@@ -77,9 +80,7 @@ cl_kernel_new(cl_program p)
 {
   cl_kernel k = NULL;
   TRY_ALLOC_NO_ERR (k, CALLOC(struct _cl_kernel));
-  SET_ICD(k->dispatch)
-  k->ref_n = 1;
-  k->magic = CL_MAGIC_KERNEL_HEADER;
+  CL_OBJECT_INIT_BASE(k, CL_OBJECT_KERNEL_MAGIC);
   k->program = p;
   k->cmrt_kernel = NULL;
 
@@ -108,7 +109,7 @@ cl_kernel_get_attributes(cl_kernel k)
 LOCAL void
 cl_kernel_add_ref(cl_kernel k)
 {
-  atomic_inc(&k->ref_n);
+  CL_OBJECT_INC_REF(k);
 }
 
 LOCAL cl_int
@@ -409,12 +410,10 @@ cl_kernel_dup(cl_kernel from)
   if (UNLIKELY(from == NULL))
     return NULL;
   TRY_ALLOC_NO_ERR (to, CALLOC(struct _cl_kernel));
-  SET_ICD(to->dispatch)
+  CL_OBJECT_INIT_BASE(to, CL_OBJECT_KERNEL_MAGIC);
   to->bo = from->bo;
   to->opaque = from->opaque;
   to->vme = from->vme;
-  to->ref_n = 1;
-  to->magic = CL_MAGIC_KERNEL_HEADER;
   to->program = from->program;
   to->arg_n = from->arg_n;
   to->curbe_sz = from->curbe_sz;

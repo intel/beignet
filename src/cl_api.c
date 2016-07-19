@@ -1316,7 +1316,7 @@ clGetKernelInfo(cl_kernel        kernel,
     cl_uint n = kernel->arg_n;
     FILL_GETINFO_RET (cl_uint, 1, &n, CL_SUCCESS);
   } else if (param_name == CL_KERNEL_REFERENCE_COUNT) {
-    cl_int ref = kernel->ref_n;
+    cl_int ref = CL_OBJECT_GET_REF(kernel);
     FILL_GETINFO_RET (cl_int, 1, &ref, CL_SUCCESS);
   } else if (param_name == CL_KERNEL_FUNCTION_NAME) {
     const char * n = cl_kernel_get_name(kernel);

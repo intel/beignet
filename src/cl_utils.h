@@ -251,7 +251,7 @@ do {                                                        \
     err = CL_INVALID_KERNEL;                                \
     goto error;                                             \
   }                                                         \
-  if (UNLIKELY(KERNEL->magic != CL_MAGIC_KERNEL_HEADER)) {  \
+  if (UNLIKELY(!CL_OBJECT_IS_KERNEL(KERNEL))) {            \
     err = CL_INVALID_KERNEL;                                \
     goto error;                                             \
   }                                                         \

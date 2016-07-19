@@ -21,6 +21,7 @@
 #define __CL_KERNEL_H__
 
 #include "cl_internals.h"
+#include "cl_base_object.h"
 #include "cl_driver.h"
 #include "cl_gbe_loader.h"
 #include "CL/cl.h"
@@ -46,9 +47,7 @@ typedef struct cl_argument {
 
 /* One OCL function */
 struct _cl_kernel {
-  DEFINE_ICD(dispatch)
-  uint64_t magic;             /* To identify it as a kernel */
-  volatile int ref_n;         /* We reference count this object */
+  _cl_base_object base;
   cl_buffer bo;               /* The code itself */
   cl_program program;         /* Owns this structure (and pointers) */
   gbe_kernel opaque;          /* (Opaque) compiler structure for the OCL kernel */
@@ -72,6 +71,9 @@ struct _cl_kernel {
 
   void* cmrt_kernel;          /* CmKernel* */
 };
+
+#define CL_OBJECT_KERNEL_MAGIC 0x1234567890abedefLL
+#define CL_OBJECT_IS_KERNEL(obj) (((cl_base_object)obj)->magic == CL_OBJECT_KERNEL_MAGIC)
 
 /* Allocate an empty kernel */
 extern cl_kernel cl_kernel_new(cl_program);
