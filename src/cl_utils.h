@@ -124,7 +124,7 @@ do {                                                        \
     err = CL_INVALID_CONTEXT;                               \
     goto error;                                             \
   }                                                         \
-  if (UNLIKELY(CTX->magic != CL_MAGIC_CONTEXT_HEADER)) {    \
+  if (UNLIKELY(!CL_OBJECT_IS_CONTEXT(CTX))) {              \
     err = CL_INVALID_CONTEXT;                               \
     goto error;                                             \
   }                                                         \

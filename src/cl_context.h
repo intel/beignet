@@ -24,7 +24,7 @@
 #include "CL/cl_ext.h"
 #include "cl_internals.h"
 #include "cl_driver.h"
-#include "cl_khr_icd.h"
+#include "cl_base_object.h"
 
 #include <stdint.h>
 #include <pthread.h>
@@ -99,9 +99,7 @@ struct _cl_context_prop {
 #define EGL_CTX(ctx)    (EGLContext)(ctx->props.gl_context)
 /* Encapsulate the whole device */
 struct _cl_context {
-  DEFINE_ICD(dispatch)
-  uint64_t magic;                   /* To identify it as a context */
-  volatile int ref_n;               /* We reference count this object */
+  _cl_base_object base;
   cl_driver drv;                    /* Handles HW or simulator */
   cl_device_id device;              /* All information about the GPU device */
   cl_command_queue queues;          /* All command queues currently allocated */
@@ -131,6 +129,9 @@ struct _cl_context {
   void *user_data;                   /* A pointer to user supplied data */
 
 };
+
+#define CL_OBJECT_CONTEXT_MAGIC 0x20BBCADE993134AALL
+#define CL_OBJECT_IS_CONTEXT(obj) (((cl_base_object)obj)->magic == CL_OBJECT_CONTEXT_MAGIC)
 
 /* Implement OpenCL function */
 extern cl_context cl_create_context(const cl_context_properties*,

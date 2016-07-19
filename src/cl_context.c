@@ -167,11 +167,9 @@ cl_context_new(struct _cl_context_prop *props)
   cl_context ctx = NULL;
 
   TRY_ALLOC_NO_ERR (ctx, CALLOC(struct _cl_context));
+  CL_OBJECT_INIT_BASE(ctx, CL_OBJECT_CONTEXT_MAGIC);
   TRY_ALLOC_NO_ERR (ctx->drv, cl_driver_new(props));
-  SET_ICD(ctx->dispatch)
   ctx->props = *props;
-  ctx->magic = CL_MAGIC_CONTEXT_HEADER;
-  ctx->ref_n = 1;
   ctx->ver = cl_driver_get_ver(ctx->drv);
   pthread_mutex_init(&ctx->program_lock, NULL);
   pthread_mutex_init(&ctx->queue_lock, NULL);
@@ -195,7 +193,7 @@ cl_context_delete(cl_context ctx)
     return;
 
   /* We are not done yet */
-  if (atomic_dec(&ctx->ref_n) > 1)
+  if (CL_OBJECT_DEC_REF(ctx) > 1)
     return;
 
   /* delete the internal programs. */
@@ -227,7 +225,7 @@ cl_context_delete(cl_context ctx)
   assert(ctx->drv);
   cl_free(ctx->prop_user);
   cl_driver_delete(ctx->drv);
-  ctx->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
+  CL_OBJECT_DESTROY_BASE(ctx);
   cl_free(ctx);
 }
 
@@ -235,7 +233,7 @@ LOCAL void
 cl_context_add_ref(cl_context ctx)
 {
   assert(ctx);
-  atomic_inc(&ctx->ref_n);
+  CL_OBJECT_INC_REF(ctx);
 }
 
 LOCAL cl_command_queue

@@ -395,7 +395,7 @@ clGetContextInfo(cl_context      context,
     cl_uint n = 1;
     FILL_GETINFO_RET (cl_uint, 1, &n, CL_SUCCESS);
   } else if (param_name == CL_CONTEXT_REFERENCE_COUNT) {
-    cl_uint ref = context->ref_n;
+    cl_uint ref = CL_OBJECT_GET_REF(context);
     FILL_GETINFO_RET (cl_uint, 1, &ref, CL_SUCCESS);
   } else if (param_name == CL_CONTEXT_PROPERTIES) {
     if(context->prop_len > 0) {
