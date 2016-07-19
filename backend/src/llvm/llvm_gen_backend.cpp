@@ -716,7 +716,7 @@ namespace gbe
     void visitResumeInst(ResumeInst &I) {NOT_SUPPORTED;}
     void visitInlineAsm(CallInst &I) {NOT_SUPPORTED;}
     void visitIndirectBrInst(IndirectBrInst &I) {NOT_SUPPORTED;}
-    void visitUnreachableInst(UnreachableInst &I) {NOT_SUPPORTED;}
+    void visitUnreachableInst(UnreachableInst &I) {;}
     void visitGetElementPtrInst(GetElementPtrInst &I) {NOT_SUPPORTED;}
     void visitInsertValueInst(InsertValueInst &I) {NOT_SUPPORTED;}
     template <bool IsLoad, typename T> void visitLoadOrStore(T &I);
@@ -3514,6 +3514,7 @@ namespace gbe
           break;
 #endif /* LLVM_VERSION_MINOR >= 2 */
           case Intrinsic::debugtrap:
+          case Intrinsic::trap:
           case Intrinsic::dbg_value:
           case Intrinsic::dbg_declare:
           break;
@@ -4123,6 +4124,7 @@ namespace gbe
           break;
 #endif /* LLVM_VERSION_MINOR >= 2 */
           case Intrinsic::debugtrap:
+          case Intrinsic::trap:
           case Intrinsic::dbg_value:
           case Intrinsic::dbg_declare:
           break;
