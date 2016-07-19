@@ -986,6 +986,12 @@ namespace gbe
     if (baseIter != pointerBaseMap.end()) {
       return baseIter->second;
     }
+
+    if (isa<ConstantPointerNull>(ptr)) {
+      PointerType *ty = PointerType::get(ptr->getType(), 0);
+      return ConstantPointerNull::get(ty);
+    }
+
     typedef std::map<Value *, unsigned>::iterator BtiIter;
     // for pointers that already assigned a bti, it is the base pointer,
     BtiIter found = BtiMap.find(ptr);
@@ -1005,6 +1011,13 @@ namespace gbe
     }
 
     PtrOrigMapIter iter = pointerOrigMap.find(ptr);
+
+    // we may not find the ptr, as it may be uninitialized
+    if (iter == pointerOrigMap.end()) {
+      PointerType *ty = PointerType::get(ptr->getType(), 0);
+      return ConstantPointerNull::get(ty);
+    }
+
     SmallVector<Value *, 4> &pointers = (*iter).second;
     if (isSingleBti(ptr)) {
       Value *base = getPointerBase(pointers[0]);
@@ -1059,7 +1072,7 @@ namespace gbe
           return basePhi;
       } else {
         ptr->dump();
-        GBE_ASSERT(0 && "Unhandled instruction in getBtiRegister\n");
+        GBE_ASSERT(0 && "Unhandled instruction in getPointerBase\n");
         return ptr;
       }
     }
@@ -1084,15 +1097,24 @@ namespace gbe
     if (valueIter != BtiValueMap.end())
       return valueIter->second;
 
+    if (isa<ConstantPointerNull>(Val)) {
+      return ConstantInt::get(Type::getInt32Ty(Val->getContext()), BTI_PRIVATE);
+    }
+
     if (found != BtiMap.end()) {
       // the Val already got assigned an BTI, return it
-      Value *bti = ConstantInt::get(IntegerType::get(Val->getContext(), 32), found->second);
+      Value *bti = ConstantInt::get(IntegerType::get(Val->getContext(), 32),
+                                    found->second);
       BtiValueMap.insert(std::make_pair(Val, bti));
       return bti;
     } else {
+      PtrOrigMapIter iter = pointerOrigMap.find(Val);
+      // the pointer may access an uninitialized pointer,
+      // in this case, we will not find it in pointerOrigMap
+      if (iter == pointerOrigMap.end())
+        return ConstantInt::get(Type::getInt32Ty(Val->getContext()), BTI_PRIVATE);
+
       if (isSingleBti(Val)) {
-        PtrOrigMapIter iter = pointerOrigMap.find(Val);
-        GBE_ASSERT(iter != pointerOrigMap.end());
         Value * bti = getBtiRegister((*iter).second[0]);
         BtiValueMap.insert(std::make_pair(Val, bti));
         return bti;
@@ -1101,12 +1123,11 @@ namespace gbe
           SelectInst *si = dyn_cast<SelectInst>(Val);
 
           IRBuilder<> Builder(si->getParent());
-          PtrOrigMapIter iter = pointerOrigMap.find(Val);
-          GBE_ASSERT(iter != pointerOrigMap.end());
           Value *trueVal = getBtiRegister((*iter).second[0]);
           Value *falseVal = getBtiRegister((*iter).second[1]);
           Builder.SetInsertPoint(si);
-          Value *bti = Builder.CreateSelect(si->getCondition(), trueVal, falseVal);
+          Value *bti = Builder.CreateSelect(si->getCondition(),
+                                            trueVal, falseVal);
           BtiValueMap.insert(std::make_pair(Val, bti));
           return bti;
         } else if (isa<PHINode>(Val)) {
@@ -1114,9 +1135,9 @@ namespace gbe
           IRBuilder<> Builder(phi->getParent());
           Builder.SetInsertPoint(phi);
 
-          PHINode *btiPhi = Builder.CreatePHI(IntegerType::get(Val->getContext(), 32), phi->getNumIncomingValues());
-          PtrOrigMapIter iter = pointerOrigMap.find(Val);
-          GBE_ASSERT(iter != pointerOrigMap.end());
+          PHINode *btiPhi = Builder.CreatePHI(
+                                    IntegerType::get(Val->getContext(), 32),
+                                    phi->getNumIncomingValues());
           SmallVector<Value *, 4> &pointers = (*iter).second;
           unsigned srcNum = pointers.size();
           for (unsigned x = 0; x < srcNum; x++) {
