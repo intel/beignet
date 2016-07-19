@@ -22,6 +22,7 @@
 
 #include "cl_internals.h"
 #include "cl_gbe_loader.h"
+#include "cl_base_object.h"
 #include "CL/cl.h"
 
 #include <stdint.h>
@@ -49,9 +50,7 @@ typedef enum _BINARY_HEADER_INDEX {
 
 /* This maps an OCL file containing some kernels */
 struct _cl_program {
-  DEFINE_ICD(dispatch)
-  uint64_t magic;         /* To identify it as a program */
-  volatile int ref_n;     /* We reference count this object */
+  _cl_base_object base;
   gbe_program opaque;     /* (Opaque) program as ouput by the compiler */
   cl_kernel *ker;         /* All kernels included by the OCL file */
   cl_program prev, next;  /* We chain the programs together */
@@ -74,6 +73,9 @@ struct _cl_program {
 
   void* cmrt_program;      /* real type: CmProgram* */
 };
+
+#define CL_OBJECT_PROGRAM_MAGIC 0x34562ab12789cdefLL
+#define CL_OBJECT_IS_PROGRAM(obj) (((cl_base_object)obj)->magic == CL_OBJECT_PROGRAM_MAGIC)
 
 /* Create a empty program */
 extern cl_program cl_program_new(cl_context);

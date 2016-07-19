@@ -66,7 +66,7 @@ cl_program_delete(cl_program p)
     return;
 
   /* We are not done with it yet */
-  if ((ref = atomic_dec(&p->ref_n)) > 1) return;
+  if ((ref = CL_OBJECT_DEC_REF(p)) > 1) return;
 
   /* Destroy the sources and binary if still allocated */
   cl_program_release_sources(p);
@@ -120,7 +120,7 @@ cl_program_delete(cl_program p)
       interp_program_delete(p->opaque);
   }
 
-  p->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
+  CL_OBJECT_DESTROY_BASE(p);
   cl_free(p);
 }
 
@@ -132,11 +132,9 @@ cl_program_new(cl_context ctx)
 
   /* Allocate the structure */
   TRY_ALLOC_NO_ERR (p, CALLOC(struct _cl_program));
-  SET_ICD(p->dispatch)
-  p->build_status = CL_BUILD_NONE;
-  p->ref_n = 1;
-  p->magic = CL_MAGIC_PROGRAM_HEADER;
+  CL_OBJECT_INIT_BASE(p, CL_OBJECT_PROGRAM_MAGIC);
   p->ctx = ctx;
+  p->build_status = CL_BUILD_NONE;
   p->cmrt_program = NULL;
   p->build_log = calloc(BUILD_LOG_MAX_SIZE, sizeof(char));
   if (p->build_log)
@@ -155,7 +153,7 @@ LOCAL void
 cl_program_add_ref(cl_program p)
 {
   assert(p);
-  atomic_inc(&p->ref_n);
+  CL_OBJECT_INC_REF(p);
 }
 
 static cl_int
@@ -541,7 +539,7 @@ cl_program_build(cl_program p, const char *options)
   int i = 0;
   int copyed = 0;
 
-  if (p->ref_n > 1) {
+  if (CL_OBJECT_GET_REF(p) > 1) {
     err = CL_INVALID_OPERATION;
     goto error;
   }
@@ -768,7 +766,7 @@ cl_program_compile(cl_program            p,
   cl_int err = CL_SUCCESS;
   int i = 0;
 
-  if (p->ref_n > 1) {
+  if (CL_OBJECT_GET_REF(p) > 1) {
     err = CL_INVALID_OPERATION;
     goto error;
   }

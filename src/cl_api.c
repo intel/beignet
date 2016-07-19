@@ -1066,7 +1066,7 @@ clGetProgramInfo(cl_program       program,
   CHECK_PROGRAM (program);
 
   if (param_name == CL_PROGRAM_REFERENCE_COUNT) {
-    cl_uint ref = program->ref_n;
+    cl_uint ref = CL_OBJECT_GET_REF(program);
     FILL_GETINFO_RET (cl_uint, 1, (&ref), CL_SUCCESS);
   } else if (param_name == CL_PROGRAM_CONTEXT) {
     cl_context context = program->ctx;

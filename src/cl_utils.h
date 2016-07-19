@@ -263,7 +263,7 @@ do {                                                        \
     err = CL_INVALID_PROGRAM;                               \
     goto error;                                             \
   }                                                         \
-  if (UNLIKELY(PROGRAM->magic != CL_MAGIC_PROGRAM_HEADER)) {\
+  if (UNLIKELY(!CL_OBJECT_IS_PROGRAM(PROGRAM))) {          \
     err = CL_INVALID_PROGRAM;                               \
     goto error;                                             \
   }                                                         \
