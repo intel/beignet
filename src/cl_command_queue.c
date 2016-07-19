@@ -44,9 +44,7 @@ cl_command_queue_new(cl_context ctx)
 
   assert(ctx);
   TRY_ALLOC_NO_ERR (queue, CALLOC(struct _cl_command_queue));
-  SET_ICD(queue->dispatch)
-  queue->magic = CL_MAGIC_QUEUE_HEADER;
-  queue->ref_n = 1;
+  CL_OBJECT_INIT_BASE(queue, CL_OBJECT_COMMAND_QUEUE_MAGIC);
   queue->ctx = ctx;
   queue->cmrt_event = NULL;
   if ((queue->thread_data = cl_thread_data_create()) == NULL) {
@@ -76,7 +74,7 @@ LOCAL void
 cl_command_queue_delete(cl_command_queue queue)
 {
   assert(queue);
-  if (atomic_dec(&queue->ref_n) != 1) return;
+  if (CL_OBJECT_DEC_REF(queue) != 1) return;
 
 #ifdef HAS_CMRT
   if (queue->cmrt_event != NULL)
@@ -103,14 +101,14 @@ cl_command_queue_delete(cl_command_queue queue)
   cl_context_delete(queue->ctx);
   cl_free(queue->wait_events);
   cl_free(queue->barrier_events);
-  queue->magic = CL_MAGIC_DEAD_HEADER; /* For safety */
+  CL_OBJECT_DESTROY_BASE(queue);
   cl_free(queue);
 }
 
 LOCAL void
 cl_command_queue_add_ref(cl_command_queue queue)
 {
-  atomic_inc(&queue->ref_n);
+  CL_OBJECT_INC_REF(queue);
 }
 
 static void

@@ -23,6 +23,7 @@
 #include "cl_internals.h"
 #include "cl_driver.h"
 #include "cl_thread.h"
+#include "cl_base_object.h"
 #include "CL/cl.h"
 #include <stdint.h>
 
@@ -30,9 +31,7 @@ struct intel_gpgpu;
 
 /* Basically, this is a (kind-of) batch buffer */
 struct _cl_command_queue {
-  DEFINE_ICD(dispatch)
-  uint64_t magic;                      /* To identify it as a command queue */
-  volatile int ref_n;                  /* We reference count this object */
+  _cl_base_object base;
   cl_context ctx;                      /* Its parent context */
   cl_event* barrier_events;               /* Point to array of non-complete user events that block this command queue */
   cl_int    barrier_events_num;           /* Number of Non-complete user events */
@@ -47,6 +46,9 @@ struct _cl_command_queue {
 
   void* cmrt_event;                    /* the latest CmEvent* of the command queue */
 };
+
+#define CL_OBJECT_COMMAND_QUEUE_MAGIC 0x83650a12b79ce4efLL
+#define CL_OBJECT_IS_COMMAND_QUEUE(obj) (((cl_base_object)obj)->magic == CL_OBJECT_COMMAND_QUEUE_MAGIC)
 
 /* The macro to get the thread specified gpgpu struct. */
 #define GET_QUEUE_THREAD_GPGPU(queue) \

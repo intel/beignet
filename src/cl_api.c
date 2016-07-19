@@ -472,7 +472,7 @@ clGetCommandQueueInfo(cl_command_queue       command_queue,
   } else if (param_name == CL_QUEUE_DEVICE) {
     FILL_GETINFO_RET (cl_device_id, 1, &command_queue->ctx->device, CL_SUCCESS);
   } else if (param_name == CL_QUEUE_REFERENCE_COUNT) {
-    cl_uint ref = command_queue->ref_n;
+    cl_uint ref = CL_OBJECT_GET_REF(command_queue);
     FILL_GETINFO_RET (cl_uint, 1, &ref, CL_SUCCESS);
   } else if (param_name == CL_QUEUE_PROPERTIES) {
     FILL_GETINFO_RET (cl_command_queue_properties, 1, &command_queue->props, CL_SUCCESS);

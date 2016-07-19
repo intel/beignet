@@ -136,7 +136,7 @@ do {                                                        \
     err = CL_INVALID_COMMAND_QUEUE;                         \
     goto error;                                             \
   }                                                         \
-  if (UNLIKELY(QUEUE->magic != CL_MAGIC_QUEUE_HEADER)) {    \
+  if (UNLIKELY(!CL_OBJECT_IS_COMMAND_QUEUE(QUEUE))) {      \
     err = CL_INVALID_COMMAND_QUEUE;                         \
     goto error;                                             \
   }                                                         \
