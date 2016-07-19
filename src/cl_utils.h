@@ -148,7 +148,7 @@ do {                                                        \
     err = CL_INVALID_MEM_OBJECT;                            \
     goto error;                                             \
   }                                                         \
-  if (UNLIKELY(MEM->magic != CL_MAGIC_MEM_HEADER)) {        \
+  if (UNLIKELY(!CL_OBJECT_IS_MEM(MEM))) {                  \
     err = CL_INVALID_MEM_OBJECT;                            \
     goto error;                                             \
   }                                                         \

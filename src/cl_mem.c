@@ -111,7 +111,7 @@ cl_get_mem_object_info(cl_mem mem,
     *((cl_uint *)param_value) = mem->map_ref;
     break;
   case CL_MEM_REFERENCE_COUNT:
-    *((cl_uint *)param_value) = mem->ref_n;
+    *((cl_uint *)param_value) = CL_OBJECT_GET_REF(mem);
     break;
   case CL_MEM_CONTEXT:
     *((cl_context *)param_value) = mem->ctx;
@@ -262,10 +262,9 @@ cl_mem_allocate(enum cl_mem_type type,
     TRY_ALLOC (buffer, CALLOC(struct _cl_mem_buffer));
     mem = &buffer->base;
   }
+
+  CL_OBJECT_INIT_BASE(mem, CL_OBJECT_MEM_MAGIC);
   mem->type = type;
-  SET_ICD(mem->dispatch)
-  mem->ref_n = 1;
-  mem->magic = CL_MAGIC_MEM_HEADER;
   mem->flags = flags;
   mem->is_userptr = 0;
   mem->offset = 0;
@@ -390,7 +389,7 @@ is_valid_mem(cl_mem mem, cl_mem buffers)
   cl_mem tmp = buffers;
   while(tmp){
     if(mem == tmp){
-      if (UNLIKELY(mem->magic != CL_MAGIC_MEM_HEADER))
+      if (UNLIKELY(!CL_OBJECT_IS_MEM(mem)))
         return CL_INVALID_MEM_OBJECT;
       return CL_SUCCESS;
     }
@@ -558,10 +557,9 @@ cl_mem_new_sub_buffer(cl_mem buffer,
   /* Now create the sub buffer and link it to the buffer. */
   TRY_ALLOC (sub_buf, CALLOC(struct _cl_mem_buffer));
   mem = &sub_buf->base;
+
+  CL_OBJECT_INIT_BASE(mem, CL_OBJECT_MEM_MAGIC);
   mem->type = CL_MEM_SUBBUFFER_TYPE;
-  SET_ICD(mem->dispatch)
-  mem->ref_n = 1;
-  mem->magic = CL_MAGIC_MEM_HEADER;
   mem->flags = flags;
   mem->offset = buffer->offset;
   mem->is_userptr = buffer->is_userptr;
@@ -1178,7 +1176,7 @@ cl_mem_delete(cl_mem mem)
   cl_int i;
   if (UNLIKELY(mem == NULL))
     return;
-  if (atomic_dec(&mem->ref_n) > 1)
+  if (CL_OBJECT_DEC_REF(mem) > 1)
     return;
 #ifdef HAS_EGL
   if (UNLIKELY(IS_GL_IMAGE(mem))) {
@@ -1268,6 +1266,7 @@ cl_mem_delete(cl_mem mem)
       (mem->type != CL_MEM_SUBBUFFER_TYPE))
     cl_free(mem->host_ptr);
 
+  CL_OBJECT_DESTROY_BASE(mem);
   cl_free(mem);
 }
 
@@ -1275,7 +1274,7 @@ LOCAL void
 cl_mem_add_ref(cl_mem mem)
 {
   assert(mem);
-  atomic_inc(&mem->ref_n);
+  CL_OBJECT_INC_REF(mem);
 }
 
 #define LOCAL_SZ_0   16

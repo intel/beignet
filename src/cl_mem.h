@@ -23,7 +23,7 @@
 #include "cl_internals.h"
 #include "cl_driver_type.h"
 #include "CL/cl.h"
-#include "cl_khr_icd.h"
+#include "cl_base_object.h"
 #include <assert.h>
 #include <pthread.h>
 
@@ -78,11 +78,9 @@ enum cl_mem_type {
 #define IS_GL_IMAGE(mem) (mem->type == CL_MEM_GL_IMAGE_TYPE)
 
 typedef  struct _cl_mem {
-  DEFINE_ICD(dispatch)
-  uint64_t magic;           /* To identify it as a memory object */
+  _cl_base_object base;
   cl_mem prev, next;        /* We chain the memory buffers together */
   enum cl_mem_type type;
-  volatile int ref_n;       /* This object is reference counted */
   cl_buffer bo;             /* Data in GPU memory */
   size_t size;              /* original request size, not alignment size, used in constant buffer */
   cl_context ctx;           /* Context it belongs to */
@@ -99,6 +97,9 @@ typedef  struct _cl_mem {
   uint8_t cmrt_mem_type;    /* CmBuffer, CmSurface2D, ... */
   void* cmrt_mem;
 } _cl_mem;
+
+#define CL_OBJECT_MEM_MAGIC 0x381a27b9ee6504dfLL
+#define CL_OBJECT_IS_MEM(obj) (((cl_base_object)obj)->magic == CL_OBJECT_MEM_MAGIC)
 
 struct _cl_mem_image {
   _cl_mem base;
