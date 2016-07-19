@@ -215,7 +215,7 @@ do {                                                        \
       err = CL_INVALID_EVENT;                                 \
       goto error;                                             \
     }                                                         \
-    if (UNLIKELY(EVENT->magic != CL_MAGIC_EVENT_HEADER)) {    \
+    if (UNLIKELY(!CL_OBJECT_IS_EVENT(EVENT))) {              \
       err = CL_INVALID_EVENT;                                 \
       goto error;                                             \
     }                                                         \

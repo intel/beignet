@@ -1408,7 +1408,7 @@ clGetEventInfo(cl_event      event,
     cl_event_update_status(event, 0);
     FILL_GETINFO_RET (cl_int, 1, &event->status, CL_SUCCESS);
   } else if (param_name == CL_EVENT_REFERENCE_COUNT) {
-    cl_uint ref = event->ref_n;
+    cl_uint ref = CL_OBJECT_GET_REF(event);
     FILL_GETINFO_RET (cl_int, 1, &ref, CL_SUCCESS);
   } else {
     return CL_INVALID_VALUE;

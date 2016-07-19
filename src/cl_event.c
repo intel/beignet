@@ -99,9 +99,7 @@ cl_event cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type ty
 
   /* Allocate and inialize the structure itself */
   TRY_ALLOC_NO_ERR (event, CALLOC(struct _cl_event));
-  SET_ICD(event->dispatch)
-  event->magic = CL_MAGIC_EVENT_HEADER;
-  event->ref_n = 1;
+  CL_OBJECT_INIT_BASE(event, CL_OBJECT_EVENT_MAGIC);
 
   /* Append the event in the context event list */
   pthread_mutex_lock(&ctx->event_lock);
@@ -146,7 +144,7 @@ void cl_event_delete(cl_event event)
 
   cl_event_update_status(event, 0);
 
-  if (atomic_dec(&event->ref_n) > 1)
+  if (CL_OBJECT_DEC_REF(event) > 1)
     return;
 
   /* Call all user's callback if haven't execute */
@@ -176,13 +174,15 @@ void cl_event_delete(cl_event event)
     cl_gpgpu_delete(event->gpgpu);
     event->gpgpu = NULL;
   }
+
+  CL_OBJECT_DESTROY_BASE(event);
   cl_free(event);
 }
 
 void cl_event_add_ref(cl_event event)
 {
   assert(event);
-  atomic_inc(&event->ref_n);
+  CL_OBJECT_INC_REF(event);
 }
 
 cl_int cl_event_set_callback(cl_event event ,

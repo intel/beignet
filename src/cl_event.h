@@ -22,7 +22,7 @@
 
 #include <semaphore.h>
 
-#include "cl_internals.h"
+#include "cl_base_object.h"
 #include "cl_driver.h"
 #include "cl_enqueue.h"
 #include "CL/cl.h"
@@ -55,9 +55,7 @@ typedef struct _user_callback {
 } user_callback;
 
 struct _cl_event {
-  DEFINE_ICD(dispatch)
-  uint64_t           magic;       /* To identify it as a sampler object */
-  volatile int       ref_n;       /* We reference count this object */
+  _cl_base_object    base;
   cl_context         ctx;         /* The context associated with event */
   cl_event           prev, next;  /* We chain the memory buffers together */
   cl_command_queue   queue;       /* The command queue associated with event */
@@ -73,6 +71,9 @@ struct _cl_event {
   cl_ulong	     queued_timestamp;
   cl_event   last_next, last_prev;/* We need a list to monitor untouchable api event*/
 };
+
+#define CL_OBJECT_EVENT_MAGIC 0x8324a9f810ebf90fLL
+#define CL_OBJECT_IS_EVENT(obj) (((cl_base_object)obj)->magic == CL_OBJECT_EVENT_MAGIC)
 
 /* Create a new event object */
 cl_event cl_event_new(cl_context, cl_command_queue, cl_command_type, cl_bool);
