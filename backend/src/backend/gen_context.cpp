@@ -3768,7 +3768,7 @@ namespace gbe
         p->curr.execWidth = 8;
         // Mov what we need into msgs
         for(uint32_t i = 0; i < vec_size; i++)
-          p->MOV(ra->genReg(insn.dst(1 + i)), ra->genReg(insn.src(2 + i)));
+          p->MOV(GenRegister::offset(header, 1 + i), ra->genReg(insn.src(2 + i)));
         // Now read the data
         p->MBWRITE(header, insn.getbti(), vec_size);
       p->pop();
