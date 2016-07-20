@@ -216,3 +216,37 @@ OVERLOADABLE void intel_sub_group_block_write8(image2d_t p, int2 cord, uint8 dat
 {
   __gen_ocl_sub_group_block_write_image8(p, cord.x, cord.y, data);
 }
+
+#define SHUFFLE_DOWN(TYPE) \
+OVERLOADABLE TYPE intel_sub_group_shuffle_down(TYPE x, TYPE y, uint c) { \
+  TYPE res0, res1; \
+  res0 = intel_sub_group_shuffle(x, (get_sub_group_local_id() + c)%get_max_sub_group_size()); \
+  res1 = intel_sub_group_shuffle(y, (get_sub_group_local_id() + c)%get_max_sub_group_size()); \
+  bool inRange = ((int)c + (int)get_sub_group_local_id() > 0) && (((int)c + (int)get_sub_group_local_id() < (int) get_max_sub_group_size())); \
+  return inRange ? res0 : res1; \
+}
+SHUFFLE_DOWN(float)
+SHUFFLE_DOWN(int)
+SHUFFLE_DOWN(uint)
+#undef SHUFFLE_DOWN
+
+#define SHUFFLE_UP(TYPE) \
+OVERLOADABLE TYPE intel_sub_group_shuffle_up(TYPE x, TYPE y, uint c) { \
+  TYPE res0, res1; \
+  res0 = intel_sub_group_shuffle(x, (get_max_sub_group_size() + get_sub_group_local_id() - c)%get_max_sub_group_size()); \
+  res1 = intel_sub_group_shuffle(y, (get_max_sub_group_size() + get_sub_group_local_id() - c)%get_max_sub_group_size()); \
+  bool inRange = ((int)c - (int)get_sub_group_local_id() > 0) && (((int)c - (int)get_sub_group_local_id() < (int) get_max_sub_group_size())); \
+  return inRange ? res0 : res1; \
+}
+SHUFFLE_UP(float)
+SHUFFLE_UP(int)
+SHUFFLE_UP(uint)
+#undef SHUFFLE_UP
+#define SHUFFLE_XOR(TYPE) \
+OVERLOADABLE TYPE intel_sub_group_shuffle_xor(TYPE x, uint c) { \
+  return intel_sub_group_shuffle(x, (get_sub_group_local_id() ^ c) % get_max_sub_group_size()); \
+}
+SHUFFLE_XOR(float)
+SHUFFLE_XOR(int)
+SHUFFLE_XOR(uint)
+#undef SHUFFLE_XOR

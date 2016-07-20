@@ -132,6 +132,15 @@ OVERLOADABLE double sub_group_scan_exclusive_max(double x);
 OVERLOADABLE float intel_sub_group_shuffle(float x, uint c);
 OVERLOADABLE int intel_sub_group_shuffle(int x, uint c);
 OVERLOADABLE uint intel_sub_group_shuffle(uint x, uint c);
+OVERLOADABLE float intel_sub_group_shuffle_down(float x, float y, uint c);
+OVERLOADABLE int intel_sub_group_shuffle_down(int x, int y, uint c);
+OVERLOADABLE uint intel_sub_group_shuffle_down(uint x, uint y, uint c);
+OVERLOADABLE float intel_sub_group_shuffle_up(float x, float y, uint c);
+OVERLOADABLE int intel_sub_group_shuffle_up(int x, int y, uint c);
+OVERLOADABLE uint intel_sub_group_shuffle_up(uint x, uint y, uint c);
+OVERLOADABLE float intel_sub_group_shuffle_xor(float x, uint c);
+OVERLOADABLE int intel_sub_group_shuffle_xor(int x, uint c);
+OVERLOADABLE uint intel_sub_group_shuffle_xor(uint x, uint c);
 
 /* blocak read/write */
 OVERLOADABLE uint intel_sub_group_block_read(const global uint* p);
