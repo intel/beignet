@@ -5180,13 +5180,6 @@ namespace gbe
       uint32_t elemNum = vectorType->getNumElements();
       GBE_ASSERTM(elemNum == 2 || elemNum == 3 || elemNum == 4 || elemNum == 8 || elemNum == 16,
                   "Only vectors of 2,3,4,8 or 16 elements are supported");
-      // Per OPenCL 1.2 spec 6.1.5:
-      //   For 3-component vector data types, the size of the data type is 4 * sizeof(component).
-      // And the llvm does cast a type3 data to type4 for load/store instruction,
-      // so a 4 elements vector may only have 3 valid elements. We need to fix it to correct element
-      // count here.
-      if (elemNum == 4 && writer->regTranslator.isUndefConst(llvmValues, 3))
-          elemNum = 3;
 
       // The code is going to be fairly different from types to types (based on
       // size of each vector element)
