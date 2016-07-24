@@ -119,6 +119,18 @@ template <typename T, typename U> static void dump_data (T* src, U* dst, int n)
     }
 }
 
+template <typename T>
+static void check_result(T* actual, T* expected)
+{
+    OCL_ASSERT(*actual == *expected);
+}
+
+template <typename T, int N>
+static void check_result(cl_vec<T, N>* actual, cl_vec<T, N>* expected)
+{
+    OCL_ASSERT(!memcmp(actual, expected, sizeof(T)*N));
+}
+
 template <typename T, typename U> static void compiler_abs_with_type(void)
 {
     const size_t n = 16;
@@ -160,7 +172,11 @@ template <typename T, typename U> static void compiler_abs_with_type(void)
 
 //      dump_data(cpu_src, cpu_dst, n);
 
-        OCL_ASSERT(!memcmp(buf_data[1], cpu_dst, sizeof(T) * n));
+        U* actual = (U*)buf_data[1];
+        U* expected = cpu_dst;
+        for (size_t i = 0; i < n; ++i)
+            check_result(&actual[i], &expected[i]);
+
         OCL_UNMAP_BUFFER(1);
         OCL_UNMAP_BUFFER(0);
     }
