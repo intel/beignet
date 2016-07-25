@@ -78,9 +78,11 @@ struct Info_Result<char **> {
     int *elt_size;
     int size;
     typedef char** type_value;
+    int array_size;
 
     Info_Result(char **other, int *sz, int elt_num) {
-        size = elt_num;
+        array_size = elt_num;
+        size = elt_num * sizeof(char**);
 
         ret = (char **)malloc(elt_num * sizeof(char *));
         memset(ret, 0, (elt_num * sizeof(char *)));
@@ -106,7 +108,7 @@ struct Info_Result<char **> {
 
     ~Info_Result(void) {
         int i = 0;
-        for (; i < size; i++) {
+        for (; i < array_size; i++) {
             if (refer[i])
                 free(refer[i]);
             free(ret[i]);
@@ -122,7 +124,7 @@ struct Info_Result<char **> {
 
     bool check_result (void) {
         int i = 0;
-        for (; i < size; i++) {
+        for (; i < array_size; i++) {
             if (refer[i] && ::memcmp(ret[i], refer[i], elt_size[i]))
                 return false;
         }
@@ -222,7 +224,7 @@ void get_program_info(void)
     expect_value = NO_STANDARD_REF;
     maps.insert(make_pair(CL_PROGRAM_BINARY_SIZES,
                           (void *)(new Info_Result<size_t>((size_t)expect_value))));
-    sz = 4096; //big enough?
+    sz = 8192; //big enough?
     expect_source = NULL;
     maps.insert(make_pair(CL_PROGRAM_BINARIES,
                           (void *)(new Info_Result<char **>(&expect_source, &sz, 1))));
