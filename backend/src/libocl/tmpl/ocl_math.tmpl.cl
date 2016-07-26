@@ -3491,11 +3491,19 @@ OVERLOADABLE float log(float x) {
   if (__ocl_math_fastpath_flag)
     return __gen_ocl_internal_fastpath_log(x);
 
+  /* Use native instruction when it has enough precision */
+  if((x > 0x1.1p0) || (x <= 0))
+    return __gen_ocl_internal_fastpath_log(x);
+
   return  __gen_ocl_internal_log(x);
 }
 
 OVERLOADABLE float log2(float x) {
   if (__ocl_math_fastpath_flag)
+    return __gen_ocl_internal_fastpath_log2(x);
+
+  /* Use native instruction when it has enough precision */
+  if((x > 0x1.1p0) || (x <= 0))
     return __gen_ocl_internal_fastpath_log2(x);
 
   return  __gen_ocl_internal_log2(x);
@@ -3505,6 +3513,10 @@ OVERLOADABLE float log10(float x) {
   if (__ocl_math_fastpath_flag)
     return __gen_ocl_internal_fastpath_log10(x);
 
+  /* Use native instruction when it has enough precision */
+  if((x > 0x1.1p0) || (x <= 0))
+    return __gen_ocl_internal_fastpath_log10(x);
+
   return  __gen_ocl_internal_log10(x);
 }
 
@@ -3512,11 +3524,15 @@ OVERLOADABLE float exp(float x) {
   if (__ocl_math_fastpath_flag)
     return __gen_ocl_internal_fastpath_exp(x);
 
+  /* Use native instruction when it has enough precision */
+  if (x > -0x1.6p1 && x < 0x1.6p1)
+    return __gen_ocl_internal_fastpath_exp(x);
+
   return  __gen_ocl_internal_exp(x);
 }
 
 OVERLOADABLE float exp2(float x) {
-  /* Use native/faster instruction when it has enough precision, exp2 always */
+  /* Use native instruction when it has enough precision, exp2 always */
   return native_exp2(x);
 }
 
