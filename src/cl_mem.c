@@ -295,7 +295,8 @@ cl_mem_allocate(enum cl_mem_type type,
           assert(host_ptr != NULL);
           /* userptr not support tiling */
           if (!is_tiled) {
-            if (ALIGN((unsigned long)host_ptr, cacheline_size) == (unsigned long)host_ptr) {
+            if ((ALIGN((unsigned long)host_ptr, cacheline_size) == (unsigned long)host_ptr) &&
+                (ALIGN((unsigned long)sz, cacheline_size) == (unsigned long)sz)) {
               void* aligned_host_ptr = (void*)(((unsigned long)host_ptr) & (~(page_size - 1)));
               mem->offset = host_ptr - aligned_host_ptr;
               mem->is_userptr = 1;
@@ -858,6 +859,7 @@ _cl_mem_new_image(cl_context ctx,
     cl_get_device_info(ctx->device, CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, sizeof(cacheline_size), &cacheline_size, NULL);
     if (ALIGN((unsigned long)data, cacheline_size) == (unsigned long)data &&
         ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_NO_TILE, 1)) == h &&
+        ALIGN(h * pitch * depth, cacheline_size) == h * pitch * depth && //h and pitch should same as aligned_h and aligned_pitch if enable userptr
         ((image_type != CL_MEM_OBJECT_IMAGE3D && image_type != CL_MEM_OBJECT_IMAGE1D_ARRAY && image_type != CL_MEM_OBJECT_IMAGE2D_ARRAY) || pitch * h == slice_pitch)) {
       tiling = CL_NO_TILE;
       enableUserptr = 1;
