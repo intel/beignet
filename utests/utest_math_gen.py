@@ -360,7 +360,7 @@ static float ldexp(float x, int y){
   lgamma_input_values = base_input_values
   lgamma_input_type = ['float','float2','float4','float8','float16']
   lgamma_output_type = ['float','float2','float4','float8','float16']
-  lgammaUtests = func('lgamma','lgamma',[lgamma_input_type],lgamma_output_type,[lgamma_input_values],'4 * FLT_ULP')
+  lgammaUtests = func('lgamma','lgamma',[lgamma_input_type],lgamma_output_type,[lgamma_input_values],'16 * FLT_ULP')
 
   ##### gentype log(gentype)
   log_input_values = base_input_values
