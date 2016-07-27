@@ -200,6 +200,8 @@ static void workgroup_generic(WG_FUNCTION wg_func,
  */
 void compiler_workgroup_scan_exclusive_add_int(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_int *input = NULL;
   cl_int *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_scan_exclusive",
@@ -209,6 +211,8 @@ void compiler_workgroup_scan_exclusive_add_int(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_scan_exclusive_add_int);
 void compiler_workgroup_scan_exclusive_add_uint(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_scan_exclusive",
@@ -218,6 +222,8 @@ void compiler_workgroup_scan_exclusive_add_uint(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_scan_exclusive_add_uint);
 void compiler_workgroup_scan_exclusive_add_long(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_long *input = NULL;
   cl_long *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_scan_exclusive",
@@ -227,6 +233,8 @@ void compiler_workgroup_scan_exclusive_add_long(void)
 MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_scan_exclusive_add_long);
 void compiler_workgroup_scan_exclusive_add_ulong(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_ulong *input = NULL;
   cl_ulong *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_scan_exclusive",
@@ -236,6 +244,8 @@ void compiler_workgroup_scan_exclusive_add_ulong(void)
 MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_scan_exclusive_add_ulong);
 void compiler_workgroup_scan_exclusive_add_float(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_float *input = NULL;
   cl_float *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_scan_exclusive",
@@ -249,6 +259,8 @@ MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_scan_exclusive_add_float);
  */
 void compiler_workgroup_scan_exclusive_max_int(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_int *input = NULL;
   cl_int *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_scan_exclusive",
@@ -258,6 +270,8 @@ void compiler_workgroup_scan_exclusive_max_int(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_scan_exclusive_max_int);
 void compiler_workgroup_scan_exclusive_max_uint(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_scan_exclusive",
@@ -267,6 +281,8 @@ void compiler_workgroup_scan_exclusive_max_uint(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_scan_exclusive_max_uint);
 void compiler_workgroup_scan_exclusive_max_long(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_long *input = NULL;
   cl_long *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_scan_exclusive",
@@ -276,6 +292,8 @@ void compiler_workgroup_scan_exclusive_max_long(void)
 MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_scan_exclusive_max_long);
 void compiler_workgroup_scan_exclusive_max_ulong(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_ulong *input = NULL;
   cl_ulong *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_scan_exclusive",
@@ -285,6 +303,8 @@ void compiler_workgroup_scan_exclusive_max_ulong(void)
 MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_scan_exclusive_max_ulong);
 void compiler_workgroup_scan_exclusive_max_float(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_float *input = NULL;
   cl_float *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_scan_exclusive",
@@ -298,6 +318,8 @@ MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_scan_exclusive_max_float);
  */
 void compiler_workgroup_scan_exclusive_min_int(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_int *input = NULL;
   cl_int *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_scan_exclusive",
@@ -307,6 +329,8 @@ void compiler_workgroup_scan_exclusive_min_int(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_scan_exclusive_min_int);
 void compiler_workgroup_scan_exclusive_min_uint(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_scan_exclusive",
@@ -316,6 +340,8 @@ void compiler_workgroup_scan_exclusive_min_uint(void)
 MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_scan_exclusive_min_uint);
 void compiler_workgroup_scan_exclusive_min_long(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_long *input = NULL;
   cl_long *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_scan_exclusive",
@@ -325,6 +351,8 @@ void compiler_workgroup_scan_exclusive_min_long(void)
 MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_scan_exclusive_min_long);
 void compiler_workgroup_scan_exclusive_min_ulong(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_ulong *input = NULL;
   cl_ulong *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_scan_exclusive",
@@ -334,6 +362,8 @@ void compiler_workgroup_scan_exclusive_min_ulong(void)
 MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_scan_exclusive_min_ulong);
 void compiler_workgroup_scan_exclusive_min_float(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_float *input = NULL;
   cl_float *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_scan_exclusive",

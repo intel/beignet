@@ -242,6 +242,8 @@ static void workgroup_generic(WG_BROADCAST wg_broadcast,
  */
 void compiler_workgroup_broadcast_1D_int(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_int *input = NULL;
   cl_int *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_broadcast",
@@ -252,6 +254,8 @@ MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_broadcast_1D_int);
 
 void compiler_workgroup_broadcast_1D_long(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_long *input = NULL;
   cl_long *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_broadcast",
@@ -265,6 +269,8 @@ MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_broadcast_1D_long);
  */
 void compiler_workgroup_broadcast_2D_int(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_int *input = NULL;
   cl_int *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_broadcast",
@@ -275,6 +281,8 @@ MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_broadcast_2D_int);
 
 void compiler_workgroup_broadcast_2D_long(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_long *input = NULL;
   cl_long *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_broadcast",
@@ -289,6 +297,8 @@ MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_workgroup_broadcast_2D_long);
  */
 void compiler_workgroup_broadcast_3D_int(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_int *input = NULL;
   cl_int *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_broadcast",
@@ -299,6 +309,8 @@ MAKE_UTEST_FROM_FUNCTION(compiler_workgroup_broadcast_3D_int);
 
 void compiler_workgroup_broadcast_3D_long(void)
 {
+  if (!cl_check_ocl20())
+    return;
   cl_long *input = NULL;
   cl_long *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_workgroup_broadcast",
