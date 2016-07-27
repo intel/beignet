@@ -467,12 +467,14 @@ void compile_spir_binary(void)
     }
 
     //Test is successful if the backend created the file
-    if( (fp = fopen(spir_file, "r")) == NULL) {
+    if (cl_check_beignet()) {
+      if( (fp = fopen(spir_file, "r")) == NULL) {
         std::cout << "SPIR file creation.. FAILED";
         OCL_ASSERT(0);
-    } else {
+      } else {
         fclose(fp);
         std::cout << "SPIR file created.. SUCCESS";
+      }
     }
 }
 MAKE_UTEST_FROM_FUNCTION(compile_spir_binary);
