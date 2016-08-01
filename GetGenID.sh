@@ -1,5 +1,21 @@
 #!/bin/bash
-genpciid=(0152 0162 0156 0166 015a 016a 0f31 0402 0412 0422 040a 041a 042a 0406 0416 0426 0c02 0c12 0c22 0c0a 0c1a 0c2a 0c06 0c16 0c26 0a02 0a12 0a22 0a0a 0a1a 0a2a 0a06 0a16 0a26 0d02 0d12 0d22 0d0a 0d1a 0d2a 0d06 0d16 0d26 5a84)
+#IVB
+genpciid=(0152 0162 0156 0166 015a 016a)
+#BYT
+genpciid+=(0f31)
+#HSW
+genpciid+=(0402 0412 0422 040a 041a 042a 0406 0416 0426 040b 041b 042b 040e 041e 042e)
+genpciid+=(0c02 0c12 0c22 0c0a 0c1a 0c2a 0c06 0c16 0c26 0c0b 0c1b 0c2b 0c0e 0c1e 0c2e)
+genpciid+=(0a02 0a12 0a22 0a0a 0a1a 0a2a 0a06 0a16 0a26 0a0b 0a1b 0a2b 0a0e 0a1e 0a2e)
+genpciid+=(0d02 0d12 0d22 0d0a 0d1a 0d2a 0d06 0d16 0d26 0d0b 0d1b 0d2b 0d0e 0d1e 0d2e)
+#BRW
+genpciid+=(1602 1606 160a 160d 160e 1612 1616 161a 161d 161e 1622 1626 162a 162d 162e)
+#BSW
+genpciid+=(22b0 22b1 22b2 22b3)
+#SKL
+genpciid+=(1906 1916 1926 190e 191e 1902 1912 1932 190b 191b 192b 193b 190a 191a 192a 193a)
+#BXT
+genpciid+=(5a84)
 pciid=($(lspci -nn | grep "\[8086:.*\]" -o | awk -F : '{print $2}' | awk -F ] '{print $1}'))
 n=${#pciid[*]}
 i=0
