@@ -34,7 +34,7 @@ void builtin_lgamma_r(void) {
 			int gpu_signp = ((int*)buf_data[2])[i];
 			float gpu = dst[i];
 			if (cpu_signp != gpu_signp || fabsf(cpu - gpu) >= 1e-3) {
-				printf("%f %f %f\n", src[i], cpu, gpu);
+				printf("%f %f %f", src[i], cpu, gpu);
 				OCL_ASSERT(0);
 			}
 		}

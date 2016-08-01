@@ -55,7 +55,7 @@ void image_1D_buffer(void)
   OCL_MAP_BUFFER(1);
   for (uint32_t i = 0; i < buffer_sz; i++) {
     if (((uint32_t*)buf_data[1])[i] != ((uint32_t*)buf_data[0])[i])
-      printf("i %d expected %x got %x \n", i, ((uint32_t*)buf_data[0])[i], ((uint32_t*)buf_data[1])[i]);
+      printf("i %d expected %x got %x", i, ((uint32_t*)buf_data[0])[i], ((uint32_t*)buf_data[1])[i]);
     OCL_ASSERT(((uint32_t*)buf_data[1])[i] == ((uint32_t*)buf_data[0])[i]);
   }
   OCL_UNMAP_BUFFER(0);

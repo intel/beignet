@@ -29,7 +29,7 @@ void builtin_lgamma(void) {
 			float cpu = lgamma(src[i]);
 			float gpu = dst[i];
 			if (fabsf(cpu - gpu) >= 1e-3) {
-				printf("%f %f %f\n", src[i], cpu, gpu);
+				printf("%f %f %f", src[i], cpu, gpu);
 				OCL_ASSERT(0);
 			}
 		}
