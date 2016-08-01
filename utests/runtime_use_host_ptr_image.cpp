@@ -18,8 +18,12 @@ static void runtime_use_host_ptr_image(void)
   desc.image_width = w;
   desc.image_height = h;
 
+  size_t alignment = 4096;  //page size
+  if (cl_check_beignet())
+    alignment = 64;     //cacheline size, beignet has loose limitaiont to enable userptr
+
   //src image
-  int ret = posix_memalign(&buf_data[0], 64, sizeof(uint32_t) * w * h);
+  int ret = posix_memalign(&buf_data[0], alignment, sizeof(uint32_t) * w * h);
   OCL_ASSERT(ret == 0);
   for (size_t i = 0; i < w*h; ++i)
     ((uint32_t*)buf_data[0])[i] = i;
@@ -27,7 +31,7 @@ static void runtime_use_host_ptr_image(void)
   OCL_CREATE_IMAGE(buf[0], CL_MEM_USE_HOST_PTR, &format, &desc, buf_data[0]);
 
   //dst image
-  ret = posix_memalign(&buf_data[1], 64, sizeof(uint32_t) * w * h);
+  ret = posix_memalign(&buf_data[1], alignment, sizeof(uint32_t) * w * h);
   OCL_ASSERT(ret == 0);
   for (size_t i = 0; i < w*h; ++i)
     ((uint32_t*)buf_data[1])[i] = 0;

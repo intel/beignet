@@ -860,7 +860,6 @@ int cl_check_beignet(void)
   size_t ret_sz;
   OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_VERSION, 0, 0, &param_value_size);
   if(param_value_size == 0) {
-    printf("Not beignet device , Skip!");
     return 0;
   }
   char* device_version_str = (char* )malloc(param_value_size * sizeof(char) );
@@ -869,7 +868,6 @@ int cl_check_beignet(void)
 
   if(!strstr(device_version_str, "beignet")) {
     free(device_version_str);
-    printf("Not beignet device , Skip!");
     return 0;
   }
   free(device_version_str);
@@ -906,8 +904,10 @@ int cl_check_ocl20(void)
     if(cl_check_beignet()) {
       printf("Beignet extension test!");
       return 1;
+    } else {
+      printf("Not beignet device , Skip!");
+      return 0;
     }
-    return 0;
   }
   char* device_version_str = (char* )malloc(param_value_size * sizeof(char) );
   OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_OPENCL_C_VERSION, param_value_size, (void*)device_version_str, &ret_sz);
@@ -919,8 +919,10 @@ int cl_check_ocl20(void)
     if(cl_check_beignet()) {
       printf("Beignet extension test!");
       return 1;
+    } else {
+      printf("Not beignet device , Skip!");
+      return 0;
     }
-    return 0;
   }
   free(device_version_str);
   return 1;
