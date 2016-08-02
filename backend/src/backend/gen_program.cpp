@@ -186,6 +186,8 @@ namespace gbe {
       ctx = GBE_NEW(Gen9Context, unit, name, deviceID, relaxMath);
     } else if (IS_BROXTON(deviceID)) {
       ctx = GBE_NEW(BxtContext, unit, name, deviceID, relaxMath);
+    } else if (IS_KABYLAKE(deviceID)) {
+      ctx = GBE_NEW(KblContext, unit, name, deviceID, relaxMath);
     }
     GBE_ASSERTM(ctx != NULL, "Fail to create the gen context\n");
 
@@ -239,6 +241,7 @@ namespace gbe {
     GBHI_BDW = 4,
     GBHI_SKL = 5,
     GBHI_BXT = 6,
+    GBHI_KBL = 7,
     GBHI_MAX,
   };
 #define GEN_BINARY_VERSION  1
@@ -249,7 +252,8 @@ namespace gbe {
                                               {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'C', 'H', 'V'},
                                               {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'B', 'D', 'W'},
                                               {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'S', 'K', 'L'},
-                                              {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'B', 'X', 'T'}
+                                              {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'B', 'X', 'T'},
+                                              {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'K', 'B', 'T'}
                                               };
 
 #define FILL_GEN_HEADER(binary, index)  do {int i = 0; do {*(binary+i) = gen_binary_header[index][i]; i++; }while(i < GEN_BINARY_HEADER_LENGTH);}while(0)
@@ -260,6 +264,7 @@ namespace gbe {
 #define FILL_BDW_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_BDW)
 #define FILL_SKL_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_SKL)
 #define FILL_BXT_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_BXT)
+#define FILL_KBL_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_KBL)
 
   static bool genHeaderCompare(const unsigned char *BufPtr, GEN_BINARY_HEADER_INDEX index)
   {
@@ -284,6 +289,7 @@ namespace gbe {
 #define MATCH_BDW_HEADER(binary) genHeaderCompare(binary, GBHI_BDW)
 #define MATCH_SKL_HEADER(binary) genHeaderCompare(binary, GBHI_SKL)
 #define MATCH_BXT_HEADER(binary) genHeaderCompare(binary, GBHI_BXT)
+#define MATCH_KBL_HEADER(binary) genHeaderCompare(binary, GBHI_KBL)
 
 #define MATCH_DEVICE(deviceID, binary) ((IS_IVYBRIDGE(deviceID) && MATCH_IVB_HEADER(binary)) ||  \
                                       (IS_IVYBRIDGE(deviceID) && MATCH_IVB_HEADER(binary)) ||  \
@@ -292,7 +298,8 @@ namespace gbe {
                                       (IS_BROADWELL(deviceID) && MATCH_BDW_HEADER(binary)) ||  \
                                       (IS_CHERRYVIEW(deviceID) && MATCH_CHV_HEADER(binary)) ||  \
                                       (IS_SKYLAKE(deviceID) && MATCH_SKL_HEADER(binary)) || \
-                                      (IS_BROXTON(deviceID) && MATCH_BXT_HEADER(binary)) \
+                                      (IS_BROXTON(deviceID) && MATCH_BXT_HEADER(binary)) || \
+                                      (IS_KABYLAKE(deviceID) && MATCH_KBL_HEADER(binary)) \
                                       )
 
   static gbe_program genProgramNewFromBinary(uint32_t deviceID, const char *binary, size_t size) {
@@ -392,6 +399,8 @@ namespace gbe {
         FILL_SKL_HEADER(*binary);
       }else if(IS_BROXTON(prog->deviceID)){
         FILL_BXT_HEADER(*binary);
+      }else if(IS_KABYLAKE(prog->deviceID)){
+        FILL_KBL_HEADER(*binary);
       }else {
         free(*binary);
         *binary = NULL;

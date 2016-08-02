@@ -27,7 +27,7 @@
 
 namespace gbe
 {
-  /* This class is used to implement the HSW
+  /* This class is used to implement the skylake
      specific logic for context. */
   class Gen9Context : public Gen8Context
   {
@@ -67,6 +67,19 @@ namespace gbe
     virtual void newSelection(void);
     virtual void calculateFullU64MUL(GenRegister src0, GenRegister src1, GenRegister dst_h,
                                            GenRegister dst_l, GenRegister s0l_s1h, GenRegister s0h_s1l);
+  };
+  /* This class is used to implement the kabylake
+     specific logic for context. */
+  class KblContext : public Gen9Context
+  {
+    public:
+      virtual ~KblContext(void) { };
+      KblContext(const ir::Unit &unit, const std::string &name, uint32_t deviceID, bool relaxMath = false)
+        : Gen9Context(unit, name, deviceID, relaxMath) {
+        };
+
+    private:
+      virtual void newSelection(void);
   };
 }
 #endif /* __GBE_GEN9_CONTEXT_HPP__ */

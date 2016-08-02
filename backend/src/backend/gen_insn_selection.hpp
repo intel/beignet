@@ -355,6 +355,13 @@ namespace gbe
       SelectionBxt(GenContext &ctx);
   };
 
+  class SelectionKbl : public Selection
+  {
+    public:
+      /*! Initialize internal structures used for the selection */
+      SelectionKbl(GenContext &ctx);
+  };
+
 } /* namespace gbe */
 
 #endif /*  __GEN_INSN_SELECTION_HPP__ */

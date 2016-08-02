@@ -165,4 +165,8 @@ namespace gbe
     p->pop();
   }
 
+  void KblContext::newSelection(void) {
+    this->sel = GBE_NEW(SelectionKbl, *this);
+  }
+
 }
