@@ -413,13 +413,15 @@ void get_build_llvm_info(void)
         }
     }
 
-    //Test is successful if the backend created the file
-    if( (fp = fopen(llvm_file, "r")) == NULL) {
-        std::cout << "LLVM file creation.. FAILED";
-        OCL_ASSERT(0);
-    } else {
-        fclose(fp);
-        std::cout << "LLVM file created.. SUCCESS";
+    if (cl_check_beignet()) {
+       //Test is successful if the backend created the file
+       if( (fp = fopen(llvm_file, "r")) == NULL) {
+           std::cout << "LLVM file creation.. FAILED";
+           OCL_ASSERT(0);
+       } else {
+           fclose(fp);
+           std::cout << "LLVM file created.. SUCCESS";
+       }
     }
 }
 
@@ -466,8 +468,8 @@ void compile_spir_binary(void)
         }
     }
 
-    //Test is successful if the backend created the file
     if (cl_check_beignet()) {
+      //Test is successful if the backend created the file
       if( (fp = fopen(spir_file, "r")) == NULL) {
         std::cout << "SPIR file creation.. FAILED";
         OCL_ASSERT(0);
@@ -517,13 +519,15 @@ void build_spir_binary(void)
         }
     }
 
-    //Test is successful if the backend created the file
-    if( (fp = fopen(spir_file, "r")) == NULL) {
-        std::cout << "SPIR file creation.. FAILED";
-        OCL_ASSERT(0);
-    } else {
-        fclose(fp);
-        std::cout << "SPIR file created.. SUCCESS";
+    if (cl_check_beignet()) {
+      //Test is successful if the backend created the file
+      if( (fp = fopen(spir_file, "r")) == NULL) {
+          std::cout << "SPIR file creation.. FAILED";
+          OCL_ASSERT(0);
+      } else {
+          fclose(fp);
+          std::cout << "SPIR file created.. SUCCESS";
+      }
     }
 }
 MAKE_UTEST_FROM_FUNCTION(build_spir_binary);
@@ -567,13 +571,15 @@ void get_build_asm_info(void)
         }
     }
 
-    //Test is successful if the backend created the file
-    if( (fp = fopen(asm_file, "r")) == NULL) {
-        std::cout << "ASM file creation.. FAILED";
-        OCL_ASSERT(0);
-    } else {
-        fclose(fp);
-        std::cout << "ASM file created.. SUCCESS";
+    if (cl_check_beignet()) {
+      //Test is successful if the backend created the file
+      if( (fp = fopen(asm_file, "r")) == NULL) {
+          std::cout << "ASM file creation.. FAILED";
+          OCL_ASSERT(0);
+      } else {
+          fclose(fp);
+          std::cout << "ASM file created.. SUCCESS";
+      }
     }
 }
 
@@ -614,15 +620,16 @@ void get_compile_llvm_info(void)
         }
     }
 
-    //Test is successful if the backend created the file
-    if( (fp = fopen(llvm_file, "r")) == NULL) {
-        std::cout << "LLVM file creation.. FAILED";
-        OCL_ASSERT(0);
-    } else {
-        fclose(fp);
-        std::cout << "LLVM file created.. SUCCESS";
+    if (cl_check_beignet()) {
+      //Test is successful if the backend created the file
+      if( (fp = fopen(llvm_file, "r")) == NULL) {
+          std::cout << "LLVM file creation.. FAILED";
+          OCL_ASSERT(0);
+      } else {
+          fclose(fp);
+          std::cout << "LLVM file created.. SUCCESS";
+      }
     }
-
 }
 
 MAKE_UTEST_FROM_FUNCTION(get_compile_llvm_info);
@@ -662,14 +669,16 @@ void get_link_asm_info(void)
         }
     }
 
-    //Test is successful if the backend created the file
-    if( (fp = fopen(asm_file, "r")) == NULL) {
-        std::cout << "ASM file creation.. FAILED";
-        OCL_ASSERT(0);
-    } else {
-        fclose(fp);
-        std::cout << "ASM file created.. SUCCESS";
-    } 
+    if (cl_check_beignet()) {
+      //Test is successful if the backend created the file
+      if( (fp = fopen(asm_file, "r")) == NULL) {
+          std::cout << "ASM file creation.. FAILED";
+          OCL_ASSERT(0);
+      } else {
+          fclose(fp);
+          std::cout << "ASM file created.. SUCCESS";
+      }
+    }
 }
 
 MAKE_UTEST_FROM_FUNCTION(get_link_asm_info);
