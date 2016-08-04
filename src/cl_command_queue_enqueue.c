@@ -22,7 +22,8 @@
 #include "cl_alloc.h"
 #include <stdio.h>
 
-static void *worker_thread_function(void *Arg)
+static void *
+worker_thread_function(void *Arg)
 {
   cl_command_queue_enqueue_worker worker = (cl_command_queue_enqueue_worker)Arg;
   cl_command_queue queue = worker->queue;
@@ -166,6 +167,9 @@ LOCAL void
 cl_command_queue_destroy_enqueue(cl_command_queue queue)
 {
   cl_command_queue_enqueue_worker worker = &queue->worker;
+  list_head *pos;
+  list_head *n;
+  cl_event e;
 
   assert(worker->queue == queue);
   assert(worker->quit == CL_FALSE);
@@ -179,10 +183,17 @@ cl_command_queue_destroy_enqueue(cl_command_queue queue)
 
   /* We will wait for finish before destroy the command queue. */
   if (!list_empty(&worker->enqueued_events)) {
-    DEBUGP(DL_WARNING, "There are still some enqueued works in the queue %p when this queue is destroyed,"
-                       " this may cause very serious problems.\n",
+    DEBUGP(DL_WARNING, "There are still some enqueued works in the queue %p when this"
+                       " queue is destroyed, this may cause very serious problems.\n",
            queue);
-    assert(0);
+
+    list_for_each_safe(pos, n, &worker->enqueued_events)
+    {
+      e = list_entry(pos, _cl_event, enqueue_node);
+      list_del(&e->enqueue_node);
+      cl_event_set_status(e, -1); // Give waiters a chance to wakeup.
+      cl_event_delete(e);
+    }
   }
 }
 
