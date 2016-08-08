@@ -2494,7 +2494,8 @@ OVERLOADABLE float ldexp(float x, int n) {
   return __gen_ocl_internal_ldexp(x, n);
 }
 
-CONST float __gen_ocl_mad(float a, float b, float c) __asm("llvm.fma" ".f32");
+CONST OVERLOADABLE float __gen_ocl_mad(float a, float b, float c) __asm("llvm.fma" ".f32");
+CONST OVERLOADABLE half __gen_ocl_mad(half a, half b, half c) __asm("llvm.fma" ".f16");
 PURE CONST float __gen_ocl_fmax(float a, float b);
 PURE CONST float __gen_ocl_fmin(float a, float b);
 
@@ -3722,10 +3723,7 @@ OVERLOADABLE half exp2(half x) {
   return (half)exp2(_x);
 }
 OVERLOADABLE half mad(half a, half b, half c) {
-  float _a = (float)a;
-  float _b = (float)b;
-  float _c = (float)c;
-  return (half)mad(_a, _b, _c);
+  return __gen_ocl_mad(a,b,c);
 }
 OVERLOADABLE half sin(half x) {
   float _x = (float)x;

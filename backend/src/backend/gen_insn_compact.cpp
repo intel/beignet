@@ -788,6 +788,8 @@ namespace gbe {
       return false;
     if(opcode != GEN_OPCODE_MAD && opcode != GEN_OPCODE_LRP)
       return false;
+    if(src0.type != GEN_TYPE_F)
+      return false;
     assert(src0.file == GEN_GENERAL_REGISTER_FILE);
     assert(src0.address_mode == GEN_ADDRESS_DIRECT);
     assert(src0.nr < 128);

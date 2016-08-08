@@ -509,11 +509,19 @@ namespace gbe
      assert(dest.file == GEN_GENERAL_REGISTER_FILE);
      assert(dest.nr < 128);
      assert(dest.address_mode == GEN_ADDRESS_DIRECT);
-     assert(dest.type == GEN_TYPE_F);
+     assert(src0.type == GEN_TYPE_HF || src0.type == GEN_TYPE_F || src0.type == GEN_TYPE_DF);
+     assert(src0.type == dest.type);
+     assert(src0.type == src1.type);
+     assert(src0.type == src2.type);
+     int32_t dataType = src0.type == GEN_TYPE_DF ? 3 : (src0.type == GEN_TYPE_HF ? 4 : 0);
      //gen8_insn->bits1.da3src.dest_reg_file = 0;
      gen8_insn->bits1.da3src.dest_reg_nr = dest.nr;
      gen8_insn->bits1.da3src.dest_subreg_nr = dest.subnr / 4;
      gen8_insn->bits1.da3src.dest_writemask = 0xf;
+     gen8_insn->bits1.da3src.dest_type = dataType;
+     gen8_insn->bits1.da3src.src_type = dataType;
+     gen8_insn->bits1.da3src.src1_type = src1.type == GEN_TYPE_HF;
+     gen8_insn->bits1.da3src.src2_type = src2.type == GEN_TYPE_HF;
      this->setHeader(insn);
      gen8_insn->header.access_mode = GEN_ALIGN_16;
      gen8_insn->header.execution_size = execution_size;
@@ -521,7 +529,6 @@ namespace gbe
      assert(src0.file == GEN_GENERAL_REGISTER_FILE);
      assert(src0.address_mode == GEN_ADDRESS_DIRECT);
      assert(src0.nr < 128);
-     assert(src0.type == GEN_TYPE_F);
      gen8_insn->bits2.da3src.src0_swizzle = NO_SWIZZLE;
      gen8_insn->bits2.da3src.src0_subreg_nr = src0.subnr / 4 ;
      gen8_insn->bits2.da3src.src0_reg_nr = src0.nr;
@@ -532,7 +539,6 @@ namespace gbe
      assert(src1.file == GEN_GENERAL_REGISTER_FILE);
      assert(src1.address_mode == GEN_ADDRESS_DIRECT);
      assert(src1.nr < 128);
-     assert(src1.type == GEN_TYPE_F);
      gen8_insn->bits2.da3src.src1_swizzle = NO_SWIZZLE;
      gen8_insn->bits2.da3src.src1_subreg_nr_low = (src1.subnr / 4) & 0x3;
      gen8_insn->bits3.da3src.src1_subreg_nr_high = (src1.subnr / 4) >> 2;
@@ -544,7 +550,6 @@ namespace gbe
      assert(src2.file == GEN_GENERAL_REGISTER_FILE);
      assert(src2.address_mode == GEN_ADDRESS_DIRECT);
      assert(src2.nr < 128);
-     assert(src2.type == GEN_TYPE_F);
      gen8_insn->bits3.da3src.src2_swizzle = NO_SWIZZLE;
      gen8_insn->bits3.da3src.src2_subreg_nr = src2.subnr / 4;
      gen8_insn->bits3.da3src.src2_rep_ctrl = src2.vstride == GEN_VERTICAL_STRIDE_0;
