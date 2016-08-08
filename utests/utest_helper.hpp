@@ -299,4 +299,11 @@ extern clGetKernelSubGroupInfoKHR_cb* utestclGetKernelSubGroupInfoKHR;
 
 /* Check is cl version 2.0. */
 extern int cl_check_ocl20(void);
+
+/* Check is FP16 enabled. */
+extern int cl_check_half(void);
+
+/* Helper function for half type numbers */
+extern uint32_t __half_to_float(uint16_t h, bool* isInf = NULL, bool* infSign = NULL);
+extern uint16_t __float_to_half(uint32_t x);
 #endif /* __UTEST_HELPER_HPP__ */

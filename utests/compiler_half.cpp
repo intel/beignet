@@ -2,126 +2,7 @@
 #include <cstring>
 #include <iostream>
 #include <cmath>
-#include <algorithm>
 #include "utest_helper.hpp"
-
-static uint32_t __half_to_float(uint16_t h, bool* isInf = NULL, bool* infSign = NULL)
-{
-  struct __FP32 {
-    uint32_t mantissa:23;
-    uint32_t exponent:8;
-    uint32_t sign:1;
-  };
-  struct __FP16 {
-    uint32_t mantissa:10;
-    uint32_t exponent:5;
-    uint32_t sign:1;
-  };
-  uint32_t f;
-  __FP32 o;
-  memset(&o, 0, sizeof(o));
-  __FP16 i;
-  memcpy(&i, &h, sizeof(uint16_t));
-
-  if (isInf)
-    *isInf = false;
-  if (infSign)
-    *infSign = false;
-
-  if (i.exponent == 0 && i.mantissa == 0) // (Signed) zero
-    o.sign = i.sign;
-  else {
-    if (i.exponent == 0) { // Denormal (converts to normalized)
-      // Adjust mantissa so it's normalized (and keep
-      // track of exponent adjustment)
-      int e = -1;
-      uint m = i.mantissa;
-      do {
-        e++;
-        m <<= 1;
-      } while ((m & 0x400) == 0);
-
-      o.mantissa = (m & 0x3ff) << 13;
-      o.exponent = 127 - 15 - e;
-      o.sign = i.sign;
-    } else if (i.exponent == 0x1f) { // Inf/NaN
-      // NOTE: Both can be handled with same code path
-      // since we just pass through mantissa bits.
-      o.mantissa = i.mantissa << 13;
-      o.exponent = 255;
-      o.sign = i.sign;
-
-      if (isInf) {
-        *isInf = (i.mantissa == 0);
-        if (infSign)
-          *infSign = !i.sign;
-      }
-    } else { // Normalized number
-      o.mantissa = i.mantissa << 13;
-      o.exponent = 127 - 15 + i.exponent;
-      o.sign = i.sign;
-    }
-  }
-
-  memcpy(&f, &o, sizeof(uint32_t));
-  return f;
-}
-
-
-static uint16_t __float_to_half(uint32_t x)
-{
-  uint16_t bits = (x >> 16) & 0x8000; /* Get the sign */
-  uint16_t m = (x >> 12) & 0x07ff; /* Keep one extra bit for rounding */
-  unsigned int e = (x >> 23) & 0xff; /* Using int is faster here */
-
-  /* If zero, or denormal, or exponent underflows too much for a denormal
-   * half, return signed zero. */
-  if (e < 103)
-    return bits;
-
-  /* If NaN, return NaN. If Inf or exponent overflow, return Inf. */
-  if (e > 142) {
-    bits |= 0x7c00u;
-    /* If exponent was 0xff and one mantissa bit was set, it means NaN,
-     * not Inf, so make sure we set one mantissa bit too. */
-    bits |= e == 255 && (x & 0x007fffffu);
-    return bits;
-  }
-
-  /* If exponent underflows but not too much, return a denormal */
-  if (e < 113) {
-    m |= 0x0800u;
-    /* Extra rounding may overflow and set mantissa to 0 and exponent
-     * to 1, which is OK. */
-    bits |= (m >> (114 - e)) + ((m >> (113 - e)) & 1);
-    return bits;
-  }
-
-  bits |= ((e - 112) << 10) | (m >> 1);
-  /* Extra rounding. An overflow will set mantissa to 0 and increment
-   * the exponent, which is OK. */
-  bits += m & 1;
-  return bits;
-}
-
-static int check_half_device(void)
-{
-  std::string extStr;
-  size_t param_value_size;
-  OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_EXTENSIONS, 0, 0, &param_value_size);
-  std::vector<char> param_value(param_value_size);
-  OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_EXTENSIONS, param_value_size,
-           param_value.empty() ? NULL : &param_value.front(), &param_value_size);
-  if (!param_value.empty())
-    extStr = std::string(&param_value.front(), param_value_size-1);
-
-  if (std::strstr(extStr.c_str(), "cl_khr_fp16") == NULL) {
-    printf("No cl_khr_fp16, Skip!");
-    return 0;
-  }
-
-  return 1;
-}
 
 void compiler_half_basic(void)
 {
@@ -131,7 +12,7 @@ void compiler_half_basic(void)
   float f = 2.5;
   uint32_t tmp_f;
 
-  if (!check_half_device())
+  if (!cl_check_half())
     return;
 
   memcpy(&tmp_f, &f, sizeof(float));
@@ -197,7 +78,7 @@ static float half_test_src[half_n] = {
     uint32_t tmp_f;                                                     \
     float f;                                                            \
                                                                         \
-    if (!check_half_device())                                           \
+    if (!cl_check_half())                                           \
       return;                                                           \
                                                                         \
     OCL_CREATE_KERNEL_FROM_FILE("compiler_half_math", "compiler_half_math_" #NAME); \
@@ -263,7 +144,7 @@ HALF_MATH_TEST_1ARG(ceil, ceilf);
     uint32_t tmp_f;                                                     \
     float f;                                                            \
                                                                         \
-    if (!check_half_device())                                           \
+    if (!cl_check_half())                                           \
       return;                                                           \
                                                                         \
     OCL_CREATE_KERNEL_FROM_FILE("compiler_half_math", "compiler_half_math_" #NAME); \
@@ -325,7 +206,7 @@ void compiler_half_isnan(void)
   const size_t n = 16*2;
   uint16_t hsrc[n];
 
-  if (!check_half_device())
+  if (!cl_check_half())
     return;
 
   // Setup kernel and buffers
@@ -366,7 +247,7 @@ void compiler_half_isinf(void)
   const size_t n = 16;
   uint16_t hsrc[n];
 
-  if (!check_half_device())
+  if (!cl_check_half())
     return;
 
   // Setup kernel and buffers
@@ -413,7 +294,7 @@ void compiler_half_to_float(void)
   float fdst[n];
   uint32_t tmp_f;
 
-  if (!check_half_device())
+  if (!cl_check_half())
     return;
 
   // Setup kernel and buffers
@@ -458,7 +339,7 @@ void compiler_half_as_char2(void)
   uint16_t hsrc[n];
   uint8_t* csrc = (uint8_t*)hsrc;
 
-  if (!check_half_device())
+  if (!cl_check_half())
     return;
 
   // Setup kernel and buffers
@@ -500,7 +381,7 @@ void compiler_half2_as_int(void)
   uint16_t hsrc[n];
   int* isrc = (int*)hsrc;
 
-  if (!check_half_device())
+  if (!cl_check_half())
     return;
 
   // Setup kernel and buffers
@@ -544,7 +425,7 @@ void compiler_half_to_char_sat(void)
   char dst[n];
   uint32_t tmp_f;
 
-  if (!check_half_device())
+  if (!cl_check_half())
     return;
 
   // Setup kernel and buffers
@@ -597,7 +478,7 @@ void compiler_half_to_ushort_sat(void)
   uint16_t dst[n];
   uint32_t tmp_f;
 
-  if (!check_half_device())
+  if (!cl_check_half())
     return;
 
   // Setup kernel and buffers
@@ -648,7 +529,7 @@ void compiler_half_to_uint_sat(void)
   uint32_t dst[n];
   uint32_t tmp_f;
 
-  if (!check_half_device())
+  if (!cl_check_half())
     return;
 
   // Setup kernel and buffers
@@ -698,7 +579,7 @@ void compiler_uchar_to_half(void)
   float fdst[n];
   uint32_t tmp_f;
 
-  if (!check_half_device())
+  if (!cl_check_half())
     return;
 
   // Setup kernel and buffers
@@ -745,7 +626,7 @@ void compiler_int_to_half(void)
   float fdst[n];
   uint32_t tmp_f;
 
-  if (!check_half_device())
+  if (!cl_check_half())
     return;
 
   // Setup kernel and buffers
@@ -793,7 +674,7 @@ void compiler_half_to_long(void)
   uint32_t tmp_f;
   float f;
 
-  if (!check_half_device())
+  if (!cl_check_half())
     return;
 
   // Setup kernel and buffers
@@ -840,7 +721,7 @@ void compiler_ulong_to_half(void)
   uint32_t tmp_f;
   float f;
 
-  if (!check_half_device())
+  if (!cl_check_half())
     return;
 
   // Setup kernel and buffers
@@ -887,7 +768,7 @@ void compiler_half_to_long_sat(void)
   uint32_t tmp_f;
   float f;
 
-  if (!check_half_device())
+  if (!cl_check_half())
     return;
 
   // Setup kernel and buffers
@@ -938,7 +819,7 @@ void compiler_half_to_double(void)
   uint32_t tmp_f;
   float f;
 
-//  if (!check_half_device())
+//  if (!cl_check_half())
 //    return;
   if (!cl_check_double())
     return;
@@ -988,7 +869,7 @@ void compiler_double_to_half(void)
   uint32_t tmp_f;
   float f;
 
-//  if (!check_half_device())
+//  if (!cl_check_half())
 //    return;
   if (!cl_check_double())
     return;
