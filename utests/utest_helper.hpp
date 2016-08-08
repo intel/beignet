@@ -52,6 +52,11 @@ extern EGLContext  eglContext;
 extern EGLSurface  eglSurface;
 #endif
 
+union uint32_cast {
+  uint32_t _uint;
+  float _float;
+};
+
 #define OCL_THROW_ERROR(FN, STATUS) \
   do { \
     char msg[2048]; \
@@ -306,4 +311,6 @@ extern int cl_check_half(void);
 /* Helper function for half type numbers */
 extern uint32_t __half_to_float(uint16_t h, bool* isInf = NULL, bool* infSign = NULL);
 extern uint16_t __float_to_half(uint32_t x);
+extern float as_float(uint32_t i);
+extern uint32_t as_uint(float f);
 #endif /* __UTEST_HELPER_HPP__ */

@@ -1046,3 +1046,13 @@ uint16_t __float_to_half(uint32_t x)
   bits += m & 1;
   return bits;
 }
+uint32_t as_uint(float f) {
+  union uint32_cast _tmp;
+  _tmp._float = f;
+  return _tmp._uint;
+}
+float as_float(uint32_t i) {
+  union uint32_cast _tmp;
+  _tmp._uint = i;
+  return _tmp._float;
+}
