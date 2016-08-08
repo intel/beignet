@@ -120,6 +120,7 @@ OVERLOADABLE void vstore16(TYPE##16 v, size_t offset, SPACE TYPE *p) { \
   DECL_BYTE_WR_SPACE(TYPE, __private)
 
 DECL_BYTE_RW_ALL(char)
+DECL_BYTE_RW_ALL(half)
 DECL_BYTE_RW_ALL(uchar)
 DECL_BYTE_RW_ALL(short)
 DECL_BYTE_RW_ALL(ushort)
