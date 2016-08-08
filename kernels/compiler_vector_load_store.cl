@@ -17,6 +17,7 @@ __kernel void test_##type ##n(__global type *pin, \
   vstore ##n(value, x, pout); \
 }
 
+#ifndef HALF
 #define TEST_ALL_TYPE(n) \
   TEST_TYPE(char,n)  \
   TEST_TYPE(uchar,n) \
@@ -27,11 +28,12 @@ __kernel void test_##type ##n(__global type *pin, \
   TEST_TYPE(float,n) \
   TEST_TYPE(long,n)  \
   TEST_TYPE(ulong,n)
-//  TEST_TYPE(double,n)
-
-#if 0
+#else
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
+#define TEST_ALL_TYPE(n) \
   TEST_TYPE(half,n)
 #endif
+//  TEST_TYPE(double,n)
 
 TEST_ALL_TYPE(2)
 TEST_ALL_TYPE(3)
