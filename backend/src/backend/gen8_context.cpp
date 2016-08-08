@@ -1343,6 +1343,8 @@ namespace gbe
         p->MOV(dataReg, GenRegister::immd(0x0));
       else if (dataReg.type == GEN_TYPE_UD)
         p->MOV(dataReg, GenRegister::immud(0x0));
+      else if (dataReg.type == GEN_TYPE_HF)
+        p->MOV(dataReg, GenRegister::immh(0x0));
       else if (dataReg.type == GEN_TYPE_F)
         p->MOV(dataReg, GenRegister::immf(0x0));
       else if (dataReg.type == GEN_TYPE_L)
@@ -1361,6 +1363,8 @@ namespace gbe
         p->MOV(dataReg, GenRegister::immd(0x7FFFFFFF));
       else if (dataReg.type == GEN_TYPE_UD)
         p->MOV(dataReg, GenRegister::immud(0xFFFFFFFF));
+      else if (dataReg.type == GEN_TYPE_HF)
+        p->MOV(GenRegister::retype(dataReg, GEN_TYPE_UW), GenRegister::immuw(0x7C00));
       else if (dataReg.type == GEN_TYPE_F)
         p->MOV(GenRegister::retype(dataReg, GEN_TYPE_UD), GenRegister::immud(0x7F800000));
       else if (dataReg.type == GEN_TYPE_L)
@@ -1379,6 +1383,8 @@ namespace gbe
         p->MOV(dataReg, GenRegister::immd(0x80000000));
       else if (dataReg.type == GEN_TYPE_UD)
         p->MOV(dataReg, GenRegister::immud(0x0));
+      else if (dataReg.type == GEN_TYPE_HF)
+        p->MOV(GenRegister::retype(dataReg, GEN_TYPE_UW), GenRegister::immuw(0xFC00));
       else if (dataReg.type == GEN_TYPE_F)
         p->MOV(GenRegister::retype(dataReg, GEN_TYPE_UD), GenRegister::immud(0xFF800000));
       else if (dataReg.type == GEN_TYPE_L)

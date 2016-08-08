@@ -5993,7 +5993,8 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         }
         else {
           GenRegister shiftL = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-          sel.SHL(shiftL, src1, GenRegister::immud(0x2));
+          uint32_t SHLimm = typeSize(getGenType(type)) == 2 ? 1 : (typeSize(getGenType(type)) == 4 ? 2 : 3);
+          sel.SHL(shiftL, src1, GenRegister::immud(SHLimm));
           sel.SIMD_SHUFFLE(dst, src0, shiftL);
         }
       }
@@ -6658,7 +6659,8 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           sel.MOV(dst, reg);
       } else {
         GenRegister shiftL = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-        sel.SHL(shiftL, src1, GenRegister::immud(0x2));
+        uint32_t SHLimm = typeSize(getGenType(type)) == 2 ? 1 : (typeSize(getGenType(type)) == 4 ? 2 : 3);
+        sel.SHL(shiftL, src1, GenRegister::immud(SHLimm));
         sel.SIMD_SHUFFLE(dst, src0, shiftL);
       }
       } sel.pop();
