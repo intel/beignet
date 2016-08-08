@@ -35,6 +35,18 @@ OVERLOADABLE float dot(float3 p0, float3 p1) {
 OVERLOADABLE float dot(float4 p0, float4 p1) {
   return p0.x * p1.x + p0.y * p1.y + p0.z * p1.z + p0.w * p1.w;
 }
+OVERLOADABLE half dot(half p0, half p1) {
+  return p0 * p1;
+}
+OVERLOADABLE half dot(half2 p0, half2 p1) {
+  return p0.x * p1.x + p0.y * p1.y;
+}
+OVERLOADABLE half dot(half3 p0, half3 p1) {
+  return p0.x * p1.x + p0.y * p1.y + p0.z * p1.z;
+}
+OVERLOADABLE half dot(half4 p0, half4 p1) {
+  return p0.x * p1.x + p0.y * p1.y + p0.z * p1.z + p0.w * p1.w;
+}
 OVERLOADABLE float length(float x) { return __gen_ocl_fabs(x); }
 
 #define BODY \
