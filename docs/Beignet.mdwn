@@ -104,6 +104,10 @@ your library installation directory.
 It installs the OCL icd vendor files to /etc/OpenCL/vendors, if the system support ICD.
 - intel-beignet.icd
 
+`> make package`
+
+It packages the driver binaries, you may copy&install the package to another machine with simillar system.
+
 How to run
 ----------
 
