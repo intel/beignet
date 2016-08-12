@@ -76,6 +76,10 @@ struct UTest
   static void runAll(void);
   /*! List all test cases */
   static void listAllCases(void);
+  /*! List test cases that can run*/
+  static void listCasesCanRun(void);
+  /*! List test cases with issue*/
+  static void listCasesWithIssue(void);
   /*! Statistics struct */
   static RStatistics retStatistics;
   /*! Do run a test case actually */

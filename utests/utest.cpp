@@ -248,9 +248,30 @@ void UTest::runAllBenchMark(void) {
 void UTest::listAllCases()
 {
   if (utestList == NULL) return;
-    for (size_t i = 0; i < utestList->size(); ++i) {
-      const UTest &utest = (*utestList)[i];
-      if (utest.fn == NULL) continue;
+  for (size_t i = 0; i < utestList->size(); ++i) {
+    const UTest &utest = (*utestList)[i];
+    if (utest.fn == NULL)
+      continue;
     std::cout << utest.name << std::endl;
- }
+  }
+}
+void UTest::listCasesCanRun()
+{
+  if (utestList == NULL) return;
+  for (size_t i = 0; i < utestList->size(); ++i) {
+    const UTest &utest = (*utestList)[i];
+    if (utest.fn == NULL || utest.haveIssue || utest.isBenchMark)
+      continue;
+    std::cout << utest.name << std::endl;
+  }
+}
+void UTest::listCasesWithIssue()
+{
+  if (utestList == NULL) return;
+  for (size_t i = 0; i < utestList->size(); ++i) {
+    const UTest &utest = (*utestList)[i];
+    if (utest.fn == NULL || !utest.haveIssue || utest.isBenchMark)
+      continue;
+    std::cout << utest.name << std::endl;
+  }
 }
