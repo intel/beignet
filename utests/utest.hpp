@@ -98,7 +98,7 @@ struct UTest
 /*! Register a test case which has issue to be fixed */
 #define MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(FN) \
   static void __ANON__##FN##__(void) { UTEST_EXPECT_SUCCESS(FN()); } \
-  static const UTest __##FN##__(__ANON__##FN##__, #FN, true);
+  static const UTest __##FN##__(__ANON__##FN##__, #FN, false ,true);
 
 /*! Turn a function into a unit performance test */
 #define MAKE_BENCHMARK_FROM_FUNCTION_KEEP_PROGRAM(FN, KEEP_PROGRAM, ...) \
