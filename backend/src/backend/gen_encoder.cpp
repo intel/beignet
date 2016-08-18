@@ -1270,7 +1270,7 @@ namespace gbe
                 insn,
                 bti,
                 size,
-                GEN7_OBLOCK_READ,
+                GEN7_UNALIGNED_OBLOCK_READ,
                 msg_length,
                 response_length);
   }
