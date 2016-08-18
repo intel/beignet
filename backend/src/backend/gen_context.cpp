@@ -3507,7 +3507,7 @@ namespace gbe
 
       // Update the header with the current address
       p->curr.execWidth = 1;
-      p->SHR(headeraddr, addr, GenRegister::immud(4));
+      p->MOV(headeraddr, addr);
 
       // Put zero in the general state base address
       p->MOV(GenRegister::offset(header, 0, 5 * 4), GenRegister::immud(0));
@@ -3540,7 +3540,7 @@ namespace gbe
             {
               // Update the address in header
               p->curr.execWidth = 1;
-              p->ADD(headeraddr, headeraddr, GenRegister::immud(8));
+              p->ADD(headeraddr, headeraddr, GenRegister::immud(128));
             }
             p->pop();
           }
@@ -3561,7 +3561,7 @@ namespace gbe
             {
               // Update the address in header
               p->curr.execWidth = 1;
-              p->ADD(headeraddr, headeraddr, GenRegister::immud(8));
+              p->ADD(headeraddr, headeraddr, GenRegister::immud(128));
             }
             p->pop();
           }
