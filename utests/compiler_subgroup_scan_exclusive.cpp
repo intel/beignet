@@ -32,36 +32,56 @@ template<class T>
 static void compute_expected(WG_FUNCTION wg_func,
                     T* input,
                     T* expected,
-                    size_t SIMD_SIZE)
+                    size_t SIMD_SIZE,
+                    bool IS_HALF)
 {
   if(wg_func == WG_SCAN_EXCLUSIVE_ADD)
   {
     expected[0] = 0;
     expected[1] = input[0];
-    for(uint32_t i = 2; i < SIMD_SIZE; i++)
-      expected[i] = input[i - 1] + expected[i - 1];
+    for(uint32_t i = 2; i < SIMD_SIZE; i++) {
+      if (IS_HALF)
+        expected[i] = __float_to_half(as_uint(as_float(__half_to_float(input[i - 1])) +
+                                              as_float(__half_to_float(expected[i - 1]))));
+      else
+        expected[i] = input[i - 1] + expected[i - 1];
+    }
   }
   else if(wg_func == WG_SCAN_EXCLUSIVE_MAX)
   {
-    if(numeric_limits<T>::is_integer)
+    if(IS_HALF)
+      expected[0] = 0xFC00;
+    else if(numeric_limits<T>::is_integer)
       expected[0] = numeric_limits<T>::min();
     else
       expected[0] = - numeric_limits<T>::infinity();
 
     expected[1] = input[0];
-    for(uint32_t i = 2; i < SIMD_SIZE; i++)
-      expected[i] = max(input[i - 1], expected[i - 1]);
+    for(uint32_t i = 2; i < SIMD_SIZE; i++) {
+      if (IS_HALF)
+        expected[i] = (as_float(__half_to_float(input[i - 1])) > as_float(__half_to_float(expected[i - 1]))) ?
+                      input[i - 1] : expected[i - 1];
+      else
+        expected[i] = max(input[i - 1], expected[i - 1]);
+    }
   }
   else if(wg_func == WG_SCAN_EXCLUSIVE_MIN)
   {
-    if(numeric_limits<T>::is_integer)
+    if(IS_HALF)
+      expected[0] = 0x7C00;
+    else if(numeric_limits<T>::is_integer)
       expected[0] = numeric_limits<T>::max();
     else
       expected[0] = numeric_limits<T>::infinity();
 
     expected[1] = input[0];
-    for(uint32_t i = 2; i < SIMD_SIZE; i++)
-      expected[i] = min(input[i - 1], expected[i - 1]);
+    for(uint32_t i = 2; i < SIMD_SIZE; i++) {
+      if (IS_HALF)
+        expected[i] = (as_float(__half_to_float(input[i - 1])) < as_float(__half_to_float(expected[i - 1]))) ?
+                      input[i - 1] : expected[i - 1];
+      else
+        expected[i] = min(input[i - 1], expected[i - 1]);
+    }
   }
 }
 
@@ -73,7 +93,8 @@ template<class T>
 static void generate_data(WG_FUNCTION wg_func,
                    T* &input,
                    T* &expected,
-                   size_t SIMD_SIZE)
+                   size_t SIMD_SIZE,
+                   bool IS_HALF)
 {
   input = new T[WG_GLOBAL_SIZE];
   expected = new T[WG_GLOBAL_SIZE];
@@ -101,6 +122,8 @@ static void generate_data(WG_FUNCTION wg_func,
       input[gid + lid] += ((rand() % 2 - 1) * base_val);
       /* add trailing random bits, tests GENERAL cases */
       input[gid + lid] += (rand() % 112);
+      if (IS_HALF)
+        input[gid + lid] = __float_to_half(as_uint((float)input[gid + lid]/2));
 
 #if DEBUG_STDOUT
       /* output generated input */
@@ -111,7 +134,7 @@ static void generate_data(WG_FUNCTION wg_func,
     }
 
     /* expected values */
-    compute_expected(wg_func, input + gid, expected + gid, SIMD_SIZE);
+    compute_expected(wg_func, input + gid, expected + gid, SIMD_SIZE, IS_HALF);
 
 #if DEBUG_STDOUT
     /* output expected input */
@@ -134,7 +157,8 @@ static void generate_data(WG_FUNCTION wg_func,
 template<class T>
 static void subgroup_generic(WG_FUNCTION wg_func,
                        T* input,
-                       T* expected)
+                       T* expected,
+                       bool IS_HALF = false)
 {
   /* get simd size */
   globals[0] = WG_GLOBAL_SIZE;
@@ -143,7 +167,7 @@ static void subgroup_generic(WG_FUNCTION wg_func,
   OCL_CALL(utestclGetKernelSubGroupInfoKHR,kernel,device,CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR,sizeof(size_t)*1,locals,sizeof(size_t),&SIMD_SIZE,NULL);
 
   /* input and expected data */
-  generate_data(wg_func, input, expected, SIMD_SIZE);
+  generate_data(wg_func, input, expected, SIMD_SIZE, IS_HALF);
 
   /* prepare input for data type */
   OCL_CREATE_BUFFER(buf[0], 0, WG_GLOBAL_SIZE * sizeof(T), NULL);
@@ -166,8 +190,21 @@ static void subgroup_generic(WG_FUNCTION wg_func,
   for (uint32_t i = 0; i < WG_GLOBAL_SIZE; i++)
     if(((T *)buf_data[1])[i] != *(expected + i))
     {
+      if (IS_HALF) {
+        float num_computed = as_float(__half_to_float(((T *)buf_data[1])[i]));
+        float num_expected = as_float(__half_to_float(*(expected + i)));
+        float num_diff = abs(num_computed - num_expected) / abs(num_expected);
+        if (num_diff > 0.03f) {
+          mismatches++;
+#if DEBUG_STDOUT
+          /* output mismatch */
+          cout << "Err at " << i << ", " << num_computed
+               << " != " << num_expected <<" diff: " <<num_diff <<endl;
+#endif
+        }
+      }
       /* found mismatch on integer, increment */
-      if(numeric_limits<T>::is_integer){
+      else if (numeric_limits<T>::is_integer) {
         mismatches++;
 
 #if DEBUG_STDOUT
@@ -261,6 +298,20 @@ void compiler_subgroup_scan_exclusive_add_float(void)
   subgroup_generic(WG_SCAN_EXCLUSIVE_ADD, input, expected);
 }
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_exclusive_add_float);
+void compiler_subgroup_scan_exclusive_add_half(void)
+{
+  if(!cl_check_subgroups())
+    return;
+  if(!cl_check_half())
+    return;
+  cl_half *input = NULL;
+  cl_half *expected = NULL;
+  OCL_CALL(cl_kernel_init, "compiler_subgroup_scan_exclusive.cl",
+                           "compiler_subgroup_scan_exclusive_add_half",
+                           SOURCE, "-DHALF");
+  subgroup_generic(WG_SCAN_EXCLUSIVE_ADD, input, expected, true);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_exclusive_add_half);
 
 /*
  * Workgroup scan_exclusive max utest functions
@@ -320,6 +371,20 @@ void compiler_subgroup_scan_exclusive_max_float(void)
   subgroup_generic(WG_SCAN_EXCLUSIVE_MAX, input, expected);
 }
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_exclusive_max_float);
+void compiler_subgroup_scan_exclusive_max_half(void)
+{
+  if(!cl_check_subgroups())
+    return;
+  if(!cl_check_half())
+    return;
+  cl_half *input = NULL;
+  cl_half *expected = NULL;
+  OCL_CALL(cl_kernel_init, "compiler_subgroup_scan_exclusive.cl",
+                           "compiler_subgroup_scan_exclusive_max_half",
+                           SOURCE, "-DHALF");
+  subgroup_generic(WG_SCAN_EXCLUSIVE_MAX, input, expected, true);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_exclusive_max_half);
 
 /*
  * Workgroup scan_exclusive min utest functions
@@ -379,3 +444,17 @@ void compiler_subgroup_scan_exclusive_min_float(void)
   subgroup_generic(WG_SCAN_EXCLUSIVE_MIN, input, expected);
 }
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_exclusive_min_float);
+void compiler_subgroup_scan_exclusive_min_half(void)
+{
+  if(!cl_check_subgroups())
+    return;
+  if(!cl_check_half())
+    return;
+  cl_half *input = NULL;
+  cl_half *expected = NULL;
+  OCL_CALL(cl_kernel_init, "compiler_subgroup_scan_exclusive.cl",
+                           "compiler_subgroup_scan_exclusive_min_half",
+                           SOURCE, "-DHALF");
+  subgroup_generic(WG_SCAN_EXCLUSIVE_MIN, input, expected, true);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_exclusive_min_half);

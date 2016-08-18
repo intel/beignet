@@ -59,10 +59,15 @@ static void generate_data(T* &input,
       /* initially 0, augment after */
       input[gid + lid] = 0;
 
-      /* check all data types, test ideal for QWORD types */
-      input[gid + lid] += ((rand() % 2 - 1) * base_val);
-      /* add trailing random bits, tests GENERAL cases */
-      input[gid + lid] += (rand() % 112);
+      if(sizeof(T) == 2) {
+        input[gid + lid] = __float_to_half(as_uint((float)(gid + lid)));
+      }
+      else {
+        /* check all data types, test ideal for QWORD types */
+        input[gid + lid] += ((rand() % 2 - 1) * base_val);
+        /* add trailing random bits, tests GENERAL cases */
+        input[gid + lid] += (rand() % 112);
+      }
 
 #if DEBUG_STDOUT
       /* output generated input */
@@ -185,3 +190,17 @@ void compiler_subgroup_broadcast_long(void)
   subgroup_generic(input, expected);
 }
 MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_subgroup_broadcast_long);
+void compiler_subgroup_broadcast_half(void)
+{
+  if(!cl_check_subgroups())
+    return;
+  if(!cl_check_half())
+    return;
+  cl_half *input = NULL;
+  cl_half *expected = NULL;
+  OCL_CALL(cl_kernel_init, "compiler_subgroup_broadcast.cl",
+                           "compiler_subgroup_broadcast_half",
+                           SOURCE, "-DHALF");
+  subgroup_generic(input, expected);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_broadcast_half);

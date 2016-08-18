@@ -1,7 +1,7 @@
 /*
  * Subgroup broadcast 1D functions
  */
-
+#ifndef HALF
 kernel void compiler_subgroup_broadcast_imm_int(global int *src,
                                                 global int *dst,
                                                 uint simd_id)
@@ -32,3 +32,17 @@ kernel void compiler_subgroup_broadcast_long(global long *src,
   long broadcast_val = sub_group_broadcast(val, simd_id);
   dst[index] = broadcast_val;
 }
+#else
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
+kernel void compiler_subgroup_broadcast_half(global half *src,
+                                                global half *dst,
+                                                uint simd_id)
+{
+  uint index = get_global_id(0);
+
+  half val = src[index];
+  half broadcast_val = sub_group_broadcast(val, simd_id);
+  printf("%d val %d is %d\n",index,as_ushort(val), as_ushort(broadcast_val));
+  dst[index] = broadcast_val;
+}
+#endif
