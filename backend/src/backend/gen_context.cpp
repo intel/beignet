@@ -3411,13 +3411,14 @@ namespace gbe
   void GenContext::emitPrintfInstruction(const SelectionInstruction &insn) {
     const GenRegister dst = ra->genReg(insn.dst(0));
     const GenRegister tmp0 = ra->genReg(insn.dst(1));
+    const GenRegister tmp1 = ra->genReg(insn.dst(2));
     GenRegister src;
     uint32_t srcNum = insn.srcNum;
     if (insn.extra.continueFlag)
       srcNum--;
 
     GenRegister addr = GenRegister::retype(tmp0, GEN_TYPE_UD);
-    GenRegister data = GenRegister::offset(addr, 2);
+    GenRegister data = GenRegister::retype(tmp1, GEN_TYPE_UD);
 
     if (!insn.extra.continueFlag) {
       p->push(); {

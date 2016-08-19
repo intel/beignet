@@ -6166,13 +6166,8 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       uint32_t totalSize = 0;
       bool isContinue = false;
       GBE_ASSERT(sel.ctx.getSimdWidth() == 16 || sel.ctx.getSimdWidth() == 8);
-      if (sel.ctx.getSimdWidth() == 16) {
-        tmp0 = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
-        tmp1 = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
-      } else {
-        tmp0 = GenRegister::retype(sel.selReg(sel.reg(FAMILY_QWORD)), GEN_TYPE_UD);
-        tmp1 = GenRegister::retype(sel.selReg(sel.reg(FAMILY_QWORD)), GEN_TYPE_UD);
-      }
+      tmp0 = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
+      tmp1 = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
 
       /* Get the total size for one printf statement. */
       for (i = 0; i < srcNum; i++) {
