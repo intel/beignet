@@ -236,8 +236,8 @@ void runtime_cmrt(void)
   OCL_CREATE_IMAGE(buf[0], 0, &format, &desc, NULL);
   OCL_CREATE_IMAGE(buf[1], 0, &format, &desc, NULL);
 
-  OCL_MAP_BUFFER(0);
-  OCL_MAP_BUFFER(1);
+  OCL_MAP_BUFFER_GTT(0);
+  OCL_MAP_BUFFER_GTT(1);
   uint8_t* src = (uint8_t*)buf_data[0];
   uint8_t* dst = (uint8_t*)buf_data[1];
   for (uint32_t j = 0; j < h; ++j)
@@ -245,8 +245,8 @@ void runtime_cmrt(void)
       src[j * w * 4 + i] = i;
       dst[j * w * 4 + i] = 0;
     }
-  OCL_UNMAP_BUFFER(0);
-  OCL_UNMAP_BUFFER(1);
+  OCL_UNMAP_BUFFER_GTT(0);
+  OCL_UNMAP_BUFFER_GTT(1);
 
   unsigned int d = 3;
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
@@ -259,16 +259,16 @@ void runtime_cmrt(void)
   //if kernel uses cm_linear_global_id, locals must be not NULL to invoke pCmQueue->EnqueueWithGroup
   OCL_CALL (clEnqueueNDRangeKernel, queue, kernel, 2, NULL, globals, NULL, 0, NULL, NULL);
 
-  OCL_MAP_BUFFER(0);
-  OCL_MAP_BUFFER(1);
+  OCL_MAP_BUFFER_GTT(0);
+  OCL_MAP_BUFFER_GTT(1);
   src = (uint8_t*)buf_data[0];
   dst = (uint8_t*)buf_data[1];
   for (uint32_t j = 0; j < h; ++j)
     for (uint32_t i = 0; i < w*4; i++) {
       OCL_ASSERT(src[j * w * 4 + i] / d == dst[j * w * 4 + i]);
     }
-  OCL_UNMAP_BUFFER(0);
-  OCL_UNMAP_BUFFER(1);
+  OCL_UNMAP_BUFFER_GTT(0);
+  OCL_UNMAP_BUFFER_GTT(1);
 }
 
 MAKE_UTEST_FROM_FUNCTION(runtime_cmrt);
