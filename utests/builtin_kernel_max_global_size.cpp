@@ -10,8 +10,10 @@ void builtin_kernel_max_global_size(void)
 
 
   OCL_CALL (clGetDeviceInfo, device, CL_DEVICE_BUILT_IN_KERNELS, 0, 0, &built_in_kernels_size);
-  if(built_in_kernels_size == 0)
+  if(built_in_kernels_size <= 1) { //the size of empty string is 1
+    printf(" no built in kernel, Skip!");
     return;
+  }
 
   built_in_kernel_names = (char* )malloc(built_in_kernels_size * sizeof(char) );
   OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_BUILT_IN_KERNELS, built_in_kernels_size, (void*)built_in_kernel_names, &ret_sz);
