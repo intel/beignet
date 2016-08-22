@@ -3662,18 +3662,13 @@ namespace gbe
   }
 
   void GenContext::emitMBReadInstruction(const SelectionInstruction &insn) {
-    const GenRegister dst = ra->genReg(insn.dst(0));
+    const GenRegister dst = ra->genReg(insn.dst(1));
     const GenRegister coordx = GenRegister::toUniform(ra->genReg(insn.src(0)),GEN_TYPE_D);
     const GenRegister coordy = GenRegister::toUniform(ra->genReg(insn.src(1)),GEN_TYPE_D);
-    GenRegister header, offsetx, offsety, blocksizereg;
-    if (simdWidth == 8)
-      header = GenRegister::retype(ra->genReg(insn.dst(0)), GEN_TYPE_UD);
-    else
-      header = GenRegister::retype(GenRegister::Qn(ra->genReg(insn.src(2)),1), GEN_TYPE_UD);
-
-    offsetx = GenRegister::offset(header, 0, 0*4);
-    offsety = GenRegister::offset(header, 0, 1*4);
-    blocksizereg = GenRegister::offset(header, 0, 2*4);
+    const GenRegister header = GenRegister::retype(ra->genReg(insn.dst(0)), GEN_TYPE_UD);
+    const GenRegister offsetx = GenRegister::offset(header, 0, 0*4);
+    const GenRegister offsety = GenRegister::offset(header, 0, 1*4);
+    const GenRegister blocksizereg = GenRegister::offset(header, 0, 2*4);
     size_t vec_size = insn.extra.elem;
     uint32_t blocksize = 0x1F | (vec_size-1) << 16;
 
@@ -3700,7 +3695,7 @@ namespace gbe
     }
     else if (simdWidth == 16)
     {
-      const GenRegister tmp = ra->genReg(insn.dst(vec_size));
+      const GenRegister tmp = GenRegister::retype(ra->genReg(insn.dst(vec_size + 1)), GEN_TYPE_UD);
       p->push();
         // Copy r0 into the header first
         p->curr.execWidth = 8;
@@ -3718,23 +3713,22 @@ namespace gbe
         // Now read the data
         p->curr.execWidth = 8;
         p->MBREAD(tmp, header, insn.getbti(), vec_size);
+        for (uint32_t i = 0; i < vec_size; i++)
+          p->MOV(ra->genReg(insn.dst(i + 1)), GenRegister::offset(tmp, i));
 
         // Second half
         // Update the header with the coord
         p->curr.execWidth = 1;
         p->ADD(offsetx, offsetx, GenRegister::immud(32));
 
-        const GenRegister tmp2 = GenRegister::offset(tmp, vec_size);
         // Now read the data
         p->curr.execWidth = 8;
-        p->MBREAD(tmp2, header, insn.getbti(), vec_size);
+        p->MBREAD(tmp, header, insn.getbti(), vec_size);
 
         // Move the reg to fit vector rule.
-        for (uint32_t i = 0; i < vec_size; i++) {
-          p->MOV(GenRegister::offset(dst, i * 2), GenRegister::offset(tmp, i));
-          p->MOV(GenRegister::offset(dst, i * 2 + 1),
-                 GenRegister::offset(tmp2, i));
-        }
+        for (uint32_t i = 0; i < vec_size; i++)
+          p->MOV(GenRegister::offset(ra->genReg(insn.dst(i + 1)), 1),
+                 GenRegister::offset(tmp, i));
       p->pop();
     } else NOT_IMPLEMENTED;
   }

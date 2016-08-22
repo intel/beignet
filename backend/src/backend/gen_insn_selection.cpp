@@ -2086,30 +2086,33 @@ namespace gbe
                                  uint32_t vec_size) {
 
     uint32_t simdWidth = curr.execWidth;
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_MBREAD, vec_size * simdWidth / 8, 3);
-    SelectionVector *vector = this->appendVector();
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_MBREAD, vec_size * simdWidth / 8 + 1, 2);
+
+    insn->dst(0) = header;
     for (uint32_t i = 0; i < vec_size; ++i) {
-      insn->dst(i) = dsts[i];
+      insn->dst(i + 1) = dsts[i];
       if(simdWidth == 16)
-        insn->dst(i + vec_size) = tmp[i];
+        insn->dst(i + vec_size + 1) = tmp[i];
     }
     insn->src(0) = coordx;
     insn->src(1) = coordy;
-    insn->src(2) = header;
     insn->setbti(bti);
     insn->extra.elem = vec_size; // vector size
 
-    vector->regNum = vec_size;
-    vector->reg = &insn->dst(0);
-    vector->offsetID = 0;
-    vector->isSrc = 0;
-
+    // Only in simd 8 the data is in vector form
+    if(simdWidth == 8) {
+      SelectionVector *vector = this->appendVector();
+      vector->regNum = vec_size;
+      vector->reg = &insn->dst(1);
+      vector->offsetID = 1;
+      vector->isSrc = 0;
+    }
     if(simdWidth == 16)
     {
       SelectionVector *vectortmp = this->appendVector();
       vectortmp->regNum = vec_size;
-      vectortmp->reg = &insn->dst(vec_size);
-      vectortmp->offsetID = vec_size;
+      vectortmp->reg = &insn->dst(vec_size + 1);
+      vectortmp->offsetID = vec_size + 1;
       vectortmp->isSrc = 0;
     }
   }
@@ -6708,11 +6711,11 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       for (uint32_t i = 0; i < vec_size; ++i) {
         valuesVec.push_back(sel.selReg(insn.getDst(i), TYPE_U32));
         if(simdWidth == 16)
-          tmpVec.push_back(sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32));
+          tmpVec.push_back(GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), TYPE_U32));
       }
       const GenRegister coordx = sel.selReg(insn.getSrc(0), TYPE_U32);
       const GenRegister coordy = sel.selReg(insn.getSrc(1), TYPE_U32);
-      const GenRegister header = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+      const GenRegister header = GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), TYPE_U32);
       GenRegister *tmp = NULL;
       if(simdWidth == 16)
         tmp = &tmpVec[0];
