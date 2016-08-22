@@ -94,8 +94,8 @@ namespace gbe
     void setDBGInfo(DebugInfo in) { DBGInfo = in; }
     /*! No more than 40 sources (40 sources are used by vme for payload passing and setting) */
     enum { MAX_SRC_NUM = 40 };
-    /*! No more than 16 destinations (15 used by I64DIV/I64REM) */
-    enum { MAX_DST_NUM = 16 };
+    /*! No more than 17 destinations (17 used by image block read8) */
+    enum { MAX_DST_NUM = 17 };
     /*! State of the instruction (extra fields neeed for the encoding) */
     GenInstructionState state;
     union {
