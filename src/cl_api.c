@@ -3032,8 +3032,17 @@ clEnqueueNDRangeKernel(cl_command_queue  command_queue,
         }
         realGroupSize *= fixed_local_sz[i];
       }
-      if (realGroupSize % 8 != 0)
+
+      //in a loop of conformance test (such as test_api repeated_setup_cleanup), in each loop:
+      //create a new context, a new command queue, and uses 'globalsize[0]=1000, localsize=NULL' to enqueu kernel
+      //it triggers the following message for many times.
+      //to avoid too many messages, only print it for the first time of the process.
+      //just use static variable since it doesn't matter to print a few times at multi-thread case.
+      static int warn_no_good_localsize = 1;
+      if (realGroupSize % 8 != 0 && warn_no_good_localsize) {
+        warn_no_good_localsize = 0;
         DEBUGP(DL_WARNING, "unable to find good values for local_work_size[i], please provide local_work_size[] explicitly, you can find good values with trial-and-error method.");
+      }
     }
   }
 
