@@ -32,26 +32,29 @@ If you don't want to enable ICD, or your system doesn't have ICD OpenCL support,
 you can still link to the beignet OpenCL library. You can find the beignet/libcl.so
 in your system's library installation directories.
 
-Note that the compiler depends on LLVM (Low-Level Virtual Machine project).
-Right now, the code has been compiled with LLVM 3.3/3.4. It will not compile
-with anything older.
+Note that the compiler depends on LLVM (Low-Level Virtual Machine project), and the
+project normally support 3 latest LLVM released version.
+Right now, the code has been compiled with LLVM 3.6, 3.7 and 3.8. With older
+version LLVM from 3.3, build still support, but no full tests cover.
 
 A simple command to install all the above dependencies for ubuntu or debian is:
 
-`sudo apt-get install cmake pkg-config python ocl-icd-dev`
-`     ocl-icd-opencl-dev libdrm-dev libxfixes-dev libxext-dev llvm-3.5-dev`
-`     clang-3.5 libclang-3.5-dev libtinfo-dev libedit-dev zlib1g-dev`
+`sudo apt-get install cmake pkg-config python ocl-icd-dev libegl1-mesa-dev`
+`     ocl-icd-opencl-dev libdrm-dev libxfixes-dev libxext-dev llvm-3.6-dev`
+`     clang-3.6 libclang-3.6-dev libtinfo-dev libedit-dev zlib1g-dev`
 
 [http://llvm.org/releases/](http://llvm.org/releases/)
 
 
-**The recommended LLVM/CLANG version is 3.5 and/or 3.6**
+**The recommended LLVM/CLANG version is 3.6 and/or 3.7**
 
-Based on our test result, LLVM 3.5 has best pass rate on all the test suites. Compare
-to LLVM 3.5, LLVM 3.6 has slightly lower pass rate(caused by one front end bug at clang
-3.6) but has better performance(3% to 8% up).
+Based on our test result, LLVM 3.6 and 3.7 has best pass rate on all the test suites. Compare
+to LLVM 3.6 and 3.7, if you used LLVM 3.8, you should pay attention to float immediate. For example,
+if you use 1.0 in the kernel, LLVM 3.6 will treate it as 1.0f, a single float, because the project
+don't support double float. but LLVM 3.8 will treate it as 1.0, a double foat, at the last it may cause
+error. So we recommend use 1.0f instead of 1.0 if you don't need double float.
 
-For LLVM 3.3 and 3.4, Beignet still support them, but it may be limited to support the
+For LLVM 3.4 and 3.5, Beignet still support them, but it may be limited to support the
 build and major functions.
 
 How to build and install
@@ -86,8 +89,11 @@ The cmake will build the backend firstly. Please refer to:
 [[OpenCL Gen Backend|Beignet/Backend]] to get more dependencies.
 
 Once built, the run-time produces a shared object libcl.so which basically
-directly implements the OpenCL API. A set of tests are also produced. They may
-be found in `utests/`.
+directly implements the OpenCL API.
+
+`> make`
+
+A set of tests are also produced. They may be found in `utests/`.
 
 Simply invoke:
 
@@ -127,9 +133,9 @@ Then in `utests/`:
 
 will run all the unit tests one after the others
 
-`> ./utest_run some_unit_test0 some_unit_test1`
+`> ./utest_run some_unit_test`
 
-will only run `some_unit_test0` and `some_unit_test1` tests
+will only run `some_unit_test` test.
 
 On all supported target platform, the pass rate should be 100%. If it is not, you may
 need to refer the "Known Issues" section. Please be noted, the `. setenv.sh` is only
@@ -144,10 +150,13 @@ beignet provides two alternative to run:
 Supported Targets
 -----------------
 
- * 3rd Generation Intel Core Processors
- * Intel “Bay Trail” platforms with Intel HD Graphics
- * 4th Generation Intel Core Processors "Haswell", need kernel patch currently, see the "Known Issues" section.
+ * 3rd Generation Intel Core Processors "Ivybridge".
+ * 3rd Generation Intel Atom Processors "BayTrail".
+ * 4th Generation Intel Core Processors "Haswell", need kernel patch if your linux kernel older than 4.2, see the "Known Issues" section.
  * 5th Generation Intel Core Processors "Broadwell".
+ * 5th Generation Intel Atom Processors "Braswell".
+ * 6th Generation Intel Core Processors "Skylake" and "Kabylake".
+ * 5th Generation Intel Atom Processors "Broxten" or "Apollolake".
 
 Known Issues
 ------------
@@ -177,17 +186,12 @@ Known Issues
 
   `# echo 0 > /sys/module/i915/parameters/enable_cmd_parser`
 
-  On Haswell hardware, Beignet 1.0.1 to 1.0.3 also required the
-  above workaround on later Linux versions, but this _should not_ be
-  required in current (after [83f8739](http://cgit.freedesktop.org/beignet/commit/?id=83f8739b6fc4893fac60145326052ccb5cf653dc))
-  git master.
-
 * "Beignet: self-test failed" and 15-30 unit tests fail on 4th Generation (Haswell) hardware.
   On Haswell, shared local memory (\_\_local) does not work at all on
   Linux <= 4.0, and requires the i915.enable_ppgtt=2 [boot parameter](https://wiki.ubuntu.com/Kernel/KernelBootParameters)
   on Linux 4.1.
   
-  This will be fixed in Linux 4.2; older versions can be fixed with
+  This is fixed in Linux 4.2; older versions can be fixed with
   [this patch](https://01.org/zh/beignet/downloads/linux-kernel-patch-hsw-support).
   
   If you do not need \_\_local, you can override the self-test with
@@ -210,38 +214,6 @@ Known Issues
   such type of extensions, we may have to hack with mesa source code to support this
   extension. This feature used to work with a previous mesa git version. But now, it's
   simply broken.
-
-TODO
-----
-
-In terms of the OpenCL 1.2 spec, beignet is quite complete now. We can pass almost
-all the piglit OpenCL test cases now. And the pass rate for the OpenCV test suite
-is also good which is about 99%. There are still some remains work items listed as below,
-most of them are extension support and performance related.
-
-- Performance tuning. There are some major optimizations need to be done,
-  Peephole optimization, futher tuning the structurized BB transformation to
-  support more pattern such as self loop/while loop. And optimize the slow
-  software based sin/cos/... math functions due to the native math instruction
-  lack of necessary precision. And all the code is inlined which will increase
-  the icache miss rate significantly. And many other things which are specified
-  partially in [[here|Beignet/Backend/TODO]].
-
-- Complete cl\_khr\_gl\_sharing support. We lack of some APIs implementation such
-  as clCreateFromGLBuffer,clCreateFromGLRenderbuffer,clGetGLObjectInfo... Currently,
-  the working APIs are clCreateFromGLTexture,clCreateFromGLTexture2D. We may need to
-  find a graceful way to co-work with mesa.
-
-- Check that NDRangeKernels can be pushed into _different_ queues from several
-  threads.
-
-- No state tracking at all. One batch buffer is created at each "draw call"
-  (i.e. for each NDRangeKernels). This is really inefficient since some
-  expensive pipe controls are issued for each batch buffer.
-
-More generally, everything in the run-time that triggers the "FATAL" macro means
-that something that must be supported is not implemented properly (either it
-does not comply with the standard or it is just missing)
 
 Project repository
 ------------------
@@ -268,7 +240,7 @@ Developers from Intel:
 * Luo, Xionghu
 * Wen, Chuanbo
 * Guo, Yejun
-* Lv, Meng
+* Pan, Xiuli
 
 Debian Maintainer:
 
