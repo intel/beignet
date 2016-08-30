@@ -91,7 +91,7 @@ The cmake will build the backend firstly. Please refer to:
 Once built, the run-time produces a shared object libcl.so which basically
 directly implements the OpenCL API.
 
-`> make`
+`> make utest`
 
 A set of tests are also produced. They may be found in `utests/`.
 
