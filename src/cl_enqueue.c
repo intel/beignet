@@ -204,7 +204,7 @@ cl_int cl_enqueue_read_image(enqueue_data *data)
     goto error;
   }
 
-  size_t offset = image->bpp*origin[0] + image->row_pitch*origin[1] + image->slice_pitch*origin[2];
+  size_t offset = image->offset + image->bpp*origin[0] + image->row_pitch*origin[1] + image->slice_pitch*origin[2];
   src_ptr = (char*)src_ptr + offset;
 
   if (!origin[0] && region[0] == image->w && data->row_pitch == image->row_pitch &&
@@ -246,8 +246,8 @@ cl_int cl_enqueue_write_image(enqueue_data *data)
     err = CL_MAP_FAILURE;
     goto error;
   }
-  //dst need to add offset
-  cl_mem_copy_image_region(data->origin, data->region, dst_ptr,
+  cl_mem_copy_image_region(data->origin, data->region,
+                           dst_ptr + image->offset,
                            image->row_pitch, image->slice_pitch,
                            data->const_ptr, data->row_pitch,
                            data->slice_pitch, image, CL_TRUE, CL_FALSE);
@@ -311,7 +311,7 @@ cl_int cl_enqueue_map_image(enqueue_data *data)
     err = CL_MAP_FAILURE;
     goto error;
   }
-  data->ptr = ptr;
+  data->ptr = (char*)ptr + image->offset;
   if (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
     row_pitch = image->slice_pitch;
   else
