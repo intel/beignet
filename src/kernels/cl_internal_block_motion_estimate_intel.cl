@@ -54,7 +54,7 @@ void block_motion_estimate_intel(accelerator_intel_t accel,
   uint src_grf4_dw1;
   uint src_grf4_dw0;
 
-  uint8 vme_result = (0, 0, 0, 0, 0, 0, 0, 0);
+  uint8 vme_result = (0);
 
   int lgid_x = get_group_id(0);
   int lgid_y = get_group_id(1);
