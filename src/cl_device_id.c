@@ -42,7 +42,6 @@
 #endif
 
 static struct _cl_device_id intel_ivb_gt2_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 16,
   .max_thread_per_unit = 8,
   .sub_slice_count = 2,
@@ -53,7 +52,6 @@ static struct _cl_device_id intel_ivb_gt2_device = {
 };
 
 static struct _cl_device_id intel_ivb_gt1_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 6,
   .max_thread_per_unit = 6,
   .sub_slice_count = 1,
@@ -64,7 +62,6 @@ static struct _cl_device_id intel_ivb_gt1_device = {
 };
 
 static struct _cl_device_id intel_baytrail_t_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 4,
   .max_thread_per_unit = 8,
   .sub_slice_count = 1,
@@ -76,7 +73,6 @@ static struct _cl_device_id intel_baytrail_t_device = {
 
 /* XXX we clone IVB for HSW now */
 static struct _cl_device_id intel_hsw_gt1_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 10,
   .max_thread_per_unit = 7,
   .sub_slice_count = 1,
@@ -87,7 +83,6 @@ static struct _cl_device_id intel_hsw_gt1_device = {
 };
 
 static struct _cl_device_id intel_hsw_gt2_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 20,
   .max_thread_per_unit = 7,
   .sub_slice_count = 2,
@@ -98,7 +93,6 @@ static struct _cl_device_id intel_hsw_gt2_device = {
 };
 
 static struct _cl_device_id intel_hsw_gt3_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 40,
   .max_thread_per_unit = 7,
   .sub_slice_count = 4,
@@ -110,7 +104,6 @@ static struct _cl_device_id intel_hsw_gt3_device = {
 
 /* XXX we clone IVB for HSW now */
 static struct _cl_device_id intel_brw_gt1_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 12,
   .max_thread_per_unit = 7,
   .sub_slice_count = 2,
@@ -121,7 +114,6 @@ static struct _cl_device_id intel_brw_gt1_device = {
 };
 
 static struct _cl_device_id intel_brw_gt2_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 24,
   .max_thread_per_unit = 7,
   .sub_slice_count = 3,
@@ -132,7 +124,6 @@ static struct _cl_device_id intel_brw_gt2_device = {
 };
 
 static struct _cl_device_id intel_brw_gt3_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 48,
   .max_thread_per_unit = 7,
   .sub_slice_count = 6,
@@ -144,7 +135,6 @@ static struct _cl_device_id intel_brw_gt3_device = {
 
 //Cherryview has the same pciid, must get the max_compute_unit and max_thread_per_unit from drm
 static struct _cl_device_id intel_chv_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 8,
   .max_thread_per_unit = 7,
   .sub_slice_count = 2,
@@ -156,7 +146,6 @@ static struct _cl_device_id intel_chv_device = {
 
 /* XXX we clone brw now */
 static struct _cl_device_id intel_skl_gt1_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 6,
   .max_thread_per_unit = 7,
   .sub_slice_count = 2,
@@ -167,7 +156,6 @@ static struct _cl_device_id intel_skl_gt1_device = {
 };
 
 static struct _cl_device_id intel_skl_gt2_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 24,
   .max_thread_per_unit = 7,
   .sub_slice_count = 3,
@@ -178,7 +166,6 @@ static struct _cl_device_id intel_skl_gt2_device = {
 };
 
 static struct _cl_device_id intel_skl_gt3_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 48,
   .max_thread_per_unit = 7,
   .sub_slice_count = 6,
@@ -189,7 +176,6 @@ static struct _cl_device_id intel_skl_gt3_device = {
 };
 
 static struct _cl_device_id intel_skl_gt4_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 72,
   .max_thread_per_unit = 7,
   .sub_slice_count = 9,
@@ -200,7 +186,6 @@ static struct _cl_device_id intel_skl_gt4_device = {
 };
 
 static struct _cl_device_id intel_bxt_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 18,
   .max_thread_per_unit = 6,
   .sub_slice_count = 3,
@@ -211,7 +196,6 @@ static struct _cl_device_id intel_bxt_device = {
 };
 
 static struct _cl_device_id intel_kbl_gt1_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 12,
   .max_thread_per_unit = 7,
   .sub_slice_count = 2,
@@ -222,7 +206,6 @@ static struct _cl_device_id intel_kbl_gt1_device = {
 };
 
 static struct _cl_device_id intel_kbl_gt15_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 18,
   .max_thread_per_unit = 7,
   .sub_slice_count = 3,
@@ -233,7 +216,6 @@ static struct _cl_device_id intel_kbl_gt15_device = {
 };
 
 static struct _cl_device_id intel_kbl_gt2_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 24,
   .max_thread_per_unit = 7,
   .sub_slice_count = 3,
@@ -244,7 +226,6 @@ static struct _cl_device_id intel_kbl_gt2_device = {
 };
 
 static struct _cl_device_id intel_kbl_gt3_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 48,
   .max_thread_per_unit = 7,
   .sub_slice_count = 6,
@@ -255,7 +236,6 @@ static struct _cl_device_id intel_kbl_gt3_device = {
 };
 
 static struct _cl_device_id intel_kbl_gt4_device = {
-  INIT_ICD(dispatch)
   .max_compute_unit = 72,
   .max_thread_per_unit = 7,
   .sub_slice_count = 9,
@@ -747,6 +727,7 @@ kbl_gt4_break:
   if (ret == NULL)
     return NULL;
 
+  CL_OBJECT_INIT_BASE(ret, CL_OBJECT_DEVICE_MAGIC);
   if (!CompilerSupported()) {
     ret->compiler_available = CL_FALSE;
     //ret->linker_available = CL_FALSE;
@@ -1042,9 +1023,22 @@ cl_get_device_info(cl_device_id     device,
     DECL_FIELD(PARTITION_PROPERTIES, partition_property)
     DECL_FIELD(PARTITION_AFFINITY_DOMAIN, affinity_domain)
     DECL_FIELD(PARTITION_TYPE, partition_type)
-    DECL_FIELD(REFERENCE_COUNT, device_reference_count)
     DECL_FIELD(IMAGE_PITCH_ALIGNMENT, image_pitch_alignment)
     DECL_FIELD(IMAGE_BASE_ADDRESS_ALIGNMENT, image_base_address_alignment)
+
+    case CL_DEVICE_REFERENCE_COUNT:
+    {
+      cl_uint dev_ref = CL_OBJECT_GET_REF(device);
+      if (param_value_size_ret) {
+        *param_value_size_ret = sizeof(cl_uint);
+        if (!param_value)
+          return CL_SUCCESS;
+      }
+      if (param_value_size < sizeof(cl_uint))
+        return CL_INVALID_VALUE;
+      memcpy(param_value, &dev_ref, sizeof(cl_uint));
+      return CL_SUCCESS;
+    }
 
     case CL_DRIVER_VERSION:
       if (param_value_size_ret) {

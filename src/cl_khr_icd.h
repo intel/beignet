@@ -21,13 +21,11 @@
 
 #define SET_ICD(dispatch) \
   dispatch = &cl_khr_icd_dispatch;
-#define INIT_ICD(member)  .member = &cl_khr_icd_dispatch,
 #define DEFINE_ICD(member) struct _cl_icd_dispatch const *member;
 
 extern struct _cl_icd_dispatch const cl_khr_icd_dispatch;
 #else
 #define SET_ICD(dispatch)
-#define INIT_ICD(member)
 #define DEFINE_ICD(member)
 #endif
 

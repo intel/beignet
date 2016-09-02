@@ -22,10 +22,10 @@
 
 #define EXTENSTION_LENGTH 512
 
-#include "cl_khr_icd.h"
+#include "cl_base_object.h"
 /* Store complete information about the device */
 struct _cl_device_id {
-  DEFINE_ICD(dispatch)
+  _cl_base_object base;
   cl_device_type device_type;
   cl_uint  device_id;
   cl_uint  vendor_id;
@@ -117,7 +117,6 @@ struct _cl_device_id {
   cl_device_partition_property partition_property[3];
   cl_device_affinity_domain    affinity_domain;
   cl_device_partition_property partition_type[3];
-  cl_uint      device_reference_count;
   uint32_t atomic_test_result;
   uint32_t image_pitch_alignment;
   uint32_t image_base_address_alignment;
@@ -125,6 +124,9 @@ struct _cl_device_id {
   //inited as NULL, created only when cmrt kernel is used
   void* cmrt_device;  //realtype: CmDevice*
 };
+
+#define CL_OBJECT_DEVICE_MAGIC 0x2acaddcca8853c52LL
+#define CL_OBJECT_IS_DEVICE(obj) (((cl_base_object)obj)->magic == CL_OBJECT_DEVICE_MAGIC)
 
 /* Get a device from the given platform */
 extern cl_int cl_get_device_ids(cl_platform_id    platform,
