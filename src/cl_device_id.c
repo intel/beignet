@@ -1151,12 +1151,12 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
 {
   int err = CL_SUCCESS;
   int dimension = 0;
+  CHECK_KERNEL(kernel);
   if (device == NULL)
     device = kernel->program->ctx->device;
   if (UNLIKELY(is_gen_device(device) == CL_FALSE))
     return CL_INVALID_DEVICE;
 
-  CHECK_KERNEL(kernel);
   switch (param_name) {
     case CL_KERNEL_WORK_GROUP_SIZE:
     {
