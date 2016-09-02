@@ -30,8 +30,8 @@ uint get_sub_group_size(void)
 {
   uint threadn = get_num_sub_groups();
   uint threadid = get_sub_group_id();
-  if((threadid == (threadn - 1)) && (threadn > 1))
-    return (get_local_size(0)*get_local_size(1)*get_local_size(2)) % get_max_sub_group_size();
+  if (threadid == (threadn - 1))
+    return (get_local_size(0)*get_local_size(1)*get_local_size(2) -1) % get_max_sub_group_size() + 1;
   else
     return get_max_sub_group_size();
 }
