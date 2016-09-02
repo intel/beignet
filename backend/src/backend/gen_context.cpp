@@ -702,7 +702,7 @@ namespace gbe
     assert(insn.opcode == SEL_OP_SIMD_SHUFFLE);
     assert (src1.file != GEN_IMMEDIATE_VALUE);
 
-    uint32_t base = src0.nr * 32 + src0.subnr * 4;
+    uint32_t base = src0.nr * 32 + src0.subnr;
     GenRegister baseReg = GenRegister::immuw(base);
     const GenRegister a0 = GenRegister::addr8(0);
     uint32_t simd = p->curr.execWidth;
