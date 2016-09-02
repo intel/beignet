@@ -42,7 +42,7 @@ kernel void compiler_subgroup_broadcast_half(global half *src,
 
   half val = src[index];
   half broadcast_val = sub_group_broadcast(val, simd_id);
-  printf("%d val %d is %d\n",index,as_ushort(val), as_ushort(broadcast_val));
+  //printf("%d val %d is %d\n",index,as_ushort(val), as_ushort(broadcast_val));
   dst[index] = broadcast_val;
 }
 #endif

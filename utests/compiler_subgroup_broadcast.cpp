@@ -108,7 +108,7 @@ static void subgroup_generic(T* input,
   size_t SIMD_SIZE = 0;
   OCL_CALL(utestclGetKernelSubGroupInfoKHR,kernel,device,CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR,sizeof(size_t)*1,locals,sizeof(size_t),&SIMD_SIZE,NULL);
 
-  cl_uint SIMD_ID = 10;
+  cl_uint SIMD_ID = 2;
   /* input and expected data */
   generate_data(input, expected, SIMD_ID, SIMD_SIZE);
 
