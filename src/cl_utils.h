@@ -351,6 +351,9 @@ static INLINE int atomic_add(atomic_t *v, const int c) {
       : "m"(*v), "r"(i));
   return i;
 }
+static INLINE int atomic_read(atomic_t *v) {
+  return *v;
+}
 
 static INLINE int atomic_inc(atomic_t *v) { return atomic_add(v, 1); }
 static INLINE int atomic_dec(atomic_t *v) { return atomic_add(v, -1); }

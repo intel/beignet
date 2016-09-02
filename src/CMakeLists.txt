@@ -65,6 +65,7 @@ MakeKernelBinStr ("${CMAKE_CURRENT_SOURCE_DIR}/kernels/" "${BUILT_IN_NAME}")
 
 set(OPENCL_SRC
     ${KERNEL_STR_FILES}
+    cl_base_object.c
     cl_api.c
     cl_alloc.c
     cl_kernel.c
