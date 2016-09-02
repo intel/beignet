@@ -1590,7 +1590,7 @@ namespace gbe
        wg_op == ir::WORKGROUP_OP_REDUCE_MIN ||
        wg_op == ir::WORKGROUP_OP_REDUCE_MAX)
    {
-     p->curr.execWidth = 16;
+     p->curr.execWidth = simd;
      /* value exchanged with other threads */
      p->MOV(threadExchangeData, result[0]);
      /* partial result thread */
@@ -1600,7 +1600,7 @@ namespace gbe
        wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN ||
        wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX)
    {
-     p->curr.execWidth = 16;
+     p->curr.execWidth = simd;
      /* value exchanged with other threads */
      p->MOV(threadExchangeData, result[simd - 1]);
      /* partial result thread */
@@ -1614,7 +1614,7 @@ namespace gbe
      /* set result[0] to min/max/null */
      wgOpInitValue(p, result[0], wg_op);
 
-     p->curr.execWidth = 16;
+     p->curr.execWidth = simd;
      /* value exchanged with other threads */
      wgOpPerform(threadExchangeData, result[simd - 1], input[simd - 1], wg_op, p);
      /* partial result thread */
@@ -1675,7 +1675,7 @@ namespace gbe
     /* do some calculation within each thread */
     wgOpPerformThread(dst, theVal, threadData, tmp, simd, wg_op, p);
 
-    p->curr.execWidth = 16;
+    p->curr.execWidth = simd;
     p->MOV(theVal, dst);
     threadData = GenRegister::toUniform(threadData, dst.type);
 
@@ -1790,13 +1790,13 @@ namespace gbe
       wg_op == ir::WORKGROUP_OP_REDUCE_MAX)
     {
       /* save result to final register location dst */
-      p->curr.execWidth = 16;
+      p->curr.execWidth = simd;
       p->MOV(dst, partialData);
     }
     else
     {
       /* save result to final register location dst */
-      p->curr.execWidth = 16;
+      p->curr.execWidth = simd;
 
       if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_ADD
           || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_ADD)
@@ -1845,7 +1845,7 @@ namespace gbe
         p->CMP(GEN_CONDITIONAL_EQ, threadId, GenRegister::immd(0x0));
         p->curr.predicate = GEN_PREDICATE_NORMAL;
 
-        p->curr.execWidth = 16;
+        p->curr.execWidth = simd;
         p->MOV(dst, theVal);
       } p->pop();
     }
