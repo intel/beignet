@@ -12,7 +12,7 @@ void compiler_sub_group_shuffle_up(void)
   OCL_CREATE_BUFFER(buf[0], 0, buf_size * sizeof(int), NULL);
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
 
-  int c = 13;
+  int c = 3;
   OCL_SET_ARG(1, sizeof(int), &c);
 
   globals[0] = n;
