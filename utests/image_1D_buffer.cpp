@@ -3,8 +3,8 @@
 
 void image_1D_buffer(void)
 {
-  size_t buffer_sz = 65536;
-  char *buf_content = (char *)malloc(buffer_sz * sizeof(int));
+  size_t buffer_sz = 8192 * 2 + 32;
+  int *buf_content = (int *)malloc(buffer_sz * sizeof(int));
   int error;
   cl_image_desc image_desc;
   cl_image_format image_format;
@@ -13,7 +13,7 @@ void image_1D_buffer(void)
   OCL_CREATE_KERNEL("image_1D_buffer");
 
   for (int32_t i = 0; i < (int32_t)buffer_sz; ++i)
-    buf_content[i] = (rand() & 0xFFFFFFFF);
+    buf_content[i] = rand();
 
   OCL_CREATE_BUFFER(buf[0], CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, buffer_sz * sizeof(int), buf_content);
   OCL_CREATE_BUFFER(buf[1], CL_MEM_READ_WRITE, buffer_sz * sizeof(int), NULL);

@@ -1118,7 +1118,6 @@ _cl_mem_new_image_from_buffer(cl_context ctx,
   if (buffer->flags & CL_MEM_USE_HOST_PTR)
     image->host_ptr = buffer->host_ptr + offset;
   cl_mem_image(image)->offset = offset;
-  cl_mem_image(image)->w = image_desc->image_width;
   cl_mem_add_ref(buffer);
   cl_mem_image(image)->buffer_1d = buffer;
   return image;
