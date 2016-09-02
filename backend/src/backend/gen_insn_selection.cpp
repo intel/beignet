@@ -1770,13 +1770,15 @@ namespace gbe
   GenRegister Selection::Opaque::getLaneIDReg()
   {
     const GenRegister laneID = GenRegister::immv(0x76543210);
-    ir::Register r = reg(ir::RegisterFamily::FAMILY_WORD);
-    const GenRegister dst = selReg(r, ir::TYPE_U16);
+    GenRegister dst;
 
     uint32_t execWidth = curr.execWidth;
-    if (execWidth == 8)
+    if (execWidth == 8) {
+      // Work around to force the register 32 alignmet
+      dst = selReg(reg(ir::RegisterFamily::FAMILY_DWORD), ir::TYPE_U16);
       MOV(dst, laneID);
-    else {
+    } else {
+      dst = selReg(reg(ir::RegisterFamily::FAMILY_WORD), ir::TYPE_U16);
       push();
       curr.execWidth = 8;
       curr.noMask = 1;
