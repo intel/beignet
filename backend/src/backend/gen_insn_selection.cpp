@@ -2788,17 +2788,12 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     static ir::Type getType(const ir::Opcode opcode, const ir::Type insnType, bool isSrc = false) {
       if (opcode == ir::OP_CBIT)
         return isSrc ? insnType : ir::TYPE_U32;
-      if (insnType == ir::TYPE_S64 || insnType == ir::TYPE_U64 || insnType == ir::TYPE_S8 || insnType == ir::TYPE_U8)
-        return insnType;
-      if (opcode == ir::OP_FBH || opcode == ir::OP_FBL || opcode == ir::OP_LZD)
-        return ir::TYPE_U32;
-      if (opcode == ir::OP_SIMD_ANY || opcode == ir::OP_SIMD_ALL)
-        return ir::TYPE_S32;
-      if (insnType == ir::TYPE_S16 || insnType == ir::TYPE_U16)
-        return insnType;
       if (insnType == ir::TYPE_BOOL)
         return ir::TYPE_U16;
-      return ir::TYPE_FLOAT;
+      else if (opcode == ir::OP_MOV && (insnType == ir::TYPE_U32 || insnType == ir::TYPE_S32))
+        return ir::TYPE_FLOAT;
+      else
+        return insnType;
     }
 
     INLINE bool emitOne(Selection::Opaque &sel, const ir::UnaryInstruction &insn, bool &markChildren) const {

@@ -4195,13 +4195,14 @@ namespace gbe
               ir::Register tmp1 = ctx.reg(getFamily(tmpType));
               ir::Register tmp2 = ctx.reg(getFamily(tmpType));
               ctx.CVT(tmpType, srcType, tmp0, src);
-              ctx.ALU1(ir::OP_LZD, tmpType, tmp1, tmp0);
+              ctx.ALU1(ir::OP_LZD, ir::TYPE_U32, tmp1, tmp0);
               ctx.SUB(tmpType, tmp2, tmp1, immReg);
               ctx.CVT(dstType, tmpType, dst, tmp2);
             }
             else
             {
-              ctx.ALU1(ir::OP_LZD, dstType, dst, src);
+              GBE_ASSERT(srcType == ir::TYPE_U32);
+              ctx.ALU1(ir::OP_LZD, srcType, dst, src);
             }
           }
           break;
@@ -4258,8 +4259,8 @@ namespace gbe
 #endif /* GBE_DEBUG */
 
         switch (genIntrinsicID) {
-          case GEN_OCL_FBH: this->emitUnaryCallInst(I,CS,ir::OP_FBH); break;
-          case GEN_OCL_FBL: this->emitUnaryCallInst(I,CS,ir::OP_FBL); break;
+          case GEN_OCL_FBH: this->emitUnaryCallInst(I,CS,ir::OP_FBH, ir::TYPE_U32); break;
+          case GEN_OCL_FBL: this->emitUnaryCallInst(I,CS,ir::OP_FBL, ir::TYPE_U32); break;
           case GEN_OCL_CBIT: this->emitUnaryCallInst(I,CS,ir::OP_CBIT, getUnsignedType(ctx, (*AI)->getType())); break;
           case GEN_OCL_ABS:
           {
