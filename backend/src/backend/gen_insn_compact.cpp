@@ -587,7 +587,7 @@ namespace gbe {
     if(src0->file == GEN_IMMEDIATE_VALUE)
       return -1;
 
-    compact_table_entry *r;
+    compact_table_entry *r = NULL;
     if(p->getCompactVersion() == 7) {
       DataTypeBits b;
       b.data = 0;
