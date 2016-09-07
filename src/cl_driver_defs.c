@@ -56,13 +56,6 @@ LOCAL cl_buffer_get_tiling_align_cb *cl_buffer_get_tiling_align = NULL;
 LOCAL cl_buffer_get_buffer_from_fd_cb *cl_buffer_get_buffer_from_fd = NULL;
 LOCAL cl_buffer_get_image_from_fd_cb *cl_buffer_get_image_from_fd = NULL;
 
-/* cl_khr_gl_sharing */
-LOCAL cl_gl_acquire_texture_cb *cl_gl_acquire_texture = NULL;
-LOCAL cl_gl_release_texture_cb *cl_gl_release_texture = NULL;
-LOCAL cl_gl_acquire_buffer_object_cb *cl_gl_acquire_buffer_object = NULL;
-LOCAL cl_gl_release_buffer_object_cb *cl_gl_release_buffer_object = NULL;
-LOCAL cl_gl_acquire_render_buffer_cb *cl_gl_acquire_render_buffer = NULL;
-LOCAL cl_gl_release_render_buffer_cb *cl_gl_release_render_buffer = NULL;
 /* GPGPU */
 LOCAL cl_gpgpu_new_cb *cl_gpgpu_new = NULL;
 LOCAL cl_gpgpu_delete_cb *cl_gpgpu_delete = NULL;

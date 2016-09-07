@@ -1177,7 +1177,7 @@ cl_mem_delete(cl_mem mem)
     return;
   if (CL_OBJECT_DEC_REF(mem) > 1)
     return;
-#ifdef HAS_EGL
+#ifdef HAS_GL_EGL
   if (UNLIKELY(IS_GL_IMAGE(mem))) {
      cl_mem_gl_delete(cl_mem_gl_image(mem));
   }

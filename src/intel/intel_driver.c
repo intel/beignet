@@ -46,10 +46,11 @@
  *
  */
 
-#if defined(HAS_EGL)
+#if defined(HAS_GL_EGL)
+#define EGL_EGLEXT_PROTOTYPES
 #include "GL/gl.h"
 #include "EGL/egl.h"
-#include "x11/mesa_egl_extension.h"
+#include <EGL/eglext.h>
 #endif
 
 #ifdef HAS_X11
@@ -244,7 +245,7 @@ intel_driver_open(intel_driver_t *intel, cl_context_prop props)
     return CL_DEVICE_NOT_FOUND;
   }
 
-#ifdef HAS_EGL
+#ifdef HAS_GL_EGL
   if (props && props->gl_type == CL_GL_EGL_DISPLAY) {
     assert(props->egl_display);
   }
@@ -536,9 +537,26 @@ static uint32_t intel_buffer_get_tiling_align(cl_context ctx, uint32_t tiling_mo
   return ret;
 }
 
-#if defined(HAS_EGL)
-#include "intel_dri_resource_sharing.h"
+#if defined(HAS_GL_EGL)
+#include "intel_cl_gl_share_image_info.h"
 #include "cl_image.h"
+
+static PFNEGLEXPORTDMABUFIMAGEMESAPROC eglExportDMABUFImageMESA_func = NULL;
+
+static int
+get_required_egl_extensions(){
+
+  if(eglExportDMABUFImageMESA_func == NULL){
+    eglExportDMABUFImageMESA_func =  (PFNEGLEXPORTDMABUFIMAGEMESAPROC) eglGetProcAddress("eglExportDMABUFImageMESA");
+    if(eglExportDMABUFImageMESA_func == NULL){
+      fprintf(stderr, "Failed to get EGL extension function eglExportDMABUFImageMESA\n");
+      return -1;
+    }
+  }
+  return 0;
+}
+
+
 static int cl_get_clformat_from_texture(GLint tex_format, cl_image_format * cl_format)
 {
   cl_int ret = CL_SUCCESS;
@@ -627,29 +645,68 @@ intel_alloc_buffer_from_texture_egl(cl_context ctx, unsigned int target,
                                     int miplevel, unsigned int texture,
                                     struct _cl_mem_image *image)
 {
-  cl_buffer bo = (cl_buffer) NULL;
-  struct _intel_dri_share_image_region region;
+  drm_intel_bo *intel_bo = NULL;
+  struct _intel_cl_gl_share_image_info info;
   unsigned int bpp, intel_fmt;
   cl_image_format cl_format;
   EGLBoolean ret;
-  EGLint attrib_list[] = { EGL_GL_TEXTURE_ID_MESA, texture,
-                           EGL_GL_TEXTURE_LEVEL_MESA, miplevel,
-                           EGL_GL_TEXTURE_TARGET_MESA, target,
-                           EGL_NONE};
-  ret = eglAcquireResourceMESA(EGL_DISP(ctx), EGL_CTX(ctx),
-                               EGL_GL_TEXTURE_MESA,
-                               &attrib_list[0], &region);
-  if (!ret)
-      goto out;
 
-  bo = (cl_buffer)intel_driver_share_buffer((intel_driver_t *)ctx->drv, "rendering buffer", region.name);
+  EGLenum e_target;
+  //We just support GL_TEXTURE_2D because we can't query info like slice_pitch now.
+  if(target == GL_TEXTURE_2D)
+    e_target = EGL_GL_TEXTURE_2D;
+  else
+    return NULL;
 
-  if (bo == NULL) {
-    eglReleaseResourceMESA(EGL_DISP(ctx), EGL_CTX(ctx), EGL_GL_TEXTURE_MESA, &attrib_list[0]);
-    goto out;
+  if(get_required_egl_extensions() != 0)
+    return NULL;
+
+  EGLAttrib attrib_list[] = {EGL_GL_TEXTURE_LEVEL, miplevel,
+                            EGL_NONE};
+  EGLImage e_image = eglCreateImage(EGL_DISP(ctx), EGL_CTX(ctx), e_target,
+                                    (EGLClientBuffer)texture, &attrib_list[0]);
+  if(e_image == EGL_NO_IMAGE)
+    return NULL;
+
+  int fd, stride, offset;
+  ret = eglExportDMABUFImageMESA_func(EGL_DISP(ctx), e_image, &fd, &stride, &offset);
+  if(ret != EGL_TRUE){
+    eglDestroyImage(EGL_DISP(ctx), e_image);
+    return NULL;
   }
-  region.tiling = get_cl_tiling(region.tiling);
-  if (cl_get_clformat_from_texture(region.gl_format, &cl_format) != 0)
+  info.fd = fd;
+
+  /* The size argument just takes effect in intel_driver_share_buffer_from_fd when
+   * Linux kernel is older than 3.12, so it doesn't matter we set to 0 here.
+   */
+  int size = 0;
+  intel_bo = intel_driver_share_buffer_from_fd((intel_driver_t *)ctx->drv, fd, size);
+
+  if (intel_bo == NULL) {
+    eglDestroyImage(EGL_DISP(ctx), e_image);
+    return NULL;
+  }
+
+  GLint param_value;
+  glGetTexLevelParameteriv(target, miplevel, GL_TEXTURE_WIDTH, &param_value);
+  info.w = param_value;
+  glGetTexLevelParameteriv(target, miplevel, GL_TEXTURE_HEIGHT, &param_value);
+  info.h = param_value;
+  glGetTexLevelParameteriv(target, miplevel, GL_TEXTURE_DEPTH, &param_value);
+  info.depth = 1;
+  info.pitch = stride;
+  uint32_t tiling_mode, swizzle_mode;
+  drm_intel_bo_get_tiling(intel_bo, &tiling_mode, &swizzle_mode);
+  info.offset = offset;
+  info.tile_x = 0;
+  info.tile_y = 0;
+  glGetTexLevelParameteriv(target, miplevel, GL_TEXTURE_INTERNAL_FORMAT, &param_value);
+  info.gl_format = param_value;
+  info.row_pitch = stride;
+  info.slice_pitch = 0;
+
+  info.tiling = get_cl_tiling(tiling_mode);
+  if (cl_get_clformat_from_texture(info.gl_format, &cl_format) != 0)
     goto error;
 
   if (cl_image_byte_per_pixel(&cl_format, &bpp) != CL_SUCCESS)
@@ -661,17 +718,22 @@ intel_alloc_buffer_from_texture_egl(cl_context ctx, unsigned int target,
   if (get_mem_type_from_target(target, &image_type) != 0)
     goto error;
 
-  cl_mem_image_init(image, region.w, region.h,
-                    image_type, region.depth, cl_format,
-                    intel_fmt, bpp, region.row_pitch,
-                    region.slice_pitch, region.tiling,
-                    region.tile_x, region.tile_y, region.offset);
-out:
-  return bo;
+  cl_mem_image_init(image, info.w, info.h,
+                    image_type, info.depth, cl_format,
+                    intel_fmt, bpp, info.row_pitch,
+                    info.slice_pitch, info.tiling,
+                    info.tile_x, info.tile_y, info.offset);
+
+  struct _cl_mem_gl_image *gl_image = (struct _cl_mem_gl_image*)image;
+  gl_image->fd = fd;
+  gl_image->egl_image = e_image;
+
+  return (cl_buffer) intel_bo;
 
 error:
-  cl_buffer_unreference(bo);
-  eglReleaseResourceMESA(EGL_DISP(ctx), EGL_CTX(ctx), EGL_GL_TEXTURE_MESA, &attrib_list[0]);
+  drm_intel_bo_unreference(intel_bo);
+  close(fd);
+  eglDestroyImage(EGL_DISP(ctx), e_image);
   return NULL;
 }
 
@@ -688,16 +750,11 @@ intel_alloc_buffer_from_texture(cl_context ctx, unsigned int target,
 }
 
 static int
-intel_release_buffer_from_texture(cl_context ctx, unsigned int target,
-                                  int miplevel, unsigned int texture)
+intel_release_buffer_from_texture(cl_context ctx, struct _cl_mem_gl_image *gl_image)
 {
   if (IS_EGL_CONTEXT(ctx)) {
-    EGLint attrib_list[] = { EGL_GL_TEXTURE_ID_MESA, texture,
-                           EGL_GL_TEXTURE_LEVEL_MESA, miplevel,
-                           EGL_GL_TEXTURE_TARGET_MESA, target,
-                           EGL_NONE};
-
-    eglReleaseResourceMESA(EGL_DISP(ctx), EGL_CTX(ctx), EGL_GL_TEXTURE_MESA, &attrib_list[0]);
+    close(gl_image->fd);
+    eglDestroyImage(EGL_DISP(ctx), gl_image->egl_image);
     return CL_SUCCESS;
   }
   return -1;
@@ -928,10 +985,9 @@ intel_setup_callbacks(void)
   cl_buffer_alloc = (cl_buffer_alloc_cb *) drm_intel_bo_alloc;
   cl_buffer_alloc_userptr = (cl_buffer_alloc_userptr_cb*) intel_buffer_alloc_userptr;
   cl_buffer_set_tiling = (cl_buffer_set_tiling_cb *) intel_buffer_set_tiling;
-#if defined(HAS_EGL)
+#if defined(HAS_GL_EGL)
   cl_buffer_alloc_from_texture = (cl_buffer_alloc_from_texture_cb *) intel_alloc_buffer_from_texture;
   cl_buffer_release_from_texture = (cl_buffer_release_from_texture_cb *) intel_release_buffer_from_texture;
-  intel_set_cl_gl_callbacks();
 #endif
   cl_buffer_get_buffer_from_libva = (cl_buffer_get_buffer_from_libva_cb *) intel_share_buffer_from_libva;
   cl_buffer_get_image_from_libva = (cl_buffer_get_image_from_libva_cb *) intel_share_image_from_libva;

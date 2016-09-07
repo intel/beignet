@@ -1,36 +1,14 @@
 #include "utest_helper.hpp"
 
-static void read_back(int tex, int width, int height, uint32_t * resultColor)
-{
-  float vertices[8] = {-1, 1, 1, 1, 1, -1, -1, -1};
-  float tex_coords[8] = {0, 0, 1, 0, 1, 1, 0, 1};
-
-  glBindTexture(GL_TEXTURE_2D, tex);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glEnable(GL_TEXTURE_2D);
-  glDisable(GL_BLEND);
-  glVertexPointer(2, GL_FLOAT, sizeof(float) * 2, vertices);
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glClientActiveTexture(GL_TEXTURE0);
-  glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 2, tex_coords);
-  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-  glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-  glFlush();
-  OCL_SWAP_EGL_BUFFERS();
-
-  glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, resultColor);
-}
-
 
 static void compiler_fill_gl_image(void)
 {
   const size_t w = EGL_WINDOW_WIDTH;
   const size_t h = EGL_WINDOW_HEIGHT;
-  uint32_t color = 0x123456FF;
-  uint32_t *resultColor;
+  uint32_t color0 = 0x123456FF;
+  uint32_t color1 = 0x789ABCDE;
+  uint32_t *resultColor0;
+  uint32_t *resultColor1;
   GLuint tex;
 
   if (eglContext == EGL_NO_CONTEXT) {
@@ -44,13 +22,15 @@ static void compiler_fill_gl_image(void)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, NULL);
+  glGenerateMipmap(GL_TEXTURE_2D);
+  glTexImage2D(GL_TEXTURE_2D, 1, GL_RGBA, w/2, h/2, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, NULL);
 
   OCL_CREATE_KERNEL("test_fill_gl_image");
+  //Create cl image from miplevel 0
   OCL_CREATE_GL_IMAGE(buf[0], 0, GL_TEXTURE_2D, 0, tex);
-
   // Run the kernel
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
-  OCL_SET_ARG(1, sizeof(color), &color);
+  OCL_SET_ARG(1, sizeof(color0), &color0);
   globals[0] = w;
   globals[1] = h;
   locals[0] = 16;
@@ -59,18 +39,37 @@ static void compiler_fill_gl_image(void)
   OCL_ENQUEUE_ACQUIRE_GL_OBJECTS(0);
   OCL_NDRANGE(2);
   OCL_FLUSH();
+  OCL_ENQUEUE_RELEASE_GL_OBJECTS(0);
 
   // Check result
-  resultColor = new uint32_t[w * h * 4];
-  if (resultColor == NULL)
+  resultColor0 = new uint32_t[w * h];
+  if (resultColor0 == NULL)
     assert(0);
-
-  read_back(tex, w, h, resultColor);
+  glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, resultColor0);
   for (uint32_t j = 0; j < h; ++j)
     for (uint32_t i = 0; i < w; i++)
-      OCL_ASSERT(resultColor[j * w + i] == color);
-  OCL_UNMAP_BUFFER(0);
-  delete[] resultColor;
+      OCL_ASSERT(resultColor0[j * w + i] == color0);
+
+
+  //Create cl image from miplevel 1
+  OCL_CREATE_GL_IMAGE(buf[1], 0, GL_TEXTURE_2D, 1, tex);
+  OCL_SET_ARG(0, sizeof(cl_mem), &buf[1]);
+  OCL_SET_ARG(1, sizeof(color1), &color1);
+  globals[0] = w/2;
+  globals[1] = h/2;
+  OCL_ENQUEUE_ACQUIRE_GL_OBJECTS(1);
+  OCL_NDRANGE(2);
+  OCL_FLUSH();
+  OCL_ENQUEUE_RELEASE_GL_OBJECTS(1);
+
+  // Check result
+  resultColor1 = new uint32_t[(w/2)*(h/2)];
+  glGetTexImage(GL_TEXTURE_2D, 1, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, resultColor1);
+  for (uint32_t j = 0; j < h/2; ++j)
+    for (uint32_t i = 0; i < w/2; i++)
+      OCL_ASSERT(resultColor1[j * (w/2) + i] == color1);
+  delete[] resultColor0;
+  delete[] resultColor1;
 }
 
 MAKE_UTEST_FROM_FUNCTION(compiler_fill_gl_image);

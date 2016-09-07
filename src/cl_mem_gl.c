@@ -74,10 +74,6 @@ cl_mem_new_gl_texture(cl_context ctx,
     goto error;
   }
 
-  cl_mem_gl_image(mem)->target = texture_target;
-  cl_mem_gl_image(mem)->miplevel = miplevel;
-  cl_mem_gl_image(mem)->texture = texture;
-
 exit:
   if (errcode_ret)
     *errcode_ret = err;
@@ -92,6 +88,5 @@ error:
 LOCAL void cl_mem_gl_delete(struct _cl_mem_gl_image *gl_image)
 {
   if (gl_image->base.base.bo != NULL)
-    cl_buffer_release_from_texture(gl_image->base.base.ctx, gl_image->target,
-                                   gl_image->miplevel, gl_image->texture);
+    cl_buffer_release_from_texture(gl_image->base.base.ctx, gl_image);
 }

@@ -347,7 +347,7 @@ typedef cl_buffer (cl_buffer_alloc_from_texture_cb)(cl_context, unsigned int, in
                                                     struct _cl_mem_image *gl_image);
 extern cl_buffer_alloc_from_texture_cb *cl_buffer_alloc_from_texture;
 
-typedef void (cl_buffer_release_from_texture_cb)(cl_context, unsigned int, int, unsigned int);
+typedef void (cl_buffer_release_from_texture_cb)(cl_context, struct _cl_mem_gl_image *);
 extern cl_buffer_release_from_texture_cb *cl_buffer_release_from_texture;
 
 typedef cl_buffer (cl_buffer_get_buffer_from_libva_cb)(cl_context ctx, unsigned int bo_name, size_t *sz);
@@ -431,36 +431,6 @@ extern cl_driver_get_device_id_cb *cl_driver_get_device_id;
 /* Update the device info */
 typedef void (cl_driver_update_device_info_cb)(cl_device_id device);
 extern cl_driver_update_device_info_cb *cl_driver_update_device_info;
-
-/**************************************************************************
- * cl_khr_gl_sharing.
- **************************************************************************/
-typedef int (cl_gl_acquire_texture_cb)(void *driver, void *ctx, int target,
-                                       int level, int texture, void*user_data);
-extern cl_gl_acquire_texture_cb *cl_gl_acquire_texture;
-
-typedef int (cl_gl_release_texture_cb)(void *driver, void *ctx, int target,
-                                       int level, int texture);
-extern cl_gl_release_texture_cb *cl_gl_release_texture;
-
-typedef int (cl_gl_acquire_buffer_object_cb)(void *driver, void *ctx,
-                                             int bufobj, void* user_data);
-extern cl_gl_acquire_buffer_object_cb *cl_gl_acquire_buffer_object;
-
-typedef int (cl_gl_release_buffer_object_cb)(void *driver, void *ctx, int bufobj);
-extern cl_gl_release_buffer_object_cb *cl_gl_release_buffer_object;
-
-typedef int (cl_gl_acquire_render_buffer_cb)(void *driver, void *ctx,
-                                             int rb, void* user_data);
-extern cl_gl_acquire_render_buffer_cb *cl_gl_acquire_render_buffer;
-
-typedef int (cl_gl_release_render_buffer_cb)(void *driver, void *ctx, int rb);
-extern cl_gl_release_render_buffer_cb *cl_gl_release_render_buffer;
-
-#ifndef DEFAULT_DRIVER_DIR
-/* this is normally defined in Mesa/configs/default with DRI_DRIVER_SEARCH_PATH */
-#define DEFAULT_DRIVER_DIR "/usr/local/lib/dri"
-#endif
 
 #endif /* __CL_DRIVER_H__ */
 

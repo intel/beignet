@@ -39,13 +39,15 @@
 #define __thread
 #endif
 
-#ifdef HAS_EGL
+#ifdef HAS_GL_EGL_X11
 #define EGL_WINDOW_WIDTH 256
 #define EGL_WINDOW_HEIGHT 256
+#define GL_GLEXT_PROTOTYPES
 #include  <GL/gl.h>
+#include  <GL/glext.h>
 #include  <EGL/egl.h>
 #include  <EGL/eglext.h>
-#include <CL/cl_gl.h>
+#include  <CL/cl_gl.h>
 
 extern EGLDisplay  eglDisplay;
 extern EGLContext  eglContext;
@@ -125,6 +127,9 @@ union uint32_cast {
 
 #define OCL_ENQUEUE_ACQUIRE_GL_OBJECTS(ID) \
     OCL_CALL(clEnqueueAcquireGLObjects, queue, 1, &buf[ID], 0, 0, 0)
+
+#define OCL_ENQUEUE_RELEASE_GL_OBJECTS(ID) \
+    OCL_CALL(clEnqueueReleaseGLObjects, queue, 1, &buf[ID], 0, 0, 0)
 
 #define OCL_SWAP_EGL_BUFFERS() \
   eglSwapBuffers(eglDisplay, eglSurface);

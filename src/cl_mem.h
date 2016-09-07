@@ -26,6 +26,9 @@
 #include "cl_base_object.h"
 #include <assert.h>
 #include <pthread.h>
+#if defined(HAS_GL_EGL)
+#include "EGL/egl.h"
+#endif
 
 #ifndef CL_VERSION_1_2
 #define CL_MEM_OBJECT_IMAGE1D                       0x10F4
@@ -119,9 +122,10 @@ struct _cl_mem_image {
 
 struct _cl_mem_gl_image {
   struct _cl_mem_image base;
-  uint32_t target;
-  int      miplevel;
-  uint32_t texture;
+  int fd;
+#if defined(HAS_GL_EGL)
+  EGLImage egl_image;
+#endif
 };
 
 struct _cl_mem_buffer1d_image {

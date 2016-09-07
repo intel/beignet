@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#ifdef HAS_EGL
+#ifdef HAS_GL_EGL
 #include <GL/gl.h>
 #endif
 
@@ -95,16 +95,7 @@ clCreateFromGLTexture3D(cl_context    context,
                         GLuint texture,
                         cl_int *      errcode_ret)
 {
-  cl_mem mem = NULL;
-  cl_int err = CL_SUCCESS;
-  CHECK_CONTEXT (context);
-  CHECK_GL_CONTEXT (context);
-
-  mem = cl_mem_new_gl_texture(context, flags, texture_target, miplevel, texture, &err);
-error:
-  if (errcode_ret)
-    *errcode_ret = err;
-  return mem;
+  NOT_IMPLEMENTED;
 }
 
 cl_mem
@@ -119,6 +110,12 @@ clCreateFromGLTexture(cl_context      context,
   cl_int err = CL_SUCCESS;
   CHECK_CONTEXT (context);
   CHECK_GL_CONTEXT (context);
+
+  //We just support GL_TEXTURE_2D now.
+  if(target != GL_TEXTURE_2D){
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
 
   mem = cl_mem_new_gl_texture(context, flags, target, miplevel, texture, &err);
 error:

@@ -1,5 +1,5 @@
 #include "llvm/Config/llvm-config.h"
-#ifdef HAS_EGL
+#ifdef HAS_GL_EGL
 #include "EGL/egl.h"
 #include "EGL/eglext.h"
 #endif
@@ -55,7 +55,7 @@ void check_opt1_extension(cl_extensions_t *extensions)
 
 void
 check_gl_extension(cl_extensions_t *extensions) {
-#if defined(HAS_EGL)
+#if defined(HAS_GL_EGL)
   int id;
       /* For now, we only support cl_khr_gl_sharing. */
   for(id = GL_EXT_START_ID; id <= GL_EXT_END_ID; id++)

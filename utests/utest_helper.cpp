@@ -57,7 +57,7 @@ __thread size_t locals[3] = {};
 float ULPSIZE_FAST_MATH = 10000.;
 __attribute__ ((visibility ("internal"))) clGetKernelSubGroupInfoKHR_cb* utestclGetKernelSubGroupInfoKHR = NULL;
 
-#ifdef HAS_EGL
+#ifdef HAS_GL_EGL_X11
 Display    *xDisplay;
 EGLDisplay  eglDisplay;
 EGLContext  eglContext = NULL;
@@ -435,7 +435,7 @@ cl_ocl_init(void)
   cl_int status = CL_SUCCESS;
   cl_uint platform_n;
   size_t i;
-#ifdef HAS_EGL
+#ifdef HAS_GL_EGL_X11
   bool hasGLExt = false;
 #endif
   cl_context_properties *props = NULL;
@@ -464,7 +464,7 @@ cl_ocl_init(void)
       GET_DEVICE_STR_INFO(version, VERSION);
       GET_DEVICE_STR_INFO(extensions, EXTENSIONS);
       GET_DEVICE_STR_INFO(opencl_c_version, OPENCL_C_VERSION);
-#ifdef HAS_EGL
+#ifdef HAS_GL_EGL_X11
       if (std::strstr(extensionsStr.c_str(), "cl_khr_gl_sharing")) {
         hasGLExt = true;
       }
@@ -476,7 +476,7 @@ cl_ocl_init(void)
      goto error;
   }
 
-#ifdef HAS_EGL
+#ifdef HAS_GL_EGL_X11
   if (hasGLExt) {
     int i = 0;
     props = new cl_context_properties[7];
@@ -556,7 +556,7 @@ cl_ocl_destroy(void)
 {
   clReleaseCommandQueue(queue);
   clReleaseContext(ctx);
-#ifdef HAS_EGL
+#ifdef HAS_GL_EGL_X11
   if (eglContext != NULL) {
     cl_ocl_destroy_egl_window();
     eglContext = NULL;
