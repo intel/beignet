@@ -757,7 +757,7 @@ kbl_gt4_break:
   /* Apply any driver-dependent updates to the device info */
   cl_driver_update_device_info(ret);
 
-  #define toMB(size) (size)&(0xfffffffffffffff<<20)
+  #define toMB(size) (size)&(UINT64_C(0xfffffffffffffff)<<20)
   /* Get the global_mem_size and max_mem_alloc size from
    * driver, system ram and hardware*/
   struct sysinfo info;
