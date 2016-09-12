@@ -15,7 +15,10 @@ genpciid+=(22b0 22b1 22b2 22b3)
 #SKL
 genpciid+=(1906 1916 1926 190e 191e 1902 1912 1932 190b 191b 192b 193b 190a 191a 192a 193a)
 #BXT
-genpciid+=(5a84)
+genpciid+=(5a84 5a85)
+#KBL
+genpciid+=(5906 5916 5926 5913 5921 5923 5927 5902 5912 5917)
+genpciid+=(590b 591b 593b 5908 590e 591e 5915 590a 591a 591d)
 pciid=($(lspci -nn | grep "\[8086:.*\]" -o | awk -F : '{print $2}' | awk -F ] '{print $1}'))
 n=${#pciid[*]}
 i=0
