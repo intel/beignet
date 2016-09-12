@@ -51,6 +51,10 @@ extern cl_driver_get_bufmgr_cb *cl_driver_get_bufmgr;
 typedef uint32_t (cl_driver_get_ver_cb)(cl_driver);
 extern cl_driver_get_ver_cb *cl_driver_get_ver;
 
+/* enlarge stack size from the driver */
+typedef void (cl_driver_enlarge_stack_size_cb)(cl_driver, int32_t*);
+extern cl_driver_enlarge_stack_size_cb *cl_driver_enlarge_stack_size;
+
 typedef enum cl_self_test_res{
   SELF_TEST_PASS = 0,
   SELF_TEST_SLM_FAIL  = 1,

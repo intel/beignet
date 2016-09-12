@@ -465,6 +465,15 @@ intel_driver_get_ver(struct intel_driver *drv)
 }
 
 static void
+intel_driver_enlarge_stack_size(struct intel_driver *drv, int32_t *stack_size)
+{
+    if (drv->gen_ver == 75)
+      *stack_size = *stack_size * 4;
+    else if (drv->device_id == PCI_CHIP_BROXTON_1)
+      *stack_size = *stack_size * 2;
+}
+
+static void
 intel_driver_set_atomic_flag(intel_driver_t *drv, int atomic_flag)
 {
   drv->atomic_test_result = atomic_flag;
@@ -978,6 +987,7 @@ intel_setup_callbacks(void)
   cl_driver_new = (cl_driver_new_cb *) cl_intel_driver_new;
   cl_driver_delete = (cl_driver_delete_cb *) cl_intel_driver_delete;
   cl_driver_get_ver = (cl_driver_get_ver_cb *) intel_driver_get_ver;
+  cl_driver_enlarge_stack_size = (cl_driver_enlarge_stack_size_cb *) intel_driver_enlarge_stack_size;
   cl_driver_set_atomic_flag = (cl_driver_set_atomic_flag_cb *) intel_driver_set_atomic_flag;
   cl_driver_get_bufmgr = (cl_driver_get_bufmgr_cb *) intel_driver_get_bufmgr;
   cl_driver_get_device_id = (cl_driver_get_device_id_cb *) intel_get_device_id;
