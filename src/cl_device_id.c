@@ -210,6 +210,16 @@ static struct _cl_device_id intel_bxt_device = {
 #include "cl_gen9_device.h"
 };
 
+static struct _cl_device_id intel_bxt1_device = {
+  .max_compute_unit = 12,
+  .max_thread_per_unit = 6,
+  .sub_slice_count = 2,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+#include "cl_gen9_device.h"
+};
+
 static struct _cl_device_id intel_kbl_gt1_device = {
   INIT_ICD(dispatch)
   .max_compute_unit = 12,
@@ -635,6 +645,16 @@ bxt_break:
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
+    case PCI_CHIP_BROXTON_1:
+      DECL_INFO_STRING(bxt1_break, intel_bxt1_device, name, "Intel(R) HD Graphics Broxton 1");
+bxt1_break:
+      intel_bxt1_device.device_id = device_id;
+      intel_bxt1_device.platform = cl_get_platform_default();
+      ret = &intel_bxt1_device;
+      cl_intel_platform_get_default_extension(ret);
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      break;
+
     case PCI_CHIP_KABYLAKE_ULT_GT1:
       DECL_INFO_STRING(kbl_gt1_break, intel_kbl_gt1_device, name, "Intel(R) HD Graphics Kabylake ULT GT1");
     case PCI_CHIP_KABYLAKE_DT_GT1:
@@ -950,6 +970,7 @@ LOCAL cl_bool is_gen_device(cl_device_id device) {
          device == &intel_skl_gt3_device ||
          device == &intel_skl_gt4_device ||
          device == &intel_bxt_device     ||
+         device == &intel_bxt1_device    ||
          device == &intel_kbl_gt1_device ||
          device == &intel_kbl_gt15_device ||
          device == &intel_kbl_gt2_device ||
@@ -1080,7 +1101,7 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
     *ver = 8;
   } else if (device == &intel_skl_gt1_device || device == &intel_skl_gt2_device
         || device == &intel_skl_gt3_device || device == &intel_skl_gt4_device
-        || device == &intel_bxt_device || device == &intel_kbl_gt1_device
+        || device == &intel_bxt_device || device == &intel_bxt1_device || device == &intel_kbl_gt1_device
         || device == &intel_kbl_gt2_device || device == &intel_kbl_gt3_device
         || device == &intel_kbl_gt4_device || device == &intel_kbl_gt15_device) {
     *ver = 9;
