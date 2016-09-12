@@ -9,7 +9,7 @@ kernel void compiler_subgroup_broadcast_imm_int(global int *src,
   uint index = get_global_id(0);
 
   int val = src[index];
-  int broadcast_val = sub_group_broadcast(val, 10);
+  int broadcast_val = sub_group_broadcast(val, 2);
   dst[index] = broadcast_val;
 }
 kernel void compiler_subgroup_broadcast_int(global int *src,
