@@ -1267,6 +1267,11 @@ namespace gbe
         } else if (reg.type == GEN_TYPE_W) {
           const uint16_t uw = reg.value.ud & 0xffff;
           reg = GenRegister::immw(-(int16_t)uw);
+        } else if (reg.type == GEN_TYPE_HF_IMM) {
+          const uint16_t uw = reg.value.ud & 0xffff;
+          reg = GenRegister::immh(uw ^ 0x8000);
+        } else if (reg.type == GEN_TYPE_DF_IMM) {
+          reg.value.df = -reg.value.df;
         } else
           NOT_SUPPORTED;
       }
