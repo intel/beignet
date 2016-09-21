@@ -18,7 +18,7 @@ void runtime_event(void)
 
   OCL_CREATE_USER_EVENT(ev[0]);
 
-  clEnqueueWriteBuffer(queue, buf[0], CL_TRUE, 0, BUFFERSIZE*sizeof(int), (void *)cpu_src, 1, &ev[0], &ev[1]);
+  clEnqueueWriteBuffer(queue, buf[0], CL_FALSE, 0, BUFFERSIZE*sizeof(int), (void *)cpu_src, 1, &ev[0], &ev[1]);
 
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
   OCL_SET_ARG(1, sizeof(int), &value);
@@ -33,7 +33,7 @@ void runtime_event(void)
     OCL_ASSERT(status >= CL_SUBMITTED);
   }
 
-  buf_data[0] = clEnqueueMapBuffer(queue, buf[0], CL_TRUE, 0, 0, BUFFERSIZE*sizeof(int), 1, &ev[2], NULL, NULL);
+  buf_data[0] = clEnqueueMapBuffer(queue, buf[0], CL_FALSE, 0, 0, BUFFERSIZE*sizeof(int), 1, &ev[2], NULL, NULL);
 
   OCL_SET_USER_EVENT_STATUS(ev[0], CL_COMPLETE);
 

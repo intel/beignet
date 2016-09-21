@@ -23,7 +23,7 @@ void runtime_marker_list(void)
 
   OCL_CREATE_USER_EVENT(ev[0]);
 
-  clEnqueueWriteBuffer(queue, buf[0], CL_TRUE, 0, BUFFERSIZE*sizeof(int), (void *)cpu_src, 1, &ev[0], &ev[1]);
+  clEnqueueWriteBuffer(queue, buf[0], CL_FALSE, 0, BUFFERSIZE*sizeof(int), (void *)cpu_src, 1, &ev[0], &ev[1]);
 
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);
   OCL_SET_ARG(1, sizeof(int), &value);
@@ -40,22 +40,21 @@ void runtime_marker_list(void)
   }
 
 
-  buf_data[0] = clEnqueueMapBuffer(queue, buf[0], CL_TRUE, 0, 0, BUFFERSIZE*sizeof(int), 1, &ev[2], NULL, NULL);
+  buf_data[0] = clEnqueueMapBuffer(queue, buf[0], CL_FALSE, 0, 0, BUFFERSIZE*sizeof(int), 1, &ev[2], NULL, NULL);
 
   clEnqueueMarkerWithWaitList(queue, 0, NULL, &ev[3]);
 
-  clEnqueueWriteBuffer(queue, buf[1], CL_TRUE, 0, BUFFERSIZE*sizeof(int), (void *)cpu_src_2, 0, NULL, &ev[4]);
+  clEnqueueWriteBuffer(queue, buf[1], CL_FALSE, 0, BUFFERSIZE*sizeof(int), (void *)cpu_src_2, 1, &ev[3], &ev[4]);
 
-  OCL_FINISH();
   clGetEventInfo(ev[4], CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(status), &status, NULL);
-  OCL_ASSERT(status == CL_COMPLETE);
+  OCL_ASSERT(status != CL_COMPLETE);
 
   OCL_SET_USER_EVENT_STATUS(ev[0], CL_COMPLETE);
 
+  OCL_FINISH();
+
   clGetEventInfo(ev[0], CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(status), &status, NULL);
   OCL_ASSERT(status == CL_COMPLETE);
-
-  OCL_FINISH();
 
   for (cl_uint i = 0; i != sizeof(ev) / sizeof(cl_event); ++i) {
     clGetEventInfo(ev[i], CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(status), &status, NULL);
