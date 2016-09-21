@@ -1537,8 +1537,8 @@ intel_gpgpu_set_scratch(intel_gpgpu_t * gpgpu, uint32_t per_thread_size)
   drm_intel_bufmgr *bufmgr = gpgpu->drv->bufmgr;
   drm_intel_bo* old = gpgpu->scratch_b.bo;
   uint32_t total = per_thread_size * gpgpu->max_threads;
-  /* Per Bspec, scratch should 2X the desired size, otherwise luxmark may hang */
-  if (IS_HASWELL(gpgpu->drv->device_id) || IS_CHERRYVIEW(gpgpu->drv->device_id))
+  /* Per Bspec, scratch should 2X the desired size when EU index is not continuous */
+  if (IS_HASWELL(gpgpu->drv->device_id) || IS_CHERRYVIEW(gpgpu->drv->device_id) || PCI_CHIP_BROXTON_1 == gpgpu->drv->device_id)
       total *= 2;
 
   gpgpu->per_thread_scratch = per_thread_size;
