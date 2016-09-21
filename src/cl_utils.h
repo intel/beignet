@@ -358,5 +358,96 @@ static INLINE int atomic_read(atomic_t *v) {
 static INLINE int atomic_inc(atomic_t *v) { return atomic_add(v, 1); }
 static INLINE int atomic_dec(atomic_t *v) { return atomic_add(v, -1); }
 
-#endif /* __CL_UTILS_H__ */
+/* The list. */
+typedef struct list_head {
+  struct list_head *next, *prev;
+} list_head;
 
+static inline void list_init(struct list_head *head)
+{
+  head->next = head->prev = head;
+}
+static inline void list_add(struct list_head *the_new,
+                            struct list_head *prev, struct list_head *next)
+{
+  next->prev = the_new;
+  the_new->next = next;
+  the_new->prev = prev;
+  prev->next = the_new;
+}
+static inline void list_add_tail(struct list_head *the_new, struct list_head *head)
+{
+  list_add(the_new, head->prev, head);
+}
+static inline void list_del(struct list_head *node)
+{
+  node->next->prev = node->prev;
+  node->prev->next = node->next;
+  node->prev = node->next = node;
+}
+static inline void list_replace(struct list_head *the_old, struct list_head *the_new)
+{
+  the_new->next = the_old->next;
+  the_new->next->prev = the_new;
+  the_new->prev = the_old->prev;
+  the_new->prev->next = the_new;
+}
+static inline int list_empty(const struct list_head *head)
+{
+  return head->next == head;
+}
+static inline int list_is_last(const struct list_head *list, const struct list_head *head)
+{
+  return list->next == head;
+}
+static inline void __list_splice(struct list_head *list,
+                                 struct list_head *prev, struct list_head *next)
+{
+  struct list_head *first = list->next;
+  struct list_head *last = list->prev;
+
+  first->prev = prev;
+  prev->next = first;
+
+  last->next = next;
+  next->prev = last;
+
+  list_init(list);
+}
+/**
+ * list_splice - join two lists
+ */
+static inline void list_splice(struct list_head *list, struct list_head *head)
+{
+  if (!list_empty(list))
+    __list_splice(list, head, head->next);
+}
+
+/**
+ * list_splice_tail - join two lists, each list being a queue
+ */
+static inline void list_splice_tail(struct list_head *list, struct list_head *head)
+{
+  if (!list_empty(list))
+    __list_splice(list, head->prev, head);
+}
+
+#undef offsetof
+#ifdef __compiler_offsetof
+#define offsetof(TYPE, MEMBER) __compiler_offsetof(TYPE, MEMBER)
+#else
+#define offsetof(TYPE, MEMBER) ((size_t) & ((TYPE *)0)->MEMBER)
+#endif
+#define container_of(ptr, type, member) ({                      \
+      const typeof( ((type *)0)->member ) *__mptr = (ptr);      \
+      (type *)( (char *)__mptr - offsetof(type,member) ); })
+#define list_entry(ptr, type, member) container_of(ptr, type, member)
+
+#define list_for_each(pos, head) \
+  for (pos = (head)->next; pos != (head); pos = pos->next)
+
+#define list_for_each_safe(pos, n, head)                 \
+  for (pos = (head)->next, n = pos->next; pos != (head); \
+       pos = n, n = pos->next)
+
+#endif /* __CL_UTILS_H__ */
