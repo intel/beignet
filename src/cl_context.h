@@ -102,18 +102,19 @@ struct _cl_context {
   _cl_base_object base;
   cl_driver drv;                    /* Handles HW or simulator */
   cl_device_id device;              /* All information about the GPU device */
-  cl_command_queue queues;          /* All command queues currently allocated */
-  cl_program programs;              /* All programs currently allocated */
-  cl_mem buffers;                   /* All memory object currently allocated */
-  cl_sampler samplers;              /* All sampler object currently allocated */
+  list_head queues;                 /* All command queues currently allocated */
+  cl_uint queue_num;                /* All queue number currently allocated */
+  cl_uint queue_cookie;             /* Cookie will change every time we change queue list. */
+  list_head mem_objects;            /* All memory object currently allocated */
+  cl_uint mem_object_num;           /* All memory number currently allocated */
+  list_head samplers;               /* All sampler object currently allocated */
+  cl_uint sampler_num;              /* All sampler number currently allocated */
+  list_head events;                 /* All event object currently allocated */
+  cl_uint event_num;                /* All event number currently allocated */
+  list_head programs;               /* All programs currently allocated */
+  cl_uint program_num;              /* All program number currently allocated */
+
   cl_accelerator_intel accels;      /* All accelerator_intel object currently allocated */
-  cl_event   events;                /* All event object currently allocated */
-  pthread_mutex_t queue_lock;       /* To allocate and deallocate queues */
-  pthread_mutex_t program_lock;     /* To allocate and deallocate programs */
-  pthread_mutex_t buffer_lock;      /* To allocate and deallocate buffers */
-  pthread_mutex_t sampler_lock;     /* To allocate and deallocate samplers */
-  pthread_mutex_t accelerator_intel_lock;     /* To allocate and deallocate accelerator_intel */
-  pthread_mutex_t event_lock;       /* To allocate and deallocate events */
   cl_program internal_prgs[CL_INTERNAL_KERNEL_MAX];
                                     /* All programs internal used, for example clEnqueuexxx api use */
   cl_kernel  internal_kernels[CL_INTERNAL_KERNEL_MAX];
@@ -132,6 +133,17 @@ struct _cl_context {
 
 #define CL_OBJECT_CONTEXT_MAGIC 0x20BBCADE993134AALL
 #define CL_OBJECT_IS_CONTEXT(obj) (((cl_base_object)obj)->magic == CL_OBJECT_CONTEXT_MAGIC)
+
+extern void cl_context_add_queue(cl_context ctx, cl_command_queue queue);
+extern void cl_context_remove_queue(cl_context ctx, cl_command_queue queue);
+extern void cl_context_add_mem(cl_context ctx, cl_mem mem);
+extern void cl_context_remove_mem(cl_context ctx, cl_mem mem);
+extern void cl_context_add_sampler(cl_context ctx, cl_sampler sampler);
+extern void cl_context_remove_sampler(cl_context ctx, cl_sampler sampler);
+extern void cl_context_add_event(cl_context ctx, cl_event sampler);
+extern void cl_context_remove_event(cl_context ctx, cl_event sampler);
+extern void cl_context_add_program(cl_context ctx, cl_program program);
+extern void cl_context_remove_program(cl_context ctx, cl_program program);
 
 /* Implement OpenCL function */
 extern cl_context cl_create_context(const cl_context_properties*,

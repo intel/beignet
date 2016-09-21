@@ -40,7 +40,6 @@ struct _cl_command_queue {
   cl_int    wait_events_num;           /* Number of Non-complete user events */
   cl_int    wait_events_size;          /* The size of array that wait_events point to */
   cl_command_queue_properties  props;  /* Queue properties */
-  cl_command_queue prev, next;         /* We chain the command queues together */
   void *thread_data;                   /* Used to store thread context data */
   cl_mem perf;                         /* Where to put the perf counters */
 

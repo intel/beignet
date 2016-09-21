@@ -88,14 +88,7 @@ cl_sampler_new(cl_context ctx,
   sampler->filter = filter;
 
   /* Append the sampler in the context sampler list */
-  pthread_mutex_lock(&ctx->sampler_lock);
-    sampler->next = ctx->samplers;
-    if (ctx->samplers != NULL)
-      ctx->samplers->prev = sampler;
-    ctx->samplers = sampler;
-  pthread_mutex_unlock(&ctx->sampler_lock);
-  sampler->ctx = ctx;
-  cl_context_add_ref(ctx);
+  cl_context_add_sampler(ctx, sampler);
 
   sampler->clkSamplerValue = cl_to_clk(normalized_coords, address, filter);
 
@@ -117,17 +110,7 @@ cl_sampler_delete(cl_sampler sampler)
   if (CL_OBJECT_DEC_REF(sampler) > 1)
     return;
 
-  assert(sampler->ctx);
-  pthread_mutex_lock(&sampler->ctx->sampler_lock);
-    if (sampler->prev)
-      sampler->prev->next = sampler->next;
-    if (sampler->next)
-      sampler->next->prev = sampler->prev;
-    if (sampler->ctx->samplers == sampler)
-      sampler->ctx->samplers = sampler->next;
-  pthread_mutex_unlock(&sampler->ctx->sampler_lock);
-  cl_context_delete(sampler->ctx);
-
+  cl_context_remove_sampler(sampler->ctx, sampler);
   CL_OBJECT_DESTROY_BASE(sampler);
   cl_free(sampler);
 }

@@ -28,7 +28,6 @@
 /* How to access images */
 struct _cl_sampler {
   _cl_base_object base;
-  cl_sampler prev, next;     /* We chain the samplers in the allocator */
   cl_context ctx;            /* Context it belongs to */
   cl_bool normalized_coords; /* Are coordinates normalized? */
   cl_addressing_mode address;/* CLAMP / REPEAT and so on... */

@@ -83,17 +83,6 @@ cl_program_delete(cl_program p)
     p->build_log = NULL;
   }
 
-  /* Remove it from the list */
-  assert(p->ctx);
-  pthread_mutex_lock(&p->ctx->program_lock);
-    if (p->prev)
-      p->prev->next = p->next;
-    if (p->next)
-      p->next->prev = p->prev;
-    if (p->ctx->programs == p)
-      p->ctx->programs = p->next;
-  pthread_mutex_unlock(&p->ctx->program_lock);
-
 #ifdef HAS_CMRT
   if (p->cmrt_program != NULL)
     cmrt_destroy_program(p);
@@ -106,9 +95,8 @@ cl_program_delete(cl_program p)
     cl_free(p->ker);
   }
 
-  /* Program belongs to their parent context */
-  cl_context_delete(p->ctx);
-
+  /* Remove it from the list */
+  cl_context_remove_program(p->ctx, p);
   /* Free the program as allocated by the compiler */
   if (p->opaque) {
     if (CompilerSupported())
@@ -133,14 +121,14 @@ cl_program_new(cl_context ctx)
   /* Allocate the structure */
   TRY_ALLOC_NO_ERR (p, CALLOC(struct _cl_program));
   CL_OBJECT_INIT_BASE(p, CL_OBJECT_PROGRAM_MAGIC);
-  p->ctx = ctx;
   p->build_status = CL_BUILD_NONE;
   p->cmrt_program = NULL;
   p->build_log = calloc(BUILD_LOG_MAX_SIZE, sizeof(char));
   if (p->build_log)
     p->build_log_max_sz = BUILD_LOG_MAX_SIZE;
+
   /* The queue also belongs to its context */
-  cl_context_add_ref(ctx);
+  cl_context_add_program(ctx, p);
 
 exit:
   return p;

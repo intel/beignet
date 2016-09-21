@@ -57,7 +57,6 @@ typedef struct _user_callback {
 struct _cl_event {
   _cl_base_object    base;
   cl_context         ctx;         /* The context associated with event */
-  cl_event           prev, next;  /* We chain the memory buffers together */
   cl_command_queue   queue;       /* The command queue associated with event */
   cl_command_type    type;        /* The command type associated with event */
   cl_int             status;      /* The execution status */

@@ -166,7 +166,7 @@ cl_kernel_set_arg(cl_kernel k, cl_uint index, size_t sz, const void *value)
     if(value != NULL)
       mem = *(cl_mem*)value;
     if(value != NULL && mem) {
-      if( CL_SUCCESS != is_valid_mem(mem, ctx->buffers))
+      if(CL_SUCCESS != cl_mem_is_valid(mem, ctx))
         return CL_INVALID_MEM_OBJECT;
 
       if (UNLIKELY((arg_type == GBE_ARG_IMAGE && !IS_IMAGE(mem))

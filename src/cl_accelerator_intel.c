@@ -35,12 +35,12 @@ cl_accelerator_intel_new(cl_context ctx,
 
   /* Append the accelerator_intel in the context accelerator_intel list */
   /* does this really needed? */
-  pthread_mutex_lock(&ctx->accelerator_intel_lock);
+  CL_OBJECT_LOCK(ctx);
     accel->next = ctx->accels;
     if (ctx->accels != NULL)
       ctx->accels->prev = accel;
     ctx->accels = accel;
-  pthread_mutex_unlock(&ctx->accelerator_intel_lock);
+  CL_OBJECT_UNLOCK(ctx);
 
   accel->ctx = ctx;
   cl_context_add_ref(ctx);
@@ -70,14 +70,14 @@ cl_accelerator_intel_delete(cl_accelerator_intel accel)
     return;
 
   /* Remove the accelerator_intel in the context accelerator_intel list */
-  pthread_mutex_lock(&accel->ctx->accelerator_intel_lock);
+  CL_OBJECT_LOCK(accel->ctx);
     if (accel->prev)
       accel->prev->next = accel->next;
     if (accel->next)
       accel->next->prev = accel->prev;
     if (accel->ctx->accels == accel)
       accel->ctx->accels = accel->next;
-  pthread_mutex_unlock(&accel->ctx->accelerator_intel_lock);
+  CL_OBJECT_UNLOCK(accel->ctx);
 
   cl_context_delete(accel->ctx);
   CL_OBJECT_DESTROY_BASE(accel);

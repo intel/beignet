@@ -22,6 +22,8 @@
 #include "cl_context.h"
 #include "cl_command_queue.h"
 #include "cl_mem.h"
+#include "cl_sampler.h"
+#include "cl_event.h"
 #include "cl_alloc.h"
 #include "cl_utils.h"
 #include "cl_driver.h"
@@ -37,6 +39,134 @@
 #include <stdint.h>
 #include <assert.h>
 #include <string.h>
+
+LOCAL void
+cl_context_add_queue(cl_context ctx, cl_command_queue queue) {
+  assert(queue->ctx == NULL);
+  cl_context_add_ref(ctx);
+
+  CL_OBJECT_LOCK(ctx);
+  list_add_tail(&queue->base.node, &ctx->queues);
+  ctx->queue_num++;
+  ctx->queue_cookie++;
+  CL_OBJECT_UNLOCK(ctx);
+
+  queue->ctx = ctx;
+}
+
+LOCAL void
+cl_context_remove_queue(cl_context ctx, cl_command_queue queue) {
+  assert(queue->ctx == ctx);
+  CL_OBJECT_LOCK(ctx);
+  list_del(&queue->base.node);
+  ctx->queue_num--;
+  ctx->queue_cookie++;
+  CL_OBJECT_UNLOCK(ctx);
+
+  cl_context_delete(ctx);
+  queue->ctx = NULL;
+}
+
+LOCAL void
+cl_context_add_mem(cl_context ctx, cl_mem mem) {
+  assert(mem->ctx == NULL);
+  cl_context_add_ref(ctx);
+
+  CL_OBJECT_LOCK(ctx);
+  list_add_tail(&mem->base.node, &ctx->mem_objects);
+  ctx->mem_object_num++;
+  CL_OBJECT_UNLOCK(ctx);
+
+  mem->ctx = ctx;
+}
+
+LOCAL void
+cl_context_remove_mem(cl_context ctx, cl_mem mem) {
+  assert(mem->ctx == ctx);
+  CL_OBJECT_LOCK(ctx);
+  list_del(&mem->base.node);
+  ctx->mem_object_num--;
+  CL_OBJECT_UNLOCK(ctx);
+
+  cl_context_delete(ctx);
+  mem->ctx = NULL;
+}
+
+LOCAL void
+cl_context_add_sampler(cl_context ctx, cl_sampler sampler) {
+  assert(sampler->ctx == NULL);
+  cl_context_add_ref(ctx);
+
+  CL_OBJECT_LOCK(ctx);
+  list_add_tail(&sampler->base.node, &ctx->samplers);
+  ctx->sampler_num++;
+  CL_OBJECT_UNLOCK(ctx);
+
+  sampler->ctx = ctx;
+}
+
+LOCAL void
+cl_context_remove_sampler(cl_context ctx, cl_sampler sampler) {
+  assert(sampler->ctx == ctx);
+  CL_OBJECT_LOCK(ctx);
+  list_del(&sampler->base.node);
+  ctx->sampler_num--;
+  CL_OBJECT_UNLOCK(ctx);
+
+  cl_context_delete(ctx);
+  sampler->ctx = NULL;
+}
+
+LOCAL void
+cl_context_add_event(cl_context ctx, cl_event event) {
+  assert(event->ctx == NULL);
+  cl_context_add_ref(ctx);
+
+  CL_OBJECT_LOCK(ctx);
+  list_add_tail(&event->base.node, &ctx->events);
+  ctx->event_num++;
+  CL_OBJECT_UNLOCK(ctx);
+
+  event->ctx = ctx;
+}
+
+LOCAL void
+cl_context_remove_event(cl_context ctx, cl_event event) {
+  assert(event->ctx == ctx);
+  CL_OBJECT_LOCK(ctx);
+  list_del(&event->base.node);
+  ctx->event_num--;
+  CL_OBJECT_UNLOCK(ctx);
+
+  cl_context_delete(ctx);
+  event->ctx = NULL;
+}
+
+LOCAL void
+cl_context_add_program(cl_context ctx, cl_program program) {
+  assert(program->ctx == NULL);
+  cl_context_add_ref(ctx);
+
+  CL_OBJECT_LOCK(ctx);
+  list_add_tail(&program->base.node, &ctx->programs);
+  ctx->program_num++;
+  CL_OBJECT_UNLOCK(ctx);
+
+  program->ctx = ctx;
+}
+
+LOCAL void
+cl_context_remove_program(cl_context ctx, cl_program program) {
+  assert(program->ctx == ctx);
+  CL_OBJECT_LOCK(ctx);
+  list_del(&program->base.node);
+  ctx->program_num--;
+  CL_OBJECT_UNLOCK(ctx);
+
+  cl_context_delete(ctx);
+  program->ctx = NULL;
+}
+
 
 #define CHECK(var) \
   if (var) \
@@ -168,14 +298,15 @@ cl_context_new(struct _cl_context_prop *props)
 
   TRY_ALLOC_NO_ERR (ctx, CALLOC(struct _cl_context));
   CL_OBJECT_INIT_BASE(ctx, CL_OBJECT_CONTEXT_MAGIC);
+  list_init(&ctx->queues);
+  list_init(&ctx->mem_objects);
+  list_init(&ctx->samplers);
+  list_init(&ctx->events);
+  list_init(&ctx->programs);
+  ctx->queue_cookie = 1;
   TRY_ALLOC_NO_ERR (ctx->drv, cl_driver_new(props));
   ctx->props = *props;
   ctx->ver = cl_driver_get_ver(ctx->drv);
-  pthread_mutex_init(&ctx->program_lock, NULL);
-  pthread_mutex_init(&ctx->queue_lock, NULL);
-  pthread_mutex_init(&ctx->buffer_lock, NULL);
-  pthread_mutex_init(&ctx->sampler_lock, NULL);
-  pthread_mutex_init(&ctx->accelerator_intel_lock, NULL);
 
 exit:
   return ctx;
@@ -216,13 +347,6 @@ cl_context_delete(cl_context ctx)
   cl_program_delete(ctx->built_in_prgs);
   ctx->built_in_prgs = NULL;
 
-  /* All object lists should have been freed. Otherwise, the reference counter
-   * of the context cannot be 0
-   */
-  assert(ctx->queues == NULL);
-  assert(ctx->programs == NULL);
-  assert(ctx->buffers == NULL);
-  assert(ctx->drv);
   cl_free(ctx->prop_user);
   cl_driver_delete(ctx->drv);
   CL_OBJECT_DESTROY_BASE(ctx);
@@ -274,7 +398,8 @@ cl_context_get_static_kernel_from_bin(cl_context ctx, cl_int index,
   cl_int ret;
   cl_int binary_status = CL_SUCCESS;
   cl_kernel ker;
-  pthread_mutex_lock(&ctx->program_lock);
+
+  CL_OBJECT_TAKE_OWNERSHIP(ctx, 1);
   if (ctx->internal_prgs[index] == NULL) {
     ctx->internal_prgs[index] = cl_program_create_from_binary(ctx, 1, &ctx->device,
       &size, (const unsigned char **)&str_kernel, &binary_status, &ret);
@@ -324,6 +449,6 @@ cl_context_get_static_kernel_from_bin(cl_context ctx, cl_int index,
   ker = ctx->internal_kernels[index];
 
 unlock:
-  pthread_mutex_unlock(&ctx->program_lock);
+  CL_OBJECT_RELEASE_OWNERSHIP(ctx);
   return cl_kernel_dup(ker);
 }

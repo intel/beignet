@@ -82,7 +82,6 @@ enum cl_mem_type {
 
 typedef  struct _cl_mem {
   _cl_base_object base;
-  cl_mem prev, next;        /* We chain the memory buffers together */
   enum cl_mem_type type;
   cl_buffer bo;             /* Data in GPU memory */
   size_t size;              /* original request size, not alignment size, used in constant buffer */
@@ -195,7 +194,7 @@ extern cl_int cl_get_mem_object_info(cl_mem, cl_mem_info, size_t, void *, size_t
 extern cl_int cl_get_image_info(cl_mem, cl_image_info, size_t, void *, size_t *);
 
 /* Query whether mem is in buffers */
-extern cl_int is_valid_mem(cl_mem mem, cl_mem buffers);
+extern cl_int cl_mem_is_valid(cl_mem mem, cl_context ctx);
 
 /* Create a new memory object and initialize it with possible user data */
 extern cl_mem cl_mem_new_buffer(cl_context, cl_mem_flags, size_t, void*, cl_int*);

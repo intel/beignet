@@ -45,22 +45,14 @@ cl_command_queue_new(cl_context ctx)
   assert(ctx);
   TRY_ALLOC_NO_ERR (queue, CALLOC(struct _cl_command_queue));
   CL_OBJECT_INIT_BASE(queue, CL_OBJECT_COMMAND_QUEUE_MAGIC);
-  queue->ctx = ctx;
+
   queue->cmrt_event = NULL;
   if ((queue->thread_data = cl_thread_data_create()) == NULL) {
     goto error;
   }
 
   /* Append the command queue in the list */
-  pthread_mutex_lock(&ctx->queue_lock);
-    queue->next = ctx->queues;
-    if (ctx->queues != NULL)
-      ctx->queues->prev = queue;
-    ctx->queues = queue;
-  pthread_mutex_unlock(&ctx->queue_lock);
-
-  /* The queue also belongs to its context */
-  cl_context_add_ref(ctx);
+  cl_context_add_queue(ctx, queue);
 
 exit:
   return queue;
@@ -74,7 +66,8 @@ LOCAL void
 cl_command_queue_delete(cl_command_queue queue)
 {
   assert(queue);
-  if (CL_OBJECT_DEC_REF(queue) != 1) return;
+  if (CL_OBJECT_DEC_REF(queue) > 1)
+    return;
 
 #ifdef HAS_CMRT
   if (queue->cmrt_event != NULL)
@@ -84,21 +77,11 @@ cl_command_queue_delete(cl_command_queue queue)
   // If there is a list of valid events, we need to give them
   // a chance to call the call-back function.
   cl_event_update_last_events(queue,1);
-  /* Remove it from the list */
-  assert(queue->ctx);
-  pthread_mutex_lock(&queue->ctx->queue_lock);
-    if (queue->prev)
-      queue->prev->next = queue->next;
-    if (queue->next)
-      queue->next->prev = queue->prev;
-    if (queue->ctx->queues == queue)
-      queue->ctx->queues = queue->next;
-  pthread_mutex_unlock(&queue->ctx->queue_lock);
 
   cl_thread_data_destroy(queue);
   queue->thread_data = NULL;
   cl_mem_delete(queue->perf);
-  cl_context_delete(queue->ctx);
+  cl_context_remove_queue(queue->ctx, queue);
   cl_free(queue->wait_events);
   cl_free(queue->barrier_events);
   CL_OBJECT_DESTROY_BASE(queue);

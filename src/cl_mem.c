@@ -362,15 +362,8 @@ cl_mem_allocate(enum cl_mem_type type,
     mem->size = sz;
   }
 
-  cl_context_add_ref(ctx);
-  mem->ctx = ctx;
-    /* Append the buffer in the context buffer list */
-  pthread_mutex_lock(&ctx->buffer_lock);
-  mem->next = ctx->buffers;
-  if (ctx->buffers != NULL)
-    ctx->buffers->prev = mem;
-  ctx->buffers = mem;
-  pthread_mutex_unlock(&ctx->buffer_lock);
+  /* Append the buffer in the context buffer list */
+  cl_context_add_mem(ctx, mem);
 
 exit:
   if (errcode)
@@ -384,17 +377,26 @@ error:
 }
 
 LOCAL cl_int
-is_valid_mem(cl_mem mem, cl_mem buffers)
+cl_mem_is_valid(cl_mem mem, cl_context ctx)
 {
-  cl_mem tmp = buffers;
-  while(tmp){
-    if(mem == tmp){
-      if (UNLIKELY(!CL_OBJECT_IS_MEM(mem)))
+  struct list_head *pos;
+  cl_base_object pbase_object;
+
+  CL_OBJECT_LOCK(ctx);
+  list_for_each (pos, (&ctx->mem_objects)) {
+    pbase_object = list_entry(pos, _cl_base_object, node);
+    if (pbase_object == (cl_base_object)mem) {
+      if (UNLIKELY(!CL_OBJECT_IS_MEM(mem))) {
+        CL_OBJECT_UNLOCK(ctx);
         return CL_INVALID_MEM_OBJECT;
+      }
+
+      CL_OBJECT_UNLOCK(ctx);
       return CL_SUCCESS;
     }
-    tmp = tmp->next;
   }
+
+  CL_OBJECT_UNLOCK(ctx);
   return CL_INVALID_MEM_OBJECT;
 }
 
@@ -581,15 +583,8 @@ cl_mem_new_sub_buffer(cl_mem buffer,
     mem->host_ptr = buffer->host_ptr;
   }
 
-  cl_context_add_ref(buffer->ctx);
-  mem->ctx = buffer->ctx;
   /* Append the buffer in the context buffer list */
-  pthread_mutex_lock(&buffer->ctx->buffer_lock);
-  mem->next = buffer->ctx->buffers;
-  if (buffer->ctx->buffers != NULL)
-    buffer->ctx->buffers->prev = mem;
-  buffer->ctx->buffers = mem;
-  pthread_mutex_unlock(&buffer->ctx->buffer_lock);
+  cl_context_add_mem(buffer->ctx, mem);
 
 exit:
   if (errcode_ret)
@@ -1203,19 +1198,7 @@ cl_mem_delete(cl_mem mem)
   }
 
   /* Remove it from the list */
-  if (mem->ctx) {
-    pthread_mutex_lock(&mem->ctx->buffer_lock);
-      if (mem->prev)
-        mem->prev->next = mem->next;
-      if (mem->next)
-        mem->next->prev = mem->prev;
-      if (mem->ctx->buffers == mem)
-        mem->ctx->buffers = mem->next;
-    pthread_mutex_unlock(&mem->ctx->buffer_lock);
-    cl_context_delete(mem->ctx);
-  } else {
-    assert((mem->prev == 0) && (mem->next == 0));
-  }
+  cl_context_remove_mem(mem->ctx, mem);
 
   /* Someone still mapped, unmap */
   if(mem->map_ref > 0) {

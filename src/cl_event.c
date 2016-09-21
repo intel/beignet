@@ -102,15 +102,8 @@ cl_event cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type ty
   CL_OBJECT_INIT_BASE(event, CL_OBJECT_EVENT_MAGIC);
 
   /* Append the event in the context event list */
-  pthread_mutex_lock(&ctx->event_lock);
-    event->next = ctx->events;
-    if (ctx->events != NULL)
-      ctx->events->prev = event;
-    ctx->events = event;
-  pthread_mutex_unlock(&ctx->event_lock);
-  event->ctx   = ctx;
-  cl_context_add_ref(ctx);
-
+  cl_context_add_event(ctx, event);
+ 
   /* Initialize all members and create GPGPU event object */
   event->queue = queue;
   event->type  = type;
@@ -155,19 +148,7 @@ void cl_event_delete(cl_event event)
     cl_gpgpu_event_delete(event->gpgpu_event);
 
   /* Remove it from the list */
-  assert(event->ctx);
-  pthread_mutex_lock(&event->ctx->event_lock);
-
-  if (event->prev)
-    event->prev->next = event->next;
-  if (event->next)
-    event->next->prev = event->prev;
-  /* if this is the head, update head pointer ctx->events */
-  if (event->ctx->events == event)
-    event->ctx->events = event->next;
-
-  pthread_mutex_unlock(&event->ctx->event_lock);
-  cl_context_delete(event->ctx);
+  cl_context_remove_event(event->ctx, event);
 
   if (event->gpgpu) {
     fprintf(stderr, "Warning: a event is deleted with a pending enqueued task.\n");
@@ -206,17 +187,17 @@ cl_int cl_event_set_callback(cl_event event ,
   // It is possible that the event enqueued is already completed.
   // clEnqueueReadBuffer can be synchronous and when the callback
   // is registered after, it still needs to get executed.
-  pthread_mutex_lock(&event->ctx->event_lock); // Thread safety required: operations on the event->status can be made from many different threads
+  CL_OBJECT_LOCK(event); // Thread safety required: operations on the event->status can be made from many different threads
   if(event->status <= command_exec_callback_type) {
     /* Call user callback */
-    pthread_mutex_unlock(&event->ctx->event_lock); // pfn_notify can call clFunctions that use the event_lock and from here it's not required
+    CL_OBJECT_UNLOCK(event); // pfn_notify can call clFunctions that use the event_lock and from here it's not required
     cb->pfn_notify(event, event->status, cb->user_data);
     cl_free(cb);
   } else {
     // Enqueue to callback list
     cb->next        = event->user_cb;
     event->user_cb  = cb;
-    pthread_mutex_unlock(&event->ctx->event_lock);
+    CL_OBJECT_UNLOCK(event);
   }
 
 exit:
@@ -434,7 +415,7 @@ void cl_event_call_callback(cl_event event, cl_int status, cl_bool free_cb) {
   user_callback *queue_cb = NULL; // For thread safety, we create a queue that holds user_callback's pfn_notify contents
   user_callback *temp_cb = NULL;
   user_cb = event->user_cb;
-  pthread_mutex_lock(&event->ctx->event_lock);
+  CL_OBJECT_LOCK(event);
   while(user_cb) {
     if(user_cb->status >= status
         && user_cb->executed == CL_FALSE) { // Added check to not execute a callback when it was already handled
@@ -458,7 +439,7 @@ void cl_event_call_callback(cl_event event, cl_int status, cl_bool free_cb) {
     }
     user_cb = user_cb->next;
   }
-  pthread_mutex_unlock(&event->ctx->event_lock);
+  CL_OBJECT_UNLOCK(event);
 
   // Calling the callbacks outside of the event_lock is required because the callback can call cl_api functions and get deadlocked
   while(queue_cb) { // For each callback queued, actually execute the callback
@@ -474,14 +455,14 @@ void cl_event_set_status(cl_event event, cl_int status)
   cl_int ret, i;
   cl_event evt;
 
-  pthread_mutex_lock(&event->ctx->event_lock);
+  CL_OBJECT_LOCK(event);
   if(status >= event->status) {
-    pthread_mutex_unlock(&event->ctx->event_lock);
+    CL_OBJECT_UNLOCK(event);
     return;
   }
   if(event->status <= CL_COMPLETE) {
     event->status = status;    //have done enqueue before or doing in another thread
-    pthread_mutex_unlock(&event->ctx->event_lock);
+    CL_OBJECT_UNLOCK(event);
     return;
   }
 
@@ -501,10 +482,10 @@ void cl_event_set_status(cl_event event, cl_int status)
 
       event->status = status;  //Change the event status after enqueue and befor unlock
 
-      pthread_mutex_unlock(&event->ctx->event_lock);
+      CL_OBJECT_UNLOCK(event);
       for(i=0; i<event->enqueue_cb->num_events; i++)
         cl_event_delete(event->enqueue_cb->wait_list[i]);
-      pthread_mutex_lock(&event->ctx->event_lock);
+      CL_OBJECT_LOCK(event);
 
       if(event->enqueue_cb->wait_list)
         cl_free(event->enqueue_cb->wait_list);
@@ -514,7 +495,7 @@ void cl_event_set_status(cl_event event, cl_int status)
   }
   if(event->status >= status)  //maybe changed in other threads
     event->status = status;
-  pthread_mutex_unlock(&event->ctx->event_lock);
+  CL_OBJECT_UNLOCK(event);
 
   /* Call user callback */
   cl_event_call_callback(event, status, CL_FALSE);
