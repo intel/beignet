@@ -29,9 +29,21 @@
 
 struct intel_gpgpu;
 
+typedef struct _cl_command_queue_enqueue_worker {
+  cl_command_queue queue;
+  pthread_t tid;
+  cl_uint cookie;
+  cl_bool quit;
+  list_head enqueued_events;
+  cl_uint in_exec_status; // Same value as CL_COMPLETE, CL_SUBMITTED ...
+} _cl_command_queue_enqueue_worker;
+
+typedef _cl_command_queue_enqueue_worker *cl_command_queue_enqueue_worker;
+
 /* Basically, this is a (kind-of) batch buffer */
 struct _cl_command_queue {
   _cl_base_object base;
+  _cl_command_queue_enqueue_worker worker;
   cl_context ctx;                      /* Its parent context */
   cl_event* barrier_events;               /* Point to array of non-complete user events that block this command queue */
   cl_int    barrier_events_num;           /* Number of Non-complete user events */
@@ -101,6 +113,15 @@ extern void cl_command_queue_remove_event(cl_command_queue, cl_event);
 extern void cl_command_queue_insert_barrier_event(cl_command_queue queue, cl_event event);
 
 extern void cl_command_queue_remove_barrier_event(cl_command_queue queue, cl_event event);
+
+extern void cl_command_queue_notify(cl_command_queue queue);
+extern void cl_command_queue_enqueue_event(cl_command_queue queue, cl_event event);
+extern cl_int cl_command_queue_init_enqueue(cl_command_queue queue);
+extern void cl_command_queue_destroy_enqueue(cl_command_queue queue);
+extern cl_int cl_command_queue_wait_finish(cl_command_queue queue);
+extern cl_int cl_command_queue_wait_flush(cl_command_queue queue);
+/* Note: Must call this function with queue's lock. */
+extern cl_event *cl_command_queue_record_in_queue_events(cl_command_queue queue, cl_uint *list_num);
 
 #endif /* __CL_COMMAND_QUEUE_H__ */
 
