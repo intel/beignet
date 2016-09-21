@@ -36,7 +36,9 @@ struct _cl_sampler {
 };
 
 #define CL_OBJECT_SAMPLER_MAGIC 0x686a0ecba79ce32fLL
-#define CL_OBJECT_IS_SAMPLER(obj) (((cl_base_object)obj)->magic == CL_OBJECT_SAMPLER_MAGIC)
+#define CL_OBJECT_IS_SAMPLER(obj) ((obj &&                           \
+         ((cl_base_object)obj)->magic == CL_OBJECT_SAMPLER_MAGIC &&  \
+         CL_OBJECT_GET_REF(obj) >= 1))
 
 /* Create a new sampler object */
 extern cl_sampler cl_sampler_new(cl_context,

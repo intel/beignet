@@ -126,7 +126,9 @@ struct _cl_device_id {
 };
 
 #define CL_OBJECT_DEVICE_MAGIC 0x2acaddcca8853c52LL
-#define CL_OBJECT_IS_DEVICE(obj) (((cl_base_object)obj)->magic == CL_OBJECT_DEVICE_MAGIC)
+#define CL_OBJECT_IS_DEVICE(obj) ((obj &&                           \
+         ((cl_base_object)obj)->magic == CL_OBJECT_DEVICE_MAGIC &&  \
+         CL_OBJECT_GET_REF(obj) >= 1))
 
 /* Get a device from the given platform */
 extern cl_int cl_get_device_ids(cl_platform_id    platform,

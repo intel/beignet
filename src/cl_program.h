@@ -75,7 +75,9 @@ struct _cl_program {
 };
 
 #define CL_OBJECT_PROGRAM_MAGIC 0x34562ab12789cdefLL
-#define CL_OBJECT_IS_PROGRAM(obj) (((cl_base_object)obj)->magic == CL_OBJECT_PROGRAM_MAGIC)
+#define CL_OBJECT_IS_PROGRAM(obj) ((obj &&                           \
+         ((cl_base_object)obj)->magic == CL_OBJECT_PROGRAM_MAGIC &&  \
+         CL_OBJECT_GET_REF(obj) >= 1))
 
 /* Create a empty program */
 extern cl_program cl_program_new(cl_context);

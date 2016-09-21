@@ -59,7 +59,9 @@ struct _cl_command_queue {
 };
 
 #define CL_OBJECT_COMMAND_QUEUE_MAGIC 0x83650a12b79ce4efLL
-#define CL_OBJECT_IS_COMMAND_QUEUE(obj) (((cl_base_object)obj)->magic == CL_OBJECT_COMMAND_QUEUE_MAGIC)
+#define CL_OBJECT_IS_COMMAND_QUEUE(obj) ((obj &&                           \
+         ((cl_base_object)obj)->magic == CL_OBJECT_COMMAND_QUEUE_MAGIC &&  \
+         CL_OBJECT_GET_REF(obj) >= 1))
 
 /* The macro to get the thread specified gpgpu struct. */
 #define GET_QUEUE_THREAD_GPGPU(queue) \

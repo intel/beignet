@@ -73,7 +73,9 @@ struct _cl_kernel {
 };
 
 #define CL_OBJECT_KERNEL_MAGIC 0x1234567890abedefLL
-#define CL_OBJECT_IS_KERNEL(obj) (((cl_base_object)obj)->magic == CL_OBJECT_KERNEL_MAGIC)
+#define CL_OBJECT_IS_KERNEL(obj) ((obj &&                           \
+         ((cl_base_object)obj)->magic == CL_OBJECT_KERNEL_MAGIC &&  \
+         CL_OBJECT_GET_REF(obj) >= 1))
 
 /* Allocate an empty kernel */
 extern cl_kernel cl_kernel_new(cl_program);

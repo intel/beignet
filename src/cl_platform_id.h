@@ -45,7 +45,9 @@ struct _cl_platform_id {
 };
 
 #define CL_OBJECT_PLATFORM_MAGIC 0xaacdbb00123ccd85LL
-#define CL_OBJECT_IS_PLATFORM(obj) (((cl_base_object)obj)->magic == CL_OBJECT_PLATFORM_MAGIC)
+#define CL_OBJECT_IS_PLATFORM(obj) ((obj &&                           \
+         ((cl_base_object)obj)->magic == CL_OBJECT_PLATFORM_MAGIC &&  \
+         CL_OBJECT_GET_REF(obj) >= 1))
 
 /* Return the default platform */
 extern cl_platform_id cl_get_platform_default(void);

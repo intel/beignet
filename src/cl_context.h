@@ -132,7 +132,9 @@ struct _cl_context {
 };
 
 #define CL_OBJECT_CONTEXT_MAGIC 0x20BBCADE993134AALL
-#define CL_OBJECT_IS_CONTEXT(obj) (((cl_base_object)obj)->magic == CL_OBJECT_CONTEXT_MAGIC)
+#define CL_OBJECT_IS_CONTEXT(obj) ((obj &&                           \
+         ((cl_base_object)obj)->magic == CL_OBJECT_CONTEXT_MAGIC &&  \
+         CL_OBJECT_GET_REF(obj) >= 1))
 
 extern void cl_context_add_queue(cl_context ctx, cl_command_queue queue);
 extern void cl_context_remove_queue(cl_context ctx, cl_command_queue queue);
