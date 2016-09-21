@@ -285,6 +285,7 @@ set (utests_sources
   compiler_sub_group_shuffle_xor.cpp
   builtin_global_linear_id.cpp
   builtin_local_linear_id.cpp
+  multi_queue_events.cpp
   compiler_mix.cpp
   compiler_math_3op.cpp
   compiler_bsort.cpp)
