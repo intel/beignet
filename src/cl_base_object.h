@@ -44,12 +44,13 @@
 *************************************************************************/
 
 typedef struct _cl_base_object {
-  DEFINE_ICD(dispatch);         /* Dispatch function table for icd */
-  cl_ulong magic;               /* Magic number for each CL object */
-  atomic_t ref;                 /* Reference for each CL object */
-  pthread_mutex_t mutex;        /* THe mutex to protect this object MT safe */
-  pthread_cond_t cond;          /* Condition to wait for getting the object */
-  pthread_t owner;              /* The thread which own this object */
+  DEFINE_ICD(dispatch);  /* Dispatch function table for icd */
+  cl_ulong magic;        /* Magic number for each CL object */
+  atomic_t ref;          /* Reference for each CL object */
+  list_head node;        /* CL object node belong to some container */
+  pthread_mutex_t mutex; /* THe mutex to protect this object MT safe */
+  pthread_cond_t cond;   /* Condition to wait for getting the object */
+  pthread_t owner;       /* The thread which own this object */
 } _cl_base_object;
 
 typedef struct _cl_base_object *cl_base_object;
@@ -68,10 +69,14 @@ extern void cl_object_init_base(cl_base_object obj, cl_ulong magic);
 extern void cl_object_destroy_base(cl_base_object obj);
 extern cl_int cl_object_take_ownership(cl_base_object obj, cl_int wait);
 extern void cl_object_release_ownership(cl_base_object obj);
+extern void cl_object_wait_on_cond(cl_base_object obj);
+extern void cl_object_notify_cond(cl_base_object obj);
 
 #define CL_OBJECT_INIT_BASE(obj, magic) (cl_object_init_base((cl_base_object)obj, magic))
 #define CL_OBJECT_DESTROY_BASE(obj) (cl_object_destroy_base((cl_base_object)obj))
 #define CL_OBJECT_TAKE_OWNERSHIP(obj, wait) (cl_object_take_ownership((cl_base_object)obj, wait))
 #define CL_OBJECT_RELEASE_OWNERSHIP(obj) (cl_object_release_ownership((cl_base_object)obj))
+#define CL_OBJECT_WAIT_ON_COND(obj) (cl_object_wait_on_cond((cl_base_object)obj))
+#define CL_OBJECT_NOTIFY_COND(obj) (cl_object_notify_cond((cl_base_object)obj))
 
 #endif /* __CL_BASE_OBJECT_H__ */

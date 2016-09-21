@@ -29,6 +29,7 @@ cl_object_init_base(cl_base_object obj, cl_ulong magic)
   pthread_mutex_init(&obj->mutex, NULL);
   pthread_cond_init(&obj->cond, NULL);
   obj->owner = invalid_thread_id;
+  list_init(&obj->node);
 }
 
 LOCAL void
@@ -53,6 +54,12 @@ cl_object_destroy_base(cl_base_object obj)
     assert(0);
   }
 
+  if (!list_empty(&obj->node)) {
+    DEBUGP(DL_ERROR, "CL object %p, call destroy while still belong to some object %p",
+           obj, obj->node.prev);
+    assert(0);
+  }
+
   obj->magic = CL_OBJECT_INVALID_MAGIC;
   pthread_mutex_destroy(&obj->mutex);
   pthread_cond_destroy(&obj->cond);
@@ -68,6 +75,12 @@ cl_object_take_ownership(cl_base_object obj, cl_int wait)
   self = pthread_self();
 
   pthread_mutex_lock(&obj->mutex);
+
+  if (pthread_equal(obj->owner, self)) { // Already get
+    pthread_mutex_unlock(&obj->mutex);
+    return 1;
+  }
+
   if (pthread_equal(obj->owner, invalid_thread_id)) {
     obj->owner = self;
     pthread_mutex_unlock(&obj->mutex);
@@ -99,4 +112,18 @@ cl_object_release_ownership(cl_base_object obj)
   pthread_cond_broadcast(&obj->cond);
 
   pthread_mutex_unlock(&obj->mutex);
+}
+
+LOCAL void
+cl_object_wait_on_cond(cl_base_object obj)
+{
+  assert(CL_OBJECT_IS_VALID(obj));
+  pthread_cond_wait(&obj->cond, &obj->mutex);
+}
+
+LOCAL void
+cl_object_notify_cond(cl_base_object obj)
+{
+  assert(CL_OBJECT_IS_VALID(obj));
+  pthread_cond_broadcast(&obj->cond);
 }
