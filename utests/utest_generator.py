@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 from __future__ import print_function
 import os,sys,re,string
 
@@ -247,7 +247,7 @@ which can print more values and information to assist debuging the issue.
   def argvector(self,paraN,index):
     vector=re.findall(r"[0-9]+",self.inputtype[paraN][index])
     if vector:
-      vector=string.atoi(vector[0])
+      vector=int(vector[0])
     else:
       vector=1
     return vector
