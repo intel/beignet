@@ -447,14 +447,20 @@ static float minmag(float x, float y){
   nextafterUtests = func('nextafter','nextafterf',[nextafter_input_type1,nextafter_input_type2],nextafter_output_type,[nextafter_input_values1,nextafter_input_values2],'0 * FLT_ULP')
   
   ##### gentype pow(gentype x, gentype y)
-  pow_base_values = base_input_values1
+  pow_base_values = [80, -80, 3.14, -3.14, 0.5, 1, -3,-4,2,0.0,-0.0,1500.24,-1500.24]
   pow_input_values1 = []
   pow_input_values2 = []
   pow_input_values1,pow_input_values2=gene2ValuesLoop(pow_input_values1,pow_input_values2,pow_base_values)
   pow_input_type1 = ['float','float2','float4','float8','float16']
   pow_input_type2 = ['float','float2','float4','float8','float16']
   pow_output_type = ['float','float2','float4','float8','float16']
-  powUtests = func('pow','powf',[pow_input_type1,pow_input_type2],pow_output_type,[pow_input_values1,pow_input_values2],'16 * FLT_ULP')
+  pow_cpu_func='''
+static float pow_utest(float x, float y){
+    if ((x == 0.0f) && (y == -INFINITY))
+        return INFINITY;
+    return pow(x,y);
+} '''
+  powUtests = func('pow','pow_utest',[pow_input_type1,pow_input_type2],pow_output_type,[pow_input_values1,pow_input_values2],'16 * FLT_ULP',pow_cpu_func)
   
   ##### floatn pown(floatn x, intn y)
   pown_input_values1 = [FLT_MAX_POSI,FLT_MIN_NEGA,FLT_MIN_POSI,FLT_MAX_NEGA,80, -80, 3.14, -3.14, 0.5, 1, 0.0,1500.24,-1500.24]
@@ -469,7 +475,7 @@ static float pown(float x, int y){
   pownUtests = func('pown','pown',[pown_input_type1,pown_input_type2],pown_output_type,[pown_input_values1,pown_input_values2],'16 * FLT_ULP', pown_cpu_func)
   
   ##### gentype powr(gentype x, gentype y)
-  powr_input_values1 = [80, -80, 3.14, 1, 1.257, +0.0, -0.0, +0.0, -0.0, +0.0, -0.0, +1, +1, -80, +0.0, -0.0, +0.0, -0.0, 'INFINITY','INFINITY', +1, +1, +0.0, 2.5,' NAN', 'NAN', 'NAN']
+  powr_input_values1 = [80, 80, 3.14, 1, 1.257, +0.0, -0.0, +0.0, -0.0, +0.0, -0.0, +1, +1, 80, +0.0, -0.0, +0.0, -0.0, 'INFINITY','INFINITY', +1, +1, +0.0, 2.5,' NAN', 'NAN', 'NAN']
   powr_input_values2 = [5.5, 6,7, +0.0, -0.0, -1, -15.67, '-INFINITY', '-INFINITY', 1,  -2.7, 10.5, 3.1415, 3.5, -0.0, -0.0, +0.0, +0.0, +0.0, -0.0, 'INFINITY', '-INFINITY', 'NAN', 'NAN', -1.5, +0.0, 1.5]
   powr_input_type1 = ['float','float2','float4','float8','float16']
   powr_input_type2 = ['float','float2','float4','float8','float16']
