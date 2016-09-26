@@ -24,7 +24,8 @@
 #include "CL/cl.h"
 
 typedef enum {
-  EnqueueReadBuffer = 0,
+  EnqueueReturnSuccesss = 0, /* For some case, we have nothing to do, just return SUCCESS. */
+  EnqueueReadBuffer,
   EnqueueReadBufferRect,
   EnqueueWriteBuffer,
   EnqueueWriteBufferRect,
@@ -49,26 +50,29 @@ typedef enum {
 } enqueue_type;
 
 typedef struct _enqueue_data {
-  enqueue_type      type;             /* Command type */
-  cl_mem            mem_obj;          /* Enqueue's cl_mem */
-  cl_command_queue  queue;            /* Command queue */
-  size_t            offset;           /* Mem object's offset */
-  size_t            size;             /* Size */
-  size_t            origin[3];        /* Origin */
-  size_t            host_origin[3];   /* Origin */
-  size_t            region[3];        /* Region */
-  size_t            row_pitch;        /* Row pitch */
-  size_t            slice_pitch;      /* Slice pitch */
-  size_t            host_row_pitch;   /* Host row pitch, used in read/write buffer rect */
-  size_t            host_slice_pitch; /* Host slice pitch, used in read/write buffer rect */
-  const void *      const_ptr;        /* Const ptr for memory read */
-  void *            ptr;              /* Ptr for write and return value */
-  const cl_mem*     mem_list;         /* mem_list of clEnqueueNativeKernel */
-  uint8_t           unsync_map;       /* Indicate the clEnqueueMapBuffer/Image is unsync map */
-  uint8_t           write_map;        /* Indicate if the clEnqueueMapBuffer is write enable */
-  void (*user_func)(void *);          /* pointer to a host-callable user function */
+  enqueue_type type;         /* Command type */
+  cl_mem mem_obj;            /* Enqueue's cl_mem */
+  cl_command_queue queue;    /* Command queue */
+  size_t offset;             /* Mem object's offset */
+  size_t size;               /* Size */
+  size_t origin[3];          /* Origin */
+  size_t host_origin[3];     /* Origin */
+  size_t region[3];          /* Region */
+  size_t row_pitch;          /* Row pitch */
+  size_t slice_pitch;        /* Slice pitch */
+  size_t host_row_pitch;     /* Host row pitch, used in read/write buffer rect */
+  size_t host_slice_pitch;   /* Host slice pitch, used in read/write buffer rect */
+  const void *const_ptr;     /* Const ptr for memory read */
+  void *ptr;                 /* Ptr for write and return value */
+  const cl_mem *mem_list;    /* mem_list of clEnqueueNativeKernel */
+  uint8_t unsync_map;        /* Indicate the clEnqueueMapBuffer/Image is unsync map */
+  uint8_t write_map;         /* Indicate if the clEnqueueMapBuffer is write enable */
+  void (*user_func)(void *); /* pointer to a host-callable user function */
+  cl_gpgpu gpgpu;
 } enqueue_data;
 
 /* Do real enqueue commands */
-cl_int cl_enqueue_handle(cl_event event, enqueue_data* data);
+extern cl_int cl_enqueue_handle(enqueue_data *data, cl_int status);
+extern void cl_enqueue_delete(enqueue_data *data);
+
 #endif /* __CL_ENQUEUE_H__ */

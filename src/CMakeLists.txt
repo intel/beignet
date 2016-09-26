@@ -68,6 +68,10 @@ set(OPENCL_SRC
     ${KERNEL_STR_FILES}
     cl_base_object.c
     cl_api.c
+    cl_api_mem.c
+    cl_api_kernel.c
+    cl_api_command_queue.c
+    cl_api_event.c
     cl_alloc.c
     cl_kernel.c
     cl_program.c
@@ -85,6 +89,7 @@ set(OPENCL_SRC
     cl_command_queue.c
     cl_command_queue.h
     cl_command_queue_gen7.c
+    cl_command_queue_enqueue.c
     cl_thread.c
     cl_driver.h
     cl_driver.cpp

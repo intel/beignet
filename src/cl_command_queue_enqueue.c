@@ -18,7 +18,7 @@
  */
 
 #include "cl_command_queue.h"
-#include "cl_event_new.h"
+#include "cl_event.h"
 #include "cl_alloc.h"
 #include <stdio.h>
 
@@ -203,7 +203,7 @@ cl_command_queue_record_in_queue_events(cl_command_queue queue, cl_uint *list_nu
   }
   assert(event_num > 0);
 
-  enqueued_list = CL_CALLOC(event_num, sizeof(cl_event));
+  enqueued_list = cl_calloc(event_num, sizeof(cl_event));
   assert(enqueued_list);
 
   i = 0;
@@ -265,7 +265,7 @@ cl_command_queue_wait_flush(cl_command_queue queue)
     cl_event_delete(enqueued_list[i]);
   }
   if (enqueued_list)
-    CL_FREE(enqueued_list);
+    cl_free(enqueued_list);
 
   return CL_SUCCESS;
 }
@@ -315,7 +315,7 @@ cl_command_queue_wait_finish(cl_command_queue queue)
     cl_event_delete(enqueued_list[i]);
   }
   if (enqueued_list)
-    CL_FREE(enqueued_list);
+    cl_free(enqueued_list);
 
   return CL_SUCCESS;
 }

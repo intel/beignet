@@ -101,7 +101,17 @@ typedef  struct _cl_mem {
 } _cl_mem;
 
 #define CL_OBJECT_MEM_MAGIC 0x381a27b9ee6504dfLL
-#define CL_OBJECT_IS_MEM(obj) (((cl_base_object)obj)->magic == CL_OBJECT_MEM_MAGIC)
+#define CL_OBJECT_IS_MEM(obj) ((obj &&                           \
+         ((cl_base_object)obj)->magic == CL_OBJECT_MEM_MAGIC &&  \
+         CL_OBJECT_GET_REF(obj) >= 1))
+#define CL_OBJECT_IS_IMAGE(mem) ((mem &&                           \
+         ((cl_base_object)mem)->magic == CL_OBJECT_MEM_MAGIC &&    \
+         CL_OBJECT_GET_REF(mem) >= 1 &&                            \
+         mem->type >= CL_MEM_IMAGE_TYPE))
+#define CL_OBJECT_IS_BUFFER(mem) ((mem &&                          \
+         ((cl_base_object)mem)->magic == CL_OBJECT_MEM_MAGIC &&    \
+         CL_OBJECT_GET_REF(mem) >= 1 &&                            \
+         mem->type < CL_MEM_IMAGE_TYPE))
 
 struct _cl_mem_image {
   _cl_mem base;
@@ -221,30 +231,30 @@ extern void cl_mem_gl_delete(struct _cl_mem_gl_image *);
 extern void cl_mem_add_ref(cl_mem);
 
 /* api clEnqueueCopyBuffer help function */
-extern cl_int cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
+extern cl_int cl_mem_copy(cl_command_queue queue, cl_event event, cl_mem src_buf, cl_mem dst_buf,
               size_t src_offset, size_t dst_offset, size_t cb);
 
-extern cl_int cl_mem_fill(cl_command_queue queue, const void * pattern, size_t pattern_size,
+extern cl_int cl_mem_fill(cl_command_queue queue, cl_event e, const void * pattern, size_t pattern_size,
               cl_mem buffer, size_t offset, size_t size);
 
 extern cl_int cl_image_fill(cl_command_queue queue, const void * pattern, struct _cl_mem_image*,
                                     const size_t *, const size_t *);
 
 /* api clEnqueueCopyBufferRect help function */
-extern cl_int cl_mem_copy_buffer_rect(cl_command_queue, cl_mem, cl_mem,
+extern cl_int cl_mem_copy_buffer_rect(cl_command_queue, cl_event event, cl_mem, cl_mem,
                                      const size_t *, const size_t *, const size_t *,
                                      size_t, size_t, size_t, size_t);
 
 /* api clEnqueueCopyImage help function */
-extern cl_int cl_mem_kernel_copy_image(cl_command_queue, struct _cl_mem_image*, struct _cl_mem_image*,
-                                       const size_t *, const size_t *, const size_t *);
+extern cl_int cl_mem_kernel_copy_image(cl_command_queue, cl_event event, struct _cl_mem_image*,
+                                       struct _cl_mem_image*, const size_t *, const size_t *, const size_t *);
 
 /* api clEnqueueCopyImageToBuffer help function */
-extern cl_int cl_mem_copy_image_to_buffer(cl_command_queue, struct _cl_mem_image*, cl_mem,
+extern cl_int cl_mem_copy_image_to_buffer(cl_command_queue, cl_event, struct _cl_mem_image*, cl_mem,
                                           const size_t *, const size_t, const size_t *);
 
 /* api clEnqueueCopyBufferToImage help function */
-extern cl_int cl_mem_copy_buffer_to_image(cl_command_queue, cl_mem, struct _cl_mem_image*,
+extern cl_int cl_mem_copy_buffer_to_image(cl_command_queue, cl_event, cl_mem, struct _cl_mem_image*,
                                           const size_t, const size_t *, const size_t *);
 
 /* Directly map a memory object */
@@ -317,6 +327,9 @@ extern cl_mem cl_mem_new_image_from_fd(cl_context ctx,
                                        cl_image_format fmt,
                                        size_t row_pitch,
                                        cl_int *errcode);
+
+extern cl_int cl_mem_record_map_mem(cl_mem mem, void *ptr, void **mem_ptr, size_t offset,
+                      size_t size, const size_t *origin, const size_t *region);
 
 #endif /* __CL_MEM_H__ */
 

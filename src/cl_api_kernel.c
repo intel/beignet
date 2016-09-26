@@ -130,10 +130,19 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
           }
           realGroupSize *= fixed_local_sz[i];
         }
-        if (realGroupSize % 8 != 0)
+
+        //in a loop of conformance test (such as test_api repeated_setup_cleanup), in each loop:
+        //create a new context, a new command queue, and uses 'globalsize[0]=1000, localsize=NULL' to enqueu kernel
+        //it triggers the following message for many times.
+        //to avoid too many messages, only print it for the first time of the process.
+        //just use static variable since it doesn't matter to print a few times at multi-thread case.
+        static int warn_no_good_localsize = 1;
+        if (realGroupSize % 8 != 0 && warn_no_good_localsize) {
+          warn_no_good_localsize = 0;
           DEBUGP(DL_WARNING, "unable to find good values for local_work_size[i], please provide\n"
-                             " local_work_size[] explicitly, you can find good values with\n"
-                             " trial-and-error method.");
+                 " local_work_size[] explicitly, you can find good values with\n"
+                 " trial-and-error method.");
+        }
       }
     }
 
@@ -253,10 +262,10 @@ clEnqueueNativeKernel(cl_command_queue command_queue,
 
     //Per spec, need copy args
     if (cb_args) {
-      new_args = CL_MALLOC(cb_args);
+      new_args = cl_malloc(cb_args);
       if (num_mem_objects) {
-        new_args_mem_loc = CL_MALLOC(sizeof(void *) * num_mem_objects);
-        new_mem_list = CL_MALLOC(sizeof(cl_mem) * num_mem_objects);
+        new_args_mem_loc = cl_malloc(sizeof(void *) * num_mem_objects);
+        new_mem_list = cl_malloc(sizeof(cl_mem) * num_mem_objects);
         memcpy(new_mem_list, mem_list, sizeof(cl_mem) * num_mem_objects);
       }
 
@@ -320,11 +329,11 @@ clEnqueueNativeKernel(cl_command_queue command_queue,
 
   if (err != CL_SUCCESS) {
     if (new_args)
-      CL_FREE(new_args);
+      cl_free(new_args);
     if (new_mem_list)
-      CL_FREE(new_mem_list);
+      cl_free(new_mem_list);
     if (new_args_mem_loc)
-      CL_FREE(new_args_mem_loc);
+      cl_free(new_args_mem_loc);
   }
 
   if (err == CL_SUCCESS && event) {

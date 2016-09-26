@@ -81,6 +81,7 @@ extern void cl_command_queue_add_ref(cl_command_queue);
 /* Map ND range kernel from OCL API */
 extern cl_int cl_command_queue_ND_range(cl_command_queue queue,
                                         cl_kernel ker,
+                                        cl_event event,
                                         const uint32_t work_dim,
                                         const size_t *global_work_offset,
                                         const size_t *global_work_size,
@@ -93,16 +94,16 @@ extern cl_int cl_command_queue_set_report_buffer(cl_command_queue, cl_mem);
 extern cl_int cl_command_queue_flush(cl_command_queue);
 
 /* Flush for the specified gpgpu */
-extern int cl_command_queue_flush_gpgpu(cl_command_queue, cl_gpgpu);
+extern int cl_command_queue_flush_gpgpu(cl_gpgpu);
 
 /* Wait for the completion of the command queue */
 extern cl_int cl_command_queue_finish(cl_command_queue);
 
 /* Bind all the surfaces in the GPGPU state */
-extern cl_int cl_command_queue_bind_surface(cl_command_queue, cl_kernel);
+extern cl_int cl_command_queue_bind_surface(cl_command_queue, cl_kernel, cl_gpgpu);
 
 /* Bind all the image surfaces in the GPGPU state */
-extern cl_int cl_command_queue_bind_image(cl_command_queue, cl_kernel);
+extern cl_int cl_command_queue_bind_image(cl_command_queue, cl_kernel, cl_gpgpu);
 
 /* Insert a user event to command's wait_events */
 extern void cl_command_queue_insert_event(cl_command_queue, cl_event);

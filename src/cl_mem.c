@@ -28,6 +28,7 @@
 #include "cl_kernel.h"
 #include "cl_command_queue.h"
 #include "cl_cmrt.h"
+#include "cl_enqueue.h"
 
 #include "CL/cl.h"
 #include "CL/cl_intel.h"
@@ -1264,7 +1265,7 @@ cl_mem_add_ref(cl_mem mem)
 #define LOCAL_SZ_2   4
 
 LOCAL cl_int
-cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
+cl_mem_copy(cl_command_queue queue, cl_event event, cl_mem src_buf, cl_mem dst_buf,
             size_t src_offset, size_t dst_offset, size_t cb)
 {
   cl_int ret = CL_SUCCESS;
@@ -1317,7 +1318,7 @@ cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
     cl_kernel_set_arg(ker, 2, sizeof(cl_mem), &dst_buf);
     cl_kernel_set_arg(ker, 3, sizeof(int), &dw_dst_offset);
     cl_kernel_set_arg(ker, 4, sizeof(int), &cb);
-    ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+    ret = cl_command_queue_ND_range(queue, ker, event, 1, global_off, global_sz, local_sz);
     cl_kernel_delete(ker);
     return ret;
   }
@@ -1358,7 +1359,7 @@ cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
     cl_kernel_set_arg(ker, 4, sizeof(int), &dw_num);
     cl_kernel_set_arg(ker, 5, sizeof(int), &first_mask);
     cl_kernel_set_arg(ker, 6, sizeof(int), &last_mask);
-    ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+    ret = cl_command_queue_ND_range(queue, ker, event, 1, global_off, global_sz, local_sz);
     cl_kernel_delete(ker);
     return ret;
   }
@@ -1388,7 +1389,7 @@ cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
     cl_kernel_set_arg(ker, 6, sizeof(int), &last_mask);
     cl_kernel_set_arg(ker, 7, sizeof(int), &shift);
     cl_kernel_set_arg(ker, 8, sizeof(int), &dw_mask);
-    ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+    ret = cl_command_queue_ND_range(queue, ker, event, 1, global_off, global_sz, local_sz);
     cl_kernel_delete(ker);
     return ret;
   }
@@ -1420,7 +1421,7 @@ cl_mem_copy(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
     cl_kernel_set_arg(ker, 7, sizeof(int), &shift);
     cl_kernel_set_arg(ker, 8, sizeof(int), &dw_mask);
     cl_kernel_set_arg(ker, 9, sizeof(int), &src_less);
-    ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+    ret = cl_command_queue_ND_range(queue, ker, event, 1, global_off, global_sz, local_sz);
     cl_kernel_delete(ker);
     return ret;
   }
@@ -1493,13 +1494,13 @@ cl_image_fill(cl_command_queue queue, const void * pattern, struct _cl_mem_image
   cl_kernel_set_arg(ker, 6, sizeof(cl_int), &origin[1]);
   cl_kernel_set_arg(ker, 7, sizeof(cl_int), &origin[2]);
 
-  ret = cl_command_queue_ND_range(queue, ker, 3, global_off, global_sz, local_sz);
+  ret = cl_command_queue_ND_range(queue, ker, NULL, 3, global_off, global_sz, local_sz);
   cl_kernel_delete(ker);
   return ret;
 }
 
 LOCAL cl_int
-cl_mem_fill(cl_command_queue queue, const void * pattern, size_t pattern_size,
+cl_mem_fill(cl_command_queue queue, cl_event e, const void * pattern, size_t pattern_size,
             cl_mem buffer, size_t offset, size_t size)
 {
   cl_int ret = CL_SUCCESS;
@@ -1596,13 +1597,13 @@ cl_mem_fill(cl_command_queue queue, const void * pattern, size_t pattern_size,
   if (is_128)
     cl_kernel_set_arg(ker, 4, pattern_size, pattern1);
 
-  ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+  ret = cl_command_queue_ND_range(queue, ker, e, 1, global_off, global_sz, local_sz);
   cl_kernel_delete(ker);
   return ret;
 }
 
 LOCAL cl_int
-cl_mem_copy_buffer_rect(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
+cl_mem_copy_buffer_rect(cl_command_queue queue, cl_event event, cl_mem src_buf, cl_mem dst_buf,
                        const size_t *src_origin, const size_t *dst_origin, const size_t *region,
                        size_t src_row_pitch, size_t src_slice_pitch,
                        size_t dst_row_pitch, size_t dst_slice_pitch) {
@@ -1617,7 +1618,7 @@ cl_mem_copy_buffer_rect(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
     cl_int src_offset = src_origin[2]*src_slice_pitch + src_origin[1]*src_row_pitch + src_origin[0];
     cl_int dst_offset = dst_origin[2]*dst_slice_pitch + dst_origin[1]*dst_row_pitch + dst_origin[0];
     cl_int size = region[0]*region[1]*region[2];
-    ret = cl_mem_copy(queue, src_buf, dst_buf,src_offset, dst_offset, size);
+    ret = cl_mem_copy(queue, NULL, src_buf, dst_buf,src_offset, dst_offset, size);
     return ret;
   }
 
@@ -1669,14 +1670,15 @@ cl_mem_copy_buffer_rect(cl_command_queue queue, cl_mem src_buf, cl_mem dst_buf,
   cl_kernel_set_arg(ker, 9, sizeof(cl_int), &dst_row_pitch);
   cl_kernel_set_arg(ker, 10, sizeof(cl_int), &dst_slice_pitch);
 
-  ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+  ret = cl_command_queue_ND_range(queue, ker, event, 1, global_off, global_sz, local_sz);
   cl_kernel_delete(ker);
   return ret;
 }
 
 LOCAL cl_int
-cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image, struct _cl_mem_image* dst_image,
-                         const size_t *src_origin, const size_t *dst_origin, const size_t *region) {
+cl_mem_kernel_copy_image(cl_command_queue queue, cl_event event, struct _cl_mem_image* src_image,
+                         struct _cl_mem_image* dst_image, const size_t *src_origin,
+                         const size_t *dst_origin, const size_t *region) {
   cl_int ret;
   cl_kernel ker = NULL;
   size_t global_off[] = {0,0,0};
@@ -1817,7 +1819,7 @@ cl_mem_kernel_copy_image(cl_command_queue queue, struct _cl_mem_image* src_image
   cl_kernel_set_arg(ker, 9, sizeof(cl_int), &dst_origin[1]);
   cl_kernel_set_arg(ker, 10, sizeof(cl_int), &dst_origin[2]);
 
-  ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+  ret = cl_command_queue_ND_range(queue, ker, event, 1, global_off, global_sz, local_sz);
 
 fail:
 
@@ -1830,7 +1832,7 @@ fail:
 }
 
 LOCAL cl_int
-cl_mem_copy_image_to_buffer(cl_command_queue queue, struct _cl_mem_image* image, cl_mem buffer,
+cl_mem_copy_image_to_buffer(cl_command_queue queue, cl_event event, struct _cl_mem_image* image, cl_mem buffer,
                          const size_t *src_origin, const size_t dst_offset, const size_t *region) {
   cl_int ret;
   cl_kernel ker = NULL;
@@ -1919,7 +1921,7 @@ cl_mem_copy_image_to_buffer(cl_command_queue queue, struct _cl_mem_image* image,
   cl_kernel_set_arg(ker, 7, sizeof(cl_int), &src_origin[2]);
   cl_kernel_set_arg(ker, 8, sizeof(cl_int), &kn_dst_offset);
 
-  ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+  ret = cl_command_queue_ND_range(queue, ker, event, 1, global_off, global_sz, local_sz);
 
 fail:
 
@@ -1933,7 +1935,7 @@ fail:
 
 
 LOCAL cl_int
-cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_mem buffer, struct _cl_mem_image* image,
+cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_event event, cl_mem buffer, struct _cl_mem_image* image,
                          const size_t src_offset, const size_t *dst_origin, const size_t *region) {
   cl_int ret;
   cl_kernel ker = NULL;
@@ -2019,7 +2021,7 @@ cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_mem buffer, struct _cl_me
   cl_kernel_set_arg(ker, 7, sizeof(cl_int), &dst_origin[2]);
   cl_kernel_set_arg(ker, 8, sizeof(cl_int), &kn_src_offset);
 
-  ret = cl_command_queue_ND_range(queue, ker, 1, global_off, global_sz, local_sz);
+  ret = cl_command_queue_ND_range(queue, ker, event, 1, global_off, global_sz, local_sz);
   cl_kernel_delete(ker);
 
   image->intel_fmt = intel_fmt;
@@ -2307,4 +2309,84 @@ error:
   cl_mem_delete(mem);
   mem = NULL;
   goto exit;
+}
+
+LOCAL cl_int
+cl_mem_record_map_mem(cl_mem mem, void *ptr, void **mem_ptr, size_t offset,
+                      size_t size, const size_t *origin, const size_t *region)
+{
+  // TODO: Need to add MT safe logic.
+
+  cl_int slot = -1;
+  int err = CL_SUCCESS;
+  size_t sub_offset = 0;
+
+  if(mem->type == CL_MEM_SUBBUFFER_TYPE) {
+    struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
+    sub_offset = buffer->sub_offset;
+  }
+
+  ptr = (char*)ptr + offset + sub_offset;
+  if(mem->flags & CL_MEM_USE_HOST_PTR) {
+    assert(mem->host_ptr);
+    //only calc ptr here, will do memcpy in enqueue
+    *mem_ptr = (char *)mem->host_ptr + offset + sub_offset;
+  } else {
+    *mem_ptr = ptr;
+  }
+  /* Record the mapped address. */
+  if (!mem->mapped_ptr_sz) {
+    mem->mapped_ptr_sz = 16;
+    mem->mapped_ptr = (cl_mapped_ptr *)malloc(
+        sizeof(cl_mapped_ptr) * mem->mapped_ptr_sz);
+    if (!mem->mapped_ptr) {
+      cl_mem_unmap_auto(mem);
+      err = CL_OUT_OF_HOST_MEMORY;
+      goto error;
+    }
+    memset(mem->mapped_ptr, 0, mem->mapped_ptr_sz * sizeof(cl_mapped_ptr));
+    slot = 0;
+  } else {
+    int i = 0;
+    for (; i < mem->mapped_ptr_sz; i++) {
+      if (mem->mapped_ptr[i].ptr == NULL) {
+        slot = i;
+        break;
+      }
+    }
+    if (i == mem->mapped_ptr_sz) {
+      cl_mapped_ptr *new_ptr = (cl_mapped_ptr *)malloc(
+          sizeof(cl_mapped_ptr) * mem->mapped_ptr_sz * 2);
+      if (!new_ptr) {
+        cl_mem_unmap_auto(mem);
+        err = CL_OUT_OF_HOST_MEMORY;
+        goto error;
+      }
+      memset(new_ptr, 0, 2 * mem->mapped_ptr_sz * sizeof(cl_mapped_ptr));
+      memcpy(new_ptr, mem->mapped_ptr,
+          mem->mapped_ptr_sz * sizeof(cl_mapped_ptr));
+      slot = mem->mapped_ptr_sz;
+      mem->mapped_ptr_sz *= 2;
+      free(mem->mapped_ptr);
+      mem->mapped_ptr = new_ptr;
+    }
+  }
+  assert(slot != -1);
+  mem->mapped_ptr[slot].ptr = *mem_ptr;
+  mem->mapped_ptr[slot].v_ptr = ptr;
+  mem->mapped_ptr[slot].size = size;
+  if(origin) {
+    assert(region);
+    mem->mapped_ptr[slot].origin[0] = origin[0];
+    mem->mapped_ptr[slot].origin[1] = origin[1];
+    mem->mapped_ptr[slot].origin[2] = origin[2];
+    mem->mapped_ptr[slot].region[0] = region[0];
+    mem->mapped_ptr[slot].region[1] = region[1];
+    mem->mapped_ptr[slot].region[2] = region[2];
+  }
+  mem->map_ref++;
+error:
+  if (err != CL_SUCCESS)
+    *mem_ptr = NULL;
+  return err;
 }

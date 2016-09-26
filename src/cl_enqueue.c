@@ -16,93 +16,101 @@
  *
  * Author: Rong Yang <rong.r.yang@intel.com>
  */
+
+//#include "cl_image.h"
+#include "cl_enqueue.h"
+#include "cl_driver.h"
+#include "cl_event.h"
+#include "cl_command_queue.h"
+#include "cl_utils.h"
+#include "cl_alloc.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include <pthread.h>
 
-#include "cl_enqueue.h"
-#include "cl_image.h"
-#include "cl_driver.h"
-#include "cl_event.h"
-#include "cl_command_queue.h"
-#include "cl_utils.h"
-
-
-cl_int cl_enqueue_read_buffer(enqueue_data* data)
+static cl_int
+cl_enqueue_read_buffer(enqueue_data *data, cl_int status)
 {
   cl_int err = CL_SUCCESS;
   cl_mem mem = data->mem_obj;
+
+  if (status != CL_COMPLETE)
+    return err;
+
   assert(mem->type == CL_MEM_BUFFER_TYPE ||
          mem->type == CL_MEM_SUBBUFFER_TYPE);
-  struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
+  struct _cl_mem_buffer *buffer = (struct _cl_mem_buffer *)mem;
   //cl_buffer_get_subdata sometime is very very very slow in linux kernel, in skl and chv,
   //and it is randomly. So temporary disable it, use map/copy/unmap to read.
   //Should re-enable it after find root cause.
   if (0 && !mem->is_userptr) {
     if (cl_buffer_get_subdata(mem->bo, data->offset + buffer->sub_offset,
-			       data->size, data->ptr) != 0)
+                              data->size, data->ptr) != 0)
       err = CL_MAP_FAILURE;
   } else {
-    void* src_ptr = cl_mem_map_auto(mem, 0);
+    void *src_ptr = cl_mem_map_auto(mem, 0);
     if (src_ptr == NULL)
       err = CL_MAP_FAILURE;
     else {
       //sometimes, application invokes read buffer, instead of map buffer, even if userptr is enabled
       //memcpy is not necessary for this case
-      if (data->ptr != (char*)src_ptr + data->offset + buffer->sub_offset)
-        memcpy(data->ptr, (char*)src_ptr + data->offset + buffer->sub_offset, data->size);
+      if (data->ptr != (char *)src_ptr + data->offset + buffer->sub_offset)
+        memcpy(data->ptr, (char *)src_ptr + data->offset + buffer->sub_offset, data->size);
       cl_mem_unmap_auto(mem);
     }
   }
   return err;
 }
 
-cl_int cl_enqueue_read_buffer_rect(enqueue_data* data)
+static cl_int
+cl_enqueue_read_buffer_rect(enqueue_data *data, cl_int status)
 {
   cl_int err = CL_SUCCESS;
-  void* src_ptr;
-  void* dst_ptr;
+  void *src_ptr;
+  void *dst_ptr;
 
-  const size_t* origin = data->origin;
-  const size_t* host_origin = data->host_origin;
-  const size_t* region = data->region;
+  const size_t *origin = data->origin;
+  const size_t *host_origin = data->host_origin;
+  const size_t *region = data->region;
 
   cl_mem mem = data->mem_obj;
+
+  if (status != CL_COMPLETE)
+    return err;
+
   assert(mem->type == CL_MEM_BUFFER_TYPE ||
          mem->type == CL_MEM_SUBBUFFER_TYPE);
-  struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
+  struct _cl_mem_buffer *buffer = (struct _cl_mem_buffer *)mem;
 
   if (!(src_ptr = cl_mem_map_auto(mem, 0))) {
     err = CL_MAP_FAILURE;
     goto error;
   }
 
-   size_t offset = origin[0] + data->row_pitch*origin[1] + data->slice_pitch*origin[2];
-   src_ptr = (char*)src_ptr + offset +  buffer->sub_offset;
+  size_t offset = origin[0] + data->row_pitch * origin[1] + data->slice_pitch * origin[2];
+  src_ptr = (char *)src_ptr + offset + buffer->sub_offset;
 
-   offset = host_origin[0] + data->host_row_pitch*host_origin[1] + data->host_slice_pitch*host_origin[2];
-   dst_ptr = (char *)data->ptr + offset;
+  offset = host_origin[0] + data->host_row_pitch * host_origin[1] + data->host_slice_pitch * host_origin[2];
+  dst_ptr = (char *)data->ptr + offset;
 
-   if (data->row_pitch == region[0] && data->row_pitch == data->host_row_pitch &&
-       (region[2] == 1 || (data->slice_pitch == region[0]*region[1] && data->slice_pitch == data->host_slice_pitch)))
-   {
-     memcpy(dst_ptr, src_ptr, region[2] == 1 ? data->row_pitch*region[1] : data->slice_pitch*region[2]);
-   }
-   else {
-     cl_uint y, z;
-     for (z = 0; z < region[2]; z++) {
-       const char* src = src_ptr;
-       char* dst = dst_ptr;
-       for (y = 0; y < region[1]; y++) {
-         memcpy(dst, src, region[0]);
-         src += data->row_pitch;
-         dst += data->host_row_pitch;
-       }
-       src_ptr = (char*)src_ptr + data->slice_pitch;
-       dst_ptr = (char*)dst_ptr + data->host_slice_pitch;
-     }
-   }
+  if (data->row_pitch == region[0] && data->row_pitch == data->host_row_pitch &&
+      (region[2] == 1 || (data->slice_pitch == region[0] * region[1] && data->slice_pitch == data->host_slice_pitch))) {
+    memcpy(dst_ptr, src_ptr, region[2] == 1 ? data->row_pitch * region[1] : data->slice_pitch * region[2]);
+  } else {
+    cl_uint y, z;
+    for (z = 0; z < region[2]; z++) {
+      const char *src = src_ptr;
+      char *dst = dst_ptr;
+      for (y = 0; y < region[1]; y++) {
+        memcpy(dst, src, region[0]);
+        src += data->row_pitch;
+        dst += data->host_row_pitch;
+      }
+      src_ptr = (char *)src_ptr + data->slice_pitch;
+      dst_ptr = (char *)dst_ptr + data->host_slice_pitch;
+    }
+  }
 
   err = cl_mem_unmap_auto(mem);
 
@@ -110,75 +118,80 @@ error:
   return err;
 }
 
-cl_int cl_enqueue_write_buffer(enqueue_data *data)
+static cl_int
+cl_enqueue_write_buffer(enqueue_data *data, cl_int status)
 {
   cl_int err = CL_SUCCESS;
   cl_mem mem = data->mem_obj;
   assert(mem->type == CL_MEM_BUFFER_TYPE ||
          mem->type == CL_MEM_SUBBUFFER_TYPE);
-  struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
+  struct _cl_mem_buffer *buffer = (struct _cl_mem_buffer *)mem;
+
+  if (status != CL_COMPLETE)
+    return err;
 
   if (mem->is_userptr) {
-    void* dst_ptr = cl_mem_map_auto(mem, 1);
+    void *dst_ptr = cl_mem_map_auto(mem, 1);
     if (dst_ptr == NULL)
       err = CL_MAP_FAILURE;
     else {
-      memcpy((char*)dst_ptr + data->offset + buffer->sub_offset, data->const_ptr, data->size);
+      memcpy((char *)dst_ptr + data->offset + buffer->sub_offset, data->const_ptr, data->size);
       cl_mem_unmap_auto(mem);
     }
-  }
-  else {
+  } else {
     if (cl_buffer_subdata(mem->bo, data->offset + buffer->sub_offset,
-			   data->size, data->const_ptr) != 0)
+                          data->size, data->const_ptr) != 0)
       err = CL_MAP_FAILURE;
   }
 
   return err;
 }
 
-cl_int cl_enqueue_write_buffer_rect(enqueue_data *data)
+static cl_int
+cl_enqueue_write_buffer_rect(enqueue_data *data, cl_int status)
 {
   cl_int err = CL_SUCCESS;
-  void* src_ptr;
-  void* dst_ptr;
+  void *src_ptr;
+  void *dst_ptr;
 
-  const size_t* origin = data->origin;
-  const size_t* host_origin = data->host_origin;
-  const size_t* region = data->region;
+  const size_t *origin = data->origin;
+  const size_t *host_origin = data->host_origin;
+  const size_t *region = data->region;
 
   cl_mem mem = data->mem_obj;
   assert(mem->type == CL_MEM_BUFFER_TYPE ||
          mem->type == CL_MEM_SUBBUFFER_TYPE);
-  struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
+  struct _cl_mem_buffer *buffer = (struct _cl_mem_buffer *)mem;
+
+  if (status != CL_COMPLETE)
+    return err;
 
   if (!(dst_ptr = cl_mem_map_auto(mem, 1))) {
     err = CL_MAP_FAILURE;
     goto error;
   }
 
-  size_t offset = origin[0] + data->row_pitch*origin[1] + data->slice_pitch*origin[2];
+  size_t offset = origin[0] + data->row_pitch * origin[1] + data->slice_pitch * origin[2];
   dst_ptr = (char *)dst_ptr + offset + buffer->sub_offset;
 
-  offset = host_origin[0] + data->host_row_pitch*host_origin[1] + data->host_slice_pitch*host_origin[2];
-  src_ptr = (char*)data->const_ptr + offset;
+  offset = host_origin[0] + data->host_row_pitch * host_origin[1] + data->host_slice_pitch * host_origin[2];
+  src_ptr = (char *)data->const_ptr + offset;
 
   if (data->row_pitch == region[0] && data->row_pitch == data->host_row_pitch &&
-      (region[2] == 1 || (data->slice_pitch == region[0]*region[1] && data->slice_pitch == data->host_slice_pitch)))
-  {
-    memcpy(dst_ptr, src_ptr, region[2] == 1 ? data->row_pitch*region[1] : data->slice_pitch*region[2]);
-  }
-  else {
+      (region[2] == 1 || (data->slice_pitch == region[0] * region[1] && data->slice_pitch == data->host_slice_pitch))) {
+    memcpy(dst_ptr, src_ptr, region[2] == 1 ? data->row_pitch * region[1] : data->slice_pitch * region[2]);
+  } else {
     cl_uint y, z;
     for (z = 0; z < region[2]; z++) {
-      const char* src = src_ptr;
-      char* dst = dst_ptr;
+      const char *src = src_ptr;
+      char *dst = dst_ptr;
       for (y = 0; y < region[1]; y++) {
         memcpy(dst, src, region[0]);
         src += data->host_row_pitch;
         dst += data->row_pitch;
       }
-      src_ptr = (char*)src_ptr + data->host_slice_pitch;
-      dst_ptr = (char*)dst_ptr + data->slice_pitch;
+      src_ptr = (char *)src_ptr + data->host_slice_pitch;
+      dst_ptr = (char *)dst_ptr + data->slice_pitch;
     }
   }
 
@@ -188,16 +201,19 @@ error:
   return err;
 }
 
-
-cl_int cl_enqueue_read_image(enqueue_data *data)
+static cl_int
+cl_enqueue_read_image(enqueue_data *data, cl_int status)
 {
   cl_int err = CL_SUCCESS;
-  void* src_ptr;
+  void *src_ptr;
 
   cl_mem mem = data->mem_obj;
   CHECK_IMAGE(mem, image);
-  const size_t* origin = data->origin;
-  const size_t* region = data->region;
+  const size_t *origin = data->origin;
+  const size_t *region = data->region;
+
+  if (status != CL_COMPLETE)
+    return err;
 
   if (!(src_ptr = cl_mem_map_auto(mem, 0))) {
     err = CL_MAP_FAILURE;
@@ -208,39 +224,41 @@ cl_int cl_enqueue_read_image(enqueue_data *data)
   src_ptr = (char*)src_ptr + offset;
 
   if (!origin[0] && region[0] == image->w && data->row_pitch == image->row_pitch &&
-      (region[2] == 1 || (!origin[1] && region[1] == image->h && data->slice_pitch == image->slice_pitch)))
-  {
-    memcpy(data->ptr, src_ptr, region[2] == 1 ? data->row_pitch*region[1] : data->slice_pitch*region[2]);
-  }
-  else {
+      (region[2] == 1 || (!origin[1] && region[1] == image->h && data->slice_pitch == image->slice_pitch))) {
+    memcpy(data->ptr, src_ptr, region[2] == 1 ? data->row_pitch * region[1] : data->slice_pitch * region[2]);
+  } else {
     cl_uint y, z;
     for (z = 0; z < region[2]; z++) {
-      const char* src = src_ptr;
-      char* dst = data->ptr;
+      const char *src = src_ptr;
+      char *dst = data->ptr;
       for (y = 0; y < region[1]; y++) {
-        memcpy(dst, src, image->bpp*region[0]);
+        memcpy(dst, src, image->bpp * region[0]);
         src += image->row_pitch;
         dst += data->row_pitch;
       }
-      src_ptr = (char*)src_ptr + image->slice_pitch;
-      data->ptr = (char*)data->ptr + data->slice_pitch;
+      src_ptr = (char *)src_ptr + image->slice_pitch;
+      data->ptr = (char *)data->ptr + data->slice_pitch;
     }
   }
 
- err = cl_mem_unmap_auto(mem);
+  err = cl_mem_unmap_auto(mem);
 
 error:
   return err;
-
 }
 
-cl_int cl_enqueue_write_image(enqueue_data *data)
+static cl_int
+cl_enqueue_write_image(enqueue_data *data, cl_int status)
 {
   cl_int err = CL_SUCCESS;
-  void* dst_ptr;
+  void *dst_ptr;
 
   cl_mem mem = data->mem_obj;
+
   CHECK_IMAGE(mem, image);
+
+  if (status != CL_COMPLETE)
+    return err;
 
   if (!(dst_ptr = cl_mem_map_auto(mem, 1))) {
     err = CL_MAP_FAILURE;
@@ -255,45 +273,57 @@ cl_int cl_enqueue_write_image(enqueue_data *data)
 
 error:
   return err;
-
 }
 
-cl_int cl_enqueue_map_buffer(enqueue_data *data)
+static cl_int
+cl_enqueue_map_buffer(enqueue_data *data, cl_int status)
 {
   void *ptr = NULL;
   cl_int err = CL_SUCCESS;
   cl_mem mem = data->mem_obj;
   assert(mem->type == CL_MEM_BUFFER_TYPE ||
          mem->type == CL_MEM_SUBBUFFER_TYPE);
-  struct _cl_mem_buffer* buffer = (struct _cl_mem_buffer*)mem;
+  struct _cl_mem_buffer *buffer = (struct _cl_mem_buffer *)mem;
 
-  if (mem->is_userptr)
-    ptr = cl_mem_map_auto(mem, data->write_map ? 1 : 0);
-  else {
-    if(data->unsync_map == 1)
-      //because using unsync map in clEnqueueMapBuffer, so force use map_gtt here
-      ptr = cl_mem_map_gtt(mem);
-    else
+  if (status == CL_SUBMITTED) {
+    if (buffer->base.is_userptr) {
+      ptr = buffer->base.host_ptr;
+    } else {
+      if ((ptr = cl_mem_map_gtt_unsync(&buffer->base)) == NULL) {
+        err = CL_MAP_FAILURE;
+        return err;
+      }
+    }
+    data->ptr = ptr;
+  } else if (status == CL_COMPLETE) {
+    if (mem->is_userptr)
       ptr = cl_mem_map_auto(mem, data->write_map ? 1 : 0);
+    else {
+      if (data->unsync_map == 1)
+        //because using unsync map in clEnqueueMapBuffer, so force use map_gtt here
+        ptr = cl_mem_map_gtt(mem);
+      else
+        ptr = cl_mem_map_auto(mem, data->write_map ? 1 : 0);
+    }
+
+    if (ptr == NULL) {
+      err = CL_MAP_FAILURE;
+      return err;
+    }
+    data->ptr = ptr;
+
+    if ((mem->flags & CL_MEM_USE_HOST_PTR) && !mem->is_userptr) {
+      assert(mem->host_ptr);
+      ptr = (char *)ptr + data->offset + buffer->sub_offset;
+      memcpy(mem->host_ptr + data->offset + buffer->sub_offset, ptr, data->size);
+    }
   }
 
-  if (ptr == NULL) {
-    err = CL_MAP_FAILURE;
-    goto error;
-  }
-  data->ptr = ptr;
-
-  if((mem->flags & CL_MEM_USE_HOST_PTR) && !mem->is_userptr) {
-    assert(mem->host_ptr);
-    ptr = (char*)ptr + data->offset + buffer->sub_offset;
-    memcpy(mem->host_ptr + data->offset + buffer->sub_offset, ptr, data->size);
-  }
-
-error:
   return err;
 }
 
-cl_int cl_enqueue_map_image(enqueue_data *data)
+static cl_int
+cl_enqueue_map_image(enqueue_data *data, cl_int status)
 {
   cl_int err = CL_SUCCESS;
   cl_mem mem = data->mem_obj;
@@ -301,45 +331,58 @@ cl_int cl_enqueue_map_image(enqueue_data *data)
   size_t row_pitch = 0;
   CHECK_IMAGE(mem, image);
 
-  if(data->unsync_map == 1)
-    //because using unsync map in clEnqueueMapBuffer, so force use map_gtt here
-    ptr = cl_mem_map_gtt(mem);
-  else
-    ptr = cl_mem_map_auto(mem, data->write_map ? 1 : 0);
+  if (status == CL_SUBMITTED) {
+    if ((ptr = cl_mem_map_gtt_unsync(mem)) == NULL) {
+      err = CL_MAP_FAILURE;
+      goto error;
+    }
+    data->ptr = ptr;
+  } else if (status == CL_COMPLETE) {
+    if (data->unsync_map == 1)
+      //because using unsync map in clEnqueueMapBuffer, so force use map_gtt here
+      ptr = cl_mem_map_gtt(mem);
+    else
+      ptr = cl_mem_map_auto(mem, data->write_map ? 1 : 0);
 
-  if (ptr == NULL) {
-    err = CL_MAP_FAILURE;
-    goto error;
-  }
-  data->ptr = (char*)ptr + image->offset;
-  if (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
-    row_pitch = image->slice_pitch;
-  else
-    row_pitch = image->row_pitch;
+    if (ptr == NULL) {
+      err = CL_MAP_FAILURE;
+      goto error;
+    }
 
-  if(mem->flags & CL_MEM_USE_HOST_PTR) {
-    assert(mem->host_ptr);
-    if (!mem->is_userptr)
-      //src and dst need add offset in function cl_mem_copy_image_region
-      cl_mem_copy_image_region(data->origin, data->region,
-                             mem->host_ptr, image->host_row_pitch, image->host_slice_pitch,
-                             data->ptr, row_pitch, image->slice_pitch, image, CL_TRUE, CL_TRUE);
+    data->ptr = (char*)ptr + image->offset;
+    if (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+      row_pitch = image->slice_pitch;
+    else
+      row_pitch = image->row_pitch;
+
+    if(mem->flags & CL_MEM_USE_HOST_PTR) {
+      assert(mem->host_ptr);
+      if (!mem->is_userptr)
+        //src and dst need add offset in function cl_mem_copy_image_region
+        cl_mem_copy_image_region(data->origin, data->region,
+                                 mem->host_ptr, image->host_row_pitch, image->host_slice_pitch,
+                                 data->ptr, row_pitch, image->slice_pitch, image, CL_TRUE, CL_TRUE);
+    }
   }
 
 error:
   return err;
 }
 
-cl_int cl_enqueue_unmap_mem_object(enqueue_data *data)
+static cl_int
+cl_enqueue_unmap_mem_object(enqueue_data *data, cl_int status)
 {
   cl_int err = CL_SUCCESS;
   int i, j;
   size_t mapped_size = 0;
   size_t origin[3], region[3];
-  void * v_ptr = NULL;
-  void * mapped_ptr = data->ptr;
+  void *v_ptr = NULL;
+  void *mapped_ptr = data->ptr;
   cl_mem memobj = data->mem_obj;
   size_t row_pitch = 0;
+
+  if (status != CL_COMPLETE)
+    return err;
 
   assert(memobj->mapped_ptr_sz >= memobj->map_ref);
   INVALID_VALUE_IF(!mapped_ptr);
@@ -348,7 +391,7 @@ cl_int cl_enqueue_unmap_mem_object(enqueue_data *data)
       memobj->mapped_ptr[i].ptr = NULL;
       mapped_size = memobj->mapped_ptr[i].size;
       v_ptr = memobj->mapped_ptr[i].v_ptr;
-      for(j=0; j<3; j++) {
+      for (j = 0; j < 3; j++) {
         region[j] = memobj->mapped_ptr[i].region[j];
         origin[j] = memobj->mapped_ptr[i].origin[j];
         memobj->mapped_ptr[i].region[j] = 0;
@@ -364,10 +407,10 @@ cl_int cl_enqueue_unmap_mem_object(enqueue_data *data)
   INVALID_VALUE_IF(i == memobj->mapped_ptr_sz);
 
   if (memobj->flags & CL_MEM_USE_HOST_PTR) {
-    if(memobj->type == CL_MEM_BUFFER_TYPE ||
-       memobj->type == CL_MEM_SUBBUFFER_TYPE) {
+    if (memobj->type == CL_MEM_BUFFER_TYPE ||
+        memobj->type == CL_MEM_SUBBUFFER_TYPE) {
       assert(mapped_ptr >= memobj->host_ptr &&
-        mapped_ptr + mapped_size <= memobj->host_ptr + memobj->size);
+             mapped_ptr + mapped_size <= memobj->host_ptr + memobj->size);
       /* Sync the data. */
       if (!memobj->is_userptr)
         memcpy(v_ptr, mapped_ptr, mapped_size);
@@ -381,8 +424,8 @@ cl_int cl_enqueue_unmap_mem_object(enqueue_data *data)
       if (!memobj->is_userptr)
         //v_ptr have added offset, host_ptr have not added offset.
         cl_mem_copy_image_region(origin, region, v_ptr, row_pitch, image->slice_pitch,
-                               memobj->host_ptr, image->host_row_pitch, image->host_slice_pitch,
-                               image, CL_FALSE, CL_TRUE);
+                                 memobj->host_ptr, image->host_row_pitch, image->host_slice_pitch,
+                                 image, CL_FALSE, CL_TRUE);
     }
   } else {
     assert(v_ptr == mapped_ptr);
@@ -391,24 +434,24 @@ cl_int cl_enqueue_unmap_mem_object(enqueue_data *data)
   cl_mem_unmap_auto(memobj);
 
   /* shrink the mapped slot. */
-  if (memobj->mapped_ptr_sz/2 > memobj->map_ref) {
+  if (memobj->mapped_ptr_sz / 2 > memobj->map_ref) {
     int j = 0;
     cl_mapped_ptr *new_ptr = (cl_mapped_ptr *)malloc(
-                             sizeof(cl_mapped_ptr) * (memobj->mapped_ptr_sz/2));
+      sizeof(cl_mapped_ptr) * (memobj->mapped_ptr_sz / 2));
     if (!new_ptr) {
       /* Just do nothing. */
       goto error;
     }
-    memset(new_ptr, 0, (memobj->mapped_ptr_sz/2) * sizeof(cl_mapped_ptr));
+    memset(new_ptr, 0, (memobj->mapped_ptr_sz / 2) * sizeof(cl_mapped_ptr));
 
     for (i = 0; i < memobj->mapped_ptr_sz; i++) {
       if (memobj->mapped_ptr[i].ptr) {
         new_ptr[j] = memobj->mapped_ptr[i];
         j++;
-        assert(j < memobj->mapped_ptr_sz/2);
+        assert(j < memobj->mapped_ptr_sz / 2);
       }
     }
-    memobj->mapped_ptr_sz = memobj->mapped_ptr_sz/2;
+    memobj->mapped_ptr_sz = memobj->mapped_ptr_sz / 2;
     free(memobj->mapped_ptr);
     memobj->mapped_ptr = new_ptr;
   }
@@ -417,7 +460,8 @@ error:
   return err;
 }
 
-cl_int cl_enqueue_native_kernel(enqueue_data *data)
+static cl_int
+cl_enqueue_native_kernel(enqueue_data *data, cl_int status)
 {
   cl_int err = CL_SUCCESS;
   cl_uint num_mem_objects = (cl_uint)data->offset;
@@ -425,18 +469,19 @@ cl_int cl_enqueue_native_kernel(enqueue_data *data)
   const void **args_mem_loc = (const void **)data->const_ptr;
   cl_uint i;
 
-  for (i=0; i<num_mem_objects; ++i)
-  {
-      const cl_mem buffer = mem_list[i];
-      CHECK_MEM(buffer);
+  if (status != CL_COMPLETE)
+    return err;
 
-      *((void **)args_mem_loc[i]) = cl_mem_map_auto(buffer, 0);
+  for (i = 0; i < num_mem_objects; ++i) {
+    const cl_mem buffer = mem_list[i];
+    CHECK_MEM(buffer);
+
+    *((void **)args_mem_loc[i]) = cl_mem_map_auto(buffer, 0);
   }
   data->user_func(data->ptr);
 
-  for (i=0; i<num_mem_objects; ++i)
-  {
-      cl_mem_unmap_auto(mem_list[i]);
+  for (i = 0; i < num_mem_objects; ++i) {
+    cl_mem_unmap_auto(mem_list[i]);
   }
 
   free(data->ptr);
@@ -444,46 +489,115 @@ error:
   return err;
 }
 
-cl_int cl_enqueue_handle(cl_event event, enqueue_data* data)
+static cl_int
+cl_enqueue_ndrange(enqueue_data *data, cl_int status)
 {
-  /* if need profiling, add the submit timestamp here. */
-  if (event && event->type != CL_COMMAND_USER
-           && event->queue->props & CL_QUEUE_PROFILING_ENABLE) {
-    cl_event_get_timestamp(event, CL_PROFILING_COMMAND_SUBMIT);
+  cl_int err = CL_SUCCESS;
+
+  if (status == CL_SUBMITTED) {
+    err = cl_command_queue_flush_gpgpu(data->gpgpu);
+  } else if (status == CL_COMPLETE) {
+    void *batch_buf = cl_gpgpu_ref_batch_buf(data->gpgpu);
+    cl_gpgpu_sync(batch_buf);
+    cl_gpgpu_unref_batch_buf(batch_buf);
+    /* Finished, we can release the gpgpu now. */
+    cl_gpgpu_delete(data->gpgpu);
+    data->gpgpu = NULL;
   }
 
-  switch(data->type) {
-    case EnqueueReadBuffer:
-      return cl_enqueue_read_buffer(data);
-    case EnqueueReadBufferRect:
-      return cl_enqueue_read_buffer_rect(data);
-    case EnqueueWriteBuffer:
-      return cl_enqueue_write_buffer(data);
-    case EnqueueWriteBufferRect:
-      return cl_enqueue_write_buffer_rect(data);
-    case EnqueueReadImage:
-      return cl_enqueue_read_image(data);
-    case EnqueueWriteImage:
-      return cl_enqueue_write_image(data);
-    case EnqueueMapBuffer:
-      return cl_enqueue_map_buffer(data);
-    case EnqueueMapImage:
-      return cl_enqueue_map_image(data);
-    case EnqueueUnmapMemObject:
-      return cl_enqueue_unmap_mem_object(data);
-    case EnqueueCopyBufferRect:
-    case EnqueueCopyBuffer:
-    case EnqueueCopyImage:
-    case EnqueueCopyBufferToImage:
-    case EnqueueCopyImageToBuffer:
-    case EnqueueNDRangeKernel:
-    case EnqueueFillBuffer:
-    case EnqueueFillImage:
-      return cl_event_flush(event);
-    case EnqueueNativeKernel:
-      return cl_enqueue_native_kernel(data);
-    case EnqueueMigrateMemObj:
-    default:
-      return CL_SUCCESS;
+  return err;
+}
+
+static cl_int
+cl_enqueue_marker_or_barrier(enqueue_data *data, cl_int status)
+{
+  return CL_COMPLETE;
+}
+
+LOCAL void
+cl_enqueue_delete(enqueue_data *data)
+{
+  if (data == NULL)
+    return;
+
+  if (data->type == EnqueueCopyBufferRect ||
+      data->type == EnqueueCopyBuffer ||
+      data->type == EnqueueCopyImage ||
+      data->type == EnqueueCopyBufferToImage ||
+      data->type == EnqueueCopyImageToBuffer ||
+      data->type == EnqueueNDRangeKernel ||
+      data->type == EnqueueFillBuffer ||
+      data->type == EnqueueFillImage) {
+    if (data->gpgpu) {
+      cl_gpgpu_delete(data->gpgpu);
+      data->gpgpu = NULL;
+    }
+    return;
+  }
+
+  if (data->type == EnqueueNativeKernel) {
+    if (data->mem_list) {
+      cl_free((void*)data->mem_list);
+      data->mem_list = NULL;
+    }
+    if (data->ptr) {
+      cl_free((void*)data->ptr);
+      data->ptr = NULL;
+    }
+    if (data->const_ptr) {
+      cl_free((void*)data->const_ptr);
+      data->const_ptr = NULL;
+    }
+  }
+}
+
+LOCAL cl_int
+cl_enqueue_handle(enqueue_data *data, cl_int status)
+{
+  /* if need profiling, add the submit timestamp here. */
+  //  if (event && event->event_type != CL_COMMAND_USER &&
+  //      event->queue->props & CL_QUEUE_PROFILING_ENABLE) {
+  //    cl_event_get_timestamp(event, CL_PROFILING_COMMAND_SUBMIT);
+  //  }
+
+  switch (data->type) {
+  case EnqueueReturnSuccesss:
+    return CL_SUCCESS;
+  case EnqueueReadBuffer:
+    return cl_enqueue_read_buffer(data, status);
+  case EnqueueReadBufferRect:
+    return cl_enqueue_read_buffer_rect(data, status);
+  case EnqueueWriteBuffer:
+    return cl_enqueue_write_buffer(data, status);
+  case EnqueueWriteBufferRect:
+    return cl_enqueue_write_buffer_rect(data, status);
+  case EnqueueReadImage:
+    return cl_enqueue_read_image(data, status);
+  case EnqueueWriteImage:
+    return cl_enqueue_write_image(data, status);
+  case EnqueueMapBuffer:
+    return cl_enqueue_map_buffer(data, status);
+  case EnqueueMapImage:
+    return cl_enqueue_map_image(data, status);
+  case EnqueueUnmapMemObject:
+    return cl_enqueue_unmap_mem_object(data, status);
+  case EnqueueMarker:
+  case EnqueueBarrier:
+    return cl_enqueue_marker_or_barrier(data, status);
+  case EnqueueCopyBufferRect:
+  case EnqueueCopyBuffer:
+  case EnqueueCopyImage:
+  case EnqueueCopyBufferToImage:
+  case EnqueueCopyImageToBuffer:
+  case EnqueueNDRangeKernel:
+  case EnqueueFillBuffer:
+  case EnqueueFillImage:
+    //return cl_event_flush(event);
+    return cl_enqueue_ndrange(data, status);
+  case EnqueueNativeKernel:
+    return cl_enqueue_native_kernel(data, status);
+  case EnqueueMigrateMemObj:
+  default:
+    return CL_SUCCESS;
   }
 }

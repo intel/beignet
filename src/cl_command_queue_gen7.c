@@ -23,6 +23,7 @@
 #include "cl_kernel.h"
 #include "cl_device_id.h"
 #include "cl_mem.h"
+#include "cl_event.h"
 #include "cl_utils.h"
 #include "cl_alloc.h"
 
@@ -123,12 +124,12 @@ error:
 }
 
 static int
-cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker)
+cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker, cl_gpgpu gpgpu)
 {
   /* calculate constant buffer size
    * we need raw_size & aligned_size
    */
-  GET_QUEUE_THREAD_GPGPU(queue);
+  //GET_QUEUE_THREAD_GPGPU(queue);
   int32_t arg;
   size_t offset = 0;
   uint32_t raw_size = 0, aligned_size =0;
@@ -331,12 +332,14 @@ cl_alloc_printf(cl_gpgpu gpgpu, cl_kernel ker, void* printf_info, int printf_num
 LOCAL cl_int
 cl_command_queue_ND_range_gen7(cl_command_queue queue,
                                cl_kernel ker,
+                               cl_event event,
                                const uint32_t work_dim,
                                const size_t *global_wk_off,
                                const size_t *global_wk_sz,
                                const size_t *local_wk_sz)
 {
-  GET_QUEUE_THREAD_GPGPU(queue);
+  //GET_QUEUE_THREAD_GPGPU(queue);
+  cl_gpgpu gpgpu = cl_gpgpu_new(queue->ctx->drv);
   cl_context ctx = queue->ctx;
   char *final_curbe = NULL;  /* Includes them and one sub-buffer per group */
   cl_gpgpu_kernel kernel;
@@ -403,9 +406,9 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   }
 
   /* Bind user buffers */
-  cl_command_queue_bind_surface(queue, ker);
+  cl_command_queue_bind_surface(queue, ker, gpgpu);
   /* Bind user images */
-  if(UNLIKELY(err = cl_command_queue_bind_image(queue, ker) != CL_SUCCESS))
+  if(UNLIKELY(err = cl_command_queue_bind_image(queue, ker, gpgpu) != CL_SUCCESS))
     return err;
   /* Bind all samplers */
   if (ker->vme)
@@ -419,7 +422,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   /* Bind a stack if needed */
   cl_bind_stack(gpgpu, ker);
 
-  if (cl_upload_constant_buffer(queue, ker) != 0)
+  if (cl_upload_constant_buffer(queue, ker, gpgpu) != 0)
     goto error;
 
   cl_gpgpu_states_setup(gpgpu, &kernel);
@@ -440,7 +443,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   batch_sz = cl_kernel_compute_batch_sz(ker);
   if (cl_gpgpu_batch_reset(gpgpu, batch_sz) != 0)
     goto error;
-  cl_set_thread_batch_buf(queue, cl_gpgpu_ref_batch_buf(gpgpu));
+  //cl_set_thread_batch_buf(queue, cl_gpgpu_ref_batch_buf(gpgpu));
   cl_gpgpu_batch_start(gpgpu);
 
   /* Issue the GPGPU_WALKER command */
@@ -448,6 +451,10 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
 
   /* Close the batch buffer and submit it */
   cl_gpgpu_batch_end(gpgpu, 0);
+
+  event->exec_data.gpgpu = gpgpu;
+  event->exec_data.type = EnqueueNDRangeKernel;
+
   return CL_SUCCESS;
 
 error:
