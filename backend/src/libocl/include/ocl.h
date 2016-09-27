@@ -18,6 +18,67 @@
 #ifndef __OCL_H__
 #define __OCL_H__
 
+/* LLVM 3.9 has these pre defined undef them first */
+#ifdef cl_khr_3d_image_writes
+#undef cl_khr_3d_image_writes
+#endif
+#ifdef cl_khr_byte_addressable_store
+#undef cl_khr_byte_addressable_store
+#endif
+#ifdef cl_khr_fp16
+#undef cl_khr_fp16
+#endif
+#ifdef cl_khr_fp64
+#undef cl_khr_fp64
+#endif
+#ifdef cl_khr_global_int32_base_atomics
+#undef cl_khr_global_int32_base_atomics
+#endif
+#ifdef cl_khr_global_int32_extended_atomics
+#undef cl_khr_global_int32_extended_atomics
+#endif
+#ifdef cl_khr_gl_sharing
+#undef cl_khr_gl_sharing
+#endif
+#ifdef cl_khr_icd
+#undef cl_khr_icd
+#endif
+#ifdef cl_khr_local_int32_base_atomics
+#undef cl_khr_local_int32_base_atomics
+#endif
+#ifdef cl_khr_local_int32_extended_atomics
+#undef cl_khr_local_int32_extended_atomics
+#endif
+
+#ifdef cl_khr_d3d10_sharing
+#undef cl_khr_d3d10_sharing
+#endif
+#ifdef cl_khr_gl_event
+#undef cl_khr_gl_event
+#endif
+#ifdef cl_khr_int64_base_atomics
+#undef cl_khr_int64_base_atomics
+#endif
+#ifdef cl_khr_int64_extended_atomics
+#undef cl_khr_int64_extended_atomics
+#endif
+
+#ifdef cl_khr_d3d11_sharing
+#undef cl_khr_d3d11_sharing
+#endif
+#ifdef cl_khr_depth_images
+#undef cl_khr_depth_images
+#endif
+#ifdef cl_khr_dx9_media_sharing
+#undef cl_khr_dx9_media_sharing
+#endif
+#ifdef cl_khr_gl_depth_images
+#undef cl_khr_gl_depth_images
+#endif
+#ifdef cl_khr_spir
+#undef cl_khr_spir
+#endif
+
 #include "ocl_defines.h"
 #include "ocl_types.h"
 #include "ocl_as.h"
@@ -40,6 +101,20 @@
 #include "ocl_workitem.h"
 #include "ocl_simd.h"
 #include "ocl_work_group.h"
+
+/* Move these out from ocl_defines.h for only one define */
+#define cl_khr_global_int32_base_atomics
+#define cl_khr_global_int32_extended_atomics
+#define cl_khr_local_int32_base_atomics
+#define cl_khr_local_int32_extended_atomics
+#define cl_khr_byte_addressable_store
+#define cl_khr_icd
+#define cl_khr_gl_sharing
+#define cl_khr_spir
+#define cl_khr_fp16
+#define cl_khr_3d_image_writes
+#define cl_intel_subgroups
+
 #pragma OPENCL EXTENSION cl_khr_fp64 : disable
 #pragma OPENCL EXTENSION cl_khr_fp16 : disable
 #endif

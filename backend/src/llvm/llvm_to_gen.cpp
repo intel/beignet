@@ -46,6 +46,13 @@ namespace gbe
   BVAR(OCL_OUTPUT_CFG_GEN_IR, false);
   using namespace llvm;
 
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+  llvm::LLVMContext& GBEGetLLVMContext() {
+    static llvm::LLVMContext GBEContext;
+    return GBEContext;
+  }
+#endif
+
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
   #define TARGETLIBRARY  TargetLibraryInfoImpl
 #else
@@ -142,7 +149,9 @@ namespace gbe
     MPM.add(createBarrierNodupPass(false));   // remove noduplicate fnAttr before inlining.
     MPM.add(createFunctionInliningPass(20000));
     MPM.add(createBarrierNodupPass(true));    // restore noduplicate fnAttr after inlining.
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+    MPM.add(createPostOrderFunctionAttrsLegacyPass());
+#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
     MPM.add(createPostOrderFunctionAttrsPass());       // Set readonly/readnone attrs
 #else
     MPM.add(createFunctionAttrsPass());       // Set readonly/readnone attrs
@@ -294,7 +303,11 @@ namespace gbe
     if (module) {
       cl_mod = reinterpret_cast<Module*>(const_cast<void*>(module));
     } else if (fileName){
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+      llvm::LLVMContext& c = GBEGetLLVMContext();
+#else
       llvm::LLVMContext& c = llvm::getGlobalContext();
+#endif
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
       cl_mod = parseIRFile(fileName, Err, c).release();
 #else
@@ -349,7 +362,11 @@ namespace gbe
     passes.add(createIntrinsicLoweringPass());
     passes.add(createStripAttributesPass());     // Strip unsupported attributes and calling conventions.
     passes.add(createFunctionInliningPass(20000));
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+    passes.add(createSROAPass());
+#else
     passes.add(createScalarReplAggregatesPass(64, true, -1, -1, 64));
+#endif
     passes.add(createLoadStoreOptimizationPass());
     passes.add(createConstantPropagationPass());
     passes.add(createPromoteMemoryToRegisterPass());

@@ -208,22 +208,22 @@ namespace ir {
       }
 #else
       bool isImage1dT() const {
-        return typeBaseName.compare("image1d_t") == 0;
+        return typeBaseName.find("image1d_t") !=std::string::npos;
       }
       bool isImage1dArrayT() const {
-        return typeBaseName.compare("image1d_array_t") == 0;
+        return typeBaseName.find("image1d_array_t") !=std::string::npos;
       }
       bool isImage1dBufferT() const {
-        return typeBaseName.compare("image1d_buffer_t") == 0;
+        return typeBaseName.find("image1d_buffer_t") !=std::string::npos;
       }
       bool isImage2dT() const {
-        return typeBaseName.compare("image2d_t") == 0;
+        return typeBaseName.find("image2d_t") !=std::string::npos;
       }
       bool isImage2dArrayT() const {
-        return typeBaseName.compare("image2d_array_t") == 0;
+        return typeBaseName.find("image2d_array_t") !=std::string::npos;
       }
       bool isImage3dT() const {
-        return typeBaseName.compare("image3d_t") == 0;
+        return typeBaseName.find("image3d_t") !=std::string::npos;
       }
       bool isSamplerType() const {
         return typeBaseName.compare("sampler_t") == 0;

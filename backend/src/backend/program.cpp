@@ -133,7 +133,13 @@ namespace gbe {
     bool strictMath = true;
     if (fast_relaxed_math || !OCL_STRICT_CONFORMANCE)
       strictMath = false;
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+    llvm::Module * linked_module = module ? llvm::CloneModule((llvm::Module*)module).release() : NULL;
+    // Src now will be removed automatically. So clone it.
+    if (llvmToGen(*unit, fileName, linked_module, optLevel, strictMath, OCL_PROFILING_LOG, error) == false) {
+#else
     if (llvmToGen(*unit, fileName, module, optLevel, strictMath, OCL_PROFILING_LOG, error) == false) {
+#endif
       if (fileName)
         error = std::string(fileName) + " not found";
       delete unit;
@@ -1057,7 +1063,11 @@ EXTEND_QUOTE:
     //FIXME: if use new allocated context to link two modules there would be context mismatch
     //for some functions, so we use global context now, need switch to new context later.
     llvm::Module * out_module;
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+    llvm::LLVMContext* llvm_ctx = &GBEGetLLVMContext();
+#else
     llvm::LLVMContext* llvm_ctx = &llvm::getGlobalContext();
+#endif
 
     if (buildModuleFromSource(source, &out_module, llvm_ctx, dumpLLVMFileName, dumpSPIRBinaryName, clOpt,
                               stringSize, err, errSize)) {

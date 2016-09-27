@@ -127,4 +127,9 @@
 #include "llvm/Analysis/TypeBasedAliasAnalysis.h"
 #endif
 
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#include "llvm/Transforms/IPO/FunctionAttrs.h"
+#include "llvm/Transforms/Scalar/GVN.h"
+#endif
+
 #endif /* __GBE_IR_LLVM_INCLUDES_HPP__ */
