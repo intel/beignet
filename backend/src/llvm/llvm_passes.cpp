@@ -41,9 +41,12 @@ using namespace llvm;
 namespace gbe
 {
   bool isKernelFunction(const llvm::Function &F) {
+    bool bKernel = false;
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+    bKernel = F.getMetadata("kernel_arg_name") != NULL;
+#else
     const Module *module = F.getParent();
     const Module::NamedMDListType& globalMD = module->getNamedMDList();
-    bool bKernel = false;
     for(auto i = globalMD.begin(); i != globalMD.end(); i++) {
       const NamedMDNode &md = *i;
       if(strcmp(md.getName().data(), "opencl.kernels") != 0) continue;
@@ -58,6 +61,7 @@ namespace gbe
         if(op == &F) bKernel = true;
       }
     }
+#endif
     return bKernel;
   }
 

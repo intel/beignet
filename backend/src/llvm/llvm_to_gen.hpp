@@ -23,6 +23,9 @@
  */
 #ifndef __GBE_IR_LLVM_TO_GEN_HPP__
 #define __GBE_IR_LLVM_TO_GEN_HPP__
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#include "llvm/IR/LLVMContext.h"
+#endif
 
 namespace gbe {
   namespace ir {
@@ -34,6 +37,9 @@ namespace gbe {
 		  optLevel 0 equal to clang -O1 and 1 equal to clang -O2*/
   bool llvmToGen(ir::Unit &unit, const char *fileName, const void* module,
                  int optLevel, bool strictMath, int profiling, std::string &errors);
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+  extern llvm::LLVMContext& GBEGetLLVMContext();
+#endif
 
 } /* namespace gbe */
 

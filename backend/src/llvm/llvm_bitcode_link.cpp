@@ -145,6 +145,7 @@ namespace gbe
       return NULL;
 
     std::vector<const char *> kernels;
+    std::vector<const char *> kerneltmp;
     std::vector<const char *> builtinFuncs;
     /* Add the memset and memcpy functions here. */
     builtinFuncs.push_back("__gen_memcpy_gg");
@@ -184,7 +185,12 @@ namespace gbe
     for (Module::iterator SF = mod->begin(), E = mod->end(); SF != E; ++SF) {
       if (SF->isDeclaration()) continue;
       if (!isKernelFunction(*SF)) continue;
-      kernels.push_back(SF->getName().data());
+      // mod will be deleted after link, copy the names.
+      const char *funcName = SF->getName().data();
+      char * tmp = new char[strlen(funcName)+1];
+      strcpy(tmp,funcName);
+      kernels.push_back(tmp);
+      kerneltmp.push_back(tmp);
 
       if (!materializedFuncCall(*mod, *clonedLib, *SF, materializedFuncs, Gvs)) {
         delete clonedLib;
@@ -273,7 +279,11 @@ namespace gbe
     /* We use beignet's bitcode as dst because it will have a lot of
        lazy functions which will not be loaded. */
     char* errorMsg;
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+    if(LLVMLinkModules2(wrap(clonedLib), wrap(mod))) {
+#else
     if(LLVMLinkModules(wrap(clonedLib), wrap(mod), LLVMLinkerDestroySource, &errorMsg)) {
+#endif
       delete clonedLib;
       printf("Fatal Error: link the bitcode error:\n%s\n", errorMsg);
       return NULL;
@@ -284,10 +294,24 @@ namespace gbe
     llvm::PassManager passes;
 #endif
 
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=9
+    auto PreserveKernel = [=](const GlobalValue &GV) {
+      for(size_t i = 0;i < kernels.size(); ++i)
+        if(strcmp(GV.getName().data(), kernels[i]))
+          return true;
+      return false;
+    };
+
+    passes.add(createInternalizePass(PreserveKernel));
+#else
     passes.add(createInternalizePass(kernels));
+#endif
     passes.add(createGlobalDCEPass());
 
     passes.run(*clonedLib);
+
+    for(size_t i = 0;i < kerneltmp.size(); i++)
+      delete[] kerneltmp[i];
 
     return clonedLib;
   }
