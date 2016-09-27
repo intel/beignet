@@ -255,7 +255,6 @@ set (utests_sources
   compiler_double_div.cpp
   compiler_double_convert.cpp
   load_program_from_gen_bin.cpp
-  load_program_from_spir.cpp
   get_arg_info.cpp
   profiling_exec.cpp
   enqueue_copy_buf.cpp
