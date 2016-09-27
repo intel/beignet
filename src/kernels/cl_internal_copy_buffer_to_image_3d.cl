@@ -1,4 +1,4 @@
-kernel void __cl_copy_buffer_to_image_3d(__read_only image3d_t image, global uchar* buffer,
+kernel void __cl_copy_buffer_to_image_3d(__write_only image3d_t image, global uchar* buffer,
                                         unsigned int region0, unsigned int region1, unsigned int region2,
                                         unsigned int dst_origin0, unsigned int dst_origin1, unsigned int dst_origin2,
                                         unsigned int src_offset)
