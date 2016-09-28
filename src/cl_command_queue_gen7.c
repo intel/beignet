@@ -129,7 +129,6 @@ cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker, cl_gpgpu gpgpu)
   /* calculate constant buffer size
    * we need raw_size & aligned_size
    */
-  //GET_QUEUE_THREAD_GPGPU(queue);
   int32_t arg;
   size_t offset = 0;
   uint32_t raw_size = 0, aligned_size =0;
@@ -338,7 +337,6 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
                                const size_t *global_wk_sz,
                                const size_t *local_wk_sz)
 {
-  //GET_QUEUE_THREAD_GPGPU(queue);
   cl_gpgpu gpgpu = cl_gpgpu_new(queue->ctx->drv);
   cl_context ctx = queue->ctx;
   char *final_curbe = NULL;  /* Includes them and one sub-buffer per group */

@@ -90,7 +90,6 @@ set(OPENCL_SRC
     cl_command_queue.h
     cl_command_queue_gen7.c
     cl_command_queue_enqueue.c
-    cl_thread.c
     cl_driver.h
     cl_driver.cpp
     cl_driver_defs.c

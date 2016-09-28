@@ -25,7 +25,6 @@
 #include "cl_device_id.h"
 #include "cl_mem.h"
 #include "cl_utils.h"
-#include "cl_thread.h"
 #include "cl_alloc.h"
 #include "cl_driver.h"
 #include "cl_khr_icd.h"
@@ -46,10 +45,6 @@ cl_command_queue_new(cl_context ctx)
   TRY_ALLOC_NO_ERR (queue, CALLOC(struct _cl_command_queue));
   CL_OBJECT_INIT_BASE(queue, CL_OBJECT_COMMAND_QUEUE_MAGIC);
   cl_command_queue_init_enqueue(queue);
-
-  if ((queue->thread_data = cl_thread_data_create()) == NULL) {
-    goto error;
-  }
 
   /* Append the command queue in the list */
   cl_context_add_queue(ctx, queue);
@@ -82,8 +77,6 @@ cl_command_queue_delete(cl_command_queue queue)
   // a chance to call the call-back function.
   //cl_event_update_last_events(queue,1);
 
-  cl_thread_data_destroy(queue);
-  queue->thread_data = NULL;
   cl_mem_delete(queue->perf);
   cl_context_remove_queue(queue->ctx, queue);
   cl_free(queue->wait_events);
@@ -154,8 +147,6 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k, cl_gpgpu gpgpu)
 LOCAL cl_int
 cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k, cl_gpgpu gpgpu)
 {
-  //GET_QUEUE_THREAD_GPGPU(queue);
-
   /* Bind all user buffers (given by clSetKernelArg) */
   uint32_t i;
   enum gbe_arg_type arg_type; /* kind of argument */
@@ -245,34 +236,6 @@ cl_command_queue_flush_gpgpu(cl_gpgpu gpgpu)
     interp_output_profiling(profiling_info, cl_gpgpu_map_profiling_buffer(gpgpu));
     cl_gpgpu_unmap_profiling_buffer(gpgpu);
   }
-  return CL_SUCCESS;
-}
-
-LOCAL cl_int
-cl_command_queue_flush(cl_command_queue queue)
-{
-  int err;
-  GET_QUEUE_THREAD_GPGPU(queue);
-  err = cl_command_queue_flush_gpgpu(gpgpu);
-  // We now keep a list of uncompleted events and check if they compelte
-  // every flush. This can make sure all events created have chance to be
-  // update status, so the callback functions or reference can be handled.
-  //cl_event_update_last_events(queue,0);
-
-  cl_event current_event = get_current_event(queue);
-  if (current_event && err == CL_SUCCESS) {
-    //err = cl_event_flush(current_event);
-    set_current_event(queue, NULL);
-  }
-  cl_invalid_thread_gpgpu(queue);
-  return err;
-}
-
-LOCAL cl_int
-cl_command_queue_finish(cl_command_queue queue)
-{
-  cl_gpgpu_sync(cl_get_thread_batch_buf(queue));
-  //cl_event_update_last_events(queue,1);
   return CL_SUCCESS;
 }
 

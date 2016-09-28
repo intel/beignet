@@ -24,7 +24,6 @@
 #include "cl_driver.h"
 #include "cl_device_data.h"
 #include "cl_khr_icd.h"
-#include "cl_thread.h"
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
 #include "CL/cl_intel.h"

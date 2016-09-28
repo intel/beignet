@@ -22,7 +22,6 @@
 
 #include "cl_internals.h"
 #include "cl_driver.h"
-#include "cl_thread.h"
 #include "cl_base_object.h"
 #include "CL/cl.h"
 #include <stdint.h>
@@ -52,7 +51,6 @@ struct _cl_command_queue {
   cl_int    wait_events_num;           /* Number of Non-complete user events */
   cl_int    wait_events_size;          /* The size of array that wait_events point to */
   cl_command_queue_properties  props;  /* Queue properties */
-  void *thread_data;                   /* Used to store thread context data */
   cl_mem perf;                         /* Where to put the perf counters */
 
   void* cmrt_event;                    /* the latest CmEvent* of the command queue */
@@ -62,12 +60,6 @@ struct _cl_command_queue {
 #define CL_OBJECT_IS_COMMAND_QUEUE(obj) ((obj &&                           \
          ((cl_base_object)obj)->magic == CL_OBJECT_COMMAND_QUEUE_MAGIC &&  \
          CL_OBJECT_GET_REF(obj) >= 1))
-
-/* The macro to get the thread specified gpgpu struct. */
-#define GET_QUEUE_THREAD_GPGPU(queue) \
-	cl_gpgpu gpgpu = queue ? cl_get_thread_gpgpu(queue) : NULL;  \
-	if (queue) \
-	  assert(gpgpu);
 
 /* Allocate and initialize a new command queue. Also insert it in the list of
  * command queue in the associated context
@@ -92,14 +84,8 @@ extern cl_int cl_command_queue_ND_range(cl_command_queue queue,
 /* The memory object where to report the performance */
 extern cl_int cl_command_queue_set_report_buffer(cl_command_queue, cl_mem);
 
-/* Flush for the command queue */
-extern cl_int cl_command_queue_flush(cl_command_queue);
-
 /* Flush for the specified gpgpu */
 extern int cl_command_queue_flush_gpgpu(cl_gpgpu);
-
-/* Wait for the completion of the command queue */
-extern cl_int cl_command_queue_finish(cl_command_queue);
 
 /* Bind all the surfaces in the GPGPU state */
 extern cl_int cl_command_queue_bind_surface(cl_command_queue, cl_kernel, cl_gpgpu);
