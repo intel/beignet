@@ -1280,6 +1280,7 @@ clGetEventInfo(cl_event      event,
                size_t *      param_value_size_ret)
 {
   cl_int err = CL_SUCCESS;
+  cl_int status;
   CHECK_EVENT(event);
 
   if (param_name == CL_EVENT_COMMAND_QUEUE) {
@@ -1289,8 +1290,8 @@ clGetEventInfo(cl_event      event,
   } else if (param_name == CL_EVENT_COMMAND_TYPE) {
     FILL_GETINFO_RET (cl_command_type, 1, &event->event_type, CL_SUCCESS);
   } else if (param_name == CL_EVENT_COMMAND_EXECUTION_STATUS) {
-    cl_event_get_status(event);
-    FILL_GETINFO_RET (cl_int, 1, &event->status, CL_SUCCESS);
+    status = cl_event_get_status(event);
+    FILL_GETINFO_RET (cl_int, 1, &status, CL_SUCCESS);
   } else if (param_name == CL_EVENT_REFERENCE_COUNT) {
     cl_uint ref = CL_OBJECT_GET_REF(event);
     FILL_GETINFO_RET (cl_int, 1, &ref, CL_SUCCESS);

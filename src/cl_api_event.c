@@ -190,6 +190,7 @@ clWaitForEvents(cl_uint num_events,
                 const cl_event *event_list)
 {
   cl_int err = CL_SUCCESS;
+  cl_uint i;
 
   if (num_events == 0 || event_list == NULL) {
     return CL_INVALID_VALUE;
@@ -198,6 +199,13 @@ clWaitForEvents(cl_uint num_events,
   err = cl_event_check_waitlist(num_events, event_list, NULL, NULL);
   if (err != CL_SUCCESS) {
     return err;
+  }
+
+  for (i = 0; i < num_events; i++) {
+    if (cl_event_get_status(event_list[i]) < CL_COMPLETE) {
+      err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
+      return err;
+    }
   }
 
   err = cl_event_wait_for_events_list(num_events, event_list);

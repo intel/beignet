@@ -436,6 +436,8 @@ cl_event_wait_for_events_list(cl_uint num_events, const cl_event *event_list)
     while (e->status > CL_COMPLETE) {
       CL_OBJECT_WAIT_ON_COND(e);
     }
+
+    assert(e->status <= CL_COMPLETE);
     /* Iff some error happened, return the error. */
     if (e->status < CL_COMPLETE) {
       ret = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
@@ -467,13 +469,8 @@ cl_event_check_waitlist(cl_uint num_events_in_wait_list, const cl_event *event_w
 
     /* check the event and context */
     for (i = 0; i < num_events_in_wait_list; i++) {
-      if (event_wait_list[i] == NULL || !CL_OBJECT_IS_EVENT(event_wait_list[i])) {
+      if (!CL_OBJECT_IS_EVENT(event_wait_list[i])) {
         err = CL_INVALID_EVENT;
-        break;
-      }
-
-      if (cl_event_get_status(event_wait_list[i]) < CL_COMPLETE) {
-        err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
         break;
       }
 
@@ -541,16 +538,21 @@ cl_event_is_ready(cl_event event)
 {
   int i;
   int status;
+  int ret_status = CL_COMPLETE;
 
   for (i = 0; i < event->depend_event_num; i++) {
     status = cl_event_get_status(event->depend_events[i]);
 
-    if (status != CL_COMPLETE) {
+    if (status > CL_COMPLETE) { // Find some not ready, just OK
       return status;
+    }
+
+    if (status < CL_COMPLETE) { // Record some error.
+      ret_status = status;
     }
   }
 
-  return CL_COMPLETE;
+  return ret_status;
 }
 
 LOCAL cl_event
