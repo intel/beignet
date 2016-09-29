@@ -637,6 +637,8 @@ skl_gt4_break:
 
     case PCI_CHIP_BROXTON_P:
       DECL_INFO_STRING(bxt_break, intel_bxt_device, name, "Intel(R) HD Graphics Broxton-P");
+    case PCI_CHIP_BROXTON_2:
+      DECL_INFO_STRING(bxt_break, intel_bxt_device, name, "Intel(R) HD Graphics Broxton 2");
 bxt_break:
       intel_bxt_device.device_id = device_id;
       intel_bxt_device.platform = cl_get_platform_default();
