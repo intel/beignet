@@ -299,10 +299,12 @@
 /* BXT */
 #define PCI_CHIP_BROXTON_P	0x5A84   /* Intel(R) BXT-P for mobile desktop */
 #define PCI_CHIP_BROXTON_1	0x5A85
+#define PCI_CHIP_BROXTON_2	0x1A84
 
 #define IS_BROXTON(devid)               \
   (devid == PCI_CHIP_BROXTON_P ||       \
-   devid == PCI_CHIP_BROXTON_1)
+   devid == PCI_CHIP_BROXTON_1 ||       \
+   devid == PCI_CHIP_BROXTON_2)
 
 #define PCI_CHIP_KABYLAKE_ULT_GT1     0x5906
 #define PCI_CHIP_KABYLAKE_ULT_GT2     0x5916
