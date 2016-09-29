@@ -311,6 +311,9 @@ clEnqueueNativeKernel(cl_command_queue command_queue,
     data->offset = (size_t)num_mem_objects;
     data->const_ptr = new_args_mem_loc;
     data->user_func = user_func;
+    new_args = NULL;
+    new_mem_list = NULL;
+    new_args_mem_loc = NULL; // Event delete will free them.
 
     if (e_status == CL_COMPLETE) {
       // Sync mode, no need to queue event.

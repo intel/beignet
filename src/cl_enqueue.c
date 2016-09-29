@@ -484,7 +484,6 @@ cl_enqueue_native_kernel(enqueue_data *data, cl_int status)
     cl_mem_unmap_auto(mem_list[i]);
   }
 
-  free(data->ptr);
 error:
   return err;
 }
