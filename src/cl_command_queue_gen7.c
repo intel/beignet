@@ -352,7 +352,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   void* printf_info = NULL;
 
   /* Setup kernel */
-  kernel.name = "KERNEL";
+  kernel.name = interp_kernel_get_name(ker->opaque);
   kernel.grf_blocks = 128;
   kernel.bo = ker->bo;
   kernel.barrierID = 0;
