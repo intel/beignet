@@ -184,7 +184,7 @@ static struct _cl_device_id intel_skl_gt4_device = {
 #include "cl_gen9_device.h"
 };
 
-static struct _cl_device_id intel_bxt_device = {
+static struct _cl_device_id intel_bxt18eu_device = {
   .max_compute_unit = 18,
   .max_thread_per_unit = 6,
   .sub_slice_count = 3,
@@ -194,7 +194,7 @@ static struct _cl_device_id intel_bxt_device = {
 #include "cl_gen9_device.h"
 };
 
-static struct _cl_device_id intel_bxt1_device = {
+static struct _cl_device_id intel_bxt12eu_device = {
   .max_compute_unit = 12,
   .max_thread_per_unit = 6,
   .sub_slice_count = 2,
@@ -615,23 +615,25 @@ skl_gt4_break:
       break;
 
     case PCI_CHIP_BROXTON_P:
-      DECL_INFO_STRING(bxt_break, intel_bxt_device, name, "Intel(R) HD Graphics Broxton-P");
+      DECL_INFO_STRING(bxt18eu_break, intel_bxt18eu_device, name, "Intel(R) HD Graphics Broxton-P");
     case PCI_CHIP_BROXTON_2:
-      DECL_INFO_STRING(bxt_break, intel_bxt_device, name, "Intel(R) HD Graphics Broxton 2");
-bxt_break:
-      intel_bxt_device.device_id = device_id;
-      intel_bxt_device.platform = cl_get_platform_default();
-      ret = &intel_bxt_device;
+      DECL_INFO_STRING(bxt18eu_break, intel_bxt18eu_device, name, "Intel(R) HD Graphics Broxton 2");
+bxt18eu_break:
+      intel_bxt18eu_device.device_id = device_id;
+      intel_bxt18eu_device.platform = cl_get_platform_default();
+      ret = &intel_bxt18eu_device;
       cl_intel_platform_get_default_extension(ret);
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
     case PCI_CHIP_BROXTON_1:
-      DECL_INFO_STRING(bxt1_break, intel_bxt1_device, name, "Intel(R) HD Graphics Broxton 1");
-bxt1_break:
-      intel_bxt1_device.device_id = device_id;
-      intel_bxt1_device.platform = cl_get_platform_default();
-      ret = &intel_bxt1_device;
+      DECL_INFO_STRING(bxt12eu_break, intel_bxt12eu_device, name, "Intel(R) HD Graphics Broxton 1");
+    case PCI_CHIP_BROXTON_3:
+      DECL_INFO_STRING(bxt12eu_break, intel_bxt12eu_device, name, "Intel(R) HD Graphics Broxton 3");
+bxt12eu_break:
+      intel_bxt12eu_device.device_id = device_id;
+      intel_bxt12eu_device.platform = cl_get_platform_default();
+      ret = &intel_bxt12eu_device;
       cl_intel_platform_get_default_extension(ret);
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
@@ -951,8 +953,8 @@ LOCAL cl_bool is_gen_device(cl_device_id device) {
          device == &intel_skl_gt2_device ||
          device == &intel_skl_gt3_device ||
          device == &intel_skl_gt4_device ||
-         device == &intel_bxt_device     ||
-         device == &intel_bxt1_device    ||
+         device == &intel_bxt18eu_device ||
+         device == &intel_bxt12eu_device ||
          device == &intel_kbl_gt1_device ||
          device == &intel_kbl_gt15_device ||
          device == &intel_kbl_gt2_device ||
@@ -1096,7 +1098,7 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
     *ver = 8;
   } else if (device == &intel_skl_gt1_device || device == &intel_skl_gt2_device
         || device == &intel_skl_gt3_device || device == &intel_skl_gt4_device
-        || device == &intel_bxt_device || device == &intel_bxt1_device || device == &intel_kbl_gt1_device
+        || device == &intel_bxt18eu_device || device == &intel_bxt12eu_device || device == &intel_kbl_gt1_device
         || device == &intel_kbl_gt2_device || device == &intel_kbl_gt3_device
         || device == &intel_kbl_gt4_device || device == &intel_kbl_gt15_device) {
     *ver = 9;

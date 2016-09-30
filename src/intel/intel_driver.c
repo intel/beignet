@@ -469,7 +469,8 @@ intel_driver_enlarge_stack_size(struct intel_driver *drv, int32_t *stack_size)
 {
     if (drv->gen_ver == 75)
       *stack_size = *stack_size * 4;
-    else if (drv->device_id == PCI_CHIP_BROXTON_1 || IS_CHERRYVIEW(drv->device_id))
+    else if (drv->device_id == PCI_CHIP_BROXTON_1 || drv->device_id == PCI_CHIP_BROXTON_3 ||
+             IS_CHERRYVIEW(drv->device_id))
       *stack_size = *stack_size * 2;
 }
 
