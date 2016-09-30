@@ -79,8 +79,9 @@ cl_command_queue_delete(cl_command_queue queue)
 
   cl_mem_delete(queue->perf);
   cl_context_remove_queue(queue->ctx, queue);
-  cl_free(queue->wait_events);
-  cl_free(queue->barrier_events);
+  if (queue->barrier_events) {
+    cl_free(queue->barrier_events);
+  }
   CL_OBJECT_DESTROY_BASE(queue);
   cl_free(queue);
 }
@@ -237,74 +238,6 @@ cl_command_queue_flush_gpgpu(cl_gpgpu gpgpu)
     cl_gpgpu_unmap_profiling_buffer(gpgpu);
   }
   return CL_SUCCESS;
-}
-
-#define DEFAULT_WAIT_EVENTS_SIZE  16
-LOCAL void
-cl_command_queue_insert_event(cl_command_queue queue, cl_event event)
-{
-  cl_int i=0;
-  cl_event *new_list;
-
-  assert(queue != NULL);
-  if(queue->wait_events == NULL) {
-    queue->wait_events_size = DEFAULT_WAIT_EVENTS_SIZE;
-    TRY_ALLOC_NO_ERR (queue->wait_events, CALLOC_ARRAY(cl_event, queue->wait_events_size));
-  }
-
-  for(i=0; i<queue->wait_events_num; i++) {
-    if(queue->wait_events[i] == event)
-      return;   //is in the wait_events, need to insert
-  }
-
-  if(queue->wait_events_num < queue->wait_events_size) {
-    queue->wait_events[queue->wait_events_num++] = event;
-    return;
-  }
-
-  //wait_events_num == wait_events_size, array is full
-  queue->wait_events_size *= 2;
-  TRY_ALLOC_NO_ERR (new_list, CALLOC_ARRAY(cl_event, queue->wait_events_size));
-  memcpy(new_list, queue->wait_events, sizeof(cl_event)*queue->wait_events_num);
-  cl_free(queue->wait_events);
-  queue->wait_events = new_list;
-  queue->wait_events[queue->wait_events_num++] = event;
-  return;
-
-exit:
-  return;
-error:
-  if(queue->wait_events)
-    cl_free(queue->wait_events);
-  queue->wait_events = NULL;
-  queue->wait_events_size = 0;
-  queue->wait_events_num = 0;
-  goto exit;
-
-}
-
-LOCAL void
-cl_command_queue_remove_event(cl_command_queue queue, cl_event event)
-{
-  cl_int i=0;
-
-  assert(queue->wait_events);
-  for(i=0; i<queue->wait_events_num; i++) {
-    if(queue->wait_events[i] == event)
-      break;
-  }
-
-  if(i == queue->wait_events_num)
-    return;
-
-  if(i == queue->wait_events_num - 1) {
-    queue->wait_events[i] = NULL;
-  } else {
-    for(; i<queue->wait_events_num-1; i++) {
-      queue->wait_events[i] = queue->wait_events[i+1];
-    }
-  }
-  queue->wait_events_num -= 1;
 }
 
 LOCAL void

@@ -44,13 +44,10 @@ struct _cl_command_queue {
   _cl_base_object base;
   _cl_command_queue_enqueue_worker worker;
   cl_context ctx;                      /* Its parent context */
-  cl_event* barrier_events;               /* Point to array of non-complete user events that block this command queue */
-  cl_int    barrier_events_num;           /* Number of Non-complete user events */
-  cl_int    barrier_events_size;          /* The size of array that wait_events point to */
-  cl_event* wait_events;               /* Point to array of non-complete user events that block this command queue */
-  cl_int    wait_events_num;           /* Number of Non-complete user events */
-  cl_int    wait_events_size;          /* The size of array that wait_events point to */
-  cl_command_queue_properties  props;  /* Queue properties */
+  cl_event* barrier_events;            /* Point to array of non-complete user events that block this command queue */
+  cl_int barrier_events_num;           /* Number of Non-complete user events */
+  cl_int barrier_events_size;          /* The size of array that wait_events point to */
+  cl_command_queue_properties props;   /* Queue properties */
   cl_mem perf;                         /* Where to put the perf counters */
 
   void* cmrt_event;                    /* the latest CmEvent* of the command queue */
@@ -93,16 +90,8 @@ extern cl_int cl_command_queue_bind_surface(cl_command_queue, cl_kernel, cl_gpgp
 /* Bind all the image surfaces in the GPGPU state */
 extern cl_int cl_command_queue_bind_image(cl_command_queue, cl_kernel, cl_gpgpu);
 
-/* Insert a user event to command's wait_events */
-extern void cl_command_queue_insert_event(cl_command_queue, cl_event);
-
-/* Remove a user event from command's wait_events */
-extern void cl_command_queue_remove_event(cl_command_queue, cl_event);
-
 extern void cl_command_queue_insert_barrier_event(cl_command_queue queue, cl_event event);
-
 extern void cl_command_queue_remove_barrier_event(cl_command_queue queue, cl_event event);
-
 extern void cl_command_queue_notify(cl_command_queue queue);
 extern void cl_command_queue_enqueue_event(cl_command_queue queue, cl_event event);
 extern cl_int cl_command_queue_init_enqueue(cl_command_queue queue);
