@@ -297,13 +297,13 @@
 #define IS_SKYLAKE(devid) (IS_SKL_GT1(devid) || IS_SKL_GT2(devid) || IS_SKL_GT3(devid) || IS_SKL_GT4(devid))
 
 /* BXT */
-#define PCI_CHIP_BROXTON_P	0x5A84   /* Intel(R) BXT-P for mobile desktop */
+#define PCI_CHIP_BROXTON_0	0x5A84
 #define PCI_CHIP_BROXTON_1	0x5A85
 #define PCI_CHIP_BROXTON_2	0x1A84
 #define PCI_CHIP_BROXTON_3	0x1A85
 
 #define IS_BROXTON(devid)               \
-  (devid == PCI_CHIP_BROXTON_P ||       \
+  (devid == PCI_CHIP_BROXTON_0 ||       \
    devid == PCI_CHIP_BROXTON_1 ||       \
    devid == PCI_CHIP_BROXTON_2 ||       \
    devid == PCI_CHIP_BROXTON_3)

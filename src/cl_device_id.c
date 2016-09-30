@@ -614,8 +614,8 @@ skl_gt4_break:
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
-    case PCI_CHIP_BROXTON_P:
-      DECL_INFO_STRING(bxt18eu_break, intel_bxt18eu_device, name, "Intel(R) HD Graphics Broxton-P");
+    case PCI_CHIP_BROXTON_0:
+      DECL_INFO_STRING(bxt18eu_break, intel_bxt18eu_device, name, "Intel(R) HD Graphics Broxton 0");
     case PCI_CHIP_BROXTON_2:
       DECL_INFO_STRING(bxt18eu_break, intel_bxt18eu_device, name, "Intel(R) HD Graphics Broxton 2");
 bxt18eu_break:
