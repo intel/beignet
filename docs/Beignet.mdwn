@@ -16,7 +16,7 @@ News
 Prerequisite
 ------------
 
-The project depends on the following external libaries:
+The project depends on the following external libraries:
 
 - libdrm libraries (libdrm and libdrm\_intel)
 - Various LLVM components
@@ -33,7 +33,7 @@ you can still link to the beignet OpenCL library. You can find the beignet/libcl
 in your system's library installation directories.
 
 Note that the compiler depends on LLVM (Low-Level Virtual Machine project), and the
-project normally support 3 latest LLVM released version.
+project normally supports the 3 latest LLVM released versions.
 Right now, the code has been compiled with LLVM 3.6, 3.7 and 3.8. With older
 version LLVM from 3.3, build still support, but no full tests cover.
 
@@ -48,11 +48,11 @@ A simple command to install all the above dependencies for ubuntu or debian is:
 
 **The recommended LLVM/CLANG version is 3.6 and/or 3.7**
 
-Based on our test result, LLVM 3.6 and 3.7 has best pass rate on all the test suites. Compare
+Based on our test result, LLVM 3.6 and 3.7 has the best pass rate on all the test suites. Compared
 to LLVM 3.6 and 3.7, if you used LLVM 3.8, you should pay attention to float immediate. For example,
-if you use 1.0 in the kernel, LLVM 3.6 will treate it as 1.0f, a single float, because the project
-don't support double float. but LLVM 3.8 will treate it as 1.0, a double foat, at the last it may cause
-error. So we recommend use 1.0f instead of 1.0 if you don't need double float.
+if you use 1.0 in the kernel, LLVM 3.6 will treat it as 1.0f, a single float, because the project
+doesn't support double float. but LLVM 3.8 will treat it as 1.0, a double float, at the last it may cause
+error. So we recommend using 1.0f instead of 1.0 if you don't need double float.
 
 For LLVM 3.4 and 3.5, Beignet still support them, but it may be limited to support the
 build and major functions.
@@ -112,12 +112,12 @@ It installs the OCL icd vendor files to /etc/OpenCL/vendors, if the system suppo
 
 `> make package`
 
-It packages the driver binaries, you may copy&install the package to another machine with simillar system.
+It packages the driver binaries, you may copy&install the package to another machine with similar system.
 
 How to run
 ----------
 
-After build and install of beignet, you may need to check whether it works on your
+After building and installing Beignet, you may need to check whether it works on your
 platform. Beignet also produces various tests to ensure the compiler and the run-time
 consistency. This small test framework uses a simple c++ registration system to
 register all the unit tests.
@@ -173,7 +173,7 @@ Known Issues
 
   `# echo -n 0 > /sys/module/i915/parameters/enable_hangcheck`
 
-  But this command is a little bit dangerous, as if your kernel really hang, then the gpu will lock up
+  But this command is a little bit dangerous, as if your kernel really hangs, then the GPU will lock up
   forever until a reboot.
 
 * "Beignet: self-test failed" and almost all unit tests fail.
@@ -207,7 +207,7 @@ Known Issues
 
   `# export OCL_STRICT_CONFORMANCE=0`.
 
-  This would lost some precision but gain performance.
+  This loses some precision but gains performance.
 
 * cl\_khr\_gl\_sharing.
   This extension highly depends on mesa support. It seems that mesa would not provide

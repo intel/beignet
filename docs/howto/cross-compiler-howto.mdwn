@@ -2,7 +2,7 @@ Cross Compiler HowTo
 ====================
 
 Beignet supports both PC devices with full profile and embedded/handheld
-devices with embeded profile. This document describes how to build Beignet
+devices with embedded profile. This document describes how to build Beignet
 and OpenCL kernels for a target machine (embedded/handheld devices) in a
 host machine with the help of cross compiler, and also the large-size-reduced
 Beignet driver package for the target machine.
@@ -65,7 +65,7 @@ provide only the OpenCL runtime library without OpenCL compiler, and only the
 executable binary kernel is supported on such devices.
 
 It means that just distribute libcl.so and libgbeinterp.so (~320k in total after strip)
-are enough for OpenCL embeded profile in the target machine. The whole Beignet
+are enough for OpenCL embedded profile in the target machine. The whole Beignet
 driver set can be separated into several packages for different usage.
 
 

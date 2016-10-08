@@ -61,7 +61,7 @@ static void builtin_global_linear_id(void)
     err = clEnqueueNDRangeKernel(queue, kernel, dim, offsets, globals, locals, 0, NULL, NULL);
     if (err != CL_SUCCESS)
     {
-      printf("Error: Failed to excute kernel! %d\n", err);
+      printf("Error: Failed to execute kernel! %d\n", err);
       exit(1);
     }
 
