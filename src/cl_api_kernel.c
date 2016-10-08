@@ -28,6 +28,53 @@
 #include <string.h>
 
 cl_int
+clGetKernelInfo(cl_kernel kernel,
+                cl_kernel_info param_name,
+                size_t param_value_size,
+                void *param_value,
+                size_t *param_value_size_ret)
+{
+  const void *src_ptr = NULL;
+  size_t src_size = 0;
+  const char *str = NULL;
+  cl_int ref;
+  cl_uint n;
+
+  if (!CL_OBJECT_IS_KERNEL(kernel)) {
+    return CL_INVALID_KERNEL;
+  }
+
+  if (param_name == CL_KERNEL_CONTEXT) {
+    src_ptr = &kernel->program->ctx;
+    src_size = sizeof(cl_context);
+  } else if (param_name == CL_KERNEL_PROGRAM) {
+    src_ptr = &kernel->program;
+    src_size = sizeof(cl_program);
+  } else if (param_name == CL_KERNEL_NUM_ARGS) {
+    n = kernel->arg_n;
+    src_ptr = &n;
+    src_size = sizeof(cl_uint);
+  } else if (param_name == CL_KERNEL_REFERENCE_COUNT) {
+    ref = CL_OBJECT_GET_REF(kernel);
+    src_ptr = &ref;
+    src_size = sizeof(cl_int);
+  } else if (param_name == CL_KERNEL_FUNCTION_NAME) {
+    str = cl_kernel_get_name(kernel);
+    src_ptr = str;
+    src_size = strlen(str) + 1;
+  } else if (param_name == CL_KERNEL_ATTRIBUTES) {
+    str = cl_kernel_get_attributes(kernel);
+    src_ptr = str;
+    src_size = strlen(str) + 1;
+  } else {
+    return CL_INVALID_VALUE;
+  }
+
+  return cl_get_info_helper(src_ptr, src_size,
+                            param_value, param_value_size, param_value_size_ret);
+}
+
+cl_int
 clEnqueueNDRangeKernel(cl_command_queue command_queue,
                        cl_kernel kernel,
                        cl_uint work_dim,
@@ -127,8 +174,8 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
         if (realGroupSize % 8 != 0 && warn_no_good_localsize) {
           warn_no_good_localsize = 0;
           DEBUGP(DL_WARNING, "unable to find good values for local_work_size[i], please provide\n"
-                 " local_work_size[] explicitly, you can find good values with\n"
-                 " trial-and-error method.");
+                             " local_work_size[] explicitly, you can find good values with\n"
+                             " trial-and-error method.");
         }
       }
     }

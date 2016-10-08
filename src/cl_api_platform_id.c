@@ -26,7 +26,7 @@ clGetPlatformInfo(cl_platform_id platform,
                   void *param_value,
                   size_t *param_value_size_ret)
 {
-  void *src_ptr = NULL;
+  const void *src_ptr = NULL;
   size_t src_size = 0;
 
   if (!CL_OBJECT_IS_PLATFORM(platform)) {
@@ -39,22 +39,22 @@ clGetPlatformInfo(cl_platform_id platform,
   }
 
   if (param_name == CL_PLATFORM_PROFILE) {
-    src_ptr = (void *)platform->profile;
+    src_ptr = platform->profile;
     src_size = platform->profile_sz;
   } else if (param_name == CL_PLATFORM_VERSION) {
-    src_ptr = (void *)platform->version;
+    src_ptr = platform->version;
     src_size = platform->version_sz;
   } else if (param_name == CL_PLATFORM_NAME) {
-    src_ptr = (void *)platform->name;
+    src_ptr = platform->name;
     src_size = platform->name_sz;
   } else if (param_name == CL_PLATFORM_VENDOR) {
-    src_ptr = (void *)platform->vendor;
+    src_ptr = platform->vendor;
     src_size = platform->vendor_sz;
   } else if (param_name == CL_PLATFORM_EXTENSIONS) {
     src_ptr = platform->extensions;
     src_size = platform->extensions_sz;
   } else if (param_name == CL_PLATFORM_ICD_SUFFIX_KHR) {
-    src_ptr = (void *)platform->icd_suffix_khr;
+    src_ptr = platform->icd_suffix_khr;
     src_size = platform->icd_suffix_khr_sz;
   } else {
     return CL_INVALID_VALUE;
