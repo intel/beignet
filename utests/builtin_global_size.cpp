@@ -74,7 +74,7 @@ static void builtin_global_size(void)
       if (err != CL_SUCCESS)
       {
         printf("Error: Failed to write to source array!\n");
-        exit(1);
+        OCL_ASSERT(0);
       }
 
       // Run the kernel

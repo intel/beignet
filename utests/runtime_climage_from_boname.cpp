@@ -161,7 +161,7 @@ void runtime_climage_from_boname(void)
 #endif
   if(!oclCreateImageFromLibvaIntel){
     fprintf(stderr, "Failed to get extension clCreateImageFromLibvaIntel\n");
-    exit(1);
+    OCL_ASSERT(0);
   }
   cl_mem dst = oclCreateImageFromLibvaIntel(ctx, &imageParam, NULL);
 
