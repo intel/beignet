@@ -17,7 +17,7 @@
 #include <ocl_icd.h>
 
 #include "cl_platform_id.h"
-
+#include "CL/cl_intel.h" // for clGetKernelSubGroupInfoKHR
 /* The interop functions are not implemented in Beignet */
 #define CL_GL_INTEROP(x) NULL
 /* OpenCL 1.2 is not implemented in Beignet */
@@ -168,7 +168,24 @@ struct _cl_icd_dispatch const cl_khr_icd_dispatch = {
   (void *) NULL,
   (void *) NULL,
   (void *) NULL,
-  (void *) NULL
+  (void *) NULL,
+#if (OCL_ICD_IDENTIFIED_FUNCTIONS > 110)
+  (void *) NULL,
+  (void *) NULL,
+  (void *) NULL,
+  (void *) NULL,
+  (void *) NULL,
+  (void *) NULL,
+  (void *) NULL,
+  (void *) NULL,
+  (void *) NULL,
+  (void *) NULL,
+  (void *) NULL,
+  (void *) NULL,
+  (void *) NULL,
+  (void *) NULL,
+  (void *) clGetKernelSubGroupInfoKHR,
+#endif
 #endif
 };
 
