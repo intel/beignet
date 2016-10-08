@@ -275,39 +275,6 @@ error:
   return err;
 }
 
-cl_int
-clGetContextInfo(cl_context      context,
-                 cl_context_info param_name,
-                 size_t          param_value_size,
-                 void *          param_value,
-                 size_t *        param_value_size_ret)
-{
-  cl_int err = CL_SUCCESS;
-  CHECK_CONTEXT (context);
-
-  if (param_name == CL_CONTEXT_DEVICES) {
-    FILL_GETINFO_RET (cl_device_id, 1, &context->device, CL_SUCCESS);
-  } else if (param_name == CL_CONTEXT_NUM_DEVICES) {
-    cl_uint n = 1;
-    FILL_GETINFO_RET (cl_uint, 1, &n, CL_SUCCESS);
-  } else if (param_name == CL_CONTEXT_REFERENCE_COUNT) {
-    cl_uint ref = CL_OBJECT_GET_REF(context);
-    FILL_GETINFO_RET (cl_uint, 1, &ref, CL_SUCCESS);
-  } else if (param_name == CL_CONTEXT_PROPERTIES) {
-    if(context->prop_len > 0) {
-      FILL_GETINFO_RET (cl_context_properties, context->prop_len, context->prop_user, CL_SUCCESS);
-    } else {
-      cl_context_properties n = 0;
-      FILL_GETINFO_RET (cl_context_properties, 1, &n, CL_SUCCESS);
-    }
-  } else {
-    return CL_INVALID_VALUE;
-  }
-
-error:
-  return err;
-}
-
 cl_command_queue
 clCreateCommandQueue(cl_context                   context,
                      cl_device_id                 device,
