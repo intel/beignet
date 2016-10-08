@@ -891,7 +891,11 @@ int cl_check_subgroups(void)
     return 0;
   }
   if(utestclGetKernelSubGroupInfoKHR == NULL)
-    utestclGetKernelSubGroupInfoKHR  = (clGetKernelSubGroupInfoKHR_cb*) clGetExtensionFunctionAddress("clGetKernelSubGroupInfoKHR");
+    utestclGetKernelSubGroupInfoKHR  = (clGetKernelSubGroupInfoKHR_cb*) clGetExtensionFunctionAddressForPlatform(platform,"clGetKernelSubGroupInfoKHR");
+  if(utestclGetKernelSubGroupInfoKHR == NULL) {
+    printf("Can't find clGetKernelSubGroupInfoKHR");
+    OCL_ASSERT(0);
+  }
   return 1;
 }
 
