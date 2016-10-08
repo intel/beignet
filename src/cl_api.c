@@ -134,20 +134,6 @@ clGetDeviceIDs(cl_platform_id platform,
 }
 
 cl_int
-clGetDeviceInfo(cl_device_id   device,
-                cl_device_info param_name,
-                size_t         param_value_size,
-                void *         param_value,
-                size_t *       param_value_size_ret)
-{
-  return cl_get_device_info(device,
-                            param_name,
-                            param_value_size,
-                            param_value,
-                            param_value_size_ret);
-}
-
-cl_int
 clCreateSubDevices(cl_device_id                         in_device,
                    const cl_device_partition_property * properties,
                    cl_uint                              num_devices,

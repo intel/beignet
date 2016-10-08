@@ -69,6 +69,7 @@ set(OPENCL_SRC
     cl_base_object.c
     cl_api.c
     cl_api_platform_id.c
+    cl_api_device_id.c
     cl_api_mem.c
     cl_api_kernel.c
     cl_api_command_queue.c

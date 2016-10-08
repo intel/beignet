@@ -917,30 +917,6 @@ cl_get_device_ids(cl_platform_id    platform,
   }
 }
 
-#define DECL_FIELD(CASE,FIELD)                                      \
-  case JOIN(CL_DEVICE_,CASE):                                       \
-    if (param_value_size_ret) {                                     \
-      *param_value_size_ret = sizeof device->FIELD;                 \
-      if (!param_value)                                             \
-        return CL_SUCCESS;                                          \
-    }                                                               \
-    if (param_value_size < sizeof device->FIELD)                    \
-      return CL_INVALID_VALUE;                                      \
-    memcpy(param_value, &device->FIELD, sizeof device->FIELD);      \
-    return CL_SUCCESS;
-
-#define DECL_STRING_FIELD(CASE,FIELD)                               \
-  case JOIN(CL_DEVICE_,CASE):                                       \
-    if (param_value_size_ret) {                                     \
-      *param_value_size_ret = device->JOIN(FIELD,_sz);              \
-      if (!param_value)                                             \
-        return CL_SUCCESS;                                          \
-    }                                                               \
-    if (param_value_size < device->JOIN(FIELD,_sz))                 \
-      return CL_INVALID_VALUE;                                      \
-    memcpy(param_value, device->FIELD, device->JOIN(FIELD,_sz));    \
-    return CL_SUCCESS;
-
 LOCAL cl_bool is_gen_device(cl_device_id device) {
   return device == &intel_ivb_gt1_device ||
          device == &intel_ivb_gt2_device ||
@@ -972,130 +948,394 @@ cl_get_device_info(cl_device_id     device,
                    void *           param_value,
                    size_t *         param_value_size_ret)
 {
+  const void *src_ptr = NULL;
+  size_t src_size = 0;
+  cl_int dev_ref;
+
+  // We now just support gen devices.
   if (UNLIKELY(is_gen_device(device) == CL_FALSE))
     return CL_INVALID_DEVICE;
 
   /* Find the correct parameter */
   switch (param_name) {
-    DECL_FIELD(TYPE, device_type)
-    DECL_FIELD(VENDOR_ID, vendor_id)
-    DECL_FIELD(MAX_COMPUTE_UNITS, max_compute_unit)
-    DECL_FIELD(MAX_WORK_ITEM_DIMENSIONS, max_work_item_dimensions)
-    DECL_FIELD(MAX_WORK_ITEM_SIZES, max_work_item_sizes)
-    DECL_FIELD(MAX_WORK_GROUP_SIZE, max_work_group_size)
-    DECL_FIELD(PREFERRED_VECTOR_WIDTH_CHAR, preferred_vector_width_char)
-    DECL_FIELD(PREFERRED_VECTOR_WIDTH_SHORT, preferred_vector_width_short)
-    DECL_FIELD(PREFERRED_VECTOR_WIDTH_INT, preferred_vector_width_int)
-    DECL_FIELD(PREFERRED_VECTOR_WIDTH_LONG, preferred_vector_width_long)
-    DECL_FIELD(PREFERRED_VECTOR_WIDTH_FLOAT, preferred_vector_width_float)
-    DECL_FIELD(PREFERRED_VECTOR_WIDTH_DOUBLE, preferred_vector_width_double)
-    DECL_FIELD(PREFERRED_VECTOR_WIDTH_HALF, preferred_vector_width_half)
-    DECL_FIELD(NATIVE_VECTOR_WIDTH_CHAR, native_vector_width_char)
-    DECL_FIELD(NATIVE_VECTOR_WIDTH_SHORT, native_vector_width_short)
-    DECL_FIELD(NATIVE_VECTOR_WIDTH_INT, native_vector_width_int)
-    DECL_FIELD(NATIVE_VECTOR_WIDTH_LONG, native_vector_width_long)
-    DECL_FIELD(NATIVE_VECTOR_WIDTH_FLOAT, native_vector_width_float)
-    DECL_FIELD(NATIVE_VECTOR_WIDTH_DOUBLE, native_vector_width_double)
-    DECL_FIELD(NATIVE_VECTOR_WIDTH_HALF, native_vector_width_half)
-    DECL_FIELD(MAX_CLOCK_FREQUENCY, max_clock_frequency)
-    DECL_FIELD(ADDRESS_BITS, address_bits)
-    DECL_FIELD(MAX_MEM_ALLOC_SIZE, max_mem_alloc_size)
-    DECL_FIELD(IMAGE_SUPPORT, image_support)
-    DECL_FIELD(MAX_READ_IMAGE_ARGS, max_read_image_args)
-    DECL_FIELD(MAX_WRITE_IMAGE_ARGS, max_write_image_args)
-    DECL_FIELD(MAX_READ_WRITE_IMAGE_ARGS, max_read_write_image_args)
-    DECL_FIELD(IMAGE_MAX_ARRAY_SIZE, image_max_array_size)
-    DECL_FIELD(IMAGE2D_MAX_WIDTH, image2d_max_width)
-    DECL_FIELD(IMAGE2D_MAX_HEIGHT, image2d_max_height)
-    DECL_FIELD(IMAGE3D_MAX_WIDTH, image3d_max_width)
-    DECL_FIELD(IMAGE3D_MAX_HEIGHT, image3d_max_height)
-    DECL_FIELD(IMAGE3D_MAX_DEPTH, image3d_max_depth)
-    DECL_FIELD(MAX_SAMPLERS, max_samplers)
-    DECL_FIELD(MAX_PARAMETER_SIZE, max_parameter_size)
-    DECL_FIELD(MEM_BASE_ADDR_ALIGN, mem_base_addr_align)
-    DECL_FIELD(MIN_DATA_TYPE_ALIGN_SIZE, min_data_type_align_size)
-    DECL_FIELD(MAX_PIPE_ARGS, max_pipe_args)
-    DECL_FIELD(PIPE_MAX_ACTIVE_RESERVATIONS, pipe_max_active_reservations)
-    DECL_FIELD(PIPE_MAX_PACKET_SIZE, pipe_max_packet_siz)
-    DECL_FIELD(SINGLE_FP_CONFIG, single_fp_config)
-    DECL_FIELD(HALF_FP_CONFIG, half_fp_config)
-    DECL_FIELD(DOUBLE_FP_CONFIG, double_fp_config)
-    DECL_FIELD(GLOBAL_MEM_CACHE_TYPE, global_mem_cache_type)
-    DECL_FIELD(GLOBAL_MEM_CACHELINE_SIZE, global_mem_cache_line_size)
-    DECL_FIELD(GLOBAL_MEM_CACHE_SIZE, global_mem_cache_size)
-    DECL_FIELD(GLOBAL_MEM_SIZE, global_mem_size)
-    DECL_FIELD(MAX_CONSTANT_BUFFER_SIZE, max_constant_buffer_size)
-    DECL_FIELD(IMAGE_MAX_BUFFER_SIZE, image_mem_size)
-    DECL_FIELD(MAX_CONSTANT_ARGS, max_constant_args)
-    DECL_FIELD(MAX_GLOBAL_VARIABLE_SIZE, max_global_variable_size)
-    DECL_FIELD(GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE, global_variable_preferred_total_size)
-    DECL_FIELD(LOCAL_MEM_TYPE, local_mem_type)
-    DECL_FIELD(LOCAL_MEM_SIZE, local_mem_size)
-    DECL_FIELD(ERROR_CORRECTION_SUPPORT, error_correction_support)
-    DECL_FIELD(HOST_UNIFIED_MEMORY, host_unified_memory)
-    DECL_FIELD(PROFILING_TIMER_RESOLUTION, profiling_timer_resolution)
-    DECL_FIELD(ENDIAN_LITTLE, endian_little)
-    DECL_FIELD(AVAILABLE, available)
-    DECL_FIELD(COMPILER_AVAILABLE, compiler_available)
-    DECL_FIELD(LINKER_AVAILABLE, linker_available)
-    DECL_FIELD(EXECUTION_CAPABILITIES, execution_capabilities)
-    DECL_FIELD(QUEUE_PROPERTIES, queue_properties)
-    //DECL_FIELD(QUEUE_ON_HOST_PROPERTIES, queue_on_host_properties)
-    DECL_FIELD(QUEUE_ON_DEVICE_PROPERTIES, queue_on_device_properties)
-    DECL_FIELD(QUEUE_ON_DEVICE_PREFERRED_SIZE, queue_on_device_preferred_size)
-    DECL_FIELD(QUEUE_ON_DEVICE_MAX_SIZE, queue_on_device_max_size)
-    DECL_FIELD(MAX_ON_DEVICE_QUEUES, max_on_device_queues)
-    DECL_FIELD(MAX_ON_DEVICE_EVENTS, max_on_device_events)
-    DECL_FIELD(PLATFORM, platform)
-    DECL_FIELD(PRINTF_BUFFER_SIZE, printf_buffer_size)
-    DECL_FIELD(PREFERRED_INTEROP_USER_SYNC, interop_user_sync)
-    DECL_STRING_FIELD(NAME, name)
-    DECL_STRING_FIELD(VENDOR, vendor)
-    DECL_STRING_FIELD(VERSION, version)
-    DECL_STRING_FIELD(PROFILE, profile)
-    DECL_STRING_FIELD(OPENCL_C_VERSION, opencl_c_version)
-    DECL_STRING_FIELD(SPIR_VERSIONS, spir_versions)
-    DECL_STRING_FIELD(EXTENSIONS, extensions);
-    DECL_STRING_FIELD(BUILT_IN_KERNELS, built_in_kernels)
-    DECL_FIELD(PARENT_DEVICE, parent_device)
-    DECL_FIELD(PARTITION_MAX_SUB_DEVICES, partition_max_sub_device)
-    DECL_FIELD(PARTITION_PROPERTIES, partition_property)
-    DECL_FIELD(PARTITION_AFFINITY_DOMAIN, affinity_domain)
-    DECL_FIELD(PARTITION_TYPE, partition_type)
-    DECL_FIELD(SVM_CAPABILITIES, svm_capabilities)
-    DECL_FIELD(PREFERRED_PLATFORM_ATOMIC_ALIGNMENT, preferred_platform_atomic_alignment)
-    DECL_FIELD(PREFERRED_GLOBAL_ATOMIC_ALIGNMENT, preferred_global_atomic_alignment)
-    DECL_FIELD(PREFERRED_LOCAL_ATOMIC_ALIGNMENT, preferred_local_atomic_alignment)
-    DECL_FIELD(IMAGE_PITCH_ALIGNMENT, image_pitch_alignment)
-    DECL_FIELD(IMAGE_BASE_ADDRESS_ALIGNMENT, image_base_address_alignment)
-
+    case CL_DEVICE_TYPE:
+      src_ptr = &device->device_type;
+      src_size = sizeof(device->device_type);
+      break;
+    case CL_DEVICE_VENDOR_ID:
+      src_ptr = &device->vendor_id;
+      src_size = sizeof(device->vendor_id);
+      break;
+    case CL_DEVICE_MAX_COMPUTE_UNITS:
+      src_ptr = &device->max_compute_unit;
+      src_size = sizeof(device->max_compute_unit);
+      break;
+    case CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS:
+      src_ptr = &device->max_work_item_dimensions;
+      src_size = sizeof(device->max_work_item_dimensions);
+      break;
+    case CL_DEVICE_MAX_WORK_ITEM_SIZES:
+      src_ptr = &device->max_work_item_sizes;
+      src_size = sizeof(device->max_work_item_sizes);
+      break;
+    case CL_DEVICE_MAX_WORK_GROUP_SIZE:
+      src_ptr = &device->max_work_group_size;
+      src_size = sizeof(device->max_work_group_size);
+      break;
+    case CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR:
+      src_ptr = &device->preferred_vector_width_char;
+      src_size = sizeof(device->preferred_vector_width_char);
+      break;
+    case CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT:
+      src_ptr = &device->preferred_vector_width_short;
+      src_size = sizeof(device->preferred_vector_width_short);
+      break;
+    case CL_DEVICE_PREFERRED_VECTOR_WIDTH_INT:
+      src_ptr = &device->preferred_vector_width_int;
+      src_size = sizeof(device->preferred_vector_width_int);
+      break;
+    case CL_DEVICE_PREFERRED_VECTOR_WIDTH_LONG:
+      src_ptr = &device->preferred_vector_width_long;
+      src_size = sizeof(device->preferred_vector_width_long);
+      break;
+    case CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT:
+      src_ptr = &device->preferred_vector_width_float;
+      src_size = sizeof(device->preferred_vector_width_float);
+      break;
+    case CL_DEVICE_PREFERRED_VECTOR_WIDTH_DOUBLE:
+      src_ptr = &device->preferred_vector_width_double;
+      src_size = sizeof(device->preferred_vector_width_double);
+      break;
+    case CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF:
+      src_ptr = &device->preferred_vector_width_half;
+      src_size = sizeof(device->preferred_vector_width_half);
+      break;
+    case CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR:
+      src_ptr = &device->native_vector_width_char;
+      src_size = sizeof(device->native_vector_width_char);
+      break;
+    case CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT:
+      src_ptr = &device->native_vector_width_short;
+      src_size = sizeof(device->native_vector_width_short);
+      break;
+    case CL_DEVICE_NATIVE_VECTOR_WIDTH_INT:
+      src_ptr = &device->native_vector_width_int;
+      src_size = sizeof(device->native_vector_width_int);
+      break;
+    case CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG:
+      src_ptr = &device->native_vector_width_long;
+      src_size = sizeof(device->native_vector_width_long);
+      break;
+    case CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT:
+      src_ptr = &device->native_vector_width_float;
+      src_size = sizeof(device->native_vector_width_float);
+      break;
+    case CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE:
+      src_ptr = &device->native_vector_width_double;
+      src_size = sizeof(device->native_vector_width_double);
+      break;
+    case CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF:
+      src_ptr = &device->native_vector_width_half;
+      src_size = sizeof(device->native_vector_width_half);
+      break;
+    case CL_DEVICE_MAX_CLOCK_FREQUENCY:
+      src_ptr = &device->max_clock_frequency;
+      src_size = sizeof(device->max_clock_frequency);
+      break;
+    case CL_DEVICE_ADDRESS_BITS:
+      src_ptr = &device->address_bits;
+      src_size = sizeof(device->address_bits);
+      break;
+    case CL_DEVICE_MAX_MEM_ALLOC_SIZE:
+      src_ptr = &device->max_mem_alloc_size;
+      src_size = sizeof(device->max_mem_alloc_size);
+      break;
+    case CL_DEVICE_IMAGE_SUPPORT:
+      src_ptr = &device->image_support;
+      src_size = sizeof(device->image_support);
+      break;
+    case CL_DEVICE_MAX_READ_IMAGE_ARGS:
+      src_ptr = &device->max_read_image_args;
+      src_size = sizeof(device->max_read_image_args);
+      break;
+    case CL_DEVICE_MAX_WRITE_IMAGE_ARGS:
+      src_ptr = &device->max_write_image_args;
+      src_size = sizeof(device->max_write_image_args);
+      break;
+    case CL_DEVICE_MAX_READ_WRITE_IMAGE_ARGS:
+      src_ptr = &device->max_read_write_image_args;
+      src_size = sizeof(device->max_read_write_image_args);
+      break;
+    case CL_DEVICE_IMAGE_MAX_ARRAY_SIZE:
+      src_ptr = &device->image_max_array_size;
+      src_size = sizeof(device->image_max_array_size);
+      break;
+    case CL_DEVICE_IMAGE2D_MAX_WIDTH:
+      src_ptr = &device->image2d_max_width;
+      src_size = sizeof(device->image2d_max_width);
+      break;
+    case CL_DEVICE_IMAGE2D_MAX_HEIGHT:
+      src_ptr = &device->image2d_max_height;
+      src_size = sizeof(device->image2d_max_height);
+      break;
+    case CL_DEVICE_IMAGE3D_MAX_WIDTH:
+      src_ptr = &device->image3d_max_width;
+      src_size = sizeof(device->image3d_max_width);
+      break;
+    case CL_DEVICE_IMAGE3D_MAX_HEIGHT:
+      src_ptr = &device->image3d_max_height;
+      src_size = sizeof(device->image3d_max_height);
+      break;
+    case CL_DEVICE_IMAGE3D_MAX_DEPTH:
+      src_ptr = &device->image3d_max_depth;
+      src_size = sizeof(device->image3d_max_depth);
+      break;
+    case CL_DEVICE_MAX_SAMPLERS:
+      src_ptr = &device->max_samplers;
+      src_size = sizeof(device->max_samplers);
+      break;
+    case CL_DEVICE_MAX_PARAMETER_SIZE:
+      src_ptr = &device->max_parameter_size;
+      src_size = sizeof(device->max_parameter_size);
+      break;
+    case CL_DEVICE_MEM_BASE_ADDR_ALIGN:
+      src_ptr = &device->mem_base_addr_align;
+      src_size = sizeof(device->mem_base_addr_align);
+      break;
+    case CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE:
+      src_ptr = &device->min_data_type_align_size;
+      src_size = sizeof(device->min_data_type_align_size);
+      break;
+    case CL_DEVICE_MAX_PIPE_ARGS:
+      src_ptr = &device->max_pipe_args;
+      src_size = sizeof(device->max_pipe_args);
+      break;
+    case CL_DEVICE_PIPE_MAX_ACTIVE_RESERVATIONS:
+      src_ptr = &device->pipe_max_active_reservations;
+      src_size = sizeof(device->pipe_max_active_reservations);
+      break;
+    case CL_DEVICE_PIPE_MAX_PACKET_SIZE:
+      src_ptr = &device->pipe_max_packet_siz;
+      src_size = sizeof(device->pipe_max_packet_siz);
+      break;
+    case CL_DEVICE_SINGLE_FP_CONFIG:
+      src_ptr = &device->single_fp_config;
+      src_size = sizeof(device->single_fp_config);
+      break;
+    case CL_DEVICE_HALF_FP_CONFIG:
+      src_ptr = &device->half_fp_config;
+      src_size = sizeof(device->half_fp_config);
+      break;
+    case CL_DEVICE_DOUBLE_FP_CONFIG:
+      src_ptr = &device->double_fp_config;
+      src_size = sizeof(device->double_fp_config);
+      break;
+    case CL_DEVICE_GLOBAL_MEM_CACHE_TYPE:
+      src_ptr = &device->global_mem_cache_type;
+      src_size = sizeof(device->global_mem_cache_type);
+      break;
+    case CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE:
+      src_ptr = &device->global_mem_cache_line_size;
+      src_size = sizeof(device->global_mem_cache_line_size);
+      break;
+    case CL_DEVICE_GLOBAL_MEM_CACHE_SIZE:
+      src_ptr = &device->global_mem_cache_size;
+      src_size = sizeof(device->global_mem_cache_size);
+      break;
+    case CL_DEVICE_GLOBAL_MEM_SIZE:
+      src_ptr = &device->global_mem_size;
+      src_size = sizeof(device->global_mem_size);
+      break;
+    case CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE:
+      src_ptr = &device->max_constant_buffer_size;
+      src_size = sizeof(device->max_constant_buffer_size);
+      break;
+    case CL_DEVICE_IMAGE_MAX_BUFFER_SIZE:
+      src_ptr = &device->image_mem_size;
+      src_size = sizeof(device->image_mem_size);
+      break;
+    case CL_DEVICE_MAX_CONSTANT_ARGS:
+      src_ptr = &device->max_constant_args;
+      src_size = sizeof(device->max_constant_args);
+      break;
+    case CL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE:
+      src_ptr = &device->max_global_variable_size;
+      src_size = sizeof(device->max_global_variable_size);
+      break;
+    case CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE:
+      src_ptr = &device->global_variable_preferred_total_size;
+      src_size = sizeof(device->global_variable_preferred_total_size);
+      break;
+    case CL_DEVICE_LOCAL_MEM_TYPE:
+      src_ptr = &device->local_mem_type;
+      src_size = sizeof(device->local_mem_type);
+      break;
+    case CL_DEVICE_LOCAL_MEM_SIZE:
+      src_ptr = &device->local_mem_size;
+      src_size = sizeof(device->local_mem_size);
+      break;
+    case CL_DEVICE_ERROR_CORRECTION_SUPPORT:
+      src_ptr = &device->error_correction_support;
+      src_size = sizeof(device->error_correction_support);
+      break;
+    case CL_DEVICE_HOST_UNIFIED_MEMORY:
+      src_ptr = &device->host_unified_memory;
+      src_size = sizeof(device->host_unified_memory);
+      break;
+    case CL_DEVICE_PROFILING_TIMER_RESOLUTION:
+      src_ptr = &device->profiling_timer_resolution;
+      src_size = sizeof(device->profiling_timer_resolution);
+      break;
+    case CL_DEVICE_ENDIAN_LITTLE:
+      src_ptr = &device->endian_little;
+      src_size = sizeof(device->endian_little);
+      break;
+    case CL_DEVICE_AVAILABLE:
+      src_ptr = &device->available;
+      src_size = sizeof(device->available);
+      break;
+    case CL_DEVICE_COMPILER_AVAILABLE:
+      src_ptr = &device->compiler_available;
+      src_size = sizeof(device->compiler_available);
+      break;
+    case CL_DEVICE_LINKER_AVAILABLE:
+      src_ptr = &device->linker_available;
+      src_size = sizeof(device->linker_available);
+      break;
+    case CL_DEVICE_EXECUTION_CAPABILITIES:
+      src_ptr = &device->execution_capabilities;
+      src_size = sizeof(device->execution_capabilities);
+      break;
+    case CL_DEVICE_QUEUE_PROPERTIES:
+      src_ptr = &device->queue_properties;
+      src_size = sizeof(device->queue_properties);
+      break;
+    case CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES:
+      src_ptr = &device->queue_on_device_properties;
+      src_size = sizeof(device->queue_on_device_properties);
+      break;
+    case CL_DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE:
+      src_ptr = &device->queue_on_device_preferred_size;
+      src_size = sizeof(device->queue_on_device_preferred_size);
+      break;
+    case CL_DEVICE_QUEUE_ON_DEVICE_MAX_SIZE:
+      src_ptr = &device->queue_on_device_max_size;
+      src_size = sizeof(device->queue_on_device_max_size);
+      break;
+    case CL_DEVICE_MAX_ON_DEVICE_QUEUES:
+      src_ptr = &device->max_on_device_queues;
+      src_size = sizeof(device->max_on_device_queues);
+      break;
+    case CL_DEVICE_MAX_ON_DEVICE_EVENTS:
+      src_ptr = &device->max_on_device_events;
+      src_size = sizeof(device->max_on_device_events);
+      break;
+    case CL_DEVICE_PLATFORM:
+      src_ptr = &device->platform;
+      src_size = sizeof(device->platform);
+      break;
+    case CL_DEVICE_PRINTF_BUFFER_SIZE:
+      src_ptr = &device->printf_buffer_size;
+      src_size = sizeof(device->printf_buffer_size);
+      break;
+    case CL_DEVICE_PREFERRED_INTEROP_USER_SYNC:
+      src_ptr = &device->interop_user_sync;
+      src_size = sizeof(device->interop_user_sync);
+      break;
+    case CL_DEVICE_NAME:
+      src_ptr = device->name;
+      src_size = device->name_sz;
+      break;
+    case CL_DEVICE_VENDOR:
+      src_ptr = device->vendor;
+      src_size = device->vendor_sz;
+      break;
+    case CL_DEVICE_VERSION:
+      src_ptr = device->version;
+      src_size = device->version_sz;
+      break;
+    case CL_DEVICE_PROFILE:
+      src_ptr = device->profile;
+      src_size = device->profile_sz;
+      break;
+    case CL_DEVICE_OPENCL_C_VERSION:
+      src_ptr = device->opencl_c_version;
+      src_size = device->opencl_c_version_sz;
+      break;
+    case CL_DEVICE_SPIR_VERSIONS:
+      src_ptr = device->spir_versions;
+      src_size = device->spir_versions_sz;
+      break;
+    case CL_DEVICE_EXTENSIONS:
+      src_ptr = device->extensions;
+      src_size = device->extensions_sz;
+      break;
+    case CL_DEVICE_BUILT_IN_KERNELS:
+      src_ptr = device->built_in_kernels;
+      src_size = device->built_in_kernels_sz;
+      break;
+    case CL_DEVICE_PARENT_DEVICE:
+      src_ptr = &device->parent_device;
+      src_size = sizeof(device->parent_device);
+      break;
+    case CL_DEVICE_PARTITION_MAX_SUB_DEVICES:
+      src_ptr = &device->partition_max_sub_device;
+      src_size = sizeof(device->partition_max_sub_device);
+      break;
+    case CL_DEVICE_PARTITION_PROPERTIES:
+      src_ptr = &device->partition_property;
+      src_size = sizeof(device->partition_property);
+      break;
+    case CL_DEVICE_PARTITION_AFFINITY_DOMAIN:
+      src_ptr = &device->affinity_domain;
+      src_size = sizeof(device->affinity_domain);
+      break;
+    case CL_DEVICE_PARTITION_TYPE:
+      src_ptr = &device->partition_type;
+      src_size = sizeof(device->partition_type);
+      break;
+    case CL_DEVICE_PREFERRED_PLATFORM_ATOMIC_ALIGNMENT:
+      src_ptr = &device->preferred_platform_atomic_alignment;
+      src_size = sizeof(device->preferred_platform_atomic_alignment);
+      break;
+    case CL_DEVICE_PREFERRED_GLOBAL_ATOMIC_ALIGNMENT:
+      src_ptr = &device->preferred_global_atomic_alignment;
+      src_size = sizeof(device->preferred_global_atomic_alignment);
+      break;
+    case CL_DEVICE_PREFERRED_LOCAL_ATOMIC_ALIGNMENT:
+      src_ptr = &device->preferred_local_atomic_alignment;
+      src_size = sizeof(device->preferred_local_atomic_alignment);
+      break;
+    case CL_DEVICE_IMAGE_PITCH_ALIGNMENT:
+      src_ptr = &device->image_pitch_alignment;
+      src_size = sizeof(device->image_pitch_alignment);
+      break;
+    case CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT:
+      src_ptr = &device->image_base_address_alignment;
+      src_size = sizeof(device->image_base_address_alignment);
+      break;
+    case CL_DEVICE_SVM_CAPABILITIES:
+      src_ptr = &device->svm_capabilities;
+      src_size = sizeof(device->svm_capabilities);
+      break;
     case CL_DEVICE_REFERENCE_COUNT:
-    {
-      cl_uint dev_ref = CL_OBJECT_GET_REF(device);
-      if (param_value_size_ret) {
-        *param_value_size_ret = sizeof(cl_uint);
-        if (!param_value)
-          return CL_SUCCESS;
+      {
+        dev_ref = CL_OBJECT_GET_REF(device);
+        src_ptr = &dev_ref;
+        src_size = sizeof(cl_int);
+        break;
       }
-      if (param_value_size < sizeof(cl_uint))
-        return CL_INVALID_VALUE;
-      memcpy(param_value, &dev_ref, sizeof(cl_uint));
-      return CL_SUCCESS;
-    }
-
     case CL_DRIVER_VERSION:
-      if (param_value_size_ret) {
-        *param_value_size_ret = device->driver_version_sz;
-        if (!param_value)
-          return CL_SUCCESS;
-      }
-      if (param_value_size < device->driver_version_sz)
-        return CL_INVALID_VALUE;
-      memcpy(param_value, device->driver_version, device->driver_version_sz);
-      return CL_SUCCESS;
+      src_ptr = device->driver_version;
+      src_size = device->driver_version_sz;
+      break;
 
-    default: return CL_INVALID_VALUE;
-  };
+    default:
+      return CL_INVALID_VALUE;
+  }
+
+  return cl_get_info_helper(src_ptr, src_size,
+                            param_value, param_value_size, param_value_size_ret);
 }
 
 LOCAL cl_int
