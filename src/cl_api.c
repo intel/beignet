@@ -419,35 +419,6 @@ error:
   return err;
 }
 
-cl_int
-clGetCommandQueueInfo(cl_command_queue       command_queue,
-                      cl_command_queue_info  param_name,
-                      size_t                 param_value_size,
-                      void *                 param_value,
-                      size_t *               param_value_size_ret)
-{
-  cl_int err = CL_SUCCESS;
-  CHECK_QUEUE (command_queue);
-
-  if (param_name == CL_QUEUE_CONTEXT) {
-    FILL_GETINFO_RET (cl_context, 1, &command_queue->ctx, CL_SUCCESS);
-  } else if (param_name == CL_QUEUE_DEVICE) {
-    FILL_GETINFO_RET (cl_device_id, 1, &command_queue->ctx->device, CL_SUCCESS);
-  } else if (param_name == CL_QUEUE_REFERENCE_COUNT) {
-    cl_uint ref = CL_OBJECT_GET_REF(command_queue);
-    FILL_GETINFO_RET (cl_uint, 1, &ref, CL_SUCCESS);
-  } else if (param_name == CL_QUEUE_PROPERTIES) {
-    FILL_GETINFO_RET (cl_command_queue_properties, 1, &command_queue->props, CL_SUCCESS);
-  } else if (param_name == CL_QUEUE_SIZE) {
-    FILL_GETINFO_RET (cl_uint, 1, &command_queue->size, CL_SUCCESS);
-  } else {
-    return CL_INVALID_VALUE;
-  }
-
-error:
-  return err;
-}
-
 cl_mem
 clCreateBuffer(cl_context    context,
                cl_mem_flags  flags,
