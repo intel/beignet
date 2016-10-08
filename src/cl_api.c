@@ -1814,38 +1814,6 @@ clGetKernelSubGroupInfoKHR(cl_kernel                   kernel,
 }
 
 cl_int
-clGetEventInfo(cl_event      event,
-               cl_event_info param_name,
-               size_t        param_value_size,
-               void *        param_value,
-               size_t *      param_value_size_ret)
-{
-  cl_int err = CL_SUCCESS;
-  cl_int status;
-  CHECK_EVENT(event);
-
-  if (param_name == CL_EVENT_COMMAND_QUEUE) {
-    FILL_GETINFO_RET (cl_command_queue, 1, &event->queue, CL_SUCCESS);
-  } else if (param_name == CL_EVENT_CONTEXT) {
-    FILL_GETINFO_RET (cl_context, 1, &event->ctx, CL_SUCCESS);
-  } else if (param_name == CL_EVENT_COMMAND_TYPE) {
-    FILL_GETINFO_RET (cl_command_type, 1, &event->event_type, CL_SUCCESS);
-  } else if (param_name == CL_EVENT_COMMAND_EXECUTION_STATUS) {
-    status = cl_event_get_status(event);
-    FILL_GETINFO_RET (cl_int, 1, &status, CL_SUCCESS);
-  } else if (param_name == CL_EVENT_REFERENCE_COUNT) {
-    cl_uint ref = CL_OBJECT_GET_REF(event);
-    FILL_GETINFO_RET (cl_int, 1, &ref, CL_SUCCESS);
-  } else {
-    return CL_INVALID_VALUE;
-  }
-
-error:
-  return err;
-
-}
-
-cl_int
 clRetainEvent(cl_event  event)
 {
   cl_int err = CL_SUCCESS;

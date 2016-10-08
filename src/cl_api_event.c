@@ -249,3 +249,44 @@ clSetEventCallback(cl_event event,
   err = cl_event_set_callback(event, command_exec_callback_type, pfn_notify, user_data);
   return err;
 }
+
+cl_int
+clGetEventInfo(cl_event event,
+               cl_event_info param_name,
+               size_t param_value_size,
+               void *param_value,
+               size_t *param_value_size_ret)
+{
+  void *src_ptr = NULL;
+  size_t src_size = 0;
+  cl_uint ref;
+  cl_int status;
+
+  if (!CL_OBJECT_IS_EVENT(event)) {
+    return CL_INVALID_EVENT;
+  }
+
+  if (param_name == CL_EVENT_COMMAND_QUEUE) {
+    src_ptr = &event->queue;
+    src_size = sizeof(cl_command_queue);
+  } else if (param_name == CL_EVENT_CONTEXT) {
+    src_ptr = &event->ctx;
+    src_size = sizeof(cl_context);
+  } else if (param_name == CL_EVENT_COMMAND_TYPE) {
+    src_ptr = &event->event_type;
+    src_size = sizeof(cl_command_type);
+  } else if (param_name == CL_EVENT_COMMAND_EXECUTION_STATUS) {
+    status = cl_event_get_status(event);
+    src_ptr = &status;
+    src_size = sizeof(cl_int);
+  } else if (param_name == CL_EVENT_REFERENCE_COUNT) {
+    ref = CL_OBJECT_GET_REF(event);
+    src_ptr = &ref;
+    src_size = sizeof(cl_int);
+  } else {
+    return CL_INVALID_VALUE;
+  }
+
+  return cl_get_info_helper(src_ptr, src_size,
+                            param_value, param_value_size, param_value_size_ret);
+}
