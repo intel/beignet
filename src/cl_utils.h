@@ -451,5 +451,5 @@ static inline void list_splice_tail(struct list_head *list, struct list_head *he
   for (pos = (head)->next, n = pos->next; pos != (head); \
        pos = n, n = pos->next)
 
-extern cl_int cl_get_info_helper(void *src, size_t src_size, void *dst, size_t dst_size, size_t *ret_size);
+extern cl_int cl_get_info_helper(const void *src, size_t src_size, void *dst, size_t dst_size, size_t *ret_size);
 #endif /* __CL_UTILS_H__ */

@@ -106,24 +106,6 @@ clGetPlatformIDs(cl_uint          num_entries,
 }
 
 cl_int
-clGetPlatformInfo(cl_platform_id    platform,
-                  cl_platform_info  param_name,
-                  size_t            param_value_size,
-                  void *            param_value,
-                  size_t *          param_value_size_ret)
-{
-  /* Only one platform. This is easy */
-  if (UNLIKELY(platform != NULL && platform != cl_get_platform_default()))
-    return CL_INVALID_PLATFORM;
-
-  return cl_get_platform_info(platform,
-                              param_name,
-                              param_value_size,
-                              param_value,
-                              param_value_size_ret);
-}
-
-cl_int
 clGetDeviceIDs(cl_platform_id platform,
                cl_device_type device_type,
                cl_uint        num_entries,

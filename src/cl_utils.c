@@ -20,7 +20,7 @@
 #include <string.h>
 
 LOCAL cl_int
-cl_get_info_helper(void *src, size_t src_size, void *dst, size_t dst_size, size_t *ret_size)
+cl_get_info_helper(const void *src, size_t src_size, void *dst, size_t dst_size, size_t *ret_size)
 {
   if (dst && dst_size < src_size)
     return CL_INVALID_VALUE;

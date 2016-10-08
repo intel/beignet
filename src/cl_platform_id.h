@@ -57,13 +57,6 @@ extern cl_int cl_get_platform_ids(cl_uint          num_entries,
                                   cl_platform_id * platforms,
                                   cl_uint *        num_platforms);
 
-/* Return information for the current platform */
-extern cl_int cl_get_platform_info(cl_platform_id    platform,
-                                   cl_platform_info  param_name,
-                                   size_t            param_value_size,
-                                   void *            param_value,
-                                   size_t *          param_value_size_ret);
-
 #define _STR(x) #x
 #define _JOINT(x, y) _STR(x) "." _STR(y)
 #define _JOINT3(x, y, z) _STR(x) "." _STR(y) "." _STR(z)
