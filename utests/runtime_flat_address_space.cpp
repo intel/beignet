@@ -59,7 +59,7 @@ main(int argc, char *argv[])
     for (uint32_t i = 0; dst_buffer && i < n; ++i)
       if (dst_buffer[i] != int(i)) {
         fprintf(stderr, "run-time flat address space failed\n");
-        exit(-1);
+        OCL_ASSERT(0);
       }
     clEnqueueUnmapMemObject(queue, dst[j], dst_buffer, 0, NULL, NULL);
   }

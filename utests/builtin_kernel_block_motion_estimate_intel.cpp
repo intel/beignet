@@ -41,7 +41,7 @@ void builtin_kernel_block_motion_estimate_intel(void)
 #endif
   if(!oclCreateAcceleratorIntel){
     fprintf(stderr, "Failed to get extension clCreateImageFromLibvaIntel\n");
-    exit(1);
+    OCL_ASSERT(0);
   }
   cl_accelerator_intel accel = oclCreateAcceleratorIntel(ctx, CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL,sizeof(cl_motion_estimation_desc_intel), &vmedesc, &err);
   OCL_ASSERT(accel != NULL);
@@ -123,7 +123,7 @@ void builtin_kernel_block_motion_estimate_intel(void)
 #endif
   if(!oclReleaseAcceleratorIntel){
     fprintf(stderr, "Failed to get extension clCreateImageFromLibvaIntel\n");
-    exit(1);
+    OCL_ASSERT(0);
   }
   oclReleaseAcceleratorIntel(accel);
   clReleaseProgram(built_in_prog);

@@ -62,7 +62,7 @@ static void builtin_global_linear_id(void)
     if (err != CL_SUCCESS)
     {
       printf("Error: Failed to execute kernel! %d\n", err);
-      exit(1);
+      OCL_ASSERT(0);
     }
 
     clFinish(queue);
