@@ -76,6 +76,7 @@ set(OPENCL_SRC
     cl_api_event.c
     cl_api_context.c
     cl_api_sampler.c
+    cl_api_program.c
     cl_alloc.c
     cl_kernel.c
     cl_program.c
