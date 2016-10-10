@@ -947,20 +947,6 @@ error:
 }
 
 cl_int
-clGetImageInfo(cl_mem         mem,
-               cl_image_info  param_name,
-               size_t         param_value_size,
-               void *         param_value,
-               size_t *       param_value_size_ret)
-{
-  return cl_get_image_info(mem,
-                           param_name,
-                           param_value_size,
-                           param_value,
-                           param_value_size_ret);
-}
-
-cl_int
 clSetMemObjectDestructorCallback(cl_mem  memobj,
                                  void (CL_CALLBACK *pfn_notify) (cl_mem, void*),
                                  void * user_data)

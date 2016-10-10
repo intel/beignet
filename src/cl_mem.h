@@ -132,7 +132,7 @@ struct _cl_mem_image {
   _cl_mem base;
   cl_image_format fmt;            /* only for images */
   uint32_t intel_fmt;             /* format to provide in the surface state */
-  uint32_t bpp;                   /* number of bytes per pixel */
+  size_t bpp;                     /* number of bytes per pixel */
   cl_mem_object_type image_type;  /* only for images 1D/2D...*/
   size_t w, h, depth;             /* only for images (depth is only for 3D images) */
   size_t row_pitch, slice_pitch;
@@ -157,6 +157,18 @@ struct _cl_mem_buffer1d_image {
   uint32_t size;
   _cl_mem * descbuffer;
 };
+
+#define IS_1D_IMAGE(image) (image->image_type == CL_MEM_OBJECT_IMAGE1D ||        \
+                                image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY ||  \
+                                image->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
+
+#define IS_2D_IMAGE(image) (image->image_type == CL_MEM_OBJECT_IMAGE2D ||        \
+                                image->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY)
+
+#define IS_3D_IMAGE(image) (image->image_type == CL_MEM_OBJECT_IMAGE3D)
+
+#define IS_IMAGE_ARRAY(image) (image->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY || \
+                                   image->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY)
 
 inline static void
 cl_mem_image_init(struct _cl_mem_image *image, size_t w, size_t h,
@@ -215,9 +227,6 @@ cl_mem_pipe(cl_mem mem)
 
 /* Query information about a memory object */
 extern cl_mem_object_type cl_get_mem_object_type(cl_mem mem);
-
-/* Query information about an image */
-extern cl_int cl_get_image_info(cl_mem, cl_image_info, size_t, void *, size_t *);
 
 /* Query whether mem is in buffers */
 extern cl_int cl_mem_is_valid(cl_mem mem, cl_context ctx);

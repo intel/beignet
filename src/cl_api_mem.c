@@ -119,6 +119,92 @@ clGetMemObjectInfo(cl_mem memobj,
                             param_value, param_value_size, param_value_size_ret);
 }
 
+cl_int
+clGetImageInfo(cl_mem memobj,
+               cl_image_info param_name,
+               size_t param_value_size,
+               void *param_value,
+               size_t *param_value_size_ret)
+{
+  const void *src_ptr = NULL;
+  size_t src_size = 0;
+  struct _cl_mem_image *image;
+  size_t height, depth, array_sz;
+  cl_uint value;
+
+  if (!CL_OBJECT_IS_MEM(memobj)) {
+    return CL_INVALID_MEM_OBJECT;
+  }
+  image = cl_mem_image(memobj);
+
+  switch (param_name) {
+  case CL_IMAGE_FORMAT:
+    src_ptr = &image->fmt;
+    src_size = sizeof(cl_image_format);
+    break;
+  case CL_IMAGE_ELEMENT_SIZE:
+    src_ptr = &image->bpp;
+    src_size = sizeof(size_t);
+    break;
+  case CL_IMAGE_ROW_PITCH:
+    src_ptr = &image->row_pitch;
+    src_size = sizeof(size_t);
+    break;
+  case CL_IMAGE_SLICE_PITCH:
+    src_ptr = &image->slice_pitch;
+    src_size = sizeof(size_t);
+    break;
+  case CL_IMAGE_WIDTH:
+    if (memobj->type == CL_MEM_BUFFER1D_IMAGE_TYPE) {
+      struct _cl_mem_buffer1d_image *buffer1d_image = (struct _cl_mem_buffer1d_image *)image;
+      src_ptr = &buffer1d_image->size;
+    } else {
+      src_ptr = &image->w;
+    }
+    src_size = sizeof(size_t);
+    break;
+  case CL_IMAGE_HEIGHT: {
+    height = 0;
+    if (memobj->type != CL_MEM_BUFFER1D_IMAGE_TYPE) {
+      height = IS_1D_IMAGE(image) ? 0 : image->h;
+    }
+    src_ptr = &height;
+    src_size = sizeof(size_t);
+    break;
+  }
+  case CL_IMAGE_DEPTH: {
+    depth = 0;
+    depth = IS_3D_IMAGE(image) ? image->depth : 0;
+    src_ptr = &depth;
+    src_size = sizeof(size_t);
+    break;
+  }
+  case CL_IMAGE_ARRAY_SIZE: {
+    array_sz = 0;
+    array_sz = IS_IMAGE_ARRAY(image) ? image->depth : 0;
+    src_ptr = &array_sz;
+    src_size = sizeof(size_t);
+    break;
+  }
+  case CL_IMAGE_BUFFER:
+    src_ptr = &image->buffer_1d;
+    src_size = sizeof(cl_mem);
+    break;
+  case CL_IMAGE_NUM_MIP_LEVELS:
+  case CL_IMAGE_NUM_SAMPLES: {
+    value = 0;
+    src_ptr = &value;
+    src_size = sizeof(cl_uint);
+    break;
+  }
+  default:
+    return CL_INVALID_VALUE;
+  }
+
+  return cl_get_info_helper(src_ptr, src_size,
+                            param_value, param_value_size, param_value_size_ret);
+}
+
 void *
 clEnqueueMapBuffer(cl_command_queue command_queue,
                    cl_mem buffer,
