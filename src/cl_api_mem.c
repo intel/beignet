@@ -22,6 +22,103 @@
 #include "cl_event.h"
 #include "CL/cl.h"
 
+cl_int
+clGetMemObjectInfo(cl_mem memobj,
+                   cl_mem_info param_name,
+                   size_t param_value_size,
+                   void *param_value,
+                   size_t *param_value_size_ret)
+{
+  const void *src_ptr = NULL;
+  size_t src_size = 0;
+  cl_mem_object_type type;
+  size_t ptr, offset;
+  cl_int ref;
+  cl_mem parent;
+
+  if (!CL_OBJECT_IS_MEM(memobj)) {
+    return CL_INVALID_MEM_OBJECT;
+  }
+
+  switch (param_name) {
+  case CL_MEM_TYPE: {
+    type = cl_get_mem_object_type(memobj);
+    src_ptr = &type;
+    src_size = sizeof(cl_mem_object_type);
+    break;
+  }
+  case CL_MEM_FLAGS:
+    src_ptr = &memobj->flags;
+    src_size = sizeof(cl_mem_flags);
+    break;
+  case CL_MEM_SIZE:
+    src_ptr = &memobj->size;
+    src_size = sizeof(size_t);
+    break;
+  case CL_MEM_HOST_PTR: {
+    ptr = 0;
+    if (memobj->type == CL_MEM_IMAGE_TYPE) {
+      ptr = (size_t)memobj->host_ptr;
+    } else {
+      struct _cl_mem_buffer *buf = (struct _cl_mem_buffer *)memobj;
+      ptr = (size_t)memobj->host_ptr + buf->sub_offset;
+    }
+    src_ptr = &ptr;
+    src_size = sizeof(size_t);
+    break;
+  }
+  case CL_MEM_USES_SVM_POINTER: {
+    src_ptr = &memobj->is_svm;
+    src_size = sizeof(memobj->is_svm);
+  }
+  case CL_MEM_MAP_COUNT:
+    src_ptr = &memobj->map_ref;
+    src_size = sizeof(cl_uint);
+    break;
+  case CL_MEM_REFERENCE_COUNT: {
+    ref = CL_OBJECT_GET_REF(memobj);
+    src_ptr = &ref;
+    src_size = sizeof(cl_int);
+    break;
+  }
+  case CL_MEM_CONTEXT:
+    src_ptr = &memobj->ctx;
+    src_size = sizeof(cl_context);
+    break;
+  case CL_MEM_ASSOCIATED_MEMOBJECT: {
+    parent = NULL;
+    if (memobj->type == CL_MEM_SUBBUFFER_TYPE) {
+      struct _cl_mem_buffer *buf = (struct _cl_mem_buffer *)memobj;
+      parent = (cl_mem)(buf->parent);
+    } else if (memobj->type == CL_MEM_IMAGE_TYPE) {
+      parent = memobj;
+    } else if (memobj->type == CL_MEM_BUFFER1D_IMAGE_TYPE) {
+      struct _cl_mem_buffer1d_image* image_buffer = (struct _cl_mem_buffer1d_image*)memobj;
+      parent = image_buffer->descbuffer;
+    } else
+      parent = NULL;
+    src_ptr = &parent;
+    src_size = sizeof(cl_mem);
+    break;
+  }
+  case CL_MEM_OFFSET: {
+    offset = 0;
+    if (memobj->type == CL_MEM_SUBBUFFER_TYPE) {
+      struct _cl_mem_buffer *buf = (struct _cl_mem_buffer *)memobj;
+      offset = buf->sub_offset;
+    }
+    src_ptr = &offset;
+    src_size = sizeof(size_t);
+    break;
+  }
+  default:
+    return CL_INVALID_VALUE;
+  }
+
+  return cl_get_info_helper(src_ptr, src_size,
+                            param_value, param_value_size, param_value_size_ret);
+}
+
 void *
 clEnqueueMapBuffer(cl_command_queue command_queue,
                    cl_mem buffer,

@@ -50,7 +50,7 @@
 
 #define MAX_TILING_SIZE                             128 * MB
 
-static cl_mem_object_type
+LOCAL cl_mem_object_type
 cl_get_mem_object_type(cl_mem mem)
 {
   switch (mem->type) {
@@ -66,84 +66,6 @@ cl_get_mem_object_type(cl_mem mem)
     default:
       return CL_MEM_OBJECT_BUFFER;
   }
-}
-
-LOCAL cl_int
-cl_get_mem_object_info(cl_mem mem,
-                cl_mem_info param_name,
-                size_t param_value_size,
-                void *param_value,
-                size_t *param_value_size_ret)
-{
-  switch(param_name)
-  {
-    FIELD_SIZE(MEM_TYPE, cl_mem_object_type);
-    FIELD_SIZE(MEM_FLAGS, cl_mem_flags);
-    FIELD_SIZE(MEM_SIZE, size_t);
-    FIELD_SIZE(MEM_HOST_PTR, void *);
-    FIELD_SIZE(MEM_MAP_COUNT, cl_uint);
-    FIELD_SIZE(MEM_REFERENCE_COUNT, cl_uint);
-    FIELD_SIZE(MEM_CONTEXT, cl_context);
-    FIELD_SIZE(MEM_ASSOCIATED_MEMOBJECT, cl_mem);
-    FIELD_SIZE(MEM_OFFSET, size_t);
-    FIELD_SIZE(MEM_USES_SVM_POINTER, cl_bool);
-  default:
-    return CL_INVALID_VALUE;
-  }
-
-  switch(param_name)
-  {
-  case CL_MEM_TYPE:
-    *((cl_mem_object_type *)param_value) = cl_get_mem_object_type(mem);
-    break;
-  case CL_MEM_FLAGS:
-    *((cl_mem_flags *)param_value) = mem->flags;
-    break;
-  case CL_MEM_SIZE:
-    *((size_t *)param_value) = mem->size;
-    break;
-  case CL_MEM_HOST_PTR:
-    if(mem->type == CL_MEM_IMAGE_TYPE) {
-      *((size_t *)param_value) = (size_t)mem->host_ptr;
-    } else {
-      struct _cl_mem_buffer* buf = (struct _cl_mem_buffer*)mem;
-      *((size_t *)param_value) = (size_t)mem->host_ptr + buf->sub_offset;
-    }
-    break;
-  case CL_MEM_MAP_COUNT:
-    *((cl_uint *)param_value) = mem->map_ref;
-    break;
-  case CL_MEM_REFERENCE_COUNT:
-    *((cl_uint *)param_value) = CL_OBJECT_GET_REF(mem);
-    break;
-  case CL_MEM_CONTEXT:
-    *((cl_context *)param_value) = mem->ctx;
-    break;
-  case CL_MEM_ASSOCIATED_MEMOBJECT:
-    if(mem->type == CL_MEM_SUBBUFFER_TYPE) {
-      struct _cl_mem_buffer* buf = (struct _cl_mem_buffer*)mem;
-      *((cl_mem *)param_value) = (cl_mem)(buf->parent);
-    } else if (mem->type == CL_MEM_IMAGE_TYPE) {
-      *((cl_mem *)param_value) = mem;
-    } else if (mem->type == CL_MEM_BUFFER1D_IMAGE_TYPE) {
-      struct _cl_mem_buffer1d_image* image_buffer = (struct _cl_mem_buffer1d_image*)mem;
-      *((cl_mem *)param_value) = image_buffer->descbuffer;
-    } else
-      *((cl_mem *)param_value) = NULL;
-    break;
-  case CL_MEM_OFFSET:
-    if(mem->type != CL_MEM_SUBBUFFER_TYPE) {
-      *((size_t *)param_value) = 0;
-    } else {
-      struct _cl_mem_buffer* buf = (struct _cl_mem_buffer*)mem;
-      *((size_t *)param_value) = buf->sub_offset;
-    }
-    break;
-  case CL_MEM_USES_SVM_POINTER:
-    *((cl_uint *)param_value) = mem->is_svm;
-  }
-
-  return CL_SUCCESS;
 }
 
 LOCAL cl_int

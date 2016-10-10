@@ -214,7 +214,7 @@ cl_mem_pipe(cl_mem mem)
 }
 
 /* Query information about a memory object */
-extern cl_int cl_get_mem_object_info(cl_mem, cl_mem_info, size_t, void *, size_t *);
+extern cl_mem_object_type cl_get_mem_object_type(cl_mem mem);
 
 /* Query information about an image */
 extern cl_int cl_get_image_info(cl_mem, cl_image_info, size_t, void *, size_t *);

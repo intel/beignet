@@ -947,25 +947,6 @@ error:
 }
 
 cl_int
-clGetMemObjectInfo(cl_mem      memobj,
-                   cl_mem_info param_name,
-                   size_t      param_value_size,
-                   void *      param_value,
-                   size_t *    param_value_size_ret)
-{
-  cl_int err = CL_SUCCESS;
-  CHECK_MEM(memobj);
-
-  err = cl_get_mem_object_info(memobj,
-                               param_name,
-                               param_value_size,
-                               param_value,
-                               param_value_size_ret);
-error:
-  return err;
-}
-
-cl_int
 clGetImageInfo(cl_mem         mem,
                cl_image_info  param_name,
                size_t         param_value_size,
