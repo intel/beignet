@@ -256,7 +256,7 @@ cl_int cmrt_set_kernel_arg(cl_kernel k, cl_uint index, size_t sz, const void *va
     result = cmrt_kernel->SetKernelArg(index, sz, value);
   else {
     cl_mem mem = *(cl_mem*)value;
-    if (mem->magic == CL_MAGIC_MEM_HEADER) {
+    if (((cl_base_object)mem)->magic == CL_MAGIC_MEM_HEADER) {
       if (!CreateCmrtMemory(mem))
         return CL_INVALID_ARG_VALUE;
 
