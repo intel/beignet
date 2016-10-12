@@ -283,7 +283,8 @@ set (utests_sources
   builtin_local_linear_id.cpp
   compiler_mix.cpp
   compiler_math_3op.cpp
-  compiler_bsort.cpp)
+  compiler_bsort.cpp
+  builtin_kernel_block_motion_estimate_intel.cpp)
 
 if (LLVM_VERSION_NODOT VERSION_GREATER 34)
   SET(utests_sources
@@ -324,7 +325,6 @@ else(GEN_PCI_ID)
 endif(GEN_PCI_ID)
 
 if (NOT_BUILD_STAND_ALONE_UTEST)
-  SET(utests_sources ${utests_sources} builtin_kernel_block_motion_estimate_intel.cpp)
   ADD_CUSTOM_TARGET(kernel_bin.bin DEPENDS ${kernel_bin}.bin)
 endif (NOT_BUILD_STAND_ALONE_UTEST)
 
