@@ -307,6 +307,9 @@ typedef cl_int(clGetKernelSubGroupInfoKHR_cb)(cl_kernel, cl_device_id,
                                               size_t *);
 extern clGetKernelSubGroupInfoKHR_cb* utestclGetKernelSubGroupInfoKHR;
 
+/* Check if cl_intel_motion_estimation enabled. */
+extern int cl_check_motion_estimation(void);
+
 /* Check is cl version 2.0. */
 extern int cl_check_ocl20(void);
 

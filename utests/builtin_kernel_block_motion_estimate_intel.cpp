@@ -8,6 +8,9 @@ OCLRELEASEACCELERATORINTEL * oclReleaseAcceleratorIntel = NULL;
 
 void builtin_kernel_block_motion_estimate_intel(void)
 {
+  if (!cl_check_motion_estimation()) {
+    return;
+  }
   char* built_in_kernel_names;
   size_t built_in_kernels_size;
   cl_int err = CL_SUCCESS;
@@ -21,7 +24,8 @@ void builtin_kernel_block_motion_estimate_intel(void)
   if (strstr(built_in_kernel_names, "block_motion_estimate_intel") == NULL)
   {
         free(built_in_kernel_names);
-        return;
+        fprintf(stderr, "Can't find block_motion_estimate_intel built-in kernel");
+        OCL_ASSERT(0);
   }
 
   cl_program built_in_prog = clCreateProgramWithBuiltInKernels(ctx, 1, &device, built_in_kernel_names, &err);
