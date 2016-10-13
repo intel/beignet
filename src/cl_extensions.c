@@ -117,16 +117,7 @@ cl_intel_platform_enable_extension(cl_device_id device, uint32_t ext)
   cl_platform_id pf = device->platform;
   assert(pf);
 
-  for(id = OPT1_EXT_START_ID; id <= OPT1_EXT_END_ID; id++) {
-    if (id == ext) {
-      if (!pf->internal_extensions->extensions[id].base.ext_enabled)
-        ext_str = pf->internal_extensions->extensions[id].base.ext_name;
-
-      break;
-    }
-  }
-
-  for(id = BASE_EXT_START_ID; id <= BASE_EXT_END_ID; id++) {
+  for(id = BASE_EXT_START_ID; id < cl_khr_extension_id_max; id++) {
     if (id == ext) {
       if (!pf->internal_extensions->extensions[id].base.ext_enabled)
         ext_str = pf->internal_extensions->extensions[id].base.ext_name;
