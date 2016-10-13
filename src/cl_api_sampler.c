@@ -17,6 +17,53 @@
  */
 
 #include "cl_sampler.h"
+#include "cl_context.h"
+#include "cl_device_id.h"
+
+cl_sampler
+clCreateSampler(cl_context context,
+                cl_bool normalized,
+                cl_addressing_mode addressing,
+                cl_filter_mode filter,
+                cl_int *errcode_ret)
+{
+  cl_sampler sampler = NULL;
+  cl_int err = CL_SUCCESS;
+  cl_uint i;
+
+  do {
+    if (!CL_OBJECT_IS_CONTEXT(context)) {
+      err = CL_INVALID_CONTEXT;
+      break;
+    }
+
+    if (addressing < CL_ADDRESS_NONE || addressing > CL_ADDRESS_MIRRORED_REPEAT) {
+      err = CL_INVALID_VALUE;
+      break;
+    }
+
+    if (filter < CL_FILTER_NEAREST || filter > CL_FILTER_LINEAR) {
+      err = CL_INVALID_VALUE;
+      break;
+    }
+
+    /* Check if images are not supported by any device associated with context */
+    for (i = 0; i < context->device_num; i++) {
+      if (context->devices[i]->image_support == CL_FALSE) {
+        err = CL_INVALID_OPERATION;
+        break;
+      }
+    }
+    if (err != CL_SUCCESS)
+      break;
+
+    sampler = cl_create_sampler(context, normalized, addressing, filter, &err);
+  } while (0);
+
+  if (errcode_ret)
+    *errcode_ret = err;
+  return sampler;
+}
 
 cl_int
 clGetSamplerInfo(cl_sampler sampler,

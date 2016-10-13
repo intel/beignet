@@ -71,17 +71,18 @@ int cl_set_sampler_arg_slot(cl_kernel k, int index, cl_sampler sampler)
 }
 
 LOCAL cl_sampler
-cl_sampler_new(cl_context ctx,
-               cl_bool normalized_coords,
-               cl_addressing_mode address,
-               cl_filter_mode filter,
-               cl_int *errcode_ret)
+cl_create_sampler(cl_context ctx, cl_bool normalized_coords, cl_addressing_mode address,
+                  cl_filter_mode filter, cl_int *errcode_ret)
 {
   cl_sampler sampler = NULL;
-  cl_int err = CL_SUCCESS;
 
   /* Allocate and inialize the structure itself */
-  TRY_ALLOC (sampler, CALLOC(struct _cl_sampler));
+  sampler = cl_calloc(1, sizeof(_cl_sampler));
+  if (sampler == NULL) {
+    *errcode_ret = CL_OUT_OF_HOST_MEMORY;
+    return NULL;
+  }
+
   CL_OBJECT_INIT_BASE(sampler, CL_OBJECT_SAMPLER_MAGIC);
   sampler->normalized_coords = normalized_coords;
   sampler->address = address;
@@ -90,16 +91,11 @@ cl_sampler_new(cl_context ctx,
   /* Append the sampler in the context sampler list */
   cl_context_add_sampler(ctx, sampler);
 
+  // TODO: May move it to other place, it's not a common sampler logic.
   sampler->clkSamplerValue = cl_to_clk(normalized_coords, address, filter);
 
-exit:
-  if (errcode_ret)
-    *errcode_ret = err;
+  *errcode_ret = CL_SUCCESS;
   return sampler;
-error:
-  cl_sampler_delete(sampler);
-  sampler = NULL;
-  goto exit;
 }
 
 LOCAL void

@@ -859,23 +859,6 @@ error:
 }
 
 cl_sampler
-clCreateSampler(cl_context         context,
-                cl_bool            normalized,
-                cl_addressing_mode addressing,
-                cl_filter_mode     filter,
-                cl_int *           errcode_ret)
-{
-  cl_sampler sampler = NULL;
-  cl_int err = CL_SUCCESS;
-  CHECK_CONTEXT (context);
-  sampler = cl_sampler_new(context, normalized, addressing, filter, &err);
-error:
-  if (errcode_ret)
-    *errcode_ret = err;
-  return sampler;
-}
-
-cl_sampler
 clCreateSamplerWithProperties(cl_context                  context,
                               const cl_sampler_properties *sampler_properties,
                               cl_int *                    errcode_ret)
@@ -933,7 +916,7 @@ clCreateSamplerWithProperties(cl_context                  context,
   if(normalized == 0xFFFFFFFF) normalized = CL_TRUE;
   if(addressing == 0xFFFFFFFF) addressing = CL_ADDRESS_CLAMP;
   if(filter == 0xFFFFFFFF) filter = CL_FILTER_NEAREST;
-  sampler = cl_sampler_new(context, normalized, addressing, filter, &err);
+  sampler = cl_create_sampler(context, normalized, addressing, filter, &err);
 error:
   if (errcode_ret)
     *errcode_ret = err;

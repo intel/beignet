@@ -26,35 +26,27 @@
 #include <stdint.h>
 
 /* How to access images */
-struct _cl_sampler {
+typedef struct _cl_sampler {
   _cl_base_object base;
-  cl_context ctx;            /* Context it belongs to */
-  cl_bool normalized_coords; /* Are coordinates normalized? */
-  cl_addressing_mode address;/* CLAMP / REPEAT and so on... */
-  cl_filter_mode filter;     /* LINEAR / NEAREST mostly */
+  cl_context ctx;             /* Context it belongs to */
+  cl_bool normalized_coords;  /* Are coordinates normalized? */
+  cl_addressing_mode address; /* CLAMP / REPEAT and so on... */
+  cl_filter_mode filter;      /* LINEAR / NEAREST mostly */
   uint32_t clkSamplerValue;
-};
+} _cl_sampler;
 
 #define CL_OBJECT_SAMPLER_MAGIC 0x686a0ecba79ce32fLL
-#define CL_OBJECT_IS_SAMPLER(obj) ((obj &&                           \
-         ((cl_base_object)obj)->magic == CL_OBJECT_SAMPLER_MAGIC &&  \
-         CL_OBJECT_GET_REF(obj) >= 1))
+#define CL_OBJECT_IS_SAMPLER(obj) ((obj &&                                                     \
+                                    ((cl_base_object)obj)->magic == CL_OBJECT_SAMPLER_MAGIC && \
+                                    CL_OBJECT_GET_REF(obj) >= 1))
 
 /* Create a new sampler object */
-extern cl_sampler cl_sampler_new(cl_context,
-                                 cl_bool,
-                                 cl_addressing_mode,
-                                 cl_filter_mode,
-                                 cl_int *err);
-
+extern cl_sampler cl_create_sampler(cl_context, cl_bool, cl_addressing_mode, cl_filter_mode, cl_int *err);
 /* Unref the object and delete it if no more reference on it */
 extern void cl_sampler_delete(cl_sampler);
-
 /* Add one more reference to this object */
 extern void cl_sampler_add_ref(cl_sampler);
-
 /* set a sampler kernel argument */
 int cl_set_sampler_arg_slot(cl_kernel k, int index, cl_sampler sampler);
 
 #endif /* __CL_SAMPLER_H__ */
-
