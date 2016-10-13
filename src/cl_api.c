@@ -923,26 +923,6 @@ error:
   return sampler;
 }
 
-cl_int
-clRetainSampler(cl_sampler sampler)
-{
-  cl_int err = CL_SUCCESS;
-  CHECK_SAMPLER (sampler);
-  cl_sampler_add_ref(sampler);
-error:
-  return err;
-}
-
-cl_int
-clReleaseSampler(cl_sampler sampler)
-{
-  cl_int err = CL_SUCCESS;
-  CHECK_SAMPLER (sampler);
-  cl_sampler_delete(sampler);
-error:
-  return err;
-}
-
 cl_program
 clCreateProgramWithSource(cl_context     context,
                           cl_uint        count,

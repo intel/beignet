@@ -103,3 +103,25 @@ clGetSamplerInfo(cl_sampler sampler,
   return cl_get_info_helper(src_ptr, src_size,
                             param_value, param_value_size, param_value_size_ret);
 }
+
+cl_int
+clRetainSampler(cl_sampler sampler)
+{
+  if (!CL_OBJECT_IS_SAMPLER(sampler)) {
+    return CL_INVALID_SAMPLER;
+  }
+
+  cl_sampler_add_ref(sampler);
+  return CL_SUCCESS;
+}
+
+cl_int
+clReleaseSampler(cl_sampler sampler)
+{
+  if (!CL_OBJECT_IS_SAMPLER(sampler)) {
+    return CL_INVALID_SAMPLER;
+  }
+
+  cl_sampler_delete(sampler);
+  return CL_SUCCESS;
+}
