@@ -69,7 +69,8 @@ check_intel_extension(cl_extensions_t *extensions)
 {
   int id;
   for(id = INTEL_EXT_START_ID; id <= INTEL_EXT_END_ID; id++)
-    extensions->extensions[id].base.ext_enabled = 1;
+    if(id != EXT_ID(intel_motion_estimation))
+      extensions->extensions[id].base.ext_enabled = 1;
 }
 
 void
