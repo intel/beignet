@@ -444,6 +444,7 @@ ivb_gt1_break:
       intel_ivb_gt1_device.platform = cl_get_platform_default();
       ret = &intel_ivb_gt1_device;
       cl_intel_platform_get_default_extension(ret);
+      cl_intel_platform_enable_extension(ret, cl_intel_motion_estimation_ext_id);
       break;
 
     case PCI_CHIP_IVYBRIDGE_GT2:
@@ -457,6 +458,7 @@ ivb_gt2_break:
       intel_ivb_gt2_device.platform = cl_get_platform_default();
       ret = &intel_ivb_gt2_device;
       cl_intel_platform_get_default_extension(ret);
+      cl_intel_platform_enable_extension(ret, cl_intel_motion_estimation_ext_id);
       break;
 
     case PCI_CHIP_BAYTRAIL_T:
@@ -466,6 +468,7 @@ baytrail_t_device_break:
       intel_baytrail_t_device.platform = cl_get_platform_default();
       ret = &intel_baytrail_t_device;
       cl_intel_platform_get_default_extension(ret);
+      cl_intel_platform_enable_extension(ret, cl_intel_motion_estimation_ext_id);
       break;
 
     case PCI_CHIP_BROADWLL_M_GT1:
