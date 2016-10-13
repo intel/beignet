@@ -2429,3 +2429,25 @@ clEnqueueFillImage(cl_command_queue command_queue,
 
   return err;
 }
+
+cl_int
+clRetainMemObject(cl_mem memobj)
+{
+  if (!CL_OBJECT_IS_MEM(memobj)) {
+    return CL_INVALID_MEM_OBJECT;
+  }
+
+  cl_mem_add_ref(memobj);
+  return CL_SUCCESS;
+}
+
+cl_int
+clReleaseMemObject(cl_mem memobj)
+{
+  if (!CL_OBJECT_IS_MEM(memobj)) {
+    return CL_INVALID_MEM_OBJECT;
+  }
+
+  cl_mem_delete(memobj);
+  return CL_SUCCESS;
+}

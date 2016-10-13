@@ -800,26 +800,6 @@ error:
 }
 
 cl_int
-clRetainMemObject(cl_mem memobj)
-{
-  cl_int err = CL_SUCCESS;
-  CHECK_MEM (memobj);
-  cl_mem_add_ref(memobj);
-error:
-  return err;
-}
-
-cl_int
-clReleaseMemObject(cl_mem memobj)
-{
-  cl_int err = CL_SUCCESS;
-  CHECK_MEM (memobj);
-  cl_mem_delete(memobj);
-error:
-  return err;
-}
-
-cl_int
 clGetSupportedImageFormats(cl_context         ctx,
                            cl_mem_flags       flags,
                            cl_mem_object_type image_type,
