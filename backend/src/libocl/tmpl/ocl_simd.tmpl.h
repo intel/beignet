@@ -42,7 +42,11 @@ OVERLOADABLE ulong sub_group_broadcast(ulong a, uint local_id);
 OVERLOADABLE half sub_group_broadcast(half a, uint local_id);
 OVERLOADABLE float sub_group_broadcast(float a, uint local_id);
 OVERLOADABLE double sub_group_broadcast(double a, uint local_id);
+OVERLOADABLE short sub_group_broadcast(short a,uint local_id);
+OVERLOADABLE ushort sub_group_broadcast(ushort a, uint local_id);
 
+OVERLOADABLE short intel_sub_group_broadcast(short a, uint local_id);
+OVERLOADABLE ushort intel_sub_group_broadcast(ushort a, uint local_id);
 /* reduce add */
 OVERLOADABLE int sub_group_reduce_add(int x);
 OVERLOADABLE uint sub_group_reduce_add(uint x);

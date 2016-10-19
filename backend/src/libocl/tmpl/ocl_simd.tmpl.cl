@@ -50,8 +50,17 @@ BROADCAST_IMPL(ulong)
 BROADCAST_IMPL(half)
 BROADCAST_IMPL(float)
 BROADCAST_IMPL(double)
+BROADCAST_IMPL(short)
+BROADCAST_IMPL(ushort)
 #undef BROADCAST_IMPL
 
+OVERLOADABLE short intel_sub_group_broadcast(short a, uint local_id) {
+  return __gen_ocl_sub_group_broadcast(a, local_id);
+}
+
+OVERLOADABLE ushort intel_sub_group_broadcast(ushort a, uint local_id) {
+  return __gen_ocl_sub_group_broadcast(a, local_id);
+}
 
 #define RANGE_OP(RANGE, OP, GEN_TYPE, SIGN) \
     OVERLOADABLE GEN_TYPE __gen_ocl_sub_group_##RANGE##_##OP(bool sign, GEN_TYPE x); \
