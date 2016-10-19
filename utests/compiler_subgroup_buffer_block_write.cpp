@@ -64,6 +64,7 @@ static void generate_data(T* &input,
         input[(gid + lid)*VEC_SIZE + vsz] += ((rand() % 2 - 1) * base_val);
         /* add trailing random bits, tests GENERAL cases */
         input[(gid + lid)*VEC_SIZE + vsz] += (rand() % 112);
+        //input[(gid + lid)*VEC_SIZE + vsz] = (gid + lid)*VEC_SIZE + vsz;
 
 #if DEBUG_STDOUT
         /* output generated input */
@@ -156,47 +157,96 @@ static void subgroup_generic(T* input,
 /*
  * subgroup buffer block write
  */
-void compiler_subgroup_buffer_block_write1(void)
+void compiler_subgroup_buffer_block_write_ui1(void)
 {
   if(!cl_check_subgroups())
     return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_buffer_block_write",
-                              "compiler_subgroup_buffer_block_write1");
+                              "compiler_subgroup_buffer_block_write_ui1");
   subgroup_generic(input, expected, 1);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_buffer_block_write1);
-void compiler_subgroup_buffer_block_write2(void)
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_buffer_block_write_ui1);
+void compiler_subgroup_buffer_block_write_ui2(void)
 {
   if(!cl_check_subgroups())
     return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_buffer_block_write",
-                              "compiler_subgroup_buffer_block_write2");
+                              "compiler_subgroup_buffer_block_write_ui2");
   subgroup_generic(input, expected, 2);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_buffer_block_write2);
-void compiler_subgroup_buffer_block_write4(void)
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_buffer_block_write_ui2);
+void compiler_subgroup_buffer_block_write_ui4(void)
 {
   if(!cl_check_subgroups())
     return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_buffer_block_write",
-                              "compiler_subgroup_buffer_block_write4");
+                              "compiler_subgroup_buffer_block_write_ui4");
   subgroup_generic(input, expected, 4);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_buffer_block_write4);
-void compiler_subgroup_buffer_block_write8(void)
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_buffer_block_write_ui4);
+void compiler_subgroup_buffer_block_write_ui8(void)
 {
   if(!cl_check_subgroups())
     return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_buffer_block_write",
-                              "compiler_subgroup_buffer_block_write8");
+                              "compiler_subgroup_buffer_block_write_ui8");
   subgroup_generic(input, expected, 8);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_buffer_block_write8);
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_buffer_block_write_ui8);
+
+void compiler_subgroup_buffer_block_write_us1(void)
+{
+  if(!cl_check_subgroups_short())
+    return;
+  cl_ushort *input = NULL;
+  cl_ushort *expected = NULL;
+  OCL_CALL(cl_kernel_init, "compiler_subgroup_buffer_block_write.cl",
+                           "compiler_subgroup_buffer_block_write_us1",
+                           SOURCE, "-DSHORT");
+  subgroup_generic(input, expected, 1);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_buffer_block_write_us1);
+void compiler_subgroup_buffer_block_write_us2(void)
+{
+  if(!cl_check_subgroups_short())
+    return;
+  cl_ushort *input = NULL;
+  cl_ushort *expected = NULL;
+  OCL_CALL(cl_kernel_init, "compiler_subgroup_buffer_block_write.cl",
+                           "compiler_subgroup_buffer_block_write_us2",
+                           SOURCE, "-DSHORT");
+  subgroup_generic(input, expected, 2);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_buffer_block_write_us2);
+void compiler_subgroup_buffer_block_write_us4(void)
+{
+  if(!cl_check_subgroups_short())
+    return;
+  cl_ushort *input = NULL;
+  cl_ushort *expected = NULL;
+  OCL_CALL(cl_kernel_init, "compiler_subgroup_buffer_block_write.cl",
+                           "compiler_subgroup_buffer_block_write_us4",
+                           SOURCE, "-DSHORT");
+  subgroup_generic(input, expected, 4);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_buffer_block_write_us4);
+void compiler_subgroup_buffer_block_write_us8(void)
+{
+  if(!cl_check_subgroups_short())
+    return;
+  cl_ushort *input = NULL;
+  cl_ushort *expected = NULL;
+  OCL_CALL(cl_kernel_init, "compiler_subgroup_buffer_block_write.cl",
+                           "compiler_subgroup_buffer_block_write_us8",
+                           SOURCE, "-DSHORT");
+  subgroup_generic(input, expected, 8);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_buffer_block_write_us8);

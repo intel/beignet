@@ -21,7 +21,7 @@ static void compute_expected(T* input,
 {
   for(uint32_t i = 0; i < WG_GLOBAL_SIZE; i++)
     for(uint32_t j = 0; j < VEC_SIZE; j++)
-      expected[i * VEC_SIZE + j] = input[WG_GLOBAL_SIZE * j + i];
+      expected[i * VEC_SIZE + j] = input[WG_GLOBAL_SIZE * 4 / sizeof(T) * j + i];
 }
 
 /*
@@ -33,7 +33,8 @@ static void generate_data(T* &input,
                           size_t VEC_SIZE)
 {
   /* allocate input and expected arrays */
-  input = new T[WG_GLOBAL_SIZE * VEC_SIZE];
+  int* input_ui = new int[WG_GLOBAL_SIZE * VEC_SIZE];
+  input = (T*)input_ui;
   expected = new T[WG_GLOBAL_SIZE * VEC_SIZE];
 
   /* base value for all data types */
@@ -45,19 +46,22 @@ static void generate_data(T* &input,
 #if DEBUG_STDOUT
     cout << endl << "IN: " << endl;
 #endif
+  uint32_t rpitch = sizeof(uint32_t) * WG_GLOBAL_SIZE / sizeof(T);
   /* generate inputs and expected values */
-  for(uint32_t gid = 0; gid < WG_GLOBAL_SIZE * VEC_SIZE; gid++)
-  {
-    /* initially 0, augment after */
-    input[gid] = ((rand() % 2 - 1) * base_val) + (rand() % 112);
+  for(uint32_t h = 0; h < VEC_SIZE; ++h) {
+    for(uint32_t w = 0; w < WG_GLOBAL_SIZE; ++w)
+    {
+      /* initially 0, augment after */
+      input[w + h * rpitch] = ((rand() % 2 - 1) * base_val) + (rand() % 112);
+      //input[w + h * rpitch] = w + h * WG_GLOBAL_SIZE;
 
 #if DEBUG_STDOUT
-    /* output generated input */
-    cout << setw(4) << input[gid] << ", " ;
-    if((gid + 1) % 8 == 0)
-          cout << endl;
+      /* output generated input */
+      cout << setw(4) << input[w + h * rpitch] << ", " ;
+      if((w+ 1) % 8 == 0)
+            cout << endl;
 #endif
-
+    }
   }
   /* expected values */
   compute_expected(input, expected, VEC_SIZE);
@@ -151,47 +155,95 @@ static void subgroup_generic(T* input,
 /*
  * sub_group image block read functions
  */
-void compiler_subgroup_image_block_read1(void)
+void compiler_subgroup_image_block_read_ui1(void)
 {
   if(!cl_check_subgroups())
     return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_image_block_read",
-                              "compiler_subgroup_image_block_read1");
+                              "compiler_subgroup_image_block_read_ui1");
   subgroup_generic(input, expected, 1);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_image_block_read1);
-void compiler_subgroup_image_block_read2(void)
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_image_block_read_ui1);
+void compiler_subgroup_image_block_read_ui2(void)
 {
   if(!cl_check_subgroups())
     return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_image_block_read",
-                              "compiler_subgroup_image_block_read2");
+                              "compiler_subgroup_image_block_read_ui2");
   subgroup_generic(input, expected, 2);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_image_block_read2);
-void compiler_subgroup_image_block_read4(void)
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_image_block_read_ui2);
+void compiler_subgroup_image_block_read_ui4(void)
 {
   if(!cl_check_subgroups())
     return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_image_block_read",
-                              "compiler_subgroup_image_block_read4");
+                              "compiler_subgroup_image_block_read_ui4");
   subgroup_generic(input, expected, 4);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_image_block_read4);
-void compiler_subgroup_image_block_read8(void)
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_image_block_read_ui4);
+void compiler_subgroup_image_block_read_ui8(void)
 {
   if(!cl_check_subgroups())
     return;
   cl_uint *input = NULL;
   cl_uint *expected = NULL;
   OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_image_block_read",
-                              "compiler_subgroup_image_block_read8");
+                              "compiler_subgroup_image_block_read_ui8");
   subgroup_generic(input, expected, 8);
 }
-MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_image_block_read8);
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_image_block_read_ui8);
+void compiler_subgroup_image_block_read_us1(void)
+{
+  if(!cl_check_subgroups_short())
+    return;
+  cl_ushort *input = NULL;
+  cl_ushort *expected = NULL;
+  OCL_CALL(cl_kernel_init, "compiler_subgroup_image_block_read.cl",
+                           "compiler_subgroup_image_block_read_us1",
+                           SOURCE, "-DSHORT");
+  subgroup_generic(input, expected, 1);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_image_block_read_us1);
+void compiler_subgroup_image_block_read_us2(void)
+{
+  if(!cl_check_subgroups_short())
+    return;
+  cl_ushort *input = NULL;
+  cl_ushort *expected = NULL;
+  OCL_CALL(cl_kernel_init, "compiler_subgroup_image_block_read.cl",
+                           "compiler_subgroup_image_block_read_us2",
+                           SOURCE, "-DSHORT");
+  subgroup_generic(input, expected, 2);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_image_block_read_us2);
+void compiler_subgroup_image_block_read_us4(void)
+{
+  if(!cl_check_subgroups_short())
+    return;
+  cl_ushort *input = NULL;
+  cl_ushort *expected = NULL;
+  OCL_CALL(cl_kernel_init, "compiler_subgroup_image_block_read.cl",
+                           "compiler_subgroup_image_block_read_us4",
+                           SOURCE, "-DSHORT");
+  subgroup_generic(input, expected, 4);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_image_block_read_us4);
+void compiler_subgroup_image_block_read_us8(void)
+{
+  if(!cl_check_subgroups_short())
+    return;
+  cl_ushort *input = NULL;
+  cl_ushort *expected = NULL;
+  OCL_CALL(cl_kernel_init, "compiler_subgroup_image_block_read.cl",
+                           "compiler_subgroup_image_block_read_us8",
+                           SOURCE, "-DSHORT");
+  subgroup_generic(input, expected, 8);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_image_block_read_us8);
