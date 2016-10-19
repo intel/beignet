@@ -55,6 +55,10 @@ OVERLOADABLE ulong sub_group_reduce_add(ulong x);
 OVERLOADABLE half sub_group_reduce_add(half x);
 OVERLOADABLE float sub_group_reduce_add(float x);
 OVERLOADABLE double sub_group_reduce_add(double x);
+OVERLOADABLE short sub_group_reduce_add(short x);
+OVERLOADABLE ushort sub_group_reduce_add(ushort x);
+OVERLOADABLE short intel_sug_group_reduce_add(short x);
+OVERLOADABLE ushort intel_sug_group_reduce_add(ushort x);
 
 /* reduce min */
 OVERLOADABLE int sub_group_reduce_min(int x);
@@ -64,6 +68,10 @@ OVERLOADABLE ulong sub_group_reduce_min(ulong x);
 OVERLOADABLE half sub_group_reduce_min(half x);
 OVERLOADABLE float sub_group_reduce_min(float x);
 OVERLOADABLE double sub_group_reduce_min(double x);
+OVERLOADABLE short sub_group_reduce_min(short x);
+OVERLOADABLE ushort sub_group_reduce_min(ushort x);
+OVERLOADABLE short intel_sug_group_reduce_min(short x);
+OVERLOADABLE ushort intel_sug_group_reduce_min(ushort x);
 
 /* reduce max */
 OVERLOADABLE int sub_group_reduce_max(int x);
@@ -73,6 +81,10 @@ OVERLOADABLE ulong sub_group_reduce_max(ulong x);
 OVERLOADABLE half sub_group_reduce_max(half x);
 OVERLOADABLE float sub_group_reduce_max(float x);
 OVERLOADABLE double sub_group_reduce_max(double x);
+OVERLOADABLE short sub_group_reduce_max(short x);
+OVERLOADABLE ushort sub_group_reduce_max(ushort x);
+OVERLOADABLE short intel_sug_group_reduce_max(short x);
+OVERLOADABLE ushort intel_sug_group_reduce_max(ushort x);
 
 /* scan_inclusive add */
 OVERLOADABLE int sub_group_scan_inclusive_add(int x);
@@ -82,6 +94,10 @@ OVERLOADABLE ulong sub_group_scan_inclusive_add(ulong x);
 OVERLOADABLE half sub_group_scan_inclusive_add(half x);
 OVERLOADABLE float sub_group_scan_inclusive_add(float x);
 OVERLOADABLE double sub_group_scan_inclusive_add(double x);
+OVERLOADABLE short sub_group_scan_inclusive_add(short x);
+OVERLOADABLE ushort sub_group_scan_inclusive_add(ushort x);
+OVERLOADABLE short intel_sug_group_scan_inclusive_add(short x);
+OVERLOADABLE ushort intel_sug_group_scan_inclusive_add(ushort x);
 
 /* scan_inclusive min */
 OVERLOADABLE int sub_group_scan_inclusive_min(int x);
@@ -91,6 +107,10 @@ OVERLOADABLE ulong sub_group_scan_inclusive_min(ulong x);
 OVERLOADABLE half sub_group_scan_inclusive_min(half x);
 OVERLOADABLE float sub_group_scan_inclusive_min(float x);
 OVERLOADABLE double sub_group_scan_inclusive_min(double x);
+OVERLOADABLE short sub_group_scan_inclusive_min(short x);
+OVERLOADABLE ushort sub_group_scan_inclusive_min(ushort x);
+OVERLOADABLE short intel_sug_group_scan_inclusive_min(short x);
+OVERLOADABLE ushort intel_sug_group_scan_inclusive_min(ushort x);
 
 /* scan_inclusive max */
 OVERLOADABLE int sub_group_scan_inclusive_max(int x);
@@ -100,6 +120,10 @@ OVERLOADABLE ulong sub_group_scan_inclusive_max(ulong x);
 OVERLOADABLE half sub_group_scan_inclusive_max(half x);
 OVERLOADABLE float sub_group_scan_inclusive_max(float x);
 OVERLOADABLE double sub_group_scan_inclusive_max(double x);
+OVERLOADABLE short sub_group_scan_inclusive_max(short x);
+OVERLOADABLE ushort sub_group_scan_inclusive_max(ushort x);
+OVERLOADABLE short intel_sug_group_scan_inclusive_max(short x);
+OVERLOADABLE ushort intel_sug_group_scan_inclusive_max(ushort x);
 
 /* scan_exclusive add */
 OVERLOADABLE int sub_group_scan_exclusive_add(int x);
@@ -109,6 +133,10 @@ OVERLOADABLE ulong sub_group_scan_exclusive_add(ulong x);
 OVERLOADABLE half sub_group_scan_exclusive_add(half x);
 OVERLOADABLE float sub_group_scan_exclusive_add(float x);
 OVERLOADABLE double sub_group_scan_exclusive_add(double x);
+OVERLOADABLE short sub_group_scan_exclusive_add(short x);
+OVERLOADABLE ushort sub_group_scan_exclusive_add(ushort x);
+OVERLOADABLE short intel_sub_group_scan_exclusive_add(short x);
+OVERLOADABLE ushort intel_sub_group_scan_exclusive_add(ushort x);
 
 /* scan_exclusive min */
 OVERLOADABLE int sub_group_scan_exclusive_min(int x);
@@ -118,6 +146,10 @@ OVERLOADABLE ulong sub_group_scan_exclusive_min(ulong x);
 OVERLOADABLE half sub_group_scan_exclusive_min(half x);
 OVERLOADABLE float sub_group_scan_exclusive_min(float x);
 OVERLOADABLE double sub_group_scan_exclusive_min(double x);
+OVERLOADABLE short sub_group_scan_exclusive_min(short x);
+OVERLOADABLE ushort sub_group_scan_exclusive_min(ushort x);
+OVERLOADABLE short intel_sug_group_scan_exclusive_min(short x);
+OVERLOADABLE ushort intel_sug_group_scan_exclusive_min(ushort x);
 
 /* scan_exclusive max */
 OVERLOADABLE int sub_group_scan_exclusive_max(int x);
@@ -127,6 +159,10 @@ OVERLOADABLE ulong sub_group_scan_exclusive_max(ulong x);
 OVERLOADABLE half sub_group_scan_exclusive_max(half x);
 OVERLOADABLE float sub_group_scan_exclusive_max(float x);
 OVERLOADABLE double sub_group_scan_exclusive_max(double x);
+OVERLOADABLE short sub_group_scan_exclusive_max(short x);
+OVERLOADABLE ushort sub_group_scan_exclusive_max(ushort x);
+OVERLOADABLE short intel_sug_group_scan_exclusive_max(short x);
+OVERLOADABLE ushort intel_sug_group_scan_exclusive_max(ushort x);
 
 /* shuffle */
 OVERLOADABLE half intel_sub_group_shuffle(half x, uint c);

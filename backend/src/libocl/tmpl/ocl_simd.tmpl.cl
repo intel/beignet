@@ -76,6 +76,8 @@ RANGE_OP(reduce, add, ulong, false)
 RANGE_OP(reduce, add, half, true)
 RANGE_OP(reduce, add, float, true)
 RANGE_OP(reduce, add, double, true)
+RANGE_OP(reduce, add, short, true)
+RANGE_OP(reduce, add, ushort, false)
 /* reduce min */
 RANGE_OP(reduce, min, int, true)
 RANGE_OP(reduce, min, uint, false)
@@ -84,6 +86,8 @@ RANGE_OP(reduce, min, ulong, false)
 RANGE_OP(reduce, min, half, true)
 RANGE_OP(reduce, min, float, true)
 RANGE_OP(reduce, min, double, true)
+RANGE_OP(reduce, min, short, true)
+RANGE_OP(reduce, min, ushort, false)
 /* reduce max */
 RANGE_OP(reduce, max, int, true)
 RANGE_OP(reduce, max, uint, false)
@@ -92,6 +96,8 @@ RANGE_OP(reduce, max, ulong, false)
 RANGE_OP(reduce, max, half, true)
 RANGE_OP(reduce, max, float, true)
 RANGE_OP(reduce, max, double, true)
+RANGE_OP(reduce, max, short, true)
+RANGE_OP(reduce, max, ushort, false)
 
 /* scan_inclusive add */
 RANGE_OP(scan_inclusive, add, int, true)
@@ -101,6 +107,8 @@ RANGE_OP(scan_inclusive, add, ulong, false)
 RANGE_OP(scan_inclusive, add, half, true)
 RANGE_OP(scan_inclusive, add, float, true)
 RANGE_OP(scan_inclusive, add, double, true)
+RANGE_OP(scan_inclusive, add, short, true)
+RANGE_OP(scan_inclusive, add, ushort, false)
 /* scan_inclusive min */
 RANGE_OP(scan_inclusive, min, int, true)
 RANGE_OP(scan_inclusive, min, uint, false)
@@ -109,6 +117,8 @@ RANGE_OP(scan_inclusive, min, ulong, false)
 RANGE_OP(scan_inclusive, min, half, true)
 RANGE_OP(scan_inclusive, min, float, true)
 RANGE_OP(scan_inclusive, min, double, true)
+RANGE_OP(scan_inclusive, min, short, true)
+RANGE_OP(scan_inclusive, min, ushort, false)
 /* scan_inclusive max */
 RANGE_OP(scan_inclusive, max, int, true)
 RANGE_OP(scan_inclusive, max, uint, false)
@@ -117,6 +127,8 @@ RANGE_OP(scan_inclusive, max, ulong, false)
 RANGE_OP(scan_inclusive, max, half, true)
 RANGE_OP(scan_inclusive, max, float, true)
 RANGE_OP(scan_inclusive, max, double, true)
+RANGE_OP(scan_inclusive, max, short, true)
+RANGE_OP(scan_inclusive, max, ushort, false)
 
 /* scan_exclusive add */
 RANGE_OP(scan_exclusive, add, int, true)
@@ -126,6 +138,8 @@ RANGE_OP(scan_exclusive, add, ulong, false)
 RANGE_OP(scan_exclusive, add, half, true)
 RANGE_OP(scan_exclusive, add, float, true)
 RANGE_OP(scan_exclusive, add, double, true)
+RANGE_OP(scan_exclusive, add, short, true)
+RANGE_OP(scan_exclusive, add, ushort, false)
 /* scan_exclusive min */
 RANGE_OP(scan_exclusive, min, int, true)
 RANGE_OP(scan_exclusive, min, uint, false)
@@ -134,6 +148,8 @@ RANGE_OP(scan_exclusive, min, ulong, false)
 RANGE_OP(scan_exclusive, min, half, true)
 RANGE_OP(scan_exclusive, min, float, true)
 RANGE_OP(scan_exclusive, min, double, true)
+RANGE_OP(scan_exclusive, min, short, true)
+RANGE_OP(scan_exclusive, min, ushort, false)
 /* scan_exclusive max */
 RANGE_OP(scan_exclusive, max, int, true)
 RANGE_OP(scan_exclusive, max, uint, false)
@@ -142,8 +158,36 @@ RANGE_OP(scan_exclusive, max, ulong, false)
 RANGE_OP(scan_exclusive, max, half, true)
 RANGE_OP(scan_exclusive, max, float, true)
 RANGE_OP(scan_exclusive, max, double, true)
+RANGE_OP(scan_exclusive, max, short, true)
+RANGE_OP(scan_exclusive, max, ushort, false)
 
 #undef RANGE_OP
+
+#define INTEL_RANGE_OP(RANGE, OP, GEN_TYPE, SIGN) \
+    OVERLOADABLE GEN_TYPE intel_sub_group_##RANGE##_##OP(GEN_TYPE x) { \
+      return __gen_ocl_sub_group_##RANGE##_##OP(SIGN, x);  \
+    }
+
+INTEL_RANGE_OP(reduce, add, short, true)
+INTEL_RANGE_OP(reduce, add, ushort, false)
+INTEL_RANGE_OP(reduce, min, short, true)
+INTEL_RANGE_OP(reduce, min, ushort, false)
+INTEL_RANGE_OP(reduce, max, short, true)
+INTEL_RANGE_OP(reduce, max, ushort, false)
+INTEL_RANGE_OP(scan_inclusive, add, short, true)
+INTEL_RANGE_OP(scan_inclusive, add, ushort, false)
+INTEL_RANGE_OP(scan_inclusive, min, short, true)
+INTEL_RANGE_OP(scan_inclusive, min, ushort, false)
+INTEL_RANGE_OP(scan_inclusive, max, short, true)
+INTEL_RANGE_OP(scan_inclusive, max, ushort, false)
+INTEL_RANGE_OP(scan_exclusive, add, short, true)
+INTEL_RANGE_OP(scan_exclusive, add, ushort, false)
+INTEL_RANGE_OP(scan_exclusive, min, short, true)
+INTEL_RANGE_OP(scan_exclusive, min, ushort, false)
+INTEL_RANGE_OP(scan_exclusive, max, short, true)
+INTEL_RANGE_OP(scan_exclusive, max, ushort, false)
+
+#undef INTEL_RANGE_OP
 PURE CONST uint __gen_ocl_sub_group_block_read_mem(const global uint* p);
 PURE CONST uint2 __gen_ocl_sub_group_block_read_mem2(const global uint* p);
 PURE CONST uint4 __gen_ocl_sub_group_block_read_mem4(const global uint* p);

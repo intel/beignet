@@ -2878,6 +2878,10 @@ namespace gbe
         p->MOV(dataReg, GenRegister::immint64(0x0));
       else if (dataReg.type == GEN_TYPE_UL)
         p->MOV(dataReg, GenRegister::immuint64(0x0));
+      else if (dataReg.type == GEN_TYPE_W)
+        p->MOV(dataReg, GenRegister::immw(0x0));
+      else if (dataReg.type == GEN_TYPE_UW)
+        p->MOV(dataReg, GenRegister::immuw(0x0));
       else
         GBE_ASSERT(0); /* unsupported data-type */
     }
@@ -2896,6 +2900,10 @@ namespace gbe
         p->MOV(dataReg, GenRegister::immint64(0x7FFFFFFFFFFFFFFFL));
       else if (dataReg.type == GEN_TYPE_UL)
         p->MOV(dataReg, GenRegister::immuint64(0xFFFFFFFFFFFFFFFFL));
+      else if (dataReg.type == GEN_TYPE_W)
+        p->MOV(dataReg, GenRegister::immw(0x7FFF));
+      else if (dataReg.type == GEN_TYPE_UW)
+        p->MOV(dataReg, GenRegister::immuw(0xFFFF));
       else
         GBE_ASSERT(0); /* unsupported data-type */
     }
@@ -2914,6 +2922,10 @@ namespace gbe
         p->MOV(dataReg, GenRegister::immint64(0x8000000000000000L));
       else if (dataReg.type == GEN_TYPE_UL)
         p->MOV(dataReg, GenRegister::immuint64(0x0));
+      else if (dataReg.type == GEN_TYPE_W)
+        p->MOV(dataReg, GenRegister::immw(0x8000));
+      else if (dataReg.type == GEN_TYPE_UW)
+        p->MOV(dataReg, GenRegister::immuw(0x0));
       else
         GBE_ASSERT(0); /* unsupported data-type */
     }
