@@ -302,6 +302,7 @@ if (ENABLE_OPENCL_20)
       ${utests_sources}
       compiler_program_global.cpp
       compiler_generic_atomic.cpp
+      compiler_atomic_functions_20.cpp
       compiler_generic_pointer.cpp)
 endif (ENABLE_OPENCL_20)
 
