@@ -321,4 +321,6 @@ extern uint32_t __half_to_float(uint16_t h, bool* isInf = NULL, bool* infSign = 
 extern uint16_t __float_to_half(uint32_t x);
 extern float as_float(uint32_t i);
 extern uint32_t as_uint(float f);
+/* Check is intel subgroups short enabled. */
+extern int cl_check_subgroups_short(void);
 #endif /* __UTEST_HELPER_HPP__ */
