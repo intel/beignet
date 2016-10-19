@@ -268,6 +268,10 @@ namespace gbe
 
     static INLINE GenRegister offset(GenRegister reg, int nr, int subnr = 0) {
       GenRegister r = reg;
+      if(subnr >= 32){
+        nr += subnr / 32;
+        subnr = subnr % 32;
+      }
       r.nr += nr;
       r.subnr += subnr;
       r.subphysical = 1;
