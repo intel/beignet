@@ -1493,8 +1493,9 @@ namespace ir {
 
     INLINE bool SimdShuffleInstruction::wellFormed(const Function &fn, std::string &whyNot) const
     {
-      if (UNLIKELY( this->type != TYPE_U32 && this->type != TYPE_S32 && this->type != TYPE_FLOAT)) {
-        whyNot = "Only support S32/U32/FLOAT type";
+      if (UNLIKELY( this->type != TYPE_U32 && this->type != TYPE_S32 && this->type != TYPE_FLOAT &&
+                    this->type != TYPE_U16 && this->type != TYPE_S16)) {
+        whyNot = "Only support S16/U16/S32/U32/FLOAT type";
         return false;
       }
 

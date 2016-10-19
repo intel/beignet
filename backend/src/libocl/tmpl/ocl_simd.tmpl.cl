@@ -283,6 +283,8 @@ OVERLOADABLE TYPE intel_sub_group_shuffle_down(TYPE x, TYPE y, uint c) { \
 SHUFFLE_DOWN(float)
 SHUFFLE_DOWN(int)
 SHUFFLE_DOWN(uint)
+SHUFFLE_DOWN(short)
+SHUFFLE_DOWN(ushort)
 #undef SHUFFLE_DOWN
 
 #define SHUFFLE_UP(TYPE) \
@@ -296,6 +298,8 @@ OVERLOADABLE TYPE intel_sub_group_shuffle_up(TYPE x, TYPE y, uint c) { \
 SHUFFLE_UP(float)
 SHUFFLE_UP(int)
 SHUFFLE_UP(uint)
+SHUFFLE_UP(short)
+SHUFFLE_UP(ushort)
 #undef SHUFFLE_UP
 #define SHUFFLE_XOR(TYPE) \
 OVERLOADABLE TYPE intel_sub_group_shuffle_xor(TYPE x, uint c) { \
@@ -304,4 +308,6 @@ OVERLOADABLE TYPE intel_sub_group_shuffle_xor(TYPE x, uint c) { \
 SHUFFLE_XOR(float)
 SHUFFLE_XOR(int)
 SHUFFLE_XOR(uint)
+SHUFFLE_XOR(short)
+SHUFFLE_XOR(ushort)
 #undef SHUFFLE_XOR
