@@ -92,11 +92,11 @@ MACRO(GENERATE_HEADER_PY _mod)
 	COMMENT "Generate the header by python: ${output_name}"
 	)
 ENDMACRO(GENERATE_HEADER_PY)
-MACRO(GENERATE_SOURCE_PY _mod)
+MACRO(GENERATE_SOURCE_PY _source _mod)
     STRING(REGEX REPLACE "\(o.*\)" "${LIBOCL_BINARY_DIR}/src/\\1.cl" output_name ${_mod})
     STRING(REGEX REPLACE "\(o.*\)" "${LIBOCL_SOURCE_DIR}/tmpl/\\1.tmpl.cl" tmpl_name ${_mod})
     STRING(REGEX REPLACE "\(o.*\)" "${LIBOCL_SOURCE_DIR}/script/\\1.def" def_name ${_mod})
-    SET(OCL_SOURCE_FILES ${OCL_SOURCE_FILES} ${output_name})
+    SET(${_source} ${${_source}} ${output_name})
     ADD_CUSTOM_COMMAND(OUTPUT ${output_name}
 	COMMAND mkdir -p ${LIBOCL_BINARY_DIR}/src/
 	COMMAND cat ${tmpl_name} > ${output_name}
@@ -106,11 +106,23 @@ MACRO(GENERATE_SOURCE_PY _mod)
 	)
 ENDMACRO(GENERATE_SOURCE_PY)
 
-SET (OCL_PY_GENERATED_MODULES ocl_common ocl_relational ocl_integer ocl_math ocl_simd)
+SET (OCL_PY_GENERATED_MODULES ocl_common ocl_relational ocl_integer ocl_simd)
 FOREACH(M ${OCL_PY_GENERATED_MODULES})
     GENERATE_HEADER_PY(${M})
-    GENERATE_SOURCE_PY(${M})
+    GENERATE_SOURCE_PY(OCL_SOURCE_FILES ${M})
 ENDFOREACH(M) 
+
+SET (OCL_PY_GENERATED_MODULES_12 ocl_math)
+FOREACH(M ${OCL_PY_GENERATED_MODULES_12})
+    GENERATE_HEADER_PY(${M})
+    GENERATE_SOURCE_PY(OCL_SOURCE_FILES_12 ${M})
+ENDFOREACH(M)
+
+SET (OCL_PY_GENERATED_MODULES_20 ocl_math_20)
+FOREACH(M ${OCL_PY_GENERATED_MODULES_20})
+    GENERATE_HEADER_PY(${M})
+    GENERATE_SOURCE_PY(OCL_SOURCE_FILES_20 ${M})
+ENDFOREACH(M)
 
 
 MACRO(GENERATE_HEADER_BASH _mod)
