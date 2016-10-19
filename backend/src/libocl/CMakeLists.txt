@@ -54,20 +54,21 @@ FOREACH(M ${OCL_COPY_HEADERS})
     COPY_THE_HEADER(${M})
 ENDFOREACH(M)
 
-SET (OCL_COPY_MODULES ocl_workitem ocl_atom ocl_async ocl_sync ocl_memcpy
+SET (OCL_COPY_MODULES ocl_workitem ocl_async ocl_sync ocl_memcpy
                       ocl_memset ocl_misc ocl_geometric ocl_image ocl_work_group)
+
 FOREACH(M ${OCL_COPY_MODULES})
     COPY_THE_HEADER(${M})
     COPY_THE_SOURCE(OCL_SOURCE_FILES ${M})
 ENDFOREACH(M)
 
-SET (OCL_COPY_MODULES_12 ocl_vload)
+SET (OCL_COPY_MODULES_12 ocl_vload ocl_atom)
 FOREACH(M ${OCL_COPY_MODULES_12})
     COPY_THE_HEADER(${M})
     COPY_THE_SOURCE(OCL_SOURCE_FILES_12 ${M})
 ENDFOREACH(M)
 
-SET (OCL_COPY_MODULES_20 ocl_vload_20)
+SET (OCL_COPY_MODULES_20 ocl_vload_20 ocl_atom_20)
 FOREACH(M ${OCL_COPY_MODULES_20})
     COPY_THE_HEADER(${M})
     COPY_THE_SOURCE(OCL_SOURCE_FILES_20 ${M})
@@ -220,7 +221,7 @@ FOREACH(f ${OCL_LL_MODULES_12})
     SET(OCL_BC_FILES_12 ${OCL_BC_FILES_12} ${bc_name})
 ENDFOREACH(f)
 
-SET (OCL_LL_MODULES_20 ocl_ctz_20)
+SET (OCL_LL_MODULES_20 ocl_ctz_20 ocl_atomic_20)
 FOREACH(f ${OCL_LL_MODULES_20})
     COPY_THE_LL(${f})
     ADD_LL_TO_BC_TARGET(${f})

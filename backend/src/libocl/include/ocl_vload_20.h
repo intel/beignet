@@ -15,8 +15,8 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef __OCL_VLOAD_H__
-#define __OCL_VLOAD_H__
+#ifndef __OCL_VLOAD_20_H__
+#define __OCL_VLOAD_20_H__
 
 #include "ocl_types.h"
 
@@ -147,4 +147,4 @@ DECL_HALF_ST_SPACE(__generic)
 #undef DECL_HALF_ST_SPACE
 #undef DECL_HALF_ST_SPACE_ROUND
 
-#endif  /* __OCL_VLOAD_H__ */
+#endif  /* __OCL_VLOAD_20_H__ */

@@ -690,6 +690,8 @@ namespace gbe
     DECL_VISIT_FN(BranchInst, BranchInst);
     DECL_VISIT_FN(PHINode, PHINode);
     DECL_VISIT_FN(AllocaInst, AllocaInst);
+    DECL_VISIT_FN(AtomicRMWInst, AtomicRMWInst);
+    DECL_VISIT_FN(AtomicCmpXchgInst, AtomicCmpXchgInst);
 #undef DECL_VISIT_FN
 
     // Emit unary instructions from gen native function
@@ -736,6 +738,7 @@ namespace gbe
         return NULL;
       return unit.printfs[inst];
     }
+    void emitAtomicInstHelper(const ir::AtomicOps opcode,const ir::Type type, const ir::Register dst, llvm::Value* llvmPtr, const ir::Tuple payloadTuple);
     private:
       void setDebugInfo_CTX(llvm::Instruction * insn); // store the debug infomation in context for subsequently passing to Gen insn
       ir::ImmediateIndex processConstantImmIndexImpl(Constant *CPV, int32_t index = 0u);
@@ -3950,6 +3953,105 @@ namespace gbe
     const ir::Register src = this->getRegister(*AI);
     const ir::Register dst = this->getRegister(&I);
     ctx.ALU1(opcode, type, dst, src);
+  }
+
+  void GenWriter::regAllocateAtomicCmpXchgInst(AtomicCmpXchgInst &I) {
+    this->newRegister(&I);
+  }
+
+  void GenWriter::emitAtomicInstHelper(const ir::AtomicOps opcode,const ir::Type type, const ir::Register dst, llvm::Value* llvmPtr, const ir::Tuple payloadTuple) {
+    ir::Register pointer = this->getRegister(llvmPtr);
+    ir::AddressSpace addrSpace = addressSpaceLLVMToGen(llvmPtr->getType()->getPointerAddressSpace());
+    // Get the function arguments
+    ir::Register ptr;
+    ir::Register btiReg;
+    unsigned SurfaceIndex = 0xff;
+    ir::AddressMode AM;
+    if (legacyMode) {
+      Value *bti = getBtiRegister(llvmPtr);
+      Value *ptrBase = getPointerBase(llvmPtr);
+      ir::Register baseReg = this->getRegister(ptrBase);
+      if (isa<ConstantInt>(bti)) {
+        AM = ir::AM_StaticBti;
+        SurfaceIndex = cast<ConstantInt>(bti)->getZExtValue();
+        addrSpace = btiToGen(SurfaceIndex);
+      } else {
+        AM = ir::AM_DynamicBti;
+        addrSpace = ir::MEM_MIXED;
+        btiReg = this->getRegister(bti);
+      }
+      const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
+      ptr = ctx.reg(pointerFamily);
+      ctx.SUB(ir::TYPE_U32, ptr, pointer, baseReg);
+    } else {
+      AM = ir::AM_Stateless;
+      ptr = pointer;
+    }
+
+    ctx.ATOMIC(opcode, type, dst, addrSpace, ptr, payloadTuple, AM, SurfaceIndex);
+  }
+
+  void GenWriter::emitAtomicCmpXchgInst(AtomicCmpXchgInst &I) {
+    // Get the function arguments
+    Value *llvmPtr = I.getPointerOperand();
+    ir::AtomicOps opcode = ir::ATOMIC_OP_CMPXCHG;
+    uint32_t payloadNum = 0;
+    vector<ir::Register> payload;
+    const ir::Register dst = this->getRegister(&I);
+
+    payload.push_back(this->getRegister(I.getCompareOperand()));
+    payloadNum++;
+    payload.push_back(this->getRegister(I.getNewValOperand()));
+    payloadNum++;
+    ir::Type type = getType(ctx, llvmPtr->getType()->getPointerElementType());
+    const ir::Tuple payloadTuple = payloadNum == 0 ?
+                                   ir::Tuple(0) :
+                                   ctx.arrayTuple(&payload[0], payloadNum);
+    this->emitAtomicInstHelper(opcode, type, dst, llvmPtr, payloadTuple);
+  }
+
+  void GenWriter::regAllocateAtomicRMWInst(AtomicRMWInst &I) {
+    this->newRegister(&I);
+  }
+
+  static INLINE ir::AtomicOps atomicOpsLLVMToGen(llvm::AtomicRMWInst::BinOp llvmOp) {
+    switch(llvmOp) {
+      case llvm::AtomicRMWInst::Xchg: return ir::ATOMIC_OP_XCHG;
+      case llvm::AtomicRMWInst::Add:  return ir::ATOMIC_OP_ADD;
+      case llvm::AtomicRMWInst::Sub:  return ir::ATOMIC_OP_SUB;
+      case llvm::AtomicRMWInst::And:  return ir::ATOMIC_OP_AND;
+      case llvm::AtomicRMWInst::Or:   return ir::ATOMIC_OP_OR;
+      case llvm::AtomicRMWInst::Xor:  return ir::ATOMIC_OP_XOR;
+      case llvm::AtomicRMWInst::Max:  return ir::ATOMIC_OP_IMAX;
+      case llvm::AtomicRMWInst::Min:  return ir::ATOMIC_OP_IMIN;
+      case llvm::AtomicRMWInst::UMax: return ir::ATOMIC_OP_UMAX;
+      case llvm::AtomicRMWInst::UMin: return ir::ATOMIC_OP_UMIN;
+      case llvm::AtomicRMWInst::Nand:
+      case llvm::AtomicRMWInst::BAD_BINOP: break;
+    }
+    GBE_ASSERT(false);
+    return ir::ATOMIC_OP_INVALID;
+  }
+
+  void GenWriter::emitAtomicRMWInst(AtomicRMWInst &I) {
+    // Get the function arguments
+    llvm::AtomicOrdering Order = I.getOrdering();
+    llvm::AtomicRMWInst::BinOp llvmOpcode = I.getOperation();
+    Value *llvmPtr = I.getOperand(0);
+    ir::AtomicOps opcode = atomicOpsLLVMToGen(llvmOpcode);
+
+    const ir::Register dst = this->getRegister(&I);
+
+    uint32_t payloadNum = 0;
+    vector<ir::Register> payload;
+
+    payload.push_back(this->getRegister(I.getOperand(1)));
+    payloadNum++;
+    ir::Type type = getType(ctx, llvmPtr->getType()->getPointerElementType());
+    const ir::Tuple payloadTuple = payloadNum == 0 ?
+                                   ir::Tuple(0) :
+                                   ctx.arrayTuple(&payload[0], payloadNum);
+    this->emitAtomicInstHelper(opcode, type, dst, llvmPtr, payloadTuple);
   }
 
   void GenWriter::emitAtomicInst(CallInst &I, CallSite &CS, ir::AtomicOps opcode) {

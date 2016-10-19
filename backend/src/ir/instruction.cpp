@@ -1357,10 +1357,11 @@ namespace ir {
     {
       if (UNLIKELY(checkSpecialRegForWrite(dst[0], fn, whyNot) == false))
         return false;
-      if (UNLIKELY(checkRegisterData(FAMILY_DWORD, dst[0], fn, whyNot) == false))
+      const RegisterFamily family = getFamily(this->type);
+      if (UNLIKELY(checkRegisterData(family, dst[0], fn, whyNot) == false))
         return false;
       for (uint32_t srcID = 0; srcID < srcNum-1u; ++srcID)
-        if (UNLIKELY(checkRegisterData(FAMILY_DWORD, getSrc(fn, srcID+1u), fn, whyNot) == false))
+        if (UNLIKELY(checkRegisterData(family, getSrc(fn, srcID+1u), fn, whyNot) == false))
           return false;
 
       return true;

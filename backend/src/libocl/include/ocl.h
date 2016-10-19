@@ -83,7 +83,6 @@
 #include "ocl_types.h"
 #include "ocl_as.h"
 #include "ocl_async.h"
-#include "ocl_atom.h"
 #include "ocl_common.h"
 #include "ocl_convert.h"
 #include "ocl_float.h"
@@ -99,8 +98,10 @@
 #include "ocl_sync.h"
 #if (__OPENCL_C_VERSION__ >= 200)
 #include "ocl_vload_20.h"
+#include "ocl_atom_20.h"
 #else
 #include "ocl_vload.h"
+#include "ocl_atom.h"
 #endif
 #include "ocl_workitem.h"
 #include "ocl_simd.h"
