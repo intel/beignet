@@ -32,6 +32,16 @@ kernel void compiler_subgroup_broadcast_long(global long *src,
   long broadcast_val = sub_group_broadcast(val, simd_id);
   dst[index] = broadcast_val;
 }
+kernel void compiler_subgroup_broadcast_short(global short *src,
+                                                global short *dst,
+                                                uint simd_id)
+{
+  uint index = get_global_id(0);
+
+  short val = src[index];
+  short broadcast_val = sub_group_broadcast(val, simd_id);
+  dst[index] = broadcast_val;
+}
 #else
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
 kernel void compiler_subgroup_broadcast_half(global half *src,

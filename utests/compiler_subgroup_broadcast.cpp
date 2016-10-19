@@ -190,6 +190,17 @@ void compiler_subgroup_broadcast_long(void)
   subgroup_generic(input, expected);
 }
 MAKE_UTEST_FROM_FUNCTION_WITH_ISSUE(compiler_subgroup_broadcast_long);
+void compiler_subgroup_broadcast_short(void)
+{
+  if(!cl_check_subgroups_short())
+    return;
+  cl_short *input = NULL;
+  cl_short *expected = NULL;
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_broadcast",
+                              "compiler_subgroup_broadcast_short");
+  subgroup_generic(input, expected);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_broadcast_short);
 void compiler_subgroup_broadcast_half(void)
 {
   if(!cl_check_subgroups())
