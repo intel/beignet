@@ -3502,14 +3502,20 @@ namespace gbe
 
   void GenContext::emitOBReadInstruction(const SelectionInstruction &insn) {
     const GenRegister dst= ra->genReg(insn.dst(1));
+    const GenRegister addrreg = ra->genReg(insn.src(0));
     uint32_t type = dst.type;
     uint32_t typesize = typeSize(type);
-    const GenRegister addr = GenRegister::toUniform(ra->genReg(insn.src(0)), GEN_TYPE_UD);
-    const GenRegister header = GenRegister::retype(ra->genReg(insn.dst(0)), GEN_TYPE_UD);
-    const GenRegister headeraddr = GenRegister::offset(header, 0, 2*4);
     const uint32_t vec_size = insn.extra.elem;
     const GenRegister tmp = GenRegister::retype(ra->genReg(insn.dst(1 + vec_size)), type);
     const uint32_t simdWidth = p->curr.execWidth;
+    const GenRegister header = GenRegister::retype(ra->genReg(insn.dst(0)), GEN_TYPE_UD);
+    const GenRegister addr = GenRegister::toUniform(addrreg, addrreg.type);
+    GenRegister headeraddr;
+    bool isA64 = insn.getbti() == 255;
+    if (isA64)
+      headeraddr = GenRegister::retype(GenRegister::offset(header, 0, 0), GEN_TYPE_UL);
+    else
+      headeraddr = GenRegister::offset(header, 0, 2*4);
 
     // Make header
     p->push();
@@ -3525,7 +3531,9 @@ namespace gbe
       p->MOV(headeraddr, addr);
 
       // Put zero in the general state base address
-      p->MOV(GenRegister::offset(header, 0, 5 * 4), GenRegister::immud(0));
+      if (!isA64)
+        p->MOV(GenRegister::offset(header, 0, 5 * 4), GenRegister::immud(0));
+
     }
     p->pop();
     // Now read the data, oword block read can only work with simd16 and no mask
@@ -3534,7 +3542,12 @@ namespace gbe
       {
         p->curr.execWidth = 16;
         p->curr.noMask = 1;
-        p->OBREAD(dst, header, insn.getbti(), simdWidth * typesize / 16);
+        if (isA64) {
+          //p->curr.execWidth = 8;
+          p->OBREADA64(dst, header, insn.getbti(), simdWidth * typesize / 16);
+        }
+        else
+          p->OBREAD(dst, header, insn.getbti(), simdWidth * typesize / 16);
       }
       p->pop();
     } else if (vec_size == 2) {
@@ -3542,7 +3555,10 @@ namespace gbe
       {
         p->curr.execWidth = 16;
         p->curr.noMask = 1;
-        p->OBREAD(tmp, header, insn.getbti(), simdWidth * typesize / 8);
+        if (isA64)
+          p->OBREADA64(tmp, header, insn.getbti(), simdWidth * typesize / 8);
+        else
+          p->OBREAD(tmp, header, insn.getbti(), simdWidth * typesize / 8);
       }
       p->pop();
       p->MOV(ra->genReg(insn.dst(1)), GenRegister::offset(tmp, 0));
@@ -3553,7 +3569,10 @@ namespace gbe
         {
           p->curr.execWidth = 16;
           p->curr.noMask = 1;
-          p->OBREAD(tmp, header, insn.getbti(), 2 * typesize);
+          if (isA64)
+            p->OBREADA64(tmp, header, insn.getbti(), 2 * typesize);
+          else
+            p->OBREAD(tmp, header, insn.getbti(), 2 * typesize);
         }
         p->pop();
         for (uint32_t j = 0; j < 4; j++)
@@ -3569,7 +3588,10 @@ namespace gbe
             }
             p->pop();
           }
-          p->OBREAD(tmp, header, insn.getbti(), 8);
+          if (isA64)
+            p->OBREADA64(tmp, header, insn.getbti(), 8);
+          else
+            p->OBREAD(tmp, header, insn.getbti(), 8);
           for (uint32_t j = 0; j < 8 / typesize ; j++)
             p->MOV(ra->genReg(insn.dst(1 + j + i * 2)), GenRegister::offset(tmp, 0 ,j * simdWidth * typesize ));
         }
@@ -3590,7 +3612,10 @@ namespace gbe
           {
             p->curr.execWidth = 16;
             p->curr.noMask = 1;
-            p->OBREAD(tmp, header, insn.getbti(), 8);
+            if (isA64)
+              p->OBREADA64(tmp, header, insn.getbti(), 8);
+            else
+              p->OBREAD(tmp, header, insn.getbti(), 8);
           }
           p->pop();
           for (uint32_t j = 0; j < 16 / typesize; j++)
@@ -3607,7 +3632,10 @@ namespace gbe
             }
             p->pop();
           }
-          p->OBREAD(tmp, header, insn.getbti(), 8);
+          if (isA64)
+            p->OBREADA64(tmp, header, insn.getbti(), 8);
+          else
+            p->OBREAD(tmp, header, insn.getbti(), 8);
           for (uint32_t j = 0; j < 8 / typesize; j++)
             p->MOV(ra->genReg(insn.dst(1 + j + i * 8 / typesize)), GenRegister::offset(tmp, 0 ,j * simdWidth * typesize ));
         }
@@ -3616,16 +3644,23 @@ namespace gbe
   }
 
   void GenContext::emitOBWriteInstruction(const SelectionInstruction &insn) {
-    const GenRegister addr = GenRegister::toUniform(ra->genReg(insn.src(0)), GEN_TYPE_UD);
+    const GenRegister addrreg = ra->genReg(insn.src(0));
     const GenRegister header = GenRegister::retype(ra->genReg(insn.dst(0)), GEN_TYPE_UD);
-    const GenRegister headeraddr = GenRegister::offset(header, 0, 2*4);
     uint32_t type = ra->genReg(insn.src(1)).type;
     uint32_t typesize = typeSize(type);
     const uint32_t vec_size = insn.extra.elem;
     const GenRegister tmp = GenRegister::offset(header, 1);
+    const GenRegister addr = GenRegister::toUniform(addrreg, addrreg.type);
+    GenRegister headeraddr;
+    bool isA64 = insn.getbti() == 255;
+    if (isA64)
+      headeraddr = GenRegister::retype(GenRegister::offset(header, 0, 0), GEN_TYPE_UL);
+    else
+      headeraddr = GenRegister::offset(header, 0, 2*4);
     const uint32_t simdWidth = p->curr.execWidth;
     uint32_t tmp_size = simdWidth * vec_size / 8;
     tmp_size = tmp_size > 4 ? 4 : tmp_size;
+    uint32_t offset_size = isA64 ? 128 : 8;
 
     p->push();
       // Copy r0 into the header first
@@ -3636,10 +3671,14 @@ namespace gbe
 
       // Update the header with the current address
       p->curr.execWidth = 1;
-      p->SHR(headeraddr, addr, GenRegister::immud(4));
+      if (isA64)
+        p->MOV(headeraddr, addr);
+      else
+        p->SHR(headeraddr, addr, GenRegister::immud(4));
 
       // Put zero in the general state base address
-      p->MOV(GenRegister::offset(header, 0, 5*4), GenRegister::immud(0));
+      if (!isA64)
+        p->MOV(GenRegister::offset(header, 0, 5*4), GenRegister::immud(0));
 
     p->pop();
     // Now write the data, oword block write can only work with simd16 and no mask
@@ -3649,7 +3688,10 @@ namespace gbe
       {
         p->curr.execWidth = 16;
         p->curr.noMask = 1;
-        p->OBWRITE(header, insn.getbti(), simdWidth * typesize / 16);
+        if (isA64)
+          p->OBWRITEA64(header, insn.getbti(), simdWidth * typesize / 16);
+        else
+          p->OBWRITE(header, insn.getbti(), simdWidth * typesize / 16);
       }
       p->pop();
     } else if (vec_size == 2) {
@@ -3659,7 +3701,10 @@ namespace gbe
       {
         p->curr.execWidth = 16;
         p->curr.noMask = 1;
-        p->OBWRITE(header, insn.getbti(), simdWidth * typesize / 8);
+        if (isA64)
+          p->OBWRITEA64(header, insn.getbti(), simdWidth * typesize / 8);
+        else
+          p->OBWRITE(header, insn.getbti(), simdWidth * typesize / 8);
       }
       p->pop();
     } else if (vec_size == 4) {
@@ -3670,7 +3715,10 @@ namespace gbe
         {
           p->curr.execWidth = 16;
           p->curr.noMask = 1;
-          p->OBWRITE(header, insn.getbti(), 2 * typesize);
+          if (isA64)
+            p->OBWRITEA64(header, insn.getbti(), 2 * typesize);
+          else
+            p->OBWRITE(header, insn.getbti(), 2 * typesize);
         }
         p->pop();
       } else {
@@ -3682,11 +3730,14 @@ namespace gbe
             {
               // Update the address in header
               p->curr.execWidth = 1;
-              p->ADD(headeraddr, headeraddr, GenRegister::immud(8));
+              p->ADD(headeraddr, headeraddr, GenRegister::immud(offset_size));
             }
             p->pop();
           }
-          p->OBWRITE(header, insn.getbti(), 8);
+          if (isA64)
+            p->OBWRITEA64(header, insn.getbti(), 8);
+          else
+            p->OBWRITE(header, insn.getbti(), 8);
         }
       }
     } else if (vec_size == 8) {
@@ -3699,7 +3750,7 @@ namespace gbe
             {
               // Update the address in header
               p->curr.execWidth = 1;
-              p->ADD(headeraddr, headeraddr, GenRegister::immud(8));
+              p->ADD(headeraddr, headeraddr, GenRegister::immud(offset_size));
             }
             p->pop();
           }
@@ -3707,7 +3758,10 @@ namespace gbe
           {
             p->curr.execWidth = 16;
             p->curr.noMask = 1;
-            p->OBWRITE(header, insn.getbti(), 8);
+            if (isA64)
+              p->OBWRITEA64(header, insn.getbti(), 8);
+            else
+              p->OBWRITE(header, insn.getbti(), 8);
           }
           p->pop();
         }
@@ -3720,11 +3774,14 @@ namespace gbe
             {
               // Update the address in header
               p->curr.execWidth = 1;
-              p->ADD(headeraddr, headeraddr, GenRegister::immud(8));
+              p->ADD(headeraddr, headeraddr, GenRegister::immud(offset_size));
             }
             p->pop();
           }
-          p->OBWRITE(header, insn.getbti(), 8);
+          if (isA64)
+            p->OBWRITEA64(header, insn.getbti(), 8);
+          else
+            p->OBWRITE(header, insn.getbti(), 8);
         }
       }
     } else NOT_SUPPORTED;

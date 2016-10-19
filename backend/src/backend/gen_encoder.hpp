@@ -275,6 +275,10 @@ namespace gbe
     virtual void MBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t elemSize);
     /*! MBlock write */
     virtual void MBWRITE(GenRegister header, uint32_t bti, uint32_t elemSize);
+    /*! A64 OBlock read */
+    virtual void OBREADA64(GenRegister dst, GenRegister header, uint32_t bti, uint32_t elemSize);
+    /*! A64 OBlock write */
+    virtual void OBWRITEA64(GenRegister header, uint32_t bti, uint32_t elemSize);
 
     GBE_CLASS(GenEncoder); //!< Use custom allocators
     virtual void alu3(uint32_t opcode, GenRegister dst,

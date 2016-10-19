@@ -637,4 +637,74 @@ namespace gbe
     gen8_insn->bits1.da3srcacc.src2_abs = src2.absolute;
     gen8_insn->bits1.da3srcacc.src2_negate = src2.negation;
   }
+
+  static void setOBlockRWA64(GenEncoder *p,
+                             GenNativeInstruction *insn,
+                             uint32_t bti,
+                             uint32_t size,
+                             uint32_t msg_type,
+                             uint32_t msg_length,
+                             uint32_t response_length)
+  {
+    const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA;
+    p->setMessageDescriptor(insn, sfid, msg_length, response_length);
+    assert(size == 0 || size == 1 || size == 2 || size == 4 || size == 8);
+    Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
+
+    gen8_insn->bits3.gen8_block_rw_a64.msg_type = msg_type;
+    gen8_insn->bits3.gen8_block_rw_a64.bti = bti;
+    // For OWord Block read, we use unaligned read
+    gen8_insn->bits3.gen8_block_rw_a64.msg_sub_type = msg_type == GEN8_P1_BLOCK_READ_A64 ? 1 : 0;
+    gen8_insn->bits3.gen8_block_rw_a64.block_size = size <=  2 ? size : (size == 4 ? 3 : 4);
+    gen8_insn->bits3.gen8_block_rw_a64.header_present = 1;
+  }
+
+  void Gen8Encoder::OBREADA64(GenRegister dst, GenRegister header, uint32_t bti, uint32_t size) {
+   GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    const uint32_t msg_length = 1;
+    uint32_t rsize = size / 2;
+    uint32_t msgsize = size;
+    // When size is 1 OWord, which means half a reg, we need to know which half to use
+    if (size == 1) {
+      if (dst.subnr == 0)
+        msgsize = 0;
+      else
+        msgsize = 1;
+    }
+    rsize = rsize == 0 ? 1 : rsize;
+    const uint32_t response_length = rsize; // Size is in regs
+    this->setHeader(insn);
+    this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
+    this->setSrc0(insn, GenRegister::ud8grf(header.nr, 0));
+    this->setSrc1(insn, GenRegister::immud(0));
+    setOBlockRWA64(this,
+                   insn,
+                   bti,
+                   msgsize,
+                   GEN8_P1_BLOCK_READ_A64,
+                   msg_length,
+                   response_length);
+
+  }
+
+  void Gen8Encoder::OBWRITEA64(GenRegister header, uint32_t bti, uint32_t size) {
+   GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    uint32_t rsize = size / 2;
+    rsize = rsize == 0 ? 1 : rsize;
+    const uint32_t msg_length = 1 + rsize; // Size is in owords
+    const uint32_t response_length = 0;
+    uint32_t msgsize = size;
+    msgsize = msgsize == 1 ? 0 : msgsize;
+    this->setHeader(insn);
+    this->setSrc0(insn, GenRegister::ud8grf(header.nr, 0));
+    this->setSrc1(insn, GenRegister::immud(0));
+    this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UW));
+    setOBlockRWA64(this,
+                   insn,
+                   bti,
+                   msgsize,
+                   GEN8_P1_BLOCK_WRITE_A64,
+                   msg_length,
+                   response_length);
+   }
 } /* End of the name space. */

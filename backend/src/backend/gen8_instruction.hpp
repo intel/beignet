@@ -604,6 +604,19 @@ union Gen8NativeInstruction
         uint32_t end_of_thread:1;
       } gen7_msg_gw;
 
+    struct {
+        uint32_t bti:8;
+        uint32_t block_size:3; // oword size
+        uint32_t msg_sub_type:2; // 00 OWord block R/W 01 Unaligned OWord block read 10 Oword Dual Block R/W 11 HWord Block R/W
+        uint32_t ignored:1;
+        uint32_t msg_type:5;  // 10100 A64 block read,  10101 A64 block write
+        uint32_t header_present:1;
+        uint32_t response_length:5;
+        uint32_t msg_length:4;
+        uint32_t pad2:2;
+        uint32_t end_of_thread:1;
+      } gen8_block_rw_a64;
+
       struct {
         uint32_t jip:32;
       } gen8_branch;

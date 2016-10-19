@@ -1338,6 +1338,14 @@ namespace gbe
                 response_length);
   }
 
+  void GenEncoder::OBREADA64(GenRegister dst, GenRegister header, uint32_t bti, uint32_t elemSize) {
+    NOT_SUPPORTED;
+  }
+
+  void GenEncoder::OBWRITEA64(GenRegister header, uint32_t bti, uint32_t elemSize) {
+    NOT_SUPPORTED;
+  }
+
   void GenEncoder::EOT(uint32_t msg) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));

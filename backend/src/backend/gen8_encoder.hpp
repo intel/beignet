@@ -71,6 +71,10 @@ namespace gbe
                        uint32_t dstAcc, uint32_t src0Acc, uint32_t src1Acc);
     void MADM(GenRegister dst, GenRegister src0, GenRegister src1, GenRegister src2,
               uint32_t dstAcc, uint32_t src0Acc, uint32_t src1Acc, uint32_t src2Acc);
+    /*! A64 OBlock read */
+    virtual void OBREADA64(GenRegister dst, GenRegister header, uint32_t bti, uint32_t elemSize);
+    /*! A64 OBlock write */
+    virtual void OBWRITEA64(GenRegister header, uint32_t bti, uint32_t elemSize);
   };
 }
 #endif /* __GBE_GEN8_ENCODER_HPP__ */
