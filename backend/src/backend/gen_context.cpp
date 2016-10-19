@@ -719,7 +719,7 @@ namespace gbe
 
         p->curr.quarterControl = 1;
         p->ADD(a0, GenRegister::unpacked_uw(src1.nr+1, src1.subnr / typeSize(GEN_TYPE_UW)), baseReg);
-        p->MOV(GenRegister::offset(dst, 1, 0), indirect);
+        p->MOV(GenRegister::offset(dst, 0, 8 * typeSize(src0.type)), indirect);
       } else
         NOT_IMPLEMENTED;
     p->pop();
