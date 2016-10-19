@@ -3501,12 +3501,14 @@ namespace gbe
   }
 
   void GenContext::emitOBReadInstruction(const SelectionInstruction &insn) {
-    const GenRegister dst= GenRegister::retype(ra->genReg(insn.dst(1)), GEN_TYPE_UD);
+    const GenRegister dst= ra->genReg(insn.dst(1));
+    uint32_t type = dst.type;
+    uint32_t typesize = typeSize(type);
     const GenRegister addr = GenRegister::toUniform(ra->genReg(insn.src(0)), GEN_TYPE_UD);
     const GenRegister header = GenRegister::retype(ra->genReg(insn.dst(0)), GEN_TYPE_UD);
     const GenRegister headeraddr = GenRegister::offset(header, 0, 2*4);
     const uint32_t vec_size = insn.extra.elem;
-    const GenRegister tmp = GenRegister::retype(ra->genReg(insn.dst(1 + vec_size)), GEN_TYPE_UD);
+    const GenRegister tmp = GenRegister::retype(ra->genReg(insn.dst(1 + vec_size)), type);
     const uint32_t simdWidth = p->curr.execWidth;
 
     // Make header
@@ -3532,7 +3534,7 @@ namespace gbe
       {
         p->curr.execWidth = 16;
         p->curr.noMask = 1;
-        p->OBREAD(dst, header, insn.getbti(), simdWidth / 4);
+        p->OBREAD(dst, header, insn.getbti(), simdWidth * typesize / 16);
       }
       p->pop();
     } else if (vec_size == 2) {
@@ -3540,14 +3542,41 @@ namespace gbe
       {
         p->curr.execWidth = 16;
         p->curr.noMask = 1;
-        p->OBREAD(tmp, header, insn.getbti(), simdWidth / 2);
+        p->OBREAD(tmp, header, insn.getbti(), simdWidth * typesize / 8);
       }
       p->pop();
       p->MOV(ra->genReg(insn.dst(1)), GenRegister::offset(tmp, 0));
-      p->MOV(ra->genReg(insn.dst(2)), GenRegister::offset(tmp, simdWidth / 8));
-    } else if (vec_size == 4 || vec_size == 8) {
+      p->MOV(ra->genReg(insn.dst(2)), GenRegister::offset(tmp, 0, simdWidth * typesize ));
+    } else if (vec_size == 4) {
       if (simdWidth == 8) {
-        for (uint32_t i = 0; i < vec_size / 4; i++) {
+        p->push();
+        {
+          p->curr.execWidth = 16;
+          p->curr.noMask = 1;
+          p->OBREAD(tmp, header, insn.getbti(), 2 * typesize);
+        }
+        p->pop();
+        for (uint32_t j = 0; j < 4; j++)
+          p->MOV(ra->genReg(insn.dst(1 + j)), GenRegister::offset(tmp, 0, j * simdWidth * typesize ));
+      } else {
+        for (uint32_t i = 0; i < typesize / 2; i++) {
+          if (i > 0) {
+            p->push();
+            {
+              // Update the address in header
+              p->curr.execWidth = 1;
+              p->ADD(headeraddr, headeraddr, GenRegister::immud(128));
+            }
+            p->pop();
+          }
+          p->OBREAD(tmp, header, insn.getbti(), 8);
+          for (uint32_t j = 0; j < 8 / typesize ; j++)
+            p->MOV(ra->genReg(insn.dst(1 + j + i * 2)), GenRegister::offset(tmp, 0 ,j * simdWidth * typesize ));
+        }
+      }
+    } else if (vec_size == 8) {
+      if (simdWidth == 8) {
+        for (uint32_t i = 0; i < typesize / 2; i++) {
           if (i > 0) {
             p->push();
             {
@@ -3564,11 +3593,11 @@ namespace gbe
             p->OBREAD(tmp, header, insn.getbti(), 8);
           }
           p->pop();
-          for (uint32_t j = 0; j < 4; j++)
-            p->MOV(ra->genReg(insn.dst(1 + j + i * 4)), GenRegister::offset(tmp, j));
+          for (uint32_t j = 0; j < 16 / typesize; j++)
+            p->MOV(ra->genReg(insn.dst(1 + j + i * 4)), GenRegister::offset(tmp, 0, j * simdWidth * typesize ));
         }
       } else {
-        for (uint32_t i = 0; i < vec_size / 2; i++) {
+        for (uint32_t i = 0; i < typesize ; i++) {
           if (i > 0) {
             p->push();
             {
@@ -3579,8 +3608,8 @@ namespace gbe
             p->pop();
           }
           p->OBREAD(tmp, header, insn.getbti(), 8);
-          for (uint32_t j = 0; j < 2; j++)
-            p->MOV(ra->genReg(insn.dst(1 + j + i * 2)), GenRegister::offset(tmp, j*2));
+          for (uint32_t j = 0; j < 8 / typesize; j++)
+            p->MOV(ra->genReg(insn.dst(1 + j + i * 8 / typesize)), GenRegister::offset(tmp, 0 ,j * simdWidth * typesize ));
         }
       }
     } else NOT_SUPPORTED;
@@ -3590,6 +3619,8 @@ namespace gbe
     const GenRegister addr = GenRegister::toUniform(ra->genReg(insn.src(0)), GEN_TYPE_UD);
     const GenRegister header = GenRegister::retype(ra->genReg(insn.dst(0)), GEN_TYPE_UD);
     const GenRegister headeraddr = GenRegister::offset(header, 0, 2*4);
+    uint32_t type = ra->genReg(insn.src(1)).type;
+    uint32_t typesize = typeSize(type);
     const uint32_t vec_size = insn.extra.elem;
     const GenRegister tmp = GenRegister::offset(header, 1);
     const uint32_t simdWidth = p->curr.execWidth;
@@ -3613,29 +3644,56 @@ namespace gbe
     p->pop();
     // Now write the data, oword block write can only work with simd16 and no mask
     if (vec_size == 1) {
-      p->MOV(tmp, ra->genReg(insn.src(1)));
+      p->MOV(GenRegister::retype(tmp, type), ra->genReg(insn.src(1)));
       p->push();
       {
         p->curr.execWidth = 16;
         p->curr.noMask = 1;
-        p->OBWRITE(header, insn.getbti(), simdWidth / 4);
+        p->OBWRITE(header, insn.getbti(), simdWidth * typesize / 16);
       }
       p->pop();
     } else if (vec_size == 2) {
-      p->MOV(GenRegister::offset(tmp, 0), ra->genReg(insn.src(1))) ;
-      p->MOV(GenRegister::offset(tmp, simdWidth / 8), ra->genReg(insn.src(2))) ;
+      p->MOV(GenRegister::retype(GenRegister::offset(tmp, 0, 0), type), ra->genReg(insn.src(1)));
+      p->MOV(GenRegister::retype(GenRegister::offset(tmp, 0, simdWidth * typesize), type), ra->genReg(insn.src(2)));
       p->push();
       {
         p->curr.execWidth = 16;
         p->curr.noMask = 1;
-        p->OBWRITE(header, insn.getbti(), simdWidth / 2);
+        p->OBWRITE(header, insn.getbti(), simdWidth * typesize / 8);
       }
       p->pop();
-    } else if (vec_size == 4 || vec_size == 8) {
+    } else if (vec_size == 4) {
       if (simdWidth == 8) {
-        for (uint32_t i = 0; i < vec_size / 4; i++) {
-          for (uint32_t j = 0; j < 4; j++)
-            p->MOV(GenRegister::offset(tmp, j), ra->genReg(insn.src(1 + j + i*4))) ;
+        for (uint32_t i = 0; i < 4; i++)
+          p->MOV(GenRegister::retype(GenRegister::offset(tmp, 0, i * simdWidth * typesize), type), ra->genReg(insn.src(1 + i)));
+        p->push();
+        {
+          p->curr.execWidth = 16;
+          p->curr.noMask = 1;
+          p->OBWRITE(header, insn.getbti(), 2 * typesize);
+        }
+        p->pop();
+      } else {
+        for (uint32_t i = 0; i < typesize / 2; i++) {
+          for (uint32_t j = 0; j < 8 / typesize; j++)
+            p->MOV(GenRegister::retype(GenRegister::offset(tmp, 0, j * simdWidth * typesize), type), ra->genReg(insn.src(1 + j + i * 8 / typesize)));
+          if (i > 0) {
+            p->push();
+            {
+              // Update the address in header
+              p->curr.execWidth = 1;
+              p->ADD(headeraddr, headeraddr, GenRegister::immud(8));
+            }
+            p->pop();
+          }
+          p->OBWRITE(header, insn.getbti(), 8);
+        }
+      }
+    } else if (vec_size == 8) {
+      if (simdWidth == 8) {
+        for (uint32_t i = 0; i < typesize / 2; i++) {
+          for (uint32_t j = 0; j < 16 / typesize; j++)
+            p->MOV(GenRegister::retype(GenRegister::offset(tmp, 0, j * simdWidth * typesize), type), ra->genReg(insn.src(1 + j + i * 16 / typesize)));
           if (i > 0) {
             p->push();
             {
@@ -3654,9 +3712,9 @@ namespace gbe
           p->pop();
         }
       } else {
-        for (uint32_t i = 0; i < vec_size / 2; i++) {
-          for (uint32_t j = 0; j < 2; j++)
-            p->MOV(GenRegister::offset(tmp, j * 2), ra->genReg(insn.src(1 + j + i*2))) ;
+        for (uint32_t i = 0; i < typesize; i++) {
+          for (uint32_t j = 0; j < 8 / typesize; j++)
+            p->MOV(GenRegister::retype(GenRegister::offset(tmp, 0, j * simdWidth * typesize), type), ra->genReg(insn.src(1 + j + i * 8 / typesize)));
           if (i > 0) {
             p->push();
             {
@@ -3682,7 +3740,10 @@ namespace gbe
     const GenRegister offsety = GenRegister::offset(header, 0, 1*4);
     const GenRegister blocksizereg = GenRegister::offset(header, 0, 2*4);
     size_t vec_size = insn.extra.elem;
-    uint32_t blocksize = 0x1F | (vec_size-1) << 16;
+    uint32_t type = dst.type;
+    uint32_t typesize = typeSize(type);
+    uint32_t block_width = typesize * simdWidth;
+    uint32_t blocksize = (block_width - 1) % 32 | (vec_size - 1) << 16;
 
     if (simdWidth == 8)
     {
@@ -3699,9 +3760,12 @@ namespace gbe
         p->MOV(offsety, coordy);
         // Update block width and height
         p->MOV(blocksizereg, GenRegister::immud(blocksize));
-        // Now read the data
         p->curr.execWidth = 8;
-        p->MBREAD(dst, header, insn.getbti(), vec_size);
+        // ushort in simd8 will have half reg, but response lenght is still 1
+        uint32_t rsize = vec_size * typesize / 4;
+        rsize = rsize ? rsize : 1;
+        // Now read the data
+        p->MBREAD(dst, header, insn.getbti(), rsize);
       p->pop();
 
     }
@@ -3726,21 +3790,24 @@ namespace gbe
         p->curr.execWidth = 8;
         p->MBREAD(tmp, header, insn.getbti(), vec_size);
         for (uint32_t i = 0; i < vec_size; i++)
-          p->MOV(ra->genReg(insn.dst(i + 1)), GenRegister::offset(tmp, i));
+          p->MOV(GenRegister::retype(ra->genReg(insn.dst(i + 1)),GEN_TYPE_UD), GenRegister::offset(tmp, i));
 
-        // Second half
-        // Update the header with the coord
-        p->curr.execWidth = 1;
-        p->ADD(offsetx, offsetx, GenRegister::immud(32));
+        if (typesize == 4)
+        {
+          // Second half
+          // Update the header with the coord
+          p->curr.execWidth = 1;
+          p->ADD(offsetx, offsetx, GenRegister::immud(32));
 
-        // Now read the data
-        p->curr.execWidth = 8;
-        p->MBREAD(tmp, header, insn.getbti(), vec_size);
+          // Now read the data
+          p->curr.execWidth = 8;
+          p->MBREAD(tmp, header, insn.getbti(), vec_size);
 
-        // Move the reg to fit vector rule.
-        for (uint32_t i = 0; i < vec_size; i++)
-          p->MOV(GenRegister::offset(ra->genReg(insn.dst(i + 1)), 1),
-                 GenRegister::offset(tmp, i));
+          // Move the reg to fit vector rule.
+          for (uint32_t i = 0; i < vec_size; i++)
+            p->MOV(GenRegister::offset(ra->genReg(insn.dst(i + 1)), 1),
+                   GenRegister::offset(tmp, i));
+        }
       p->pop();
     } else NOT_IMPLEMENTED;
   }
@@ -3749,9 +3816,13 @@ namespace gbe
     const GenRegister coordx = GenRegister::toUniform(ra->genReg(insn.src(0)), GEN_TYPE_D);
     const GenRegister coordy = GenRegister::toUniform(ra->genReg(insn.src(1)), GEN_TYPE_D);
     const GenRegister header = GenRegister::retype(ra->genReg(insn.dst(0)), GEN_TYPE_UD);
+    const GenRegister tmp = GenRegister::offset(header, 1);
     GenRegister offsetx, offsety, blocksizereg;
     size_t vec_size = insn.extra.elem;
-    uint32_t blocksize = 0x1F | (vec_size-1) << 16;
+    uint32_t type = ra->genReg(insn.src(2)).type;
+    uint32_t typesize = typeSize(type);
+    uint32_t block_width = typesize * simdWidth;
+    uint32_t blocksize = (block_width - 1) % 32 | (vec_size-1) << 16;
 
     offsetx = GenRegister::offset(header, 0, 0*4);
     offsety = GenRegister::offset(header, 0, 1*4);
@@ -3775,9 +3846,13 @@ namespace gbe
         p->curr.execWidth = 8;
         // Mov what we need into msgs
         for(uint32_t i = 0; i < vec_size; i++)
-          p->MOV(GenRegister::offset(header, 1 + i), ra->genReg(insn.src(2 + i)));
+          p->MOV(GenRegister::retype(GenRegister::offset(tmp, 0, i * block_width), type),
+                 ra->genReg(insn.src(2 + i)));
+        // ushort in simd8 will have half reg, but reponse lenght is still 1
+        uint32_t rsize = vec_size * typesize / 4;
+        rsize = rsize ? rsize : 1;
         // Now read the data
-        p->MBWRITE(header, insn.getbti(), vec_size);
+        p->MBWRITE(header, insn.getbti(), rsize);
       p->pop();
 
     }
@@ -3801,20 +3876,23 @@ namespace gbe
         p->curr.execWidth = 8;
         // Mov what we need into msgs
         for(uint32_t i = 0; i < vec_size; i++)
-          p->MOV(GenRegister::offset(header, 1 + i), ra->genReg(insn.src(2 + i)));
+          p->MOV(GenRegister::offset(tmp, i), GenRegister::retype(ra->genReg(insn.src(2 + i)), GEN_TYPE_UD));
         p->MBWRITE(header, insn.getbti(), vec_size);
 
-        // Second half
-        // Update the header with the coord
-        p->curr.execWidth = 1;
-        p->ADD(offsetx, offsetx, GenRegister::immud(32));
+        if (typesize == 4)
+        {
+          // Second half
+          // Update the header with the coord
+          p->curr.execWidth = 1;
+          p->ADD(offsetx, offsetx, GenRegister::immud(32));
 
-        p->curr.execWidth = 8;
-        // Mov what we need into msgs
-        for(uint32_t i = 0; i < vec_size; i++)
-          p->MOV(GenRegister::offset(header, 1 + i), GenRegister::Qn(ra->genReg(insn.src(2 + i)), 1));
-        // Now write the data
-        p->MBWRITE(header, insn.getbti(), vec_size);
+          p->curr.execWidth = 8;
+          // Mov what we need into msgs
+          for(uint32_t i = 0; i < vec_size; i++)
+            p->MOV(GenRegister::offset(header, 1 + i), GenRegister::Qn(ra->genReg(insn.src(2 + i)), 1));
+          // Now write the data
+          p->MBWRITE(header, insn.getbti(), vec_size);
+        }
 
       p->pop();
     }

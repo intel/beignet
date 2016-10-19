@@ -2089,7 +2089,6 @@ namespace gbe
 
     uint32_t simdWidth = curr.execWidth;
     SelectionInstruction *insn = this->appendInsn(SEL_OP_MBREAD, vec_size * simdWidth / 8 + 1, 2);
-
     insn->dst(0) = header;
     for (uint32_t i = 0; i < vec_size; ++i) {
       insn->dst(i + 1) = dsts[i];
@@ -4157,16 +4156,19 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       using namespace ir;
       const uint32_t vec_size = insn.getValueNum();
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
-      const GenRegister header = GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), TYPE_U32);
+      const Type type = insn.getValueType();
+      const uint32_t typeSize = type == TYPE_U32 ? 4 : 2;
+      const GenRegister header = GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
       vector<GenRegister> valuesVec;
       for(uint32_t i = 0; i < vec_size; i++)
-        valuesVec.push_back(sel.selReg(insn.getValue(i), TYPE_U32));
+        valuesVec.push_back(sel.selReg(insn.getValue(i), type));
       // check tmp_size for OWORD read need, max 8 OWROD thus 4 regs
-      uint32_t tmp_size = simdWidth * vec_size / 8;
+      uint32_t tmp_size = simdWidth * vec_size * typeSize / 32;
+      tmp_size = tmp_size == 0 ? 1 : tmp_size;
       tmp_size = tmp_size > 4 ? 4 : tmp_size;
       vector<GenRegister> tmpVec;
       for(uint32_t i = 0; i < tmp_size; i++)
-        tmpVec.push_back(GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), TYPE_U32));
+        tmpVec.push_back(GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD));
       sel.OBREAD(&valuesVec[0], vec_size, address, header, bti.imm, &tmpVec[0], tmp_size);
     }
 
@@ -4342,16 +4344,19 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       using namespace ir;
       const uint32_t vec_size = insn.getValueNum();
       const uint32_t simdWidth = sel.ctx.getSimdWidth();
-      const GenRegister header = GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), TYPE_U32);
+      const Type type = insn.getValueType();
+      const uint32_t typeSize = type == TYPE_U32 ? 4 : 2;
+      const GenRegister header = GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
       vector<GenRegister> valuesVec;
       for(uint32_t i = 0; i < vec_size; i++)
-        valuesVec.push_back(sel.selReg(insn.getValue(i), TYPE_U32));
+        valuesVec.push_back(sel.selReg(insn.getValue(i), type));
       // check tmp_size for OWORD write need, max 8 OWROD thus 4 regs
-      uint32_t tmp_size = simdWidth * vec_size / 8;
+      uint32_t tmp_size = simdWidth * vec_size * typeSize / 32;
+      tmp_size = tmp_size == 0 ? 1 : tmp_size;
       tmp_size = tmp_size > 4 ? 4 : tmp_size;
       vector<GenRegister> tmpVec;
       for(uint32_t i = 0; i < tmp_size; i++)
-        tmpVec.push_back(GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), TYPE_U32));
+        tmpVec.push_back(GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD));
       sel.OBWRITE(address, &valuesVec[0], vec_size, header, bti.imm, &tmpVec[0], tmp_size);
     }
 
@@ -6713,16 +6718,17 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       using namespace ir;
       uint32_t vec_size = insn.getVectorSize();
       uint32_t simdWidth = sel.curr.execWidth;
+      const Type type = insn.getType();
       vector<GenRegister> valuesVec;
       vector<GenRegister> tmpVec;
       for (uint32_t i = 0; i < vec_size; ++i) {
-        valuesVec.push_back(sel.selReg(insn.getDst(i), TYPE_U32));
+        valuesVec.push_back(sel.selReg(insn.getDst(i), type));
         if(simdWidth == 16)
-          tmpVec.push_back(GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), TYPE_U32));
+          tmpVec.push_back(GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD));
       }
       const GenRegister coordx = sel.selReg(insn.getSrc(0), TYPE_U32);
       const GenRegister coordy = sel.selReg(insn.getSrc(1), TYPE_U32);
-      const GenRegister header = GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), TYPE_U32);
+      const GenRegister header = GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
       GenRegister *tmp = NULL;
       if(simdWidth == 16)
         tmp = &tmpVec[0];
@@ -6739,16 +6745,17 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     {
       using namespace ir;
       uint32_t vec_size = insn.getVectorSize();
+      const Type type = insn.getType();
       const GenRegister coordx = sel.selReg(insn.getSrc(0), TYPE_U32);
       const GenRegister coordy = sel.selReg(insn.getSrc(1), TYPE_U32);
       vector<GenRegister> valuesVec;
       vector<GenRegister> tmpVec;
       for(uint32_t i = 0; i < vec_size; i++)
       {
-        valuesVec.push_back(sel.selReg(insn.getSrc(2 + i), TYPE_U32));
-        tmpVec.push_back(GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), TYPE_U32));
+        valuesVec.push_back(sel.selReg(insn.getSrc(2 + i), type));
+        tmpVec.push_back(GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD));
       }
-      const GenRegister header = GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), TYPE_U32);
+      const GenRegister header = GenRegister::retype(GenRegister::f8grf(sel.reg(FAMILY_DWORD)), GEN_TYPE_UD);
       sel.MBWRITE(coordx, coordy, &valuesVec[0], header, &tmpVec[0], insn.getImageIndex(), vec_size);
       return true;
     }

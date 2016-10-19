@@ -196,10 +196,10 @@ OVERLOADABLE uint2 intel_sub_group_block_read2(const global uint* p);
 OVERLOADABLE uint4 intel_sub_group_block_read4(const global uint* p);
 OVERLOADABLE uint8 intel_sub_group_block_read8(const global uint* p);
 
-OVERLOADABLE void intel_sub_group_block_write(const __global uint* p, uint data);
-OVERLOADABLE void intel_sub_group_block_write2(const __global uint* p, uint2 data);
-OVERLOADABLE void intel_sub_group_block_write4(const __global uint* p, uint4 data);
-OVERLOADABLE void intel_sub_group_block_write8(const __global uint* p, uint8 data);
+OVERLOADABLE void intel_sub_group_block_write(__global uint* p, uint data);
+OVERLOADABLE void intel_sub_group_block_write2(__global uint* p, uint2 data);
+OVERLOADABLE void intel_sub_group_block_write4(__global uint* p, uint4 data);
+OVERLOADABLE void intel_sub_group_block_write8(__global uint* p, uint8 data);
 
 OVERLOADABLE uint intel_sub_group_block_read(image2d_t image, int2 byte_coord);
 OVERLOADABLE uint2 intel_sub_group_block_read2(image2d_t image, int2 byte_coord);
@@ -210,3 +210,43 @@ OVERLOADABLE void intel_sub_group_block_write(image2d_t image, int2 byte_coord, 
 OVERLOADABLE void intel_sub_group_block_write2(image2d_t image, int2 byte_coord, uint2 data);
 OVERLOADABLE void intel_sub_group_block_write4(image2d_t image, int2 byte_coord, uint4 data);
 OVERLOADABLE void intel_sub_group_block_write8(image2d_t image, int2 byte_coord, uint8 data);
+
+OVERLOADABLE uint intel_sub_group_block_read_ui(const global uint* p);
+OVERLOADABLE uint2 intel_sub_group_block_read_ui2(const global uint* p);
+OVERLOADABLE uint4 intel_sub_group_block_read_ui4(const global uint* p);
+OVERLOADABLE uint8 intel_sub_group_block_read_ui8(const global uint* p);
+
+OVERLOADABLE void intel_sub_group_block_write_ui(__global uint* p, uint data);
+OVERLOADABLE void intel_sub_group_block_write_ui2(__global uint* p, uint2 data);
+OVERLOADABLE void intel_sub_group_block_write_ui4(__global uint* p, uint4 data);
+OVERLOADABLE void intel_sub_group_block_write_ui8(__global uint* p, uint8 data);
+
+OVERLOADABLE uint intel_sub_group_block_read_ui(image2d_t image, int2 byte_coord);
+OVERLOADABLE uint2 intel_sub_group_block_read_ui2(image2d_t image, int2 byte_coord);
+OVERLOADABLE uint4 intel_sub_group_block_read_ui4(image2d_t image, int2 byte_coord);
+OVERLOADABLE uint8 intel_sub_group_block_read_ui8(image2d_t image, int2 byte_coord);
+
+OVERLOADABLE void intel_sub_group_block_write_ui(image2d_t image, int2 byte_coord, uint data);
+OVERLOADABLE void intel_sub_group_block_write_ui2(image2d_t image, int2 byte_coord, uint2 data);
+OVERLOADABLE void intel_sub_group_block_write_ui4(image2d_t image, int2 byte_coord, uint4 data);
+OVERLOADABLE void intel_sub_group_block_write_ui8(image2d_t image, int2 byte_coord, uint8 data);
+
+OVERLOADABLE ushort intel_sub_group_block_read_us(const global ushort* p);
+OVERLOADABLE ushort2 intel_sub_group_block_read_us2(const global ushort* p);
+OVERLOADABLE ushort4 intel_sub_group_block_read_us4(const global ushort* p);
+OVERLOADABLE ushort8 intel_sub_group_block_read_us8(const global ushort* p);
+
+OVERLOADABLE void intel_sub_group_block_write_us(__global ushort* p, ushort data);
+OVERLOADABLE void intel_sub_group_block_write_us2(__global ushort* p, ushort2 data);
+OVERLOADABLE void intel_sub_group_block_write_us4(__global ushort* p, ushort4 data);
+OVERLOADABLE void intel_sub_group_block_write_us8(__global ushort* p, ushort8 data);
+
+OVERLOADABLE ushort intel_sub_group_block_read_us(image2d_t image, int2 byte_coord);
+OVERLOADABLE ushort2 intel_sub_group_block_read_us2(image2d_t image, int2 byte_coord);
+OVERLOADABLE ushort4 intel_sub_group_block_read_us4(image2d_t image, int2 byte_coord);
+OVERLOADABLE ushort8 intel_sub_group_block_read_us8(image2d_t image, int2 byte_coord);
+
+OVERLOADABLE void intel_sub_group_block_write_us(image2d_t image, int2 byte_coord, ushort data);
+OVERLOADABLE void intel_sub_group_block_write_us2(image2d_t image, int2 byte_coord, ushort2 data);
+OVERLOADABLE void intel_sub_group_block_write_us4(image2d_t image, int2 byte_coord, ushort4 data);
+OVERLOADABLE void intel_sub_group_block_write_us8(image2d_t image, int2 byte_coord, ushort8 data);

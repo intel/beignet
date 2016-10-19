@@ -642,6 +642,7 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
     uint8_t getImageIndex() const;
     uint8_t getVectorSize() const;
+    Type getType(void) const;
   };
 
   /*! Media Block Write.  */
@@ -651,6 +652,7 @@ namespace ir {
     static bool isClassOf(const Instruction &insn);
     uint8_t getImageIndex() const;
     uint8_t getVectorSize() const;
+    Type getType(void) const;
   };
 
   /*! Specialize the instruction. Also performs typechecking first based on the
@@ -886,9 +888,9 @@ namespace ir {
   /*! printf */
   Instruction PRINTF(Register dst, Tuple srcTuple, Tuple typeTuple, uint8_t srcNum, uint8_t bti, uint16_t num);
   /*! media block read */
-  Instruction MBREAD(uint8_t imageIndex, Tuple dst, uint8_t vec_size, Tuple coord, uint8_t srcNum);
+  Instruction MBREAD(uint8_t imageIndex, Tuple dst, uint8_t vec_size, Tuple coord, uint8_t srcNum, Type type);
   /*! media block write */
-  Instruction MBWRITE(uint8_t imageIndex, Tuple srcTuple, uint8_t srcNum, uint8_t vec_size);
+  Instruction MBWRITE(uint8_t imageIndex, Tuple srcTuple, uint8_t srcNum, uint8_t vec_size, Type type);
 } /* namespace ir */
 } /* namespace gbe */
 

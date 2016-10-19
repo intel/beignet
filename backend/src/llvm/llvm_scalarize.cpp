@@ -682,10 +682,14 @@ namespace gbe {
             *CI = InsertToVector(call, *CI);
             break;
           }
-          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE:
-          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE2:
-          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE4:
-          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_IMAGE8:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UI_IMAGE:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UI_IMAGE2:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UI_IMAGE4:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UI_IMAGE8:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE2:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE4:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE8:
           {
             ++CI;
             ++CI;
@@ -693,22 +697,32 @@ namespace gbe {
               *CI = InsertToVector(call, *CI);
             break;
           }
-          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_MEM:
-          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_MEM2:
-          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_MEM4:
-          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_MEM8:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UI_MEM:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UI_MEM2:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UI_MEM4:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UI_MEM8:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_MEM:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_MEM2:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_MEM4:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_MEM8:
           {
             if ((*CI)->getType()->isVectorTy())
               *CI = InsertToVector(call, *CI);
             break;
           }
           case GEN_OCL_VME:
-          case GEN_OCL_SUB_GROUP_BLOCK_READ_MEM2:
-          case GEN_OCL_SUB_GROUP_BLOCK_READ_MEM4:
-          case GEN_OCL_SUB_GROUP_BLOCK_READ_MEM8:
-          case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE2:
-          case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE4:
-          case GEN_OCL_SUB_GROUP_BLOCK_READ_IMAGE8:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UI_MEM2:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UI_MEM4:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UI_MEM8:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UI_IMAGE2:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UI_IMAGE4:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UI_IMAGE8:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_US_MEM2:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_US_MEM4:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_US_MEM8:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE2:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE4:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE8:
             setAppendPoint(call);
             extractFromVector(call);
             break;

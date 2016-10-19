@@ -1070,18 +1070,20 @@ namespace ir {
       public TupleDstPolicy<MediaBlockReadInstruction>
     {
     public:
-      INLINE MediaBlockReadInstruction(uint8_t imageIdx, Tuple dst, uint8_t vec_size, Tuple srcTuple, uint8_t srcNum) {
+      INLINE MediaBlockReadInstruction(uint8_t imageIdx, Tuple dst, uint8_t vec_size, Tuple srcTuple, uint8_t srcNum, Type type) {
         this->opcode = OP_MBREAD;
         this->dst = dst;
         this->dstNum = vec_size;
         this->src = srcTuple;
         this->srcNum = srcNum;
         this->imageIdx = imageIdx;
+        this->type = type;
       }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const {
         this->outOpcode(out);
-        out << (int)this->getVectorSize();
+        out << "." << type << "."
+            << (int)this->getVectorSize();
         out << " {";
         for (uint32_t i = 0; i < dstNum; ++i)
           out << "%" << this->getDst(fn, i) << (i != (dstNum-1u) ? " " : "");
@@ -1092,12 +1094,14 @@ namespace ir {
       }
       INLINE uint8_t getImageIndex(void) const { return this->imageIdx; }
       INLINE uint8_t getVectorSize(void) const { return this->dstNum; }
+      INLINE Type getType(void) const { return this->type; }
 
       Tuple src;
       Tuple dst;
       uint8_t imageIdx;
       uint8_t srcNum;
       uint8_t dstNum;
+      Type type;
     };
 
     class ALIGNED_INSTRUCTION MediaBlockWriteInstruction :
@@ -1107,17 +1111,19 @@ namespace ir {
     {
     public:
 
-      INLINE MediaBlockWriteInstruction(uint8_t imageIdx, Tuple srcTuple, uint8_t srcNum, uint8_t vec_size) {
+      INLINE MediaBlockWriteInstruction(uint8_t imageIdx, Tuple srcTuple, uint8_t srcNum, uint8_t vec_size, Type type) {
         this->opcode = OP_MBWRITE;
         this->src = srcTuple;
         this->srcNum = srcNum;
         this->imageIdx = imageIdx;
         this->vec_size = vec_size;
+        this->type = type;
       }
       INLINE bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const {
         this->outOpcode(out);
-        out << (int)this->getVectorSize()
+        out << "." << type << "."
+            << (int)this->getVectorSize()
             << " 2D surface id " << (int)this->getImageIndex()
             << " byte coord x %" << this->getSrc(fn, 0)
             << " row coord y %" << this->getSrc(fn, 1);
@@ -1128,12 +1134,14 @@ namespace ir {
       }
       INLINE uint8_t getImageIndex(void) const { return this->imageIdx; }
       INLINE uint8_t getVectorSize(void) const { return this->vec_size; }
+      INLINE Type getType(void) const { return this->type; }
 
       Tuple src;
       Register dst[0];
       uint8_t imageIdx;
       uint8_t srcNum;
       uint8_t vec_size;
+      Type type;
     };
 
 #undef ALIGNED_INSTRUCTION
@@ -2375,8 +2383,10 @@ DECL_MEM_FN(PrintfInstruction, uint32_t, getBti(void), getBti())
 DECL_MEM_FN(PrintfInstruction, Type, getType(const Function& fn, uint32_t ID), getType(fn, ID))
 DECL_MEM_FN(MediaBlockReadInstruction, uint8_t, getImageIndex(void), getImageIndex())
 DECL_MEM_FN(MediaBlockReadInstruction, uint8_t, getVectorSize(void), getVectorSize())
+DECL_MEM_FN(MediaBlockReadInstruction, Type, getType(void), getType())
 DECL_MEM_FN(MediaBlockWriteInstruction, uint8_t, getImageIndex(void), getImageIndex())
 DECL_MEM_FN(MediaBlockWriteInstruction, uint8_t, getVectorSize(void), getVectorSize())
+DECL_MEM_FN(MediaBlockWriteInstruction, Type, getType(void), getType())
 
 #undef DECL_MEM_FN
 
@@ -2684,12 +2694,12 @@ DECL_MEM_FN(MemInstruction, void,     setBtiReg(Register reg), setBtiReg(reg))
     return internal::PrintfInstruction(dst, srcTuple, typeTuple, srcNum, bti, num).convert();
   }
 
-  Instruction MBREAD(uint8_t imageIndex, Tuple dst, uint8_t vec_size, Tuple coord, uint8_t srcNum) {
-    return internal::MediaBlockReadInstruction(imageIndex, dst, vec_size, coord, srcNum).convert();
+  Instruction MBREAD(uint8_t imageIndex, Tuple dst, uint8_t vec_size, Tuple coord, uint8_t srcNum, Type type) {
+    return internal::MediaBlockReadInstruction(imageIndex, dst, vec_size, coord, srcNum, type).convert();
   }
 
-  Instruction MBWRITE(uint8_t imageIndex, Tuple srcTuple, uint8_t srcNum, uint8_t vec_size) {
-    return internal::MediaBlockWriteInstruction(imageIndex, srcTuple, srcNum, vec_size).convert();
+  Instruction MBWRITE(uint8_t imageIndex, Tuple srcTuple, uint8_t srcNum, uint8_t vec_size, Type type) {
+    return internal::MediaBlockWriteInstruction(imageIndex, srcTuple, srcNum, vec_size, type).convert();
   }
 
 
