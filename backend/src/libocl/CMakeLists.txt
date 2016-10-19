@@ -2,6 +2,8 @@ PROJECT(LIBOCL)
 SET (OCL_OBJECT_DIR ${LIBOCL_BINARY_DIR}/${BEIGNET_INSTALL_DIR})
 SET (OCL_HEADER_FILES ${OCL_OBJECT_DIR}/include/ocl_defines.h)
 SET (OCL_SOURCE_FILES "")
+SET (OCL_SOURCE_FILES_12 "")
+SET (OCL_SOURCE_FILES_20 "")
 
 ADD_CUSTOM_COMMAND(OUTPUT ${OCL_OBJECT_DIR}/include/ocl_defines.h
     COMMAND mkdir -p ${OCL_OBJECT_DIR}/include/
@@ -30,11 +32,11 @@ MACRO(COPY_THE_HEADER _mod)
 	    )
     ENDIF(orgin_name STREQUAL output_name)
 ENDMACRO(COPY_THE_HEADER)
-MACRO(COPY_THE_SOURCE _mod)
+MACRO(COPY_THE_SOURCE _source _mod)
     # Use the python script to generate the header files.
     STRING(REGEX REPLACE "\(o.*\)" "${LIBOCL_BINARY_DIR}/src/\\1.cl" output_name ${_mod})
     STRING(REGEX REPLACE "\(o.*\)" "${LIBOCL_SOURCE_DIR}/src/\\1.cl" orgin_name ${_mod})
-    SET(OCL_SOURCE_FILES ${OCL_SOURCE_FILES} ${output_name})
+    SET(${_source} ${${_source}} ${output_name})
     IF(orgin_name STREQUAL output_name)
     ELSE(orgin_name STREQUAL output_name)
 	ADD_CUSTOM_COMMAND(OUTPUT ${output_name}
@@ -50,14 +52,26 @@ ENDMACRO(COPY_THE_SOURCE)
 SET (OCL_COPY_HEADERS ocl ocl_types ocl_float ocl_printf)
 FOREACH(M ${OCL_COPY_HEADERS})
     COPY_THE_HEADER(${M})
-ENDFOREACH(M) 
+ENDFOREACH(M)
 
 SET (OCL_COPY_MODULES ocl_workitem ocl_atom ocl_async ocl_sync ocl_memcpy
-                      ocl_memset ocl_misc ocl_vload ocl_geometric ocl_image ocl_work_group)
+                      ocl_memset ocl_misc ocl_geometric ocl_image ocl_work_group)
 FOREACH(M ${OCL_COPY_MODULES})
     COPY_THE_HEADER(${M})
-    COPY_THE_SOURCE(${M})
-ENDFOREACH(M) 
+    COPY_THE_SOURCE(OCL_SOURCE_FILES ${M})
+ENDFOREACH(M)
+
+SET (OCL_COPY_MODULES_12 ocl_vload)
+FOREACH(M ${OCL_COPY_MODULES_12})
+    COPY_THE_HEADER(${M})
+    COPY_THE_SOURCE(OCL_SOURCE_FILES_12 ${M})
+ENDFOREACH(M)
+
+SET (OCL_COPY_MODULES_20 ocl_vload_20)
+FOREACH(M ${OCL_COPY_MODULES_20})
+    COPY_THE_HEADER(${M})
+    COPY_THE_SOURCE(OCL_SOURCE_FILES_20 ${M})
+ENDFOREACH(M)
 
 
 MACRO(GENERATE_HEADER_PY _mod)
@@ -146,13 +160,21 @@ ENDMACRO(ADD_CL_TO_BC_TARGET)
 
 FOREACH(f ${OCL_SOURCE_FILES})
     ADD_CL_TO_BC_TARGET(${f})
-ENDFOREACH(f) 
-
-FOREACH(f ${OCL_SOURCE_FILES})
     STRING(REGEX REPLACE "${LIBOCL_BINARY_DIR}/src/\(o.*\)\\.cl" "${OCL_OBJECT_DIR}/\\1.bc" bc_name ${f})
     SET(OCL_BC_FILES ${OCL_BC_FILES} ${bc_name})
-ENDFOREACH(f) 
+ENDFOREACH(f)
 
+FOREACH(f ${OCL_SOURCE_FILES_12})
+    ADD_CL_TO_BC_TARGET(${f})
+    STRING(REGEX REPLACE "${LIBOCL_BINARY_DIR}/src/\(o.*\)\\.cl" "${OCL_OBJECT_DIR}/\\1.bc" bc_name ${f})
+    SET(OCL_BC_FILES_12 ${OCL_BC_FILES_12} ${bc_name})
+ENDFOREACH(f)
+
+FOREACH(f ${OCL_SOURCE_FILES_20})
+    ADD_CL_TO_BC_TARGET(${f})
+    STRING(REGEX REPLACE "${LIBOCL_BINARY_DIR}/src/\(o.*\)\\.cl" "${OCL_OBJECT_DIR}/\\1.bc" bc_name ${f})
+    SET(OCL_BC_FILES_20 ${OCL_BC_FILES_20} ${bc_name})
+ENDFOREACH(f)
 
 # handle the ll files
 MACRO(COPY_THE_LL _mod)
@@ -194,10 +216,20 @@ ENDFOREACH(f)
 ADD_CUSTOM_COMMAND(OUTPUT ${OCL_OBJECT_DIR}/beignet.bc
     COMMAND mkdir -p ${LIBOCL_BINARY_DIR}/lib/
     #COMMAND echo llvm-link -o ${LIBOCL_BINARY_DIR}/lib/beignet.bc ${OCL_BC_FILES}
-    COMMAND ${LLVM_LINK_EXECUTABLE} -o ${OCL_OBJECT_DIR}/beignet.bc ${OCL_BC_FILES}
-    DEPENDS ${OCL_BC_FILES}
+    COMMAND ${LLVM_LINK_EXECUTABLE} -o ${OCL_OBJECT_DIR}/beignet.bc ${OCL_BC_FILES} ${OCL_BC_FILES_12}
+    DEPENDS ${OCL_BC_FILES} ${OCL_BC_FILES_12}
     COMMENT "Generate the bitcode file: ${OCL_OBJECT_DIR}/beignet.bc"
     )
+
+if (ENABLE_OPENCL_20)
+ADD_CUSTOM_COMMAND(OUTPUT ${OCL_OBJECT_DIR}/beignet_20.bc
+    COMMAND mkdir -p ${LIBOCL_BINARY_DIR}/lib/
+    #COMMAND echo llvm-link -o ${LIBOCL_BINARY_DIR}/lib/beignet.bc ${OCL_BC_FILES}
+    COMMAND ${LLVM_LINK_EXECUTABLE} -o ${OCL_OBJECT_DIR}/beignet_20.bc ${OCL_BC_FILES} ${OCL_BC_FILES_20}
+    DEPENDS ${OCL_BC_FILES} ${OCL_BC_FILES_20}
+    COMMENT "Generate the bitcode file: ${OCL_OBJECT_DIR}/beignet_20.bc"
+    )
+endif (ENABLE_OPENCL_20)
 
 ADD_CUSTOM_COMMAND(OUTPUT ${OCL_OBJECT_DIR}/beignet.local.pch
     COMMAND mkdir -p ${OCL_OBJECT_DIR}

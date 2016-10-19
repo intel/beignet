@@ -97,7 +97,11 @@
 #include "ocl_printf.h"
 #include "ocl_relational.h"
 #include "ocl_sync.h"
+#if (__OPENCL_C_VERSION__ >= 200)
+#include "ocl_vload_20.h"
+#else
 #include "ocl_vload.h"
+#endif
 #include "ocl_workitem.h"
 #include "ocl_simd.h"
 #include "ocl_work_group.h"
