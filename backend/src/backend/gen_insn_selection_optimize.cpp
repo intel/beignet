@@ -161,7 +161,7 @@ namespace gbe
     assert(insn.opcode == SEL_OP_MOV);
     const GenRegister& src = insn.src(0);
     const GenRegister& dst = insn.dst(0);
-    if (src.type != dst.type || src.file != dst.file)
+    if (src.type != dst.type || src.file != dst.file || src.hstride != dst.hstride)
       return;
 
     if (liveout.find(dst.reg()) != liveout.end())
