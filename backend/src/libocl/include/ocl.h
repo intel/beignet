@@ -114,6 +114,7 @@
 #define cl_khr_fp16
 #define cl_khr_3d_image_writes
 #define cl_intel_subgroups
+#define cl_intel_subgroups_short
 
 #pragma OPENCL EXTENSION cl_khr_fp64 : disable
 #pragma OPENCL EXTENSION cl_khr_fp16 : disable

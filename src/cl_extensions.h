@@ -28,7 +28,8 @@
 #define DECL_INTEL_EXTENSIONS \
   DECL_EXT(intel_accelerator) \
   DECL_EXT(intel_motion_estimation) \
-  DECL_EXT(intel_subgroups)
+  DECL_EXT(intel_subgroups) \
+  DECL_EXT(intel_subgroups_short)
 
 #define DECL_GL_EXTENSIONS \
   DECL_EXT(khr_gl_sharing)\
@@ -63,7 +64,7 @@ cl_khr_extension_id_max
 #define OPT1_EXT_START_ID EXT_ID(khr_int64_base_atomics)
 #define OPT1_EXT_END_ID EXT_ID(khr_icd)
 #define INTEL_EXT_START_ID EXT_ID(intel_accelerator)
-#define INTEL_EXT_END_ID EXT_ID(intel_subgroups)
+#define INTEL_EXT_END_ID EXT_ID(intel_subgroups_short)
 #define GL_EXT_START_ID EXT_ID(khr_gl_sharing)
 #define GL_EXT_END_ID EXT_ID(khr_gl_msaa_sharing)
 
