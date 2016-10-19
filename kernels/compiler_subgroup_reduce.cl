@@ -73,6 +73,17 @@ kernel void compiler_subgroup_reduce_add_float(global float *src, global float *
 /*
  * Subgroup reduce max functions
  */
+kernel void compiler_subgroup_reduce_max_short(global short *src, global short *dst) {
+  short val = src[get_global_id(0)];
+  short sum = sub_group_reduce_max(val);
+  dst[get_global_id(0)] = sum;
+}
+kernel void compiler_subgroup_reduce_max_ushort(global ushort *src, global ushort *dst) {
+  ushort val = src[get_global_id(0)];
+  //printf("src is %d\n",val);
+  ushort sum = sub_group_reduce_max(val);
+  dst[get_global_id(0)] = sum;
+}
 kernel void compiler_subgroup_reduce_max_int(global int *src, global int *dst) {
   int val = src[get_global_id(0)];
   int sum = sub_group_reduce_max(val);
@@ -106,6 +117,17 @@ kernel void compiler_subgroup_reduce_max_float(global float *src, global float *
 /*
  * Subgroup reduce min functions
  */
+kernel void compiler_subgroup_reduce_min_short(global short *src, global short *dst) {
+  short val = src[get_global_id(0)];
+  short sum = sub_group_reduce_min(val);
+  dst[get_global_id(0)] = sum;
+}
+kernel void compiler_subgroup_reduce_min_ushort(global ushort *src, global ushort *dst) {
+  ushort val = src[get_global_id(0)];
+  //printf("src is %d\n",val);
+  ushort sum = sub_group_reduce_min(val);
+  dst[get_global_id(0)] = sum;
+}
 kernel void compiler_subgroup_reduce_min_int(global int *src, global int *dst) {
   int val = src[get_global_id(0)];
   int sum = sub_group_reduce_min(val);

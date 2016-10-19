@@ -357,6 +357,28 @@ void compiler_subgroup_reduce_add_half(void)
   subgroup_generic(WG_REDUCE_ADD, input, expected, true);
 }
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_reduce_add_half);
+void compiler_subgroup_reduce_add_short(void)
+{
+  if(!cl_check_subgroups_short())
+    return;
+  cl_short *input = NULL;
+  cl_short *expected = NULL;
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_reduce",
+                              "compiler_subgroup_reduce_add_short");
+  subgroup_generic(WG_REDUCE_ADD, input, expected);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_reduce_add_short);
+void compiler_subgroup_reduce_add_ushort(void)
+{
+  if(!cl_check_subgroups_short())
+    return;
+  cl_ushort *input = NULL;
+  cl_ushort *expected = NULL;
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_reduce",
+                              "compiler_subgroup_reduce_add_ushort");
+  subgroup_generic(WG_REDUCE_ADD, input, expected);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_reduce_add_ushort);
 
 /*
  * Workgroup reduce max utest functions
@@ -430,6 +452,28 @@ void compiler_subgroup_reduce_max_half(void)
   subgroup_generic(WG_REDUCE_MAX, input, expected, true);
 }
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_reduce_max_half);
+void compiler_subgroup_reduce_max_short(void)
+{
+  if(!cl_check_subgroups_short())
+    return;
+  cl_short *input = NULL;
+  cl_short *expected = NULL;
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_reduce",
+                              "compiler_subgroup_reduce_max_short");
+  subgroup_generic(WG_REDUCE_MAX, input, expected);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_reduce_max_short);
+void compiler_subgroup_reduce_max_ushort(void)
+{
+  if(!cl_check_subgroups_short())
+    return;
+  cl_ushort *input = NULL;
+  cl_ushort *expected = NULL;
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_reduce",
+                              "compiler_subgroup_reduce_max_ushort");
+  subgroup_generic(WG_REDUCE_MAX, input, expected);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_reduce_max_ushort);
 
 /*
  * Workgroup reduce min utest functions
@@ -503,3 +547,25 @@ void compiler_subgroup_reduce_min_half(void)
   subgroup_generic(WG_REDUCE_MIN, input, expected, true);
 }
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_reduce_min_half);
+void compiler_subgroup_reduce_min_short(void)
+{
+  if(!cl_check_subgroups_short())
+    return;
+  cl_short *input = NULL;
+  cl_short *expected = NULL;
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_reduce",
+                              "compiler_subgroup_reduce_min_short");
+  subgroup_generic(WG_REDUCE_MIN, input, expected);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_reduce_min_short);
+void compiler_subgroup_reduce_min_ushort(void)
+{
+  if(!cl_check_subgroups_short())
+    return;
+  cl_ushort *input = NULL;
+  cl_ushort *expected = NULL;
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_reduce",
+                              "compiler_subgroup_reduce_min_ushort");
+  subgroup_generic(WG_REDUCE_MIN, input, expected);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_reduce_min_ushort);

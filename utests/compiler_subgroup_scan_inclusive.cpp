@@ -298,6 +298,28 @@ void compiler_subgroup_scan_inclusive_add_half(void)
   subgroup_generic(WG_SCAN_INCLUSIVE_ADD, input, expected, true);
 }
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_inclusive_add_half);
+void compiler_subgroup_scan_inclusive_add_short(void)
+{
+  if(!cl_check_subgroups())
+    return;
+  cl_short *input = NULL;
+  cl_short *expected = NULL;
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_inclusive",
+                              "compiler_subgroup_scan_inclusive_add_short");
+  subgroup_generic(WG_SCAN_INCLUSIVE_ADD, input, expected);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_inclusive_add_short);
+void compiler_subgroup_scan_inclusive_add_ushort(void)
+{
+  if(!cl_check_subgroups())
+    return;
+  cl_ushort *input = NULL;
+  cl_ushort *expected = NULL;
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_inclusive",
+                              "compiler_subgroup_scan_inclusive_add_ushort");
+  subgroup_generic(WG_SCAN_INCLUSIVE_ADD, input, expected);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_inclusive_add_ushort);
 
 /*
  * Workgroup scan_inclusive max utest functions
@@ -371,6 +393,28 @@ void compiler_subgroup_scan_inclusive_max_half(void)
   subgroup_generic(WG_SCAN_INCLUSIVE_MAX, input, expected, true);
 }
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_inclusive_max_half);
+void compiler_subgroup_scan_inclusive_max_short(void)
+{
+  if(!cl_check_subgroups())
+    return;
+  cl_short *input = NULL;
+  cl_short *expected = NULL;
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_inclusive",
+                              "compiler_subgroup_scan_inclusive_max_short");
+  subgroup_generic(WG_SCAN_INCLUSIVE_MAX, input, expected);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_inclusive_max_short);
+void compiler_subgroup_scan_inclusive_max_ushort(void)
+{
+  if(!cl_check_subgroups())
+    return;
+  cl_ushort *input = NULL;
+  cl_ushort *expected = NULL;
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_inclusive",
+                              "compiler_subgroup_scan_inclusive_max_ushort");
+  subgroup_generic(WG_SCAN_INCLUSIVE_MAX, input, expected);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_inclusive_max_ushort);
 
 /*
  * Workgroup scan_inclusive min utest functions
@@ -444,3 +488,25 @@ void compiler_subgroup_scan_inclusive_min_half(void)
   subgroup_generic(WG_SCAN_INCLUSIVE_MIN, input, expected, true);
 }
 MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_inclusive_min_half);
+void compiler_subgroup_scan_inclusive_min_short(void)
+{
+  if(!cl_check_subgroups())
+    return;
+  cl_short *input = NULL;
+  cl_short *expected = NULL;
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_inclusive",
+                              "compiler_subgroup_scan_inclusive_min_short");
+  subgroup_generic(WG_SCAN_INCLUSIVE_MIN, input, expected);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_inclusive_min_short);
+void compiler_subgroup_scan_inclusive_min_ushort(void)
+{
+  if(!cl_check_subgroups())
+    return;
+  cl_ushort *input = NULL;
+  cl_ushort *expected = NULL;
+  OCL_CREATE_KERNEL_FROM_FILE("compiler_subgroup_scan_inclusive",
+                              "compiler_subgroup_scan_inclusive_min_ushort");
+  subgroup_generic(WG_SCAN_INCLUSIVE_MIN, input, expected);
+}
+MAKE_UTEST_FROM_FUNCTION(compiler_subgroup_scan_inclusive_min_ushort);
