@@ -38,17 +38,9 @@ uint get_sub_group_size(void)
 
 /* broadcast */
 #define BROADCAST_IMPL(GEN_TYPE) \
-    OVERLOADABLE GEN_TYPE __gen_ocl_sub_group_broadcast(GEN_TYPE a, size_t local_id); \
-    OVERLOADABLE GEN_TYPE sub_group_broadcast(GEN_TYPE a, size_t local_id) { \
+    OVERLOADABLE GEN_TYPE __gen_ocl_sub_group_broadcast(GEN_TYPE a, uint local_id); \
+    OVERLOADABLE GEN_TYPE sub_group_broadcast(GEN_TYPE a, uint local_id) { \
       return __gen_ocl_sub_group_broadcast(a, local_id); \
-    } \
-    OVERLOADABLE GEN_TYPE __gen_ocl_sub_group_broadcast(GEN_TYPE a, size_t local_id_x, size_t local_id_y); \
-    OVERLOADABLE GEN_TYPE sub_group_broadcast(GEN_TYPE a, size_t local_id_x, size_t local_id_y) { \
-      return __gen_ocl_sub_group_broadcast(a, local_id_x, local_id_y);  \
-    } \
-    OVERLOADABLE GEN_TYPE __gen_ocl_sub_group_broadcast(GEN_TYPE a, size_t local_id_x, size_t local_id_y, size_t local_id_z); \
-    OVERLOADABLE GEN_TYPE sub_group_broadcast(GEN_TYPE a, size_t local_id_x, size_t local_id_y, size_t local_id_z) { \
-      return __gen_ocl_sub_group_broadcast(a, local_id_x, local_id_y, local_id_z); \
     }
 
 BROADCAST_IMPL(int)

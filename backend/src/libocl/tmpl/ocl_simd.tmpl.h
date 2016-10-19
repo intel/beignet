@@ -35,29 +35,13 @@ uint get_sub_group_id(void);
 uint get_sub_group_local_id(void);
 
 /* broadcast */
-OVERLOADABLE int sub_group_broadcast(int a, size_t local_id);
-OVERLOADABLE uint sub_group_broadcast(uint a, size_t local_id);
-OVERLOADABLE long sub_group_broadcast(long a, size_t local_id);
-OVERLOADABLE ulong sub_group_broadcast(ulong a, size_t local_id);
-OVERLOADABLE half sub_group_broadcast(half a, size_t local_id);
-OVERLOADABLE float sub_group_broadcast(float a, size_t local_id);
-OVERLOADABLE double sub_group_broadcast(double a, size_t local_id);
-
-OVERLOADABLE int sub_group_broadcast(int a, size_t local_id_x, size_t local_id_y);
-OVERLOADABLE uint sub_group_broadcast(uint a, size_t local_id_x, size_t local_id_y);
-OVERLOADABLE long sub_group_broadcast(long a, size_t local_id_x, size_t local_id_y);
-OVERLOADABLE ulong sub_group_broadcast(ulong a, size_t local_id_x, size_t local_id_y);
-OVERLOADABLE half sub_group_broadcast(half a, size_t local_id_x, size_t local_id_y);
-OVERLOADABLE float sub_group_broadcast(float a, size_t local_id_x, size_t local_id_y);
-OVERLOADABLE double sub_group_broadcast(double a, size_t local_id_x, size_t local_id_y);
-
-OVERLOADABLE int sub_group_broadcast(int a, size_t local_id_x, size_t local_id_y, size_t local_id_z);
-OVERLOADABLE uint sub_group_broadcast(uint a, size_t local_id_x, size_t local_id_y, size_t local_id_z);
-OVERLOADABLE long sub_group_broadcast(long a, size_t local_id_x, size_t local_id_y, size_t local_id_z);
-OVERLOADABLE ulong sub_group_broadcast(ulong a, size_t local_id_x, size_t local_id_y, size_t local_id_z);
-OVERLOADABLE half sub_group_broadcast(half a, size_t local_id_x, size_t local_id_y, size_t local_id_z);
-OVERLOADABLE float sub_group_broadcast(float a, size_t local_id_x, size_t local_id_y, size_t local_id_z);
-OVERLOADABLE double sub_group_broadcast(double a, size_t local_id_x, size_t local_id_y, size_t local_id_z);
+OVERLOADABLE int sub_group_broadcast(int a,uint local_id);
+OVERLOADABLE uint sub_group_broadcast(uint a, uint local_id);
+OVERLOADABLE long sub_group_broadcast(long a, uint local_id);
+OVERLOADABLE ulong sub_group_broadcast(ulong a, uint local_id);
+OVERLOADABLE half sub_group_broadcast(half a, uint local_id);
+OVERLOADABLE float sub_group_broadcast(float a, uint local_id);
+OVERLOADABLE double sub_group_broadcast(double a, uint local_id);
 
 /* reduce add */
 OVERLOADABLE int sub_group_reduce_add(int x);
