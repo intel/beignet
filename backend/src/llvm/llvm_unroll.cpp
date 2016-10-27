@@ -65,8 +65,8 @@ namespace gbe {
       // Returns the value associated with the given metadata node name (for
       // example, "llvm.loop.unroll.count").  If no such named metadata node
       // exists, then nullptr is returned.
-      static const ConstantInt *GetUnrollMetadataValue(const Loop *L,
-                                                     StringRef Name) {
+      static const MDNode *GetUnrollMetadataValue(const Loop *L,
+                                                          StringRef Name) {
         MDNode *LoopID = L->getLoopID();
         if (!LoopID) return nullptr;
         // First operand should refer to the loop id itself.
@@ -78,16 +78,28 @@ namespace gbe {
           const MDString *S = dyn_cast<MDString>(MD->getOperand(0));
           if (!S) continue;
           if (Name.equals(S->getString())) {
-            assert(MD->getNumOperands() == 2 &&
-                   "Unroll hint metadata should have two operands.");
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
-            return mdconst::extract<ConstantInt>(MD->getOperand(1));
-#else
-            return cast<ConstantInt>(MD->getOperand(1));
-#endif
+            return MD;
           }
         }
         return nullptr;
+      }
+
+      static unsigned GetUnrollCount(const Loop *L,
+                                            StringRef Name) {
+        const MDNode *MD = GetUnrollMetadataValue(L, "llvm.loop.unroll.count");
+        if (MD) {
+          assert(MD->getNumOperands() == 2 &&
+                 "Unroll count hint metadata should have two operands.");
+          unsigned Count;
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+          Count = mdconst::extract<ConstantInt>(MD->getOperand(1))->getZExtValue();
+#else
+          Count = cast<ConstantInt>(MD->getOperand(1))->getZExtValue();
+#endif
+          assert(Count >= 1 && "Unroll count must be positive.");
+          return Count;
+        }
+        return 0;
       }
 
       void setUnrollID(Loop *L, bool enable) {
@@ -212,11 +224,11 @@ namespace gbe {
       // some private load or store, we change it's loop meta data
       // to indicate more aggresive unrolling on it.
       virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
-        const ConstantInt *Enable = GetUnrollMetadataValue(L, "llvm.loop.unroll.enable");
+        const MDNode *Enable = GetUnrollMetadataValue(L, "llvm.loop.unroll.enable");
         if (Enable)
           return false;
-        const ConstantInt *Count = GetUnrollMetadataValue(L, "llvm.loop.unroll.count");
-        if (Count)
+        const unsigned Count = GetUnrollCount(L, "llvm.loop.unroll.count");
+        if (Count > 0)
           return false;
 
         if (!handleParentLoops(L, LPM))
