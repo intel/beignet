@@ -2223,6 +2223,16 @@ namespace gbe
         if (!ld.isAligned())
           return false;
       }
+      //If dst is a bool reg, the insn may modify flag, can't use this flag
+      //as predication, so can't remove if/endif. For example ir:
+      //%or.cond1244 = or i1 %cmp.i338, %cmp2.i403
+      //%or.cond1245 = or i1 %or.cond1244, %cmp3.i405
+      //asm:
+      //(+f1.0) or.ne(16)       g20<1>:W        g9<8,8,1>:W     g1<8,8,1>:W
+      //(+f1.1) or.ne.f1.1(16)  g21<1>:W        g20<8,8,1>:W    g30<8,8,1>:W
+      //The second insn is error.
+      if(insn.getDstNum() && getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL)
+          return false;
     }
 
     // there would generate a extra CMP instruction for predicated BRA with extern flag,
