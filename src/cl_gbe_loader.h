@@ -64,6 +64,7 @@ extern gbe_kernel_get_sampler_data_cb *interp_kernel_get_sampler_data;
 extern gbe_kernel_get_compile_wg_size_cb *interp_kernel_get_compile_wg_size;
 extern gbe_kernel_get_image_size_cb *interp_kernel_get_image_size;
 extern gbe_kernel_get_image_data_cb *interp_kernel_get_image_data;
+extern gbe_kernel_get_ocl_version_cb *interp_kernel_get_ocl_version;
 extern gbe_output_profiling_cb* interp_output_profiling;
 extern gbe_get_profiling_bti_cb* interp_get_profiling_bti;
 extern gbe_dup_profiling_cb* interp_dup_profiling;

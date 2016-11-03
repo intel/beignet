@@ -362,6 +362,9 @@ extern gbe_kernel_use_slm_cb *gbe_kernel_use_slm;
 typedef int32_t (gbe_kernel_get_slm_size_cb)(gbe_kernel);
 extern gbe_kernel_get_slm_size_cb *gbe_kernel_get_slm_size;
 
+typedef uint32_t (gbe_kernel_get_ocl_version_cb)(gbe_kernel);
+extern gbe_kernel_get_ocl_version_cb *gbe_kernel_get_ocl_version;
+
 /*mutex to lock global llvmcontext access.*/
 extern void acquireLLVMContextLock();
 extern void releaseLLVMContextLock();

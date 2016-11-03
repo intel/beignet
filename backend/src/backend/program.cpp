@@ -1376,6 +1376,12 @@ EXTEND_QUOTE:
     kernel->getImageData(images);
   }
 
+  static uint32_t kernelGetOclVersion(gbe_kernel gbeKernel) {
+    if (gbeKernel == NULL) return 0;
+    const gbe::Kernel *kernel = (const gbe::Kernel*) gbeKernel;
+    return kernel->getOclVersion();
+  }
+
   static uint32_t kernelGetRequiredWorkGroupSize(gbe_kernel kernel, uint32_t dim) {
     return 0u;
   }
@@ -1433,6 +1439,7 @@ GBE_EXPORT_SYMBOL gbe_kernel_get_sampler_data_cb *gbe_kernel_get_sampler_data = 
 GBE_EXPORT_SYMBOL gbe_kernel_get_compile_wg_size_cb *gbe_kernel_get_compile_wg_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_image_size_cb *gbe_kernel_get_image_size = NULL;
 GBE_EXPORT_SYMBOL gbe_kernel_get_image_data_cb *gbe_kernel_get_image_data = NULL;
+GBE_EXPORT_SYMBOL gbe_kernel_get_ocl_version_cb *gbe_kernel_get_ocl_version = NULL;
 GBE_EXPORT_SYMBOL gbe_output_profiling_cb *gbe_output_profiling = NULL;
 GBE_EXPORT_SYMBOL gbe_dup_profiling_cb *gbe_dup_profiling = NULL;
 GBE_EXPORT_SYMBOL gbe_get_profiling_bti_cb *gbe_get_profiling_bti = NULL;
@@ -1483,6 +1490,7 @@ namespace gbe
       gbe_kernel_get_compile_wg_size = gbe::kernelGetCompileWorkGroupSize;
       gbe_kernel_get_image_size = gbe::kernelGetImageSize;
       gbe_kernel_get_image_data = gbe::kernelGetImageData;
+      gbe_kernel_get_ocl_version = gbe::kernelGetOclVersion;
       gbe_get_profiling_bti = gbe::kernelGetProfilingBTI;
       gbe_get_printf_num = gbe::kernelGetPrintfNum;
       gbe_dup_profiling = gbe::kernelDupProfiling;

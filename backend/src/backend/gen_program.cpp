@@ -212,6 +212,7 @@ namespace gbe {
       kernel = ctx->compileKernel();
       if (kernel != NULL) {
         GBE_ASSERT(ctx->getErrCode() == NO_ERROR);
+        kernel->setOclVersion(unit.getOclVersion());
         break;
       }
       simdFn->getImageSet()->clearInfo();

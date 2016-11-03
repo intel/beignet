@@ -64,6 +64,7 @@ struct BinInterpCallBackInitializer
     gbe_program_get_global_constant_data = gbe::programGetGlobalConstantData;
     gbe_kernel_get_sampler_data = gbe::kernelGetSamplerData;
     gbe_kernel_get_image_data = gbe::kernelGetImageData;
+    gbe_kernel_get_ocl_version = gbe::kernelGetOclVersion;
     gbe_kernel_get_arg_info = gbe::kernelGetArgInfo;
     gbe_get_profiling_bti = gbe::kernelGetProfilingBTI;
     gbe_dup_profiling = gbe::kernelDupProfiling;

@@ -125,6 +125,9 @@ namespace gbe {
     INLINE bool getUseSLM(void) const { return this->useSLM; }
     /*! get slm size for kernel local variable */
     INLINE uint32_t getSLMSize(void) const { return this->slmSize; }
+    /*! Return the OpenCL version */
+    INLINE void setOclVersion(uint32_t version) { this->oclVersion = version; }
+    INLINE uint32_t getOclVersion(void) const { return this->oclVersion; }
     /*! Set sampler set. */
     void setSamplerSet(ir::SamplerSet *from) {
       samplerSet = from;
@@ -240,6 +243,7 @@ namespace gbe {
     uint32_t simdWidth;        //!< SIMD size for the kernel (lane number)
     uint32_t stackSize;        //!< Stack size (0 if unused)
     uint32_t scratchSize;      //!< Scratch memory size (may be 0 if unused)
+    uint32_t oclVersion;       //!< Opencl Version (120 for 1.2, 200 for 2.0)
     bool useSLM;               //!< SLM requires a special HW config
     uint32_t slmSize;          //!< slm size for kernel variable
     Context *ctx;              //!< Save context after compiler to alloc constant buffer curbe

@@ -64,6 +64,7 @@ gbe_kernel_get_sampler_data_cb *interp_kernel_get_sampler_data = NULL;
 gbe_kernel_get_compile_wg_size_cb *interp_kernel_get_compile_wg_size = NULL;
 gbe_kernel_get_image_size_cb *interp_kernel_get_image_size = NULL;
 gbe_kernel_get_image_data_cb *interp_kernel_get_image_data = NULL;
+gbe_kernel_get_ocl_version_cb *interp_kernel_get_ocl_version = NULL;
 gbe_output_profiling_cb* interp_output_profiling = NULL;
 gbe_get_profiling_bti_cb* interp_get_profiling_bti = NULL;
 gbe_dup_profiling_cb* interp_dup_profiling = NULL;
@@ -212,6 +213,10 @@ struct GbeLoaderInitializer
 
     interp_kernel_get_image_data = *(gbe_kernel_get_image_data_cb**)dlsym(dlhInterp, "gbe_kernel_get_image_data");
     if (interp_kernel_get_image_data == NULL)
+      return false;
+
+    interp_kernel_get_ocl_version = *(gbe_kernel_get_ocl_version_cb**)dlsym(dlhInterp, "gbe_kernel_get_ocl_version");
+    if (interp_kernel_get_ocl_version == NULL)
       return false;
 
     interp_output_profiling = *(gbe_output_profiling_cb**)dlsym(dlhInterp, "gbe_output_profiling");
