@@ -164,10 +164,10 @@ cl_mem_allocate(enum cl_mem_type type,
 
 #ifdef HAS_USERPTR
     uint8_t bufCreated = 0;
-    if (ctx->device->host_unified_memory) {
+    if (ctx->devices[0]->host_unified_memory) {
       int page_size = getpagesize();
       int cacheline_size = 0;
-      cl_get_device_info(ctx->device, CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, sizeof(cacheline_size), &cacheline_size, NULL);
+      cl_get_device_info(ctx->devices[0], CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, sizeof(cacheline_size), &cacheline_size, NULL);
 
       if (type == CL_MEM_BUFFER_TYPE) {
         if (flags & CL_MEM_USE_HOST_PTR) {
@@ -221,7 +221,7 @@ cl_mem_allocate(enum cl_mem_type type,
       // if create image from USE_HOST_PTR buffer, the buffer's base address need be aligned.
       if(buffer->is_userptr) {
         int base_alignement = 0;
-        cl_get_device_info(ctx->device, CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT, sizeof(base_alignement), &base_alignement, NULL);
+        cl_get_device_info(ctx->devices[0], CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT, sizeof(base_alignement), &base_alignement, NULL);
         if(ALIGN((unsigned long)buffer->host_ptr, base_alignement) != (unsigned long)buffer->host_ptr) {
           err = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
           goto error;
@@ -338,7 +338,7 @@ cl_mem_new_buffer(cl_context ctx,
     goto error;
   }
 
-  if ((err = cl_get_device_info(ctx->device,
+  if ((err = cl_get_device_info(ctx->devices[0],
                                 CL_DEVICE_MAX_MEM_ALLOC_SIZE,
                                 sizeof(max_mem_size),
                                 &max_mem_size,
@@ -440,7 +440,7 @@ cl_mem_new_sub_buffer(cl_mem buffer,
     goto error;
   }
 
-  if (info->origin & (buffer->ctx->device->mem_base_addr_align / 8 - 1)) {
+  if (info->origin & (buffer->ctx->devices[0]->mem_base_addr_align / 8 - 1)) {
     err = CL_MISALIGNED_SUB_BUFFER_OFFSET;
     goto error;
   }
@@ -573,7 +573,7 @@ void* cl_mem_svm_allocate(cl_context ctx, cl_svm_mem_flags flags,
   if(UNLIKELY(alignment & (alignment - 1)))
     return NULL;
 
-  if ((err = cl_get_device_info(ctx->device,
+  if ((err = cl_get_device_info(ctx->devices[0],
                                  CL_DEVICE_MAX_MEM_ALLOC_SIZE,
                                  sizeof(max_mem_size),
                                  &max_mem_size,
@@ -808,7 +808,7 @@ _cl_mem_new_image(cl_context ctx,
 
     h = 1;
     depth = 1;
-    if (UNLIKELY(w > ctx->device->image2d_max_width)) DO_IMAGE_ERROR;
+    if (UNLIKELY(w > ctx->devices[0]->image2d_max_width)) DO_IMAGE_ERROR;
     if (UNLIKELY(data && min_pitch > pitch)) DO_IMAGE_ERROR;
     if (UNLIKELY(data && (slice_pitch % pitch != 0))) DO_IMAGE_ERROR;
     if (UNLIKELY(!data && pitch != 0)) DO_IMAGE_ERROR;
@@ -818,11 +818,11 @@ _cl_mem_new_image(cl_context ctx,
              image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
 
     if (image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
-      if (UNLIKELY(w > ctx->device->image_mem_size)) DO_IMAGE_ERROR;
+      if (UNLIKELY(w > ctx->devices[0]->image_mem_size)) DO_IMAGE_ERROR;
       /* This is an image1d buffer which exceeds normal image size restrication
          We have to use a 2D image to simulate this 1D image. */
-      h = (w + ctx->device->image2d_max_width - 1) / ctx->device->image2d_max_width;
-      w = w > ctx->device->image2d_max_width ? ctx->device->image2d_max_width : w;
+      h = (w + ctx->devices[0]->image2d_max_width - 1) / ctx->devices[0]->image2d_max_width;
+      w = w > ctx->devices[0]->image2d_max_width ? ctx->devices[0]->image2d_max_width : w;
       tiling = CL_NO_TILE;
     } else if(image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL) {
       tiling = CL_NO_TILE;
@@ -835,8 +835,8 @@ _cl_mem_new_image(cl_context ctx,
     if (data && pitch == 0)
       pitch = min_pitch;
 
-    if (UNLIKELY(w > ctx->device->image2d_max_width)) DO_IMAGE_ERROR;
-    if (UNLIKELY(h > ctx->device->image2d_max_height)) DO_IMAGE_ERROR;
+    if (UNLIKELY(w > ctx->devices[0]->image2d_max_width)) DO_IMAGE_ERROR;
+    if (UNLIKELY(h > ctx->devices[0]->image2d_max_height)) DO_IMAGE_ERROR;
     if (UNLIKELY(data && min_pitch > pitch)) DO_IMAGE_ERROR;
     if (UNLIKELY(!data && pitch != 0 && buffer == NULL)) DO_IMAGE_ERROR;
 
@@ -856,11 +856,11 @@ _cl_mem_new_image(cl_context ctx,
     size_t min_slice_pitch = pitch * h;
     if (data && slice_pitch == 0)
       slice_pitch = min_slice_pitch;
-    if (UNLIKELY(w > ctx->device->image3d_max_width)) DO_IMAGE_ERROR;
-    if (UNLIKELY(h > ctx->device->image3d_max_height)) DO_IMAGE_ERROR;
+    if (UNLIKELY(w > ctx->devices[0]->image3d_max_width)) DO_IMAGE_ERROR;
+    if (UNLIKELY(h > ctx->devices[0]->image3d_max_height)) DO_IMAGE_ERROR;
     if (image_type == CL_MEM_OBJECT_IMAGE3D &&
-       (UNLIKELY(depth > ctx->device->image3d_max_depth))) DO_IMAGE_ERROR
-    else if (UNLIKELY(depth > ctx->device->image_max_array_size)) DO_IMAGE_ERROR;
+       (UNLIKELY(depth > ctx->devices[0]->image3d_max_depth))) DO_IMAGE_ERROR
+    else if (UNLIKELY(depth > ctx->devices[0]->image_max_array_size)) DO_IMAGE_ERROR;
     if (UNLIKELY(data && min_pitch > pitch)) DO_IMAGE_ERROR;
     if (UNLIKELY(data && min_slice_pitch > slice_pitch)) DO_IMAGE_ERROR;
     if (UNLIKELY(!data && pitch != 0)) DO_IMAGE_ERROR;
@@ -872,9 +872,9 @@ _cl_mem_new_image(cl_context ctx,
 #undef DO_IMAGE_ERROR
 
   uint8_t enableUserptr = 0;
-  if (enable_true_hostptr && ctx->device->host_unified_memory && data != NULL && (flags & CL_MEM_USE_HOST_PTR)) {
+  if (enable_true_hostptr && ctx->devices[0]->host_unified_memory && data != NULL && (flags & CL_MEM_USE_HOST_PTR)) {
     int cacheline_size = 0;
-    cl_get_device_info(ctx->device, CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, sizeof(cacheline_size), &cacheline_size, NULL);
+    cl_get_device_info(ctx->devices[0], CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, sizeof(cacheline_size), &cacheline_size, NULL);
     if (ALIGN((unsigned long)data, cacheline_size) == (unsigned long)data &&
         ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_NO_TILE, 1)) == h &&
         ALIGN(h * pitch * depth, cacheline_size) == h * pitch * depth && //h and pitch should same as aligned_h and aligned_pitch if enable userptr
@@ -1051,7 +1051,7 @@ _cl_mem_new_image_from_buffer(cl_context ctx,
     goto error;
   }
 
-  if ((err = cl_get_device_info(ctx->device,
+  if ((err = cl_get_device_info(ctx->devices[0],
                                 CL_DEVICE_IMAGE_MAX_BUFFER_SIZE,
                                 sizeof(max_size),
                                 &max_size,

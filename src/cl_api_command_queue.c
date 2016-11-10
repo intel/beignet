@@ -38,7 +38,7 @@ clGetCommandQueueInfo(cl_command_queue command_queue,
     src_ptr = &command_queue->ctx;
     src_size = sizeof(cl_context);
   } else if (param_name == CL_QUEUE_DEVICE) {
-    src_ptr = &command_queue->ctx->device;
+    src_ptr = &command_queue->device;
     src_size = sizeof(cl_device_id);
   } else if (param_name == CL_QUEUE_REFERENCE_COUNT) {
     ref = CL_OBJECT_GET_REF(command_queue);

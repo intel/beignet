@@ -268,6 +268,10 @@ cl_create_context(const cl_context_properties *  properties,
   cl_context ctx = NULL;
   cl_int err = CL_SUCCESS;
   cl_uint prop_len = 0;
+  cl_uint dev_num = 0;
+  cl_device_id* all_dev = NULL;
+  cl_uint i, j;
+
   /* XXX */
   FATAL_IF (num_devices != 1, "Only one device is supported");
 
@@ -275,8 +279,32 @@ cl_create_context(const cl_context_properties *  properties,
   if (UNLIKELY(((err = cl_context_properties_process(properties, &props, &prop_len)) != CL_SUCCESS)))
     goto error;
 
+  /* Filter out repeated device. */
+  assert(num_devices > 0);
+  all_dev = cl_calloc(num_devices, sizeof(cl_device_id));
+  if (all_dev == NULL) {
+    *errcode_ret = CL_OUT_OF_HOST_MEMORY;
+    return NULL;
+  }
+  for (i = 0; i < num_devices; i++) {
+    for (j = 0; j < i; j++) {
+      if (devices[j] == devices[i]) {
+        break;
+      }
+    }
+
+    if (j != i) { // Find some duplicated one.
+      continue;
+    }
+
+    all_dev[dev_num] = devices[i];
+    dev_num++;
+  }
+  assert(dev_num == 1); // TODO: multi devices later.
+
   /* We are good */
-  if (UNLIKELY((ctx = cl_context_new(&props)) == NULL)) {
+  if (UNLIKELY((ctx = cl_context_new(&props, dev_num, all_dev)) == NULL)) {
+    cl_free(all_dev);
     err = CL_OUT_OF_HOST_MEMORY;
     goto error;
   }
@@ -286,13 +314,13 @@ cl_create_context(const cl_context_properties *  properties,
     memcpy(ctx->prop_user, properties, sizeof(cl_context_properties)*prop_len);
   }
   ctx->prop_len = prop_len;
-  /* Attach the device to the context */
-  ctx->device = *devices;
+  /* cl_context_new will use all_dev. */
+  all_dev = NULL;
 
   /* Save the user callback and user data*/
   ctx->pfn_notify = pfn_notify;
   ctx->user_data = user_data;
-  cl_driver_set_atomic_flag(ctx->drv, ctx->device->atomic_test_result);
+  cl_driver_set_atomic_flag(ctx->drv, ctx->devices[0]->atomic_test_result);
 
 exit:
   if (errcode_ret != NULL)
@@ -305,12 +333,14 @@ error:
 }
 
 LOCAL cl_context
-cl_context_new(struct _cl_context_prop *props)
+cl_context_new(struct _cl_context_prop *props, cl_uint dev_num, cl_device_id* all_dev)
 {
   cl_context ctx = NULL;
 
   TRY_ALLOC_NO_ERR (ctx, CALLOC(struct _cl_context));
   CL_OBJECT_INIT_BASE(ctx, CL_OBJECT_CONTEXT_MAGIC);
+  ctx->devices = all_dev;
+  ctx->device_num = dev_num;
   list_init(&ctx->queues);
   list_init(&ctx->mem_objects);
   list_init(&ctx->samplers);
@@ -387,6 +417,7 @@ cl_context_create_queue(cl_context ctx,
   /* We create the command queue and store it in the context list of queues */
   TRY_ALLOC (queue, cl_command_queue_new(ctx));
   queue->props = properties;
+  queue->device = device;
 
 exit:
   if (errcode_ret)
@@ -414,7 +445,7 @@ cl_context_get_static_kernel_from_bin(cl_context ctx, cl_int index,
 
   CL_OBJECT_TAKE_OWNERSHIP(ctx, 1);
   if (ctx->internal_prgs[index] == NULL) {
-    ctx->internal_prgs[index] = cl_program_create_from_binary(ctx, 1, &ctx->device,
+    ctx->internal_prgs[index] = cl_program_create_from_binary(ctx, 1, &ctx->devices[0],
       &size, (const unsigned char **)&str_kernel, &binary_status, &ret);
 
     if (!ctx->internal_prgs[index]) {

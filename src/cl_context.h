@@ -101,7 +101,8 @@ struct _cl_context_prop {
 struct _cl_context {
   _cl_base_object base;
   cl_driver drv;                    /* Handles HW or simulator */
-  cl_device_id device;              /* All information about the GPU device */
+  cl_device_id* devices;            /* All devices belong to this context */
+  cl_uint device_num;               /* Devices number of this context */
   list_head queues;                 /* All command queues currently allocated */
   cl_uint queue_num;                /* All queue number currently allocated */
   cl_uint queue_cookie;             /* Cookie will change every time we change queue list. */
@@ -158,7 +159,7 @@ extern cl_context cl_create_context(const cl_context_properties*,
                                     cl_int*);
 
 /* Allocate and initialize a context */
-extern cl_context cl_context_new(struct _cl_context_prop *);
+extern cl_context cl_context_new(struct _cl_context_prop *prop, cl_uint dev_num, cl_device_id* all_dev);
 
 /* Destroy and deallocate a context */
 extern void cl_context_delete(cl_context);

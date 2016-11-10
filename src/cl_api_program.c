@@ -44,12 +44,12 @@ clGetProgramInfo(cl_program program,
     src_ptr = &program->ctx;
     src_size = sizeof(cl_context);
   } else if (param_name == CL_PROGRAM_NUM_DEVICES) {
-    num_dev = 1; // Just 1 dev now.
+    num_dev = program->ctx->device_num; // Just 1 dev now.
     src_ptr = &num_dev;
     src_size = sizeof(cl_uint);
   } else if (param_name == CL_PROGRAM_DEVICES) {
-    src_ptr = &program->ctx->device;
-    src_size = sizeof(cl_device_id);
+    src_ptr = program->ctx->devices;
+    src_size = program->ctx->device_num * sizeof(cl_device_id);
   } else if (param_name == CL_PROGRAM_NUM_KERNELS) {
     kernels_num = program->ker_n;
     src_ptr = &kernels_num;
@@ -135,9 +135,10 @@ clGetProgramBuildInfo(cl_program program,
     return CL_INVALID_PROGRAM;
   }
 
-  if (device != program->ctx->device) {
-    return CL_INVALID_DEVICE;
-  }
+  cl_int err = cl_devices_list_include_check(program->ctx->device_num,
+                                             program->ctx->devices, 1, &device);
+  if (err != CL_SUCCESS)
+    return err;
 
   if (param_name == CL_PROGRAM_BUILD_STATUS) {
     src_ptr = &program->build_status;

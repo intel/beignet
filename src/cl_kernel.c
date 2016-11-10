@@ -453,7 +453,7 @@ cl_kernel_setup(cl_kernel k, gbe_kernel opaque)
   /* Get image data & size */
   k->image_sz = interp_kernel_get_image_size(k->opaque);
   assert(k->sampler_sz <= GEN_MAX_SURFACES);
-  assert(k->image_sz <= ctx->device->max_read_image_args + ctx->device->max_write_image_args);
+  assert(k->image_sz <= ctx->devices[0]->max_read_image_args + ctx->devices[0]->max_write_image_args);
   if (k->image_sz > 0) {
     TRY_ALLOC_NO_ERR(k->images, cl_calloc(k->image_sz, sizeof(k->images[0])));
     interp_kernel_get_image_data(k->opaque, k->images);

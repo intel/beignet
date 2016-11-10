@@ -273,7 +273,7 @@ static void
 cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
 {
   cl_context ctx = ker->program->ctx;
-  cl_device_id device = ctx->device;
+  cl_device_id device = ctx->devices[0];
   const int32_t per_lane_stack_sz = ker->stack_size;
   const int32_t value = GBE_CURBE_EXTRA_ARGUMENT;
   const int32_t sub_value = GBE_STACK_BUFFER;
@@ -289,7 +289,7 @@ cl_bind_stack(cl_gpgpu gpgpu, cl_kernel ker)
    */
   assert(offset_stack_buffer >= 0);
   stack_sz *= interp_kernel_get_simd_width(ker->opaque);
-  stack_sz *= device->max_compute_unit * ctx->device->max_thread_per_unit;
+  stack_sz *= device->max_compute_unit * ctx->devices[0]->max_thread_per_unit;
 
   /* for some hardware, part of EUs are disabled with EU id reserved,
    * it makes the active EU id larger than count of EUs within a subslice,
@@ -394,14 +394,14 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   kernel.thread_n = thread_n = (local_sz + simd_sz - 1) / simd_sz;
   kernel.curbe_sz = cst_sz;
 
-  if (scratch_sz > ker->program->ctx->device->scratch_mem_size) {
+  if (scratch_sz > ker->program->ctx->devices[0]->scratch_mem_size) {
     DEBUGP(DL_ERROR, "Out of scratch memory %d.", scratch_sz);
     return CL_OUT_OF_RESOURCES;
   }
   /* Curbe step 1: fill the constant urb buffer data shared by all threads */
   if (ker->curbe) {
     kernel.slm_sz = cl_curbe_fill(ker, work_dim, global_wk_off, global_wk_sz,local_wk_sz_use ,local_wk_sz, thread_n);
-    if (kernel.slm_sz > ker->program->ctx->device->local_mem_size) {
+    if (kernel.slm_sz > ker->program->ctx->devices[0]->local_mem_size) {
       DEBUGP(DL_ERROR, "Out of shared local memory %d.", kernel.slm_sz);
       return CL_OUT_OF_RESOURCES;
     }
@@ -412,9 +412,9 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
 
   /* Setup the kernel */
   if (queue->props & CL_QUEUE_PROFILING_ENABLE)
-    err = cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit * ctx->device->max_thread_per_unit, cst_sz / 32, 1);
+    err = cl_gpgpu_state_init(gpgpu, ctx->devices[0]->max_compute_unit * ctx->devices[0]->max_thread_per_unit, cst_sz / 32, 1);
   else
-    err = cl_gpgpu_state_init(gpgpu, ctx->device->max_compute_unit * ctx->device->max_thread_per_unit, cst_sz / 32, 0);
+    err = cl_gpgpu_state_init(gpgpu, ctx->devices[0]->max_compute_unit * ctx->devices[0]->max_thread_per_unit, cst_sz / 32, 0);
   if (err != 0)
     goto error;
   printf_num = interp_get_printf_num(printf_info);

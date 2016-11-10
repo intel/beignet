@@ -268,7 +268,7 @@ cl_program_create_from_binary(cl_context             ctx,
   assert(ctx);
   INVALID_DEVICE_IF (num_devices != 1);
   INVALID_DEVICE_IF (devices == NULL);
-  INVALID_DEVICE_IF (devices[0] != ctx->device);
+  INVALID_DEVICE_IF (devices[0] != ctx->devices[0]);
   INVALID_VALUE_IF (binaries == NULL);
   INVALID_VALUE_IF (lengths == NULL);
 
@@ -305,7 +305,7 @@ cl_program_create_from_binary(cl_context             ctx,
     TRY_ALLOC(typed_binary, cl_calloc(lengths[0]+1, sizeof(char)));
     memcpy(typed_binary+1, binaries[0], lengths[0]);
     *typed_binary = 1;
-    program->opaque = compiler_program_new_from_llvm_binary(program->ctx->device->device_id, typed_binary, program->binary_sz+1);
+    program->opaque = compiler_program_new_from_llvm_binary(program->ctx->devices[0]->device_id, typed_binary, program->binary_sz+1);
     cl_free(typed_binary);
     if (UNLIKELY(program->opaque == NULL)) {
       err = CL_INVALID_PROGRAM;
@@ -323,7 +323,7 @@ cl_program_create_from_binary(cl_context             ctx,
       err= CL_INVALID_BINARY;
       goto error;
     }
-    program->opaque = compiler_program_new_from_llvm_binary(program->ctx->device->device_id, program->binary, program->binary_sz);
+    program->opaque = compiler_program_new_from_llvm_binary(program->ctx->devices[0]->device_id, program->binary, program->binary_sz);
 
     if (UNLIKELY(program->opaque == NULL)) {
       err = CL_INVALID_PROGRAM;
@@ -332,7 +332,7 @@ cl_program_create_from_binary(cl_context             ctx,
     program->source_type = FROM_LLVM;
   }
   else if (isGenBinary((unsigned char*)program->binary)) {
-    program->opaque = interp_program_new_from_binary(program->ctx->device->device_id, program->binary, program->binary_sz);
+    program->opaque = interp_program_new_from_binary(program->ctx->devices[0]->device_id, program->binary, program->binary_sz);
     if (UNLIKELY(program->opaque == NULL)) {
       err = CL_INVALID_PROGRAM;
       goto error;
@@ -374,7 +374,7 @@ cl_program_create_with_built_in_kernles(cl_context     ctx,
   assert(ctx);
   INVALID_DEVICE_IF (num_devices != 1);
   INVALID_DEVICE_IF (devices == NULL);
-  INVALID_DEVICE_IF (devices[0] != ctx->device);
+  INVALID_DEVICE_IF (devices[0] != ctx->devices[0]);
 
   cl_int binary_status = CL_SUCCESS;
   extern char cl_internal_built_in_kernel_str[];
@@ -382,7 +382,7 @@ cl_program_create_with_built_in_kernles(cl_context     ctx,
   char* p_built_in_kernel_str =cl_internal_built_in_kernel_str;
 
   ctx->built_in_prgs = cl_program_create_from_binary(ctx, 1,
-                                                          &ctx->device,
+                                                          &ctx->devices[0],
                                                           (size_t*)&cl_internal_built_in_kernel_str_size,
                                                           (const unsigned char **)&p_built_in_kernel_str,
                                                           &binary_status, &err);
@@ -408,7 +408,7 @@ cl_program_create_with_built_in_kernles(cl_context     ctx,
 
   kernel = strtok_r( local_kernel_names, delims , &saveptr);
   while( kernel != NULL ) {
-    matched_kernel = strstr(ctx->device->built_in_kernels, kernel);
+    matched_kernel = strstr(ctx->devices[0]->built_in_kernels, kernel);
     if(matched_kernel){
       for (i = 0; i < ctx->built_in_prgs->ker_n; ++i) {
         assert(ctx->built_in_prgs->ker[i]);
@@ -448,7 +448,7 @@ cl_program_create_from_llvm(cl_context ctx,
   assert(ctx);
   INVALID_DEVICE_IF (num_devices != 1);
   INVALID_DEVICE_IF (devices == NULL);
-  INVALID_DEVICE_IF (devices[0] != ctx->device);
+  INVALID_DEVICE_IF (devices[0] != ctx->devices[0]);
   INVALID_VALUE_IF (file_name == NULL);
 
   program = cl_program_new(ctx);
@@ -457,7 +457,7 @@ cl_program_create_from_llvm(cl_context ctx,
       goto error;
   }
 
-  program->opaque = compiler_program_new_from_llvm(ctx->device->device_id, file_name, NULL, NULL, NULL, program->build_log_max_sz, program->build_log, &program->build_log_sz, 1, NULL);
+  program->opaque = compiler_program_new_from_llvm(ctx->devices[0]->device_id, file_name, NULL, NULL, NULL, program->build_log_max_sz, program->build_log, &program->build_log_sz, 1, NULL);
   if (UNLIKELY(program->opaque == NULL)) {
     err = CL_INVALID_PROGRAM;
     goto error;
@@ -554,7 +554,7 @@ static int check_cl_version_option(cl_program p, const char* options) {
 
     ver1 = (s[10] - '0') * 10 + (s[12] - '0');
 
-    if (cl_get_device_info(p->ctx->device, CL_DEVICE_OPENCL_C_VERSION, sizeof(version_str),
+    if (cl_get_device_info(p->ctx->devices[0], CL_DEVICE_OPENCL_C_VERSION, sizeof(version_str),
                                   version_str, NULL) != CL_SUCCESS)
       return 0;
 
@@ -622,7 +622,7 @@ cl_program_build(cl_program p, const char *options)
       goto error;
     }
 
-    p->opaque = compiler_program_new_from_source(p->ctx->device->device_id, p->source, p->build_log_max_sz, options, p->build_log, &p->build_log_sz);
+    p->opaque = compiler_program_new_from_source(p->ctx->devices[0]->device_id, p->source, p->build_log_max_sz, options, p->build_log, &p->build_log_sz);
     if (UNLIKELY(p->opaque == NULL)) {
       if (p->build_log_sz > 0 && strstr(p->build_log, "error: error reading 'options'"))
         err = CL_INVALID_BUILD_OPTIONS;
@@ -650,7 +650,7 @@ cl_program_build(cl_program p, const char *options)
     /* Create all the kernels */
     TRY (cl_program_load_gen_program, p);
   } else if (p->source_type == FROM_BINARY && p->binary_type != CL_PROGRAM_BINARY_TYPE_EXECUTABLE) {
-    p->opaque = interp_program_new_from_binary(p->ctx->device->device_id, p->binary, p->binary_sz);
+    p->opaque = interp_program_new_from_binary(p->ctx->devices[0]->device_id, p->binary, p->binary_sz);
     if (UNLIKELY(p->opaque == NULL)) {
       err = CL_BUILD_PROGRAM_FAILURE;
       goto error;
@@ -745,7 +745,7 @@ cl_program_link(cl_context            context,
     goto error;
   }
 
-  p->opaque = compiler_program_new_gen_program(context->device->device_id, NULL, NULL, NULL);
+  p->opaque = compiler_program_new_gen_program(context->devices[0]->device_id, NULL, NULL, NULL);
   for(i = 0; i < num_input_programs; i++) {
     // if program create with llvm binary, need deserilize first to get module.
     if(input_programs[i])
@@ -884,7 +884,7 @@ cl_program_compile(cl_program            p,
       }
     }
 
-    p->opaque = compiler_program_compile_from_source(p->ctx->device->device_id, p->source, temp_header_path,
+    p->opaque = compiler_program_compile_from_source(p->ctx->devices[0]->device_id, p->source, temp_header_path,
         p->build_log_max_sz, options, p->build_log, &p->build_log_sz);
 
     char rm_path[255]="rm ";

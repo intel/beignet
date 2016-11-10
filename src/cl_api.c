@@ -85,13 +85,6 @@ cl_check_device_type(cl_device_type device_type)
   return CL_SUCCESS;
 }
 
-static cl_int
-cl_device_id_is_ok(const cl_device_id device)
-{
-  if(UNLIKELY(device == NULL)) return CL_FALSE;
-  return device != cl_get_gt_device() ? CL_FALSE : CL_TRUE;
-}
-
 cl_int
 clGetPlatformIDs(cl_uint          num_entries,
                  cl_platform_id * platforms,
@@ -179,7 +172,10 @@ clCreateCommandQueue(cl_context                   context,
   cl_int err = CL_SUCCESS;
   CHECK_CONTEXT (context);
 
-  INVALID_DEVICE_IF (device != context->device);
+  err = cl_devices_list_include_check(context->device_num, context->devices, 1, &device);
+  if (err)
+    goto error;
+
   INVALID_VALUE_IF (properties & ~(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE));
 
   if(properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) {/*not supported now.*/
@@ -206,7 +202,10 @@ clCreateCommandQueueWithProperties(cl_context                         context,
   cl_uint queue_sz = 0xFFFFFFFF;
   CHECK_CONTEXT (context);
 
-  INVALID_DEVICE_IF (device != context->device);
+  err = cl_devices_list_include_check(context->device_num, context->devices, 1, &device);
+  if (err)
+    goto error;
+
   if(properties)
   {
     cl_ulong que_type;
@@ -1099,7 +1098,10 @@ clBuildProgram(cl_program            program,
   /* Everything is easy. We only support one device anyway */
   if (num_devices != 0) {
     assert(program->ctx);
-    INVALID_DEVICE_IF (device_list[0] != program->ctx->device);
+    err = cl_devices_list_include_check(program->ctx->device_num,
+                                        program->ctx->devices, num_devices, device_list);
+    if (err)
+      goto error;
   }
 
   assert(program->source_type == FROM_LLVM ||
@@ -1141,7 +1143,10 @@ clCompileProgram(cl_program            program ,
   /* Everything is easy. We only support one device anyway */
   if (num_devices != 0) {
     assert(program->ctx);
-    INVALID_DEVICE_IF (device_list[0] != program->ctx->device);
+    err = cl_devices_list_include_check(program->ctx->device_num,
+                                        program->ctx->devices, num_devices, device_list);
+    if (err)
+      goto error;
   }
 
   /* TODO support create program from binary */
@@ -1505,7 +1510,7 @@ cl_mem clCreatePipe (cl_context context,
     err = CL_INVALID_PIPE_SIZE;
     goto error;
   }
-  if ((err = cl_get_device_info(context->device,
+  if ((err = cl_get_device_info(context->devices[0],
                                 CL_DEVICE_PIPE_MAX_PACKET_SIZE,
                                 sizeof(device_max_size),
                                 &device_max_size,

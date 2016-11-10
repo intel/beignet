@@ -146,10 +146,10 @@ clGetContextInfo(cl_context context,
   }
 
   if (param_name == CL_CONTEXT_DEVICES) {
-    src_ptr = &context->device;
-    src_size = sizeof(cl_device_id);
+    src_ptr = context->devices;
+    src_size = sizeof(cl_device_id) * context->device_num;
   } else if (param_name == CL_CONTEXT_NUM_DEVICES) {
-    n = 1;
+    n = context->device_num;
     src_ptr = &n;
     src_size = sizeof(cl_uint);
   } else if (param_name == CL_CONTEXT_REFERENCE_COUNT) {

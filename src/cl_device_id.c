@@ -1405,22 +1405,22 @@ cl_get_kernel_max_wg_sz(cl_kernel kernel)
 {
   size_t work_group_size, thread_cnt;
   int simd_width = interp_kernel_get_simd_width(kernel->opaque);
-  int device_id = kernel->program->ctx->device->device_id;
+  int device_id = kernel->program->ctx->devices[0]->device_id;
   if (!interp_kernel_use_slm(kernel->opaque)) {
     if (!IS_BAYTRAIL_T(device_id) || simd_width == 16)
       work_group_size = simd_width * 64;
     else
-      work_group_size = kernel->program->ctx->device->max_compute_unit *
-                        kernel->program->ctx->device->max_thread_per_unit * simd_width;
+      work_group_size = kernel->program->ctx->devices[0]->max_compute_unit *
+                        kernel->program->ctx->devices[0]->max_thread_per_unit * simd_width;
   } else {
-    thread_cnt = kernel->program->ctx->device->max_compute_unit *
-                 kernel->program->ctx->device->max_thread_per_unit / kernel->program->ctx->device->sub_slice_count;
+    thread_cnt = kernel->program->ctx->devices[0]->max_compute_unit *
+                 kernel->program->ctx->devices[0]->max_thread_per_unit / kernel->program->ctx->devices[0]->sub_slice_count;
     if(thread_cnt > 64)
       thread_cnt = 64;
     work_group_size = thread_cnt * simd_width;
   }
-  if(work_group_size > kernel->program->ctx->device->max_work_group_size)
-    work_group_size = kernel->program->ctx->device->max_work_group_size;
+  if(work_group_size > kernel->program->ctx->devices[0]->max_work_group_size)
+    work_group_size = kernel->program->ctx->devices[0]->max_work_group_size;
   return work_group_size;
 }
 
@@ -1436,7 +1436,7 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
   int dimension = 0;
   CHECK_KERNEL(kernel);
   if (device == NULL)
-    device = kernel->program->ctx->device;
+    device = kernel->program->ctx->devices[0];
   if (UNLIKELY(is_gen_device(device) == CL_FALSE))
     return CL_INVALID_DEVICE;
 
@@ -1508,7 +1508,7 @@ cl_get_kernel_subgroup_info(cl_kernel kernel,
 {
   int err = CL_SUCCESS;
   if(device != NULL)
-    if (kernel->program->ctx->device != device)
+    if (kernel->program->ctx->devices[0] != device)
       return CL_INVALID_DEVICE;
 
   CHECK_KERNEL(kernel);

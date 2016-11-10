@@ -44,6 +44,7 @@ struct _cl_command_queue {
   _cl_base_object base;
   _cl_command_queue_enqueue_worker worker;
   cl_context ctx;                      /* Its parent context */
+  cl_device_id device;                 /* Its device */
   cl_event* barrier_events;            /* Point to array of non-complete user events that block this command queue */
   cl_int barrier_events_num;           /* Number of Non-complete user events */
   cl_int barrier_events_size;          /* The size of array that wait_events point to */
