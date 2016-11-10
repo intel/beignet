@@ -1578,3 +1578,54 @@ cl_get_kernel_subgroup_info(cl_kernel kernel,
 error:
   return err;
 }
+
+LOCAL cl_int
+cl_devices_list_check(cl_uint num_devices, const cl_device_id *devices)
+{
+  cl_uint i;
+
+  if (devices == NULL)
+    return CL_INVALID_DEVICE;
+
+  assert(num_devices > 0);
+  for (i = 0; i < num_devices; i++) {
+    if (!CL_OBJECT_IS_DEVICE(devices[i])) {
+      return CL_INVALID_DEVICE;
+    }
+
+    if (devices[i]->available == CL_FALSE) {
+      return CL_DEVICE_NOT_AVAILABLE;
+    }
+
+    // We now just support one platform.
+    if (devices[i]->platform != cl_get_platform_default()) {
+      return CL_INVALID_DEVICE;
+    }
+
+    // TODO: We now just support Gen Device.
+    if (devices[i] != cl_get_gt_device()) {
+      return CL_INVALID_DEVICE;
+    }
+  }
+
+  return CL_SUCCESS;
+}
+
+LOCAL cl_int
+cl_devices_list_include_check(cl_uint num_devices, const cl_device_id *devices,
+                              cl_uint num_to_check, const cl_device_id *devices_to_check)
+{
+  cl_uint i, j;
+
+  for (i = 0; i < num_to_check; i++) {
+    for (j = 0; j < num_devices; j++) {
+      if (devices_to_check[i] == devices[j])
+        break;
+    }
+
+    if (j == num_devices)
+      return CL_INVALID_DEVICE;
+  }
+
+  return CL_SUCCESS;
+}

@@ -182,5 +182,9 @@ extern cl_int cl_get_kernel_subgroup_info(cl_kernel kernel,
 extern cl_int cl_device_get_version(cl_device_id device, cl_int *ver);
 extern size_t cl_get_kernel_max_wg_sz(cl_kernel);
 
+extern cl_int cl_devices_list_check(cl_uint num_devices, const cl_device_id *devices);
+extern cl_int cl_devices_list_include_check(cl_uint num_devices, const cl_device_id *devices,
+                                        cl_uint num_to_check, const cl_device_id *devices_to_check);
+
 #endif /* __CL_DEVICE_ID_H__ */
 
