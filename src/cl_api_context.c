@@ -17,6 +17,117 @@
  */
 
 #include "cl_context.h"
+#include "cl_device_id.h"
+#include "cl_alloc.h"
+
+cl_context
+clCreateContext(const cl_context_properties *properties,
+                cl_uint num_devices,
+                const cl_device_id *devices,
+                void (*pfn_notify)(const char *, const void *, size_t, void *),
+                void *user_data,
+                cl_int *errcode_ret)
+{
+  cl_int err = CL_SUCCESS;
+  cl_context context = NULL;
+
+  do {
+    /* Assure parameters correctness */
+    if (devices == NULL) {
+      err = CL_INVALID_VALUE;
+      break;
+    }
+
+    if (num_devices == 0) {
+      err = CL_INVALID_VALUE;
+      break;
+    }
+
+    if (pfn_notify == NULL && user_data != NULL) {
+      err = CL_INVALID_VALUE;
+      break;
+    }
+
+    err = cl_devices_list_check(num_devices, devices);
+    if (err != CL_SUCCESS)
+      break;
+
+    context = cl_create_context(properties, num_devices, devices, pfn_notify, user_data, &err);
+  } while (0);
+
+  if (errcode_ret)
+    *errcode_ret = err;
+  return context;
+}
+
+cl_context
+clCreateContextFromType(const cl_context_properties *properties,
+                        cl_device_type device_type,
+                        void(CL_CALLBACK *pfn_notify)(const char *, const void *, size_t, void *),
+                        void *user_data,
+                        cl_int *errcode_ret)
+{
+  cl_context context = NULL;
+  cl_int err = CL_SUCCESS;
+  cl_device_id *devices = NULL;
+  cl_uint num_devices = 0;
+  const cl_device_type valid_type = CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_ACCELERATOR |
+                                    CL_DEVICE_TYPE_DEFAULT | CL_DEVICE_TYPE_CUSTOM;
+
+  do {
+    /* Assure parameters correctness */
+    if (pfn_notify == NULL && user_data != NULL) {
+      err = CL_INVALID_VALUE;
+      break;
+    }
+
+    if ((device_type & valid_type) == 0) {
+      err = CL_INVALID_DEVICE_TYPE;
+      break;
+    }
+
+    /* Get the devices num first. */
+    err = cl_get_device_ids(NULL, device_type, 0, NULL, &num_devices);
+    if (err != CL_SUCCESS)
+      break;
+
+    assert(num_devices > 0);
+    devices = cl_malloc(num_devices * sizeof(cl_device_id));
+    err = cl_get_device_ids(NULL, device_type, num_devices, &devices[0], &num_devices);
+    if (err != CL_SUCCESS)
+      break;
+
+    context = cl_create_context(properties, num_devices, devices, pfn_notify, user_data, &err);
+  } while (0);
+
+  if (devices)
+    cl_free(devices);
+  if (errcode_ret)
+    *errcode_ret = err;
+  return context;
+}
+
+cl_int
+clRetainContext(cl_context context)
+{
+  if (!CL_OBJECT_IS_CONTEXT(context)) {
+    return CL_INVALID_CONTEXT;
+  }
+
+  cl_context_add_ref(context);
+  return CL_SUCCESS;
+}
+
+cl_int
+clReleaseContext(cl_context context)
+{
+  if (!CL_OBJECT_IS_CONTEXT(context)) {
+    return CL_INVALID_CONTEXT;
+  }
+
+  cl_context_delete(context);
+  return CL_SUCCESS;
+}
 
 cl_int
 clGetContextInfo(cl_context context,
