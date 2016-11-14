@@ -1496,7 +1496,7 @@ do { \
       }
       GBE_ASSERT(RA.contains(reg.reg()) != false);
       const uint32_t grfOffset = RA.find(reg.reg())->second;
-      const uint32_t suboffset = reg.subphysical ? reg.subnr : 0;
+      const uint32_t suboffset = reg.subphysical ? reg.nr * GEN_REG_SIZE + reg.subnr : 0;
       const GenRegister dst = setGenReg(reg, grfOffset + suboffset);
       if (reg.quarter != 0)
         return GenRegister::Qn(dst, reg.quarter);
