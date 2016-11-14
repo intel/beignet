@@ -1240,7 +1240,7 @@ namespace gbe
       RegIntervalMap *boolsMap = new RegIntervalMap;
       for (auto &insn : block.insnList) {
         const uint32_t srcNum = insn.srcNum, dstNum = insn.dstNum;
-        insn.ID  = insnID;
+        assert(insnID == (int32_t)insn.ID);
         bool is3SrcOp = insn.opcode == SEL_OP_MAD;
         for (uint32_t srcID = 0; srcID < srcNum; ++srcID) {
           const GenRegister &selReg = insn.src(srcID);
@@ -1265,8 +1265,12 @@ namespace gbe
           if (this->intervals[reg].conflictReg == 0 ||
               this->intervals[reg].conflictReg > conflictReg)
           this->intervals[reg].conflictReg = conflictReg;
-          this->intervals[reg].minID = std::min(this->intervals[reg].minID, insnID);
-          this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, insnID);
+          int insnsrcID = insnID;
+          // If instruction is simple, src and dst can be reused and they will have different IDs
+          if (insn.isNative())
+            insnsrcID -= 1;
+          this->intervals[reg].minID = std::min(this->intervals[reg].minID, insnsrcID);
+          this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, insnsrcID);
         }
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
           const GenRegister &selReg = insn.dst(dstID);
@@ -1321,7 +1325,7 @@ namespace gbe
                        (insn.state.flag == 0 && insn.state.subFlag == 1) ));
         }
         lastID = insnID;
-        insnID++;
+        insnID += 2;
       }
 
       // All registers alive at the begining of the block must update their intervals.

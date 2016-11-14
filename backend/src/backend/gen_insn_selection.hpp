@@ -82,6 +82,8 @@ namespace gbe
     bool isBranch(void) const;
     /*! Is it a label instruction (i.e. change the implicit mask) */
     bool isLabel(void) const;
+    /*! Is it a simple navtive instruction (i.e. will be one simple ISA) */
+    bool isNative(void) const;
     /*! Get the destination register */
     GenRegister &dst(uint32_t dstID) { return regs[dstID]; }
     /*! Get the source register */
@@ -314,6 +316,8 @@ namespace gbe
     void optimize(void);
     uint32_t opt_features;
 
+    /* Add insn ID for sel IR */
+    void addID(void);
     const GenContext &getCtx();
 
     /*! Use custom allocators */

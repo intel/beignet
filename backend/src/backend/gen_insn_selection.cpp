@@ -234,6 +234,37 @@ namespace gbe
     return this->opcode == SEL_OP_LABEL;
   }
 
+  bool SelectionInstruction::isNative(void) const {
+    return this->opcode == SEL_OP_NOT         || /* ALU1 */
+           this->opcode == SEL_OP_LZD         ||
+           this->opcode == SEL_OP_RNDZ        ||
+           this->opcode == SEL_OP_RNDE        ||
+           this->opcode == SEL_OP_RNDD        ||
+           this->opcode == SEL_OP_RNDU        ||
+           this->opcode == SEL_OP_FRC         ||
+           this->opcode == SEL_OP_F16TO32     ||
+           this->opcode == SEL_OP_F32TO16     ||
+           this->opcode == SEL_OP_CBIT        ||
+           this->opcode == SEL_OP_SEL         || /* ALU2 */
+           this->opcode == SEL_OP_AND         ||
+           this->opcode == SEL_OP_OR          ||
+           this->opcode == SEL_OP_XOR         ||
+           this->opcode == SEL_OP_SHR         ||
+           this->opcode == SEL_OP_SHL         ||
+           this->opcode == SEL_OP_RSR         ||
+           this->opcode == SEL_OP_RSL         ||
+           this->opcode == SEL_OP_ASR         ||
+           this->opcode == SEL_OP_SEL         ||
+           this->opcode == SEL_OP_ADD         ||
+           this->opcode == SEL_OP_MUL         ||
+           this->opcode == SEL_OP_FBH         ||
+           this->opcode == SEL_OP_FBL         ||
+           this->opcode == SEL_OP_MACH        ||
+           this->opcode == SEL_OP_MATH        ||
+           this->opcode == SEL_OP_LRP         || /* ALU3 */
+           this->opcode == SEL_OP_MAD;
+  }
+
   ///////////////////////////////////////////////////////////////////////////
   // SelectionVector
   ///////////////////////////////////////////////////////////////////////////

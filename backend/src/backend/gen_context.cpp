@@ -4038,9 +4038,11 @@ namespace gbe
     sel->select();
     if (OCL_OPTIMIZE_SEL_IR)
       sel->optimize();
+    sel->addID();
     if (OCL_OUTPUT_SEL_IR)
       outputSelectionIR(*this, this->sel, genKernel->getName());
     schedulePreRegAllocation(*this, *this->sel);
+    sel->addID();
     if (UNLIKELY(ra->allocate(*this->sel) == false))
       return false;
     schedulePostRegAllocation(*this, *this->sel);

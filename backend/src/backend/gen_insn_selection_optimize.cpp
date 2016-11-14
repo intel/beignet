@@ -285,4 +285,14 @@ namespace gbe
     //do global optimization
 
   }
+
+  void Selection::addID()
+  {
+    uint32_t insnID = 0;
+    for (auto &block : *blockList)
+      for (auto &insn : block.insnList) {
+        insn.ID  = insnID;
+        insnID += 2;
+      }
+  }
 } /* namespace gbe */

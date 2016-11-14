@@ -102,6 +102,7 @@ namespace gbe
     cout << "WARNING: not completed yet, welcome for the FIX!" << endl;
     for (SelectionBlock &block : *sel->blockList) {
       for (SelectionInstruction &insn : block.insnList) {
+        cout<<"["<<insn.ID<<"]";
         char opname[OP_NAME_LENGTH];
         if (insn.isLabel()) {
             cout << "  L" << insn.index << ":" << endl;
