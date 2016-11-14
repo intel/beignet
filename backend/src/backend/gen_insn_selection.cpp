@@ -246,7 +246,7 @@ namespace gbe
   // SelectionBlock
   ///////////////////////////////////////////////////////////////////////////
 
-  SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) : bb(bb), isLargeBlock(false), endifLabel( (ir::LabelIndex) 0), removeSimpleIfEndif(false){}
+  SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) : bb(bb), endifLabel( (ir::LabelIndex) 0), removeSimpleIfEndif(false){}
 
   void SelectionBlock::append(ir::Register reg) { tmp.push_back(reg); }
 
@@ -1121,7 +1121,7 @@ namespace gbe
       if(this->block->removeSimpleIfEndif){
         mov->state.predicate = GEN_PREDICATE_NORMAL;
         mov->state.flag = 0;
-        mov->state.subFlag = 0;
+        mov->state.subFlag = 1;
       }
       if (this->isScalarReg(insn->src(regID).reg()))
         mov->state.noMask = 1;
@@ -1155,7 +1155,7 @@ namespace gbe
       if(this->block->removeSimpleIfEndif){
         mov->state.predicate = GEN_PREDICATE_NORMAL;
         mov->state.flag = 0;
-        mov->state.subFlag = 0;
+        mov->state.subFlag = 1;
       }
       if (simdWidth == 1) {
         mov->state.noMask = 1;
@@ -2568,7 +2568,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           this->push();
             this->curr.predicate = GEN_PREDICATE_NORMAL;
             this->curr.flag = 0;
-            this->curr.subFlag = 0;
+            this->curr.subFlag = 1;
         }
         // If there is no branch at the end of this block.
 
@@ -2583,7 +2583,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         if(this->block->removeSimpleIfEndif){
             this->curr.predicate = GEN_PREDICATE_NONE;
             this->curr.flag = 0;
-            this->curr.subFlag = 0;
+            this->curr.subFlag = 1;
           this->pop();
         }
         // If we are in if/endif fix mode, and this block is
@@ -2593,13 +2593,14 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
             this->block->insnList.size() != 0 &&
             this->block->insnList.size() % 1000 == 0 &&
             this->block->endifLabel.value() != 0) {
+          this->curr.flag = 0;
+          this->curr.subFlag = 1;
           ir::LabelIndex jip = this->block->endifLabel;
           this->ENDIF(GenRegister::immd(0), jip);
           this->push();
             this->curr.predicate = GEN_PREDICATE_NORMAL;
             this->IF(GenRegister::immd(0), jip, jip);
           this->pop();
-          this->block->isLargeBlock = true;
         }
         // Output the code in the current basic block
         this->endBackwardGeneration();
@@ -6542,6 +6543,8 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       sel.push();
         sel.curr.noMask = 1;
         sel.curr.predicate = GEN_PREDICATE_NONE;
+        sel.curr.flag = 0;
+        sel.curr.subFlag = 1;
         sel.cmpBlockIP(GEN_CONDITIONAL_LE, src0, src1);
       sel.pop();
 
@@ -6552,6 +6555,8 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         // this block, as it will always excute with all lanes activated.
         sel.push();
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
+          sel.curr.flag = 0;
+          sel.curr.subFlag = 1;
           sel.setBlockIP(src0, sel.ctx.getMaxLabel());
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.curr.noMask = 1;
@@ -6570,6 +6575,8 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         // FIXME, if the last BRA is unconditional jump, we don't need to update the label here.
         sel.push();
          sel.curr.predicate = GEN_PREDICATE_NORMAL;
+         sel.curr.flag = 0;
+         sel.curr.subFlag = 1;
          sel.setBlockIP(src0, label.value());
         sel.pop();
       }
@@ -6581,6 +6588,8 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
             (jip != nextLabel || sel.block->endifOffset != -1)) {
           // If it is required, insert a JUMP to bypass the block
           sel.push();
+            sel.curr.flag = 0;
+            sel.curr.subFlag = 1;
             if (simdWidth == 8)
               sel.curr.predicate = GEN_PREDICATE_ALIGN1_ANY8H;
             else if (simdWidth == 16)
@@ -6595,6 +6604,8 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         }
         if(!sel.block->removeSimpleIfEndif){
           sel.push();
+            sel.curr.flag = 0;
+            sel.curr.subFlag = 1;
             sel.curr.predicate = GEN_PREDICATE_NORMAL;
             if(!insn.getParent()->needEndif && insn.getParent()->needIf) {
               ir::LabelIndex label = insn.getParent()->endifLabel;
@@ -7159,6 +7170,8 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       } else {
         // Update the PcIPs
         const LabelIndex jip = sel.ctx.getLabelIndex(&insn);
+        sel.curr.flag = 0;
+        sel.curr.subFlag = 1;
         if(insn.getParent()->needEndif)
           sel.setBlockIP(ip, dst.value());
 
@@ -7225,6 +7238,8 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       } else {
         const LabelIndex next = bb.getNextBlock()->getLabelIndex();
         // Update the PcIPs
+        sel.curr.flag = 0;
+        sel.curr.subFlag = 1;
         if(insn.getParent()->needEndif)
         sel.setBlockIP(ip, dst.value());
         sel.block->endifOffset = -1;

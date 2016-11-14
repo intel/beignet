@@ -254,7 +254,6 @@ namespace gbe
     void append(SelectionInstruction *insn);
     /*! Append a new selection instruction at the beginning of the block */
     void prepend(SelectionInstruction *insn);
-    bool isLargeBlock;
     ir::LabelIndex endifLabel;
     int endifOffset;
     bool hasBarrier;
