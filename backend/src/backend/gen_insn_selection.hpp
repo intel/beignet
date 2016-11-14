@@ -212,6 +212,7 @@ namespace gbe
     // Allocates (with a linear allocator) and owns SelectionInstruction
     friend class Selection;
   };
+  void outputSelectionInst(SelectionInstruction &insn);
 
   /*! Instructions like sends require to make registers contiguous in GRF */
   class SelectionVector : public NonCopyable, public intrusive_list_node
