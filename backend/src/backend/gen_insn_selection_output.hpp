@@ -6,7 +6,7 @@ namespace gbe
   class Selection;  // Pre ISA code
   class GenContext; // Handle compilation for Gen
 
-  void outputSelectionIR(GenContext &ctx, Selection* sel);
+  void outputSelectionIR(GenContext &ctx, Selection* sel, const char* KernelName);
 
 } /* namespace gbe */
 

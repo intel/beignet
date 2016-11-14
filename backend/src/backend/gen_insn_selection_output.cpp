@@ -96,9 +96,9 @@ namespace gbe
   }
 
 #define OP_NAME_LENGTH 512
-  void outputSelectionIR(GenContext &ctx, Selection* sel)
+  void outputSelectionIR(GenContext &ctx, Selection* sel, const char* KernelName)
   {
-    cout << "SELECTION IR begin:" << endl;
+    cout << KernelName <<"'s SELECTION IR begin:" << endl;
     cout << "WARNING: not completed yet, welcome for the FIX!" << endl;
     for (SelectionBlock &block : *sel->blockList) {
       for (SelectionInstruction &insn : block.insnList) {
@@ -166,7 +166,7 @@ namespace gbe
       }
       cout << endl;
     }
-    cout << "SELECTION IR end." << endl << endl;
+    cout <<KernelName << "'s SELECTION IR end." << endl << endl;
   }
 
 }

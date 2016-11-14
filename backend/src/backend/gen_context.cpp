@@ -4039,7 +4039,7 @@ namespace gbe
     if (OCL_OPTIMIZE_SEL_IR)
       sel->optimize();
     if (OCL_OUTPUT_SEL_IR)
-      outputSelectionIR(*this, this->sel);
+      outputSelectionIR(*this, this->sel, genKernel->getName());
     schedulePreRegAllocation(*this, *this->sel);
     if (UNLIKELY(ra->allocate(*this->sel) == false))
       return false;
