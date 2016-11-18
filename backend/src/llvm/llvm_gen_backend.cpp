@@ -1366,7 +1366,7 @@ namespace gbe
           }
           Builder.SetInsertPoint(cast<Instruction>(theUser));
 
-          Type *ptyTy = IntegerType::get(ptr->getContext(), ptr->getType()->getIntegerBitWidth());
+          Type *ptyTy = IntegerType::get(ptr->getContext(), getTypeBitSize(unit, ptr->getType()));
           Value *v1 = Builder.CreatePtrToInt(pointerOp, ptyTy);
 
           Value *v2 = Builder.CreatePtrToInt(getSinglePointerOrigin(pointerOp), ptyTy);
