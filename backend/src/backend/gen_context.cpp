@@ -3469,9 +3469,8 @@ namespace gbe
   }
 
   void GenContext::emitPrintfInstruction(const SelectionInstruction &insn) {
-    const GenRegister dst = ra->genReg(insn.dst(0));
-    const GenRegister tmp0 = ra->genReg(insn.dst(1));
-    const GenRegister tmp1 = ra->genReg(insn.dst(2));
+    const GenRegister tmp0 = ra->genReg(insn.dst(0));
+    const GenRegister tmp1 = ra->genReg(insn.dst(1));
     GenRegister src;
     uint32_t srcNum = insn.srcNum;
 
@@ -3517,15 +3516,6 @@ namespace gbe
       } else if (src.type == GEN_TYPE_L || src.type == GEN_TYPE_UL ) {
         emitPrintfLongInstruction(addr, data, src, insn.extra.printfBTI);
       }
-    }
-
-    if (dst.hstride == GEN_HORIZONTAL_STRIDE_0) {
-      p->push();
-      p->curr.execWidth = 1;
-    }
-    p->MOV(dst, GenRegister::immd(0));
-    if (dst.hstride == GEN_HORIZONTAL_STRIDE_0) {
-      p->pop();
     }
   }
 

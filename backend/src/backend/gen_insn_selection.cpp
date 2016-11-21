@@ -705,7 +705,7 @@ namespace gbe
     /*! Store the profiling info */
     void STORE_PROFILING(uint32_t profilingType, uint32_t bti, GenRegister tmp0, GenRegister tmp1, GenRegister ts[5], int tsNum);
     /*! Printf */
-    void PRINTF(GenRegister dst, uint8_t bti, GenRegister tmp0, GenRegister tmp1, GenRegister src[8],
+    void PRINTF(uint8_t bti, GenRegister tmp0, GenRegister tmp1, GenRegister src[8],
                 int srcNum, uint16_t num, bool isContinue, uint32_t totalSize);
     /*! Multiply 64-bit integers */
     void I64MUL(Reg dst, Reg src0, Reg src1, GenRegister *tmp, bool native_long);
@@ -2129,20 +2129,19 @@ namespace gbe
     }
   }
 
-  void Selection::Opaque::PRINTF(GenRegister dst, uint8_t bti, GenRegister tmp0, GenRegister tmp1,
+  void Selection::Opaque::PRINTF(uint8_t bti, GenRegister tmp0, GenRegister tmp1,
                GenRegister src[8], int srcNum, uint16_t num, bool isContinue, uint32_t totalSize) {
-    SelectionInstruction *insn = this->appendInsn(SEL_OP_PRINTF, 3, srcNum);
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_PRINTF, 2, srcNum);
     SelectionVector *vector = this->appendVector();
 
     for (int i = 0; i < srcNum; i++)
       insn->src(i) = src[i];
 
-    insn->dst(0) = dst;
-    insn->dst(1) = tmp0;
-    insn->dst(2) = tmp1;
+    insn->dst(0) = tmp0;
+    insn->dst(1) = tmp1;
 
     vector->regNum = 2;
-    vector->reg = &insn->dst(1);
+    vector->reg = &insn->dst(0);
     vector->offsetID = 0;
     vector->isSrc = 0;
 
@@ -7041,8 +7040,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       uint8_t BTI = insn.getBti();
       GenRegister tmp0, tmp1;
       uint32_t srcNum = insn.getSrcNum();
-      GenRegister dst = sel.selReg(insn.getDst(0), TYPE_S32);
-      //GBE_ASSERT(srcNum);
+
       uint32_t i = 0;
       uint32_t totalSize = 0;
       bool isContinue = false;
@@ -7063,14 +7061,14 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       i = 0;
       GenRegister regs[8];
       if (srcNum == 0) {
-          sel.PRINTF(dst, BTI, tmp0, tmp1, regs, srcNum, num, isContinue, totalSize);
+          sel.PRINTF(BTI, tmp0, tmp1, regs, srcNum, num, isContinue, totalSize);
       } else {
         do {
           uint32_t s = srcNum < 8 ? srcNum : 8;
           for (uint32_t j = 0; j < s; j++) {
             regs[j] = sel.selReg(insn.getSrc(i + j), insn.getType(i + j));
           }
-          sel.PRINTF(dst, BTI, tmp0, tmp1, regs, s, num, isContinue, totalSize);
+          sel.PRINTF(BTI, tmp0, tmp1, regs, s, num, isContinue, totalSize);
 
           if (srcNum > 8) {
             srcNum -= 8;
