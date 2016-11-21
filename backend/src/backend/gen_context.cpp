@@ -3474,8 +3474,6 @@ namespace gbe
     const GenRegister tmp1 = ra->genReg(insn.dst(2));
     GenRegister src;
     uint32_t srcNum = insn.srcNum;
-    if (insn.extra.continueFlag)
-      srcNum--;
 
     GenRegister addr = GenRegister::retype(tmp0, GEN_TYPE_UD);
     GenRegister data = GenRegister::retype(tmp1, GEN_TYPE_UD);

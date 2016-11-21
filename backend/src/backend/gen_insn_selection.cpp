@@ -2131,49 +2131,25 @@ namespace gbe
 
   void Selection::Opaque::PRINTF(GenRegister dst, uint8_t bti, GenRegister tmp0, GenRegister tmp1,
                GenRegister src[8], int srcNum, uint16_t num, bool isContinue, uint32_t totalSize) {
-    if (isContinue) {
-      SelectionInstruction *insn = this->appendInsn(SEL_OP_PRINTF, 3, srcNum + 1);
-      SelectionVector *vector = this->appendVector();
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_PRINTF, 3, srcNum);
+    SelectionVector *vector = this->appendVector();
 
-      for (int i = 0; i < srcNum; i++)
-        insn->src(i) = src[i];
+    for (int i = 0; i < srcNum; i++)
+      insn->src(i) = src[i];
 
-      insn->src(srcNum) = tmp0;
+    insn->dst(0) = dst;
+    insn->dst(1) = tmp0;
+    insn->dst(2) = tmp1;
 
-      insn->dst(0) = dst;
-      insn->dst(1) = tmp0;
-      insn->dst(2) = tmp1;
+    vector->regNum = 2;
+    vector->reg = &insn->dst(1);
+    vector->offsetID = 0;
+    vector->isSrc = 0;
 
-      vector->regNum = 2;
-      vector->reg = &insn->dst(1);
-      vector->offsetID = 0;
-      vector->isSrc = 0;
-
-      insn->extra.printfSize = static_cast<uint16_t>(totalSize);
-      insn->extra.continueFlag = isContinue;
-      insn->extra.printfBTI = bti;
-      insn->extra.printfNum = num;
-    } else {
-      SelectionInstruction *insn = this->appendInsn(SEL_OP_PRINTF, 3, srcNum);
-      SelectionVector *vector = this->appendVector();
-
-      for (int i = 0; i < srcNum; i++)
-        insn->src(i) = src[i];
-
-      insn->dst(0) = dst;
-      insn->dst(1) = tmp0;
-      insn->dst(2) = tmp1;
-
-      vector->regNum = 2;
-      vector->reg = &insn->dst(1);
-      vector->offsetID = 0;
-      vector->isSrc = 0;
-
-      insn->extra.printfSize = static_cast<uint16_t>(totalSize);
-      insn->extra.continueFlag = isContinue;
-      insn->extra.printfBTI = bti;
-      insn->extra.printfNum = num;
-    }
+    insn->extra.printfSize = static_cast<uint16_t>(totalSize);
+    insn->extra.continueFlag = isContinue;
+    insn->extra.printfBTI = bti;
+    insn->extra.printfNum = num;
   }
 
   void Selection::Opaque::WORKGROUP_OP(uint32_t wg_op,
