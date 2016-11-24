@@ -45,11 +45,14 @@ namespace ir {
     FAMILY_BYTE  = 1,
     FAMILY_WORD  = 2,
     FAMILY_DWORD = 3,
-    FAMILY_QWORD = 4
+    FAMILY_QWORD = 4,
+    FAMILY_OWORD = 5,
+    FAMILY_HWORD = 6,
+    FAMILY_REG   = 7
   };
 
   INLINE char getFamilyName(RegisterFamily family) {
-    static char registerFamilyName[] = {'b', 'B', 'W', 'D', 'Q'};
+    static char registerFamilyName[] = {'b', 'B', 'W', 'D', 'Q', 'O', 'H', 'R'};
     return registerFamilyName[family];
   }
 
@@ -59,6 +62,7 @@ namespace ir {
       case FAMILY_WORD: return 2;
       case FAMILY_DWORD: return 4;
       case FAMILY_QWORD: return 8;
+      case FAMILY_REG: return 32;
       default: NOT_SUPPORTED;
     };
     return 0;

@@ -92,8 +92,12 @@ namespace gbe
       const bool isScalar = ctx.sel->isScalarReg(reg);
       const RegisterData regData = ctx.sel->getRegisterData(reg);
       const RegisterFamily family = regData.family;
-      const uint32_t typeSize = isScalar ? familyScalarSize[family] : familyVectorSize[family];
-      regSize = isScalar ? typeSize : ctx.getSimdWidth() * typeSize;
+      if (family == ir::FAMILY_REG)
+        regSize = 32;
+      else {
+        const uint32_t typeSize = isScalar ? familyScalarSize[family] : familyVectorSize[family];
+        regSize = isScalar ? typeSize : ctx.getSimdWidth() * typeSize;
+      }
       if (regFamily != NULL)
         *regFamily = family;
     }

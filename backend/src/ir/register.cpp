@@ -35,6 +35,9 @@ namespace ir {
       case FAMILY_WORD: return out << "word";
       case FAMILY_DWORD: return out << "dword";
       case FAMILY_QWORD: return out << "qword";
+      case FAMILY_OWORD: return out << "oword";
+      case FAMILY_HWORD: return out << "hword";
+      case FAMILY_REG: return out << "reg";
     };
     return out;
   }

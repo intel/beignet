@@ -86,8 +86,8 @@ namespace ir {
       case FAMILY_WORD: return TYPE_U16;
       case FAMILY_DWORD: return TYPE_U32;
       case FAMILY_QWORD: return TYPE_U64;
-    };
-    return TYPE_U32;
+      default: return TYPE_U32;
+    }
   }
 
 } /* namespace ir */
