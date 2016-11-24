@@ -4462,7 +4462,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       using namespace ir;
       unsigned addrBytes = typeSize(addr.type);
       AddressMode AM = insn.getAddressMode();
-      vector<GenRegister> btiTemp;
+      vector<GenRegister> btiTemp = sel.getBTITemps(AM);
       if (AM == AM_DynamicBti || AM == AM_StaticBti) {
         if (AM == AM_DynamicBti) {
           Register btiReg = insn.getBtiReg();
