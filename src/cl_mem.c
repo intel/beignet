@@ -763,9 +763,9 @@ void* cl_mem_svm_allocate(cl_context ctx, cl_svm_mem_flags flags,
     return NULL;
   }
 
+  void * ptr = NULL;
 #ifdef HAS_BO_SET_SOFTPIN
   cl_buffer_mgr bufmgr = NULL;
-  void * ptr = NULL;
   cl_mem mem;
   _cl_mem_svm* svm;
   if(UNLIKELY((svm = CALLOC(_cl_mem_svm)) == NULL))
