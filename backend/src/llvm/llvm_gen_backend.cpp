@@ -2351,6 +2351,14 @@ namespace gbe
         }
         if(typeNameNode) {
           llvmInfo.typeName = (cast<MDString>(typeNameNode->getOperand(opID)))->getString();
+          //LLVM 3.9 image's type name include access qual, don't match OpenCL spec, erase them.
+          std::vector<std::string> filters = {"__read_only ", "__write_only "};
+          for (uint32_t i = 0; i < filters.size(); i++) {
+            size_t pos = llvmInfo.typeName.find(filters[i]);
+            if (pos != std::string::npos) {
+              llvmInfo.typeName = llvmInfo.typeName.erase(pos, filters[i].length());
+            }
+          }
         }
         if(typeBaseNameNode){
           llvmInfo.typeBaseName = (cast<MDString>(typeBaseNameNode->getOperand(opID)))->getString();
