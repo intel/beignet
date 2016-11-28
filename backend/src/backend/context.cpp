@@ -345,7 +345,7 @@ namespace gbe
   Context::Context(const ir::Unit &unit, const std::string &name) :
     unit(unit), fn(*unit.getFunction(name)), name(name), liveness(NULL), dag(NULL), useDWLabel(false)
   {
-    GBE_ASSERT(unit.getPointerSize() == ir::POINTER_32_BITS);
+    GBE_ASSERT(unit.getPointerSize() == ir::POINTER_32_BITS || unit.getPointerSize() == ir::POINTER_64_BITS);
     this->liveness = GBE_NEW(ir::Liveness, const_cast<ir::Function&>(fn), true);
     this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
     // r0 (GEN_REG_SIZE) is always set by the HW and used at the end by EOT

@@ -153,7 +153,9 @@ namespace gbe
   llvm::FunctionPass* createSamplerFixPass();
 
   /*! Add all the function call of ocl to our bitcode. */
-  llvm::Module* runBitCodeLinker(llvm::Module *mod, bool strictMath);
+  llvm::Module* runBitCodeLinker(llvm::Module *mod, bool strictMath, ir::Unit &unit);
+
+  uint32_t getModuleOclVersion(const llvm::Module *M);
 
   void* getPrintfInfo(llvm::CallInst* inst);
 } /* namespace gbe */

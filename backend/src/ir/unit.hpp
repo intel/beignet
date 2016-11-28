@@ -67,6 +67,7 @@ namespace ir {
     }
     /*! Return the size of the pointers manipulated */
     INLINE PointerSize getPointerSize(void) const { return pointerSize; }
+    INLINE void setPointerSize(PointerSize size) { pointerSize = size; }
     /*! Return the family of registers that contain pointer */
     INLINE RegisterFamily getPointerFamily(void) const {
       if (this->getPointerSize() == POINTER_32_BITS)
@@ -88,7 +89,7 @@ namespace ir {
     bool getInProfilingMode(void) const { return inProfilingMode; }
     void setValid(bool value) { valid = value; }
     bool getValid() { return valid; }
-    void setOclVersoin(uint32_t version) { oclVersion = version; }
+    void setOclVersion(uint32_t version) { oclVersion = version; }
     uint32_t getOclVersion() const { return oclVersion; }
   private:
     friend class ContextInterface; //!< Can free modify the unit

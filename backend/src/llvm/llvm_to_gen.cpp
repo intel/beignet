@@ -321,8 +321,9 @@ namespace gbe
 
     std::unique_ptr<Module> M;
 
-    /* Before do any thing, we first filter in all CL functions in bitcode. */ 
-    M.reset(runBitCodeLinker(cl_mod, strictMath));
+    /* Before do any thing, we first filter in all CL functions in bitcode. */
+    /* Also set unit's pointer size in runBitCodeLinker */
+    M.reset(runBitCodeLinker(cl_mod, strictMath, unit));
     if (!module)
       delete cl_mod;
     if (M.get() == 0)

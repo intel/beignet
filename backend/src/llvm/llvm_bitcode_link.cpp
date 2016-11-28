@@ -26,18 +26,23 @@
 #include "src/GBEConfig.h"
 #include "llvm_includes.hpp"
 #include "llvm/llvm_gen_backend.hpp"
+#include "ir/unit.hpp"
 
 using namespace llvm;
 
 SVAR(OCL_BITCODE_LIB_PATH, OCL_BITCODE_BIN);
+SVAR(OCL_BITCODE_LIB_20_PATH, OCL_BITCODE_BIN_20);
 
 namespace gbe
 {
-  static Module* createOclBitCodeModule(LLVMContext& ctx, bool strictMath)
+  static Module* createOclBitCodeModule(LLVMContext& ctx,
+                                                 bool strictMath,
+                                                 uint32_t oclVersion)
   {
-    std::string bitCodeFiles = OCL_BITCODE_LIB_PATH;
+    std::string bitCodeFiles = oclVersion >= 200 ?
+                               OCL_BITCODE_LIB_20_PATH : OCL_BITCODE_LIB_PATH;
     if(bitCodeFiles == "")
-      bitCodeFiles = OCL_BITCODE_BIN;
+      bitCodeFiles = oclVersion >= 200 ? OCL_BITCODE_BIN_20 : OCL_BITCODE_BIN;
     std::istringstream bitCodeFilePath(bitCodeFiles);
     std::string FilePath;
     bool findBC = false;
@@ -135,12 +140,16 @@ namespace gbe
   }
 
 
-  Module* runBitCodeLinker(Module *mod, bool strictMath)
+  Module* runBitCodeLinker(Module *mod, bool strictMath, ir::Unit &unit)
   {
     LLVMContext& ctx = mod->getContext();
     std::set<std::string> materializedFuncs;
     std::vector<GlobalValue *> Gvs;
-    Module* clonedLib = createOclBitCodeModule(ctx, strictMath);
+
+    uint32_t oclVersion = getModuleOclVersion(mod);
+    ir::PointerSize size = oclVersion >= 200 ? ir::POINTER_64_BITS : ir::POINTER_32_BITS;
+    unit.setPointerSize(size);
+    Module* clonedLib = createOclBitCodeModule(ctx, strictMath, oclVersion);
     if (clonedLib == NULL)
       return NULL;
 

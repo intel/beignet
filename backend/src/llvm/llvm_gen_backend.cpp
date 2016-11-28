@@ -1697,6 +1697,9 @@ namespace gbe
 
     // Initialize
     TheModule = &M;
+    uint32_t oclVersion = getModuleOclVersion(TheModule);
+    legacyMode = oclVersion >= 200 ? false : true;
+    unit.setOclVersion(oclVersion);
     collectGlobalConstant();
     return false;
   }

@@ -122,7 +122,10 @@ namespace gbe {
   IVAR(OCL_PROFILING_LOG, 0, 0, 1); // Int for different profiling types.
   BVAR(OCL_OUTPUT_BUILD_LOG, false);
 
-  bool Program::buildFromLLVMFile(const char *fileName, const void* module, std::string &error, int optLevel) {
+  bool Program::buildFromLLVMFile(const char *fileName,
+                                         const void* module,
+                                         std::string &error,
+                                         int optLevel) {
     ir::Unit *unit = new ir::Unit();
     llvm::Module * cloned_module = NULL;
     bool ret = false;
@@ -649,7 +652,7 @@ namespace gbe {
 #ifdef GBE_COMPILER_AVAILABLE
   static bool buildModuleFromSource(const char *source, llvm::Module** out_module, llvm::LLVMContext* llvm_ctx,
                                     std::string dumpLLVMFileName, std::string dumpSPIRBinaryName, std::vector<std::string>& options, size_t stringSize, char *err,
-                                    size_t *errSize) {
+                                    size_t *errSize, uint32_t oclVersion) {
     // Arguments to pass to the clang frontend
     vector<const char *> args;
     bool bFastMath = false;
@@ -687,7 +690,10 @@ namespace gbe {
     args.push_back("-x");
     args.push_back("cl");
     args.push_back("-triple");
-    args.push_back("spir");
+    if (oclVersion >= 200)
+      args.push_back("spir64");
+    else
+      args.push_back("spir");
 #endif /* LLVM_VERSION_MINOR <= 2 */
     args.push_back("stringInput.cl");
     args.push_back("-ffp-contract=on");
@@ -829,6 +835,7 @@ namespace gbe {
 
 
   SVAR(OCL_PCH_PATH, OCL_PCH_OBJECT);
+  SVAR(OCL_PCH_20_PATH, OCL_PCH_OBJECT_20);
   SVAR(OCL_HEADER_FILE_DIR, OCL_HEADER_DIR);
   BVAR(OCL_OUTPUT_KERNEL_SOURCE, false);
 
@@ -842,10 +849,9 @@ namespace gbe {
                                      int& optLevel,
                                      size_t stringSize,
                                      char *err,
-                                     size_t *errSize)
+                                     size_t *errSize,
+                                     uint32_t &oclVersion)
   {
-    std::string dirs = OCL_PCH_PATH;
-    std::istringstream idirs(dirs);
     std::string pchFileName;
     bool findPCH = false;
 #if defined(__ANDROID__)
@@ -858,8 +864,6 @@ namespace gbe {
     std::string hdirs = OCL_HEADER_FILE_DIR;
     if(hdirs == "")
       hdirs = OCL_HEADER_DIR;
-    if(dirs == "")
-      dirs = OCL_PCH_OBJECT;
     std::istringstream hidirs(hdirs);
     std::string headerFilePath;
     bool findOcl = false;
@@ -967,11 +971,16 @@ EXTEND_QUOTE:
 
         if(str.find("-cl-std=") != std::string::npos) {
           useDefaultCLCVersion = false;
-          if (str == "-cl-std=CL1.1")
+          if (str == "-cl-std=CL1.1") {
             clOpt.push_back("-D__OPENCL_C_VERSION__=110");
-          else if (str == "-cl-std=CL1.2")
+            oclVersion = 110;
+          } else if (str == "-cl-std=CL1.2") {
             clOpt.push_back("-D__OPENCL_C_VERSION__=120");
-          else {
+            oclVersion = 120;
+          } else if (str == "-cl-std=CL2.0") {
+            clOpt.push_back("-D__OPENCL_C_VERSION__=200");
+            oclVersion = 200;
+          } else {
             if (err && stringSize > 0 && errSize)
               *errSize = snprintf(err, stringSize, "Invalid build option: %s\n", str.c_str());
             return false;
@@ -1007,14 +1016,29 @@ EXTEND_QUOTE:
     }
 
     if (useDefaultCLCVersion) {
+#ifdef ENABLE_OPENCL_20
+      clOpt.push_back("-D__OPENCL_C_VERSION__=200");
+      clOpt.push_back("-cl-std=CL2.0");
+      oclVersion = 200;
+#else
       clOpt.push_back("-D__OPENCL_C_VERSION__=120");
       clOpt.push_back("-cl-std=CL1.2");
+      oclVersion = 120;
+#endif
     }
     //for clCompilerProgram usage.
     if(temp_header_path){
       clOpt.push_back("-I");
       clOpt.push_back(temp_header_path);
     }
+
+    std::string dirs = OCL_PCH_PATH;
+    if(oclVersion >= 200)
+      dirs = OCL_PCH_20_PATH;
+    if(dirs == "") {
+      dirs = oclVersion >= 200 ? OCL_PCH_OBJECT_20 : OCL_PCH_OBJECT;
+    }
+    std::istringstream idirs(dirs);
 
     while (getline(idirs, pchFileName, ':')) {
       if(access(pchFileName.c_str(), R_OK) == 0) {
@@ -1046,10 +1070,11 @@ EXTEND_QUOTE:
     std::vector<std::string> clOpt;
     std::string dumpLLVMFileName, dumpASMFileName;
     std::string dumpSPIRBinaryName;
+    uint32_t oclVersion = 0;
     if (!processSourceAndOption(source, options, NULL, clOpt,
                                 dumpLLVMFileName, dumpASMFileName, dumpSPIRBinaryName,
                                 optLevel,
-                                stringSize, err, errSize))
+                                stringSize, err, errSize, oclVersion))
       return NULL;
 
     gbe_program p;
@@ -1061,7 +1086,7 @@ EXTEND_QUOTE:
       llvm_mutex.lock();
 
     if (buildModuleFromSource(source, &out_module, llvm_ctx, dumpLLVMFileName, dumpSPIRBinaryName, clOpt,
-                              stringSize, err, errSize)) {
+                              stringSize, err, errSize, oclVersion)) {
     // Now build the program from llvm
       size_t clangErrSize = 0;
       if (err != NULL && *errSize != 0) {
@@ -1108,9 +1133,10 @@ EXTEND_QUOTE:
     std::vector<std::string> clOpt;
     std::string dumpLLVMFileName, dumpASMFileName;
     std::string dumpSPIRBinaryName;
+    uint32_t oclVersion = 0;
     if (!processSourceAndOption(source, options, temp_header_path, clOpt,
                                 dumpLLVMFileName, dumpASMFileName, dumpSPIRBinaryName,
-                                optLevel, stringSize, err, errSize))
+                                optLevel, stringSize, err, errSize, oclVersion))
       return NULL;
 
     gbe_program p;
@@ -1125,7 +1151,7 @@ EXTEND_QUOTE:
 #endif
 
     if (buildModuleFromSource(source, &out_module, llvm_ctx, dumpLLVMFileName, dumpSPIRBinaryName, clOpt,
-                              stringSize, err, errSize)) {
+                              stringSize, err, errSize, oclVersion)) {
     // Now build the program from llvm
       if (err != NULL) {
         GBE_ASSERT(errSize != NULL);

@@ -65,6 +65,27 @@ namespace gbe
     return bKernel;
   }
 
+  uint32_t getModuleOclVersion(const llvm::Module *M) {
+    uint32_t oclVersion = 120;
+    NamedMDNode *version = M->getNamedMetadata("opencl.ocl.version");
+    if (version == NULL)
+      return oclVersion;
+    uint32_t ops = version->getNumOperands();
+    if(ops > 0) {
+      uint32_t major = 0, minor = 0;
+      MDNode* node = version->getOperand(0);
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+      major = mdconst::extract<ConstantInt>(node->getOperand(0))->getZExtValue();
+      minor = mdconst::extract<ConstantInt>(node->getOperand(1))->getZExtValue();
+#else
+      major = cast<ConstantInt>(MD->getOperand(0))->getZExtValue();
+      minor = cast<ConstantInt>(MD->getOperand(1))->getZExtValue();
+#endif
+      oclVersion = major * 100 + minor * 10;
+    }
+    return oclVersion;
+  }
+
   int32_t getPadding(int32_t offset, int32_t align) {
     return (align - (offset % align)) % align; 
   }
@@ -262,7 +283,7 @@ namespace gbe
 
         if(!operand)
           continue;
-
+#if 0
         //HACK TODO: Inserted by type replacement.. this code could break something????
         if(getTypeByteSize(unit, operand->getType())>4)
         {
@@ -286,7 +307,7 @@ namespace gbe
                   "", GEPInst);
           }
         }
-
+#endif
         Value* tmpMul = operand;
         if (size != 1) {
           tmpMul = BinaryOperator::Create(Instruction::Mul, newConstSize, operand,
