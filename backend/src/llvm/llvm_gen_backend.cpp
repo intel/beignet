@@ -1635,10 +1635,15 @@ namespace gbe
           offset += sizeof(short);
           break;
         }
-      default: {
-        c->dump();
-        NOT_IMPLEMENTED;
-               }
+      case Type::TypeID::PointerTyID:
+        {
+          break;
+        }
+      default:
+        {
+          c->dump();
+          NOT_IMPLEMENTED;
+        }
     }
   }
   static bool isProgramGlobal(const GlobalVariable &v) {
@@ -2977,6 +2982,8 @@ namespace gbe
             ctx.ADD(getType(ctx, v.getType()), reg, ir::ocl::constant_addrspace, reg);
           }
         }
+      } else if(addrSpace == ir::MEM_PRIVATE) {
+          this->newRegister(const_cast<GlobalVariable*>(&v));
       }
     }
   }
@@ -4019,6 +4026,8 @@ namespace gbe
       case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE2:
       case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE4:
       case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE8:
+      case GEN_OCL_ENQUEUE_SET_NDRANGE_INFO:
+      case GEN_OCL_ENQUEUE_GET_NDRANGE_INFO:
         this->newRegister(&I);
         break;
       case GEN_OCL_GET_PIPE:
@@ -4039,6 +4048,9 @@ namespace gbe
         regTranslator.newValueProxy(srcValue, dst);
         break;
       }
+      case GEN_OCL_ENQUEUE_GET_ENQUEUE_INFO_ADDR:
+        regTranslator.newScalarProxy(ir::ocl::enqueuebufptr, dst);
+        break;
       case GEN_OCL_PRINTF:
         this->newRegister(&I);  // fall through
       case GEN_OCL_PUTS:
@@ -5440,6 +5452,29 @@ namespace gbe
           case GEN_OCL_MAKE_RID:
           case GEN_OCL_GET_RID:
           {
+            break;
+          }
+          case GEN_OCL_ENQUEUE_SET_NDRANGE_INFO:
+          {
+            GBE_ASSERT(AI != AE);
+            Value *srcValue = *AI;
+            ++AI;
+            Value *dstValue = &I;
+            regTranslator.newValueProxy(srcValue, dstValue);
+            break;
+          }
+          case GEN_OCL_ENQUEUE_GET_NDRANGE_INFO:
+          {
+            GBE_ASSERT(AI != AE);
+            Value *srcValue = *AI;
+            ++AI;
+            Value *dstValue = &I;
+            regTranslator.newValueProxy(srcValue, dstValue);
+            break;
+          }
+          case GEN_OCL_ENQUEUE_GET_ENQUEUE_INFO_ADDR:
+          {
+            ctx.getFunction().setUseDeviceEnqueue(true);
             break;
           }
           default: break;

@@ -89,7 +89,8 @@ namespace gbe {
   Kernel::Kernel(const std::string &name) :
     name(name), args(NULL), argNum(0), curbeSize(0), stackSize(0), useSLM(false),
         slmSize(0), ctx(NULL), samplerSet(NULL), imageSet(NULL), printfSet(NULL),
-        profilingInfo(NULL) {}
+        profilingInfo(NULL), useDeviceEnqueue(false) {}
+
   Kernel::~Kernel(void) {
     if(ctx) GBE_DELETE(ctx);
     if(samplerSet) GBE_DELETE(samplerSet);
@@ -181,6 +182,7 @@ namespace gbe {
   bool Program::buildFromUnit(const ir::Unit &unit, std::string &error) {
     constantSet = new ir::ConstantSet(unit.getConstantSet());
     relocTable = new ir::RelocTable(unit.getRelocTable());
+    blockFuncs = unit.blockFuncs;
     const auto &set = unit.getFunctionSet();
     const uint32_t kernelNum = set.size();
     if (OCL_OUTPUT_GEN_IR) std::cout << unit;

@@ -232,6 +232,12 @@ namespace gbe {
     virtual uint32_t serializeToBin(std::ostream& outs);
     virtual uint32_t deserializeFromBin(std::istream& ins);
     virtual void printStatus(int indent, std::ostream& outs);
+    /*! Does kernel use device enqueue */
+    INLINE bool getUseDeviceEnqueue(void) const { return this->useDeviceEnqueue; }
+    /*! Change the device enqueue info of the function */
+    INLINE bool setUseDeviceEnqueue(bool useDeviceEnqueue) {
+      return this->useDeviceEnqueue = useDeviceEnqueue;
+    }
 
   protected:
     friend class Context;      //!< Owns the kernels
@@ -254,6 +260,7 @@ namespace gbe {
     ir::ProfilingInfo *profilingInfo;  //!< Copy from the corresponding function.
     uint32_t compileWgSize[3]; //!< required work group size by kernel attribute.
     std::string functionAttributes; //!< function attribute qualifiers combined.
+    bool useDeviceEnqueue;          //!< Has device enqueue?
     GBE_CLASS(Kernel);         //!< Use custom allocators
   };
 
@@ -289,6 +296,12 @@ namespace gbe {
         currID++;
       }
       return kernel;
+    }
+
+    const char *getDeviceEnqueueKernelName(uint32_t index) const {
+      if(index >= blockFuncs.size())
+        return NULL;
+      return blockFuncs[index].c_str();
     }
     /*! Build a program from a ir::Unit */
     bool buildFromUnit(const ir::Unit &unit, std::string &error);
@@ -336,6 +349,8 @@ namespace gbe {
     ir::ConstantSet *constantSet;
     /*! relocation table */
     ir::RelocTable *relocTable;
+    /*! device enqueue functions */
+    vector<std::string> blockFuncs;
     /*! Use custom allocators */
     GBE_CLASS(Program);
   };
