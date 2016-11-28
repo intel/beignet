@@ -4628,7 +4628,7 @@ namespace gbe
               ir::Type revType = ir::TYPE_U32;
               ir::Register revTmp = ctx.reg(getFamily(revType));
               ctx.ALU1(ir::OP_BFREV, revType, revTmp, src);
-              ctx.ALU1(ir::OP_LZD, dstType, dst, revTmp);
+              ctx.ALU1(ir::OP_LZD, ir::TYPE_U32, dst, revTmp);
             }
           }
           break;
