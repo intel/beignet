@@ -155,7 +155,10 @@ namespace gbe
   /*! Add all the function call of ocl to our bitcode. */
   llvm::Module* runBitCodeLinker(llvm::Module *mod, bool strictMath, ir::Unit &unit);
 
+  /*! Get the moudule's opencl version form meta data. */
   uint32_t getModuleOclVersion(const llvm::Module *M);
+
+  void collectDeviceEnqueueInfo(llvm::Module *mod, ir::Unit &unit);
 
   void* getPrintfInfo(llvm::CallInst* inst);
 } /* namespace gbe */
