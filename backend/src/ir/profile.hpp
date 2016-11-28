@@ -81,7 +81,8 @@ namespace ir {
     static const Register threadid = Register(37); // the thread id of this thread.
     static const Register constant_addrspace = Register(38);  // starting address of program-scope constant
     static const Register stacksize = Register(39); // stack buffer total size
-    static const uint32_t regNum = 40;             // number of special registers
+    static const Register enqueuebufptr = Register(40); // enqueue buffer address .
+    static const uint32_t regNum = 41;             // number of special registers
     extern const char *specialRegMean[];           // special register name.
   } /* namespace ocl */
 

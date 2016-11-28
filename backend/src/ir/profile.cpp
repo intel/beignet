@@ -50,7 +50,7 @@ namespace ir {
         "profiling_timestamps4",
         "threadid",
         "constant_addrspace_start",
-        "stack_size"
+        "stack_size", "enqueue_buffer_pointer",
     };
 
 #if GBE_DEBUG
@@ -107,6 +107,7 @@ namespace ir {
       DECL_NEW_REG(FAMILY_DWORD, threadid, 1, GBE_CURBE_THREAD_ID);
       DECL_NEW_REG(FAMILY_QWORD, constant_addrspace, 1, GBE_CURBE_CONSTANT_ADDRSPACE);
       DECL_NEW_REG(FAMILY_QWORD, stacksize, 1, GBE_CURBE_STACK_SIZE);
+      DECL_NEW_REG(FAMILY_QWORD, enqueuebufptr, 1, GBE_CURBE_ENQUEUE_BUF_POINTER);
     }
 #undef DECL_NEW_REG
 
