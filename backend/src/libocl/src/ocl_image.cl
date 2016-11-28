@@ -77,6 +77,42 @@ DECL_GEN_OCL_QUERY_IMAGE(write_only image2d_t)
 DECL_GEN_OCL_QUERY_IMAGE(write_only image2d_array_t)
 DECL_GEN_OCL_QUERY_IMAGE(write_only image3d_t)
 #endif
+
+#if (__OPENCL_C_VERSION__ >= 200)
+#define DECL_GEN_OCL_RW_IMAGE_WR(image_type, n) \
+  OVERLOADABLE int4 __gen_ocl_read_imagei(read_write image_type image, sampler_t sampler,            \
+                                          float ##n coord, uint sampler_offset);          \
+  OVERLOADABLE int4 __gen_ocl_read_imagei(read_write image_type image, sampler_t sampler,            \
+                                          int ##n coord, uint sampler_offset);            \
+  OVERLOADABLE uint4 __gen_ocl_read_imageui(read_write image_type image, sampler_t sampler,          \
+                                            float ##n coord, uint sampler_offset);        \
+  OVERLOADABLE uint4 __gen_ocl_read_imageui(read_write image_type image, sampler_t sampler,          \
+                                            int ##n coord, uint sampler_offset);          \
+  OVERLOADABLE float4 __gen_ocl_read_imagef(read_write image_type image, sampler_t sampler,          \
+                                            float ##n coord, uint sampler_offset);        \
+  OVERLOADABLE float4 __gen_ocl_read_imagef(read_write image_type image, sampler_t sampler,          \
+                                            int ##n coord, uint sampler_offset);          \
+  OVERLOADABLE void __gen_ocl_write_imagei(read_write image_type image, int ##n coord , int4 color); \
+  OVERLOADABLE void __gen_ocl_write_imageui(read_write image_type image, int ##n coord, uint4 color);\
+  OVERLOADABLE void __gen_ocl_write_imagef(read_write image_type image, int ##n coord, float4 color);
+
+DECL_GEN_OCL_RW_IMAGE_WR(image1d_t, 1)
+DECL_GEN_OCL_RW_IMAGE_WR(image1d_buffer_t, 2)
+DECL_GEN_OCL_RW_IMAGE_WR(image1d_array_t, 2)
+DECL_GEN_OCL_RW_IMAGE_WR(image1d_array_t, 4)
+DECL_GEN_OCL_RW_IMAGE_WR(image2d_t, 2)
+DECL_GEN_OCL_RW_IMAGE_WR(image2d_array_t, 3)
+DECL_GEN_OCL_RW_IMAGE_WR(image3d_t, 3)
+DECL_GEN_OCL_RW_IMAGE_WR(image2d_array_t, 4)
+DECL_GEN_OCL_RW_IMAGE_WR(image3d_t, 4)
+
+DECL_GEN_OCL_QUERY_IMAGE(read_write image1d_t)
+DECL_GEN_OCL_QUERY_IMAGE(read_write image1d_buffer_t)
+DECL_GEN_OCL_QUERY_IMAGE(read_write image1d_array_t)
+DECL_GEN_OCL_QUERY_IMAGE(read_write image2d_t)
+DECL_GEN_OCL_QUERY_IMAGE(read_write image2d_array_t)
+DECL_GEN_OCL_QUERY_IMAGE(read_write image3d_t)
+#endif
 ///////////////////////////////////////////////////////////////////////////////
 // helper functions to validate array index.
 ///////////////////////////////////////////////////////////////////////////////
@@ -160,6 +196,51 @@ INLINE_OVERLOADABLE int3 __gen_validate_array_index(int3 coord, write_only image
   return coord;
 }
 #endif
+
+#if (__OPENCL_C_VERSION__ >= 200)
+INLINE_OVERLOADABLE float2 __gen_validate_array_index(float2 coord, read_write image1d_array_t image)
+{
+  float array_size = __gen_ocl_get_image_depth(image);
+  coord.s1 = clamp(rint(coord.s1), 0.f, array_size - 1.f);
+  return coord;
+}
+
+INLINE_OVERLOADABLE float4 __gen_validate_array_index(float4 coord, read_write image2d_array_t image)
+{
+  float array_size = __gen_ocl_get_image_depth(image);
+  coord.s2 = clamp(rint(coord.s2), 0.f, array_size - 1.f);
+  return coord;
+}
+
+INLINE_OVERLOADABLE float3 __gen_validate_array_index(float3 coord, read_write image2d_array_t image)
+{
+  float array_size = __gen_ocl_get_image_depth(image);
+  coord.s2 = clamp(rint(coord.s2), 0.f, array_size - 1.f);
+  return coord;
+}
+
+INLINE_OVERLOADABLE int2 __gen_validate_array_index(int2 coord, read_write image1d_array_t image)
+{
+  int array_size = __gen_ocl_get_image_depth(image);
+  coord.s1 = clamp(coord.s1, 0, array_size - 1);
+  return coord;
+}
+
+INLINE_OVERLOADABLE int4 __gen_validate_array_index(int4 coord, read_write image2d_array_t image)
+{
+  int array_size = __gen_ocl_get_image_depth(image);
+  coord.s2 = clamp(coord.s2, 0, array_size - 1);
+  return coord;
+}
+
+INLINE_OVERLOADABLE int3 __gen_validate_array_index(int3 coord, read_write image2d_array_t image)
+{
+  int array_size = __gen_ocl_get_image_depth(image);
+  coord.s2 = clamp(coord.s2, 0, array_size - 1);
+  return coord;
+}
+#endif
+
 // For non array image type, we need to do nothing.
 #define GEN_VALIDATE_ARRAY_INDEX(coord_type, image_type) \
 INLINE_OVERLOADABLE coord_type __gen_validate_array_index(coord_type coord, image_type image) \
@@ -189,6 +270,19 @@ GEN_VALIDATE_ARRAY_INDEX(float3, write_only image3d_t)
 GEN_VALIDATE_ARRAY_INDEX(int3, write_only image3d_t)
 GEN_VALIDATE_ARRAY_INDEX(float, write_only image1d_buffer_t)
 GEN_VALIDATE_ARRAY_INDEX(int, write_only image1d_buffer_t)
+#endif
+
+#if (__OPENCL_C_VERSION__ >= 200)
+GEN_VALIDATE_ARRAY_INDEX(float, read_write image1d_t)
+GEN_VALIDATE_ARRAY_INDEX(int, read_write image1d_t)
+GEN_VALIDATE_ARRAY_INDEX(float2, read_write image2d_t)
+GEN_VALIDATE_ARRAY_INDEX(int2, read_write image2d_t)
+GEN_VALIDATE_ARRAY_INDEX(float4, read_write image3d_t)
+GEN_VALIDATE_ARRAY_INDEX(int4, read_write image3d_t)
+GEN_VALIDATE_ARRAY_INDEX(float3, read_write image3d_t)
+GEN_VALIDATE_ARRAY_INDEX(int3, read_write image3d_t)
+GEN_VALIDATE_ARRAY_INDEX(float, read_write image1d_buffer_t)
+GEN_VALIDATE_ARRAY_INDEX(int, read_write image1d_buffer_t)
 #endif
 ///////////////////////////////////////////////////////////////////////////////
 // Helper functions to work around some coordiate boundary issues.
@@ -390,9 +484,9 @@ INLINE_OVERLOADABLE float3 __gen_fixup_neg_boundary(float3 coord)
                                           convert_float ##n (tmpCoord), 0);   \
   }
 
-#define DECL_READ_IMAGE_NOSAMPLER(image_type, image_data_type,                \
+#define DECL_READ_IMAGE_NOSAMPLER(access_qual, image_type, image_data_type,   \
                                   suffix, coord_type, n)                      \
-  OVERLOADABLE image_data_type read_image ##suffix(read_only image_type cl_image,       \
+  OVERLOADABLE image_data_type read_image ##suffix(access_qual image_type cl_image, \
                                                coord_type coord)              \
   {                                                                           \
     coord = __gen_validate_array_index(coord, cl_image);                      \
@@ -402,8 +496,8 @@ INLINE_OVERLOADABLE float3 __gen_fixup_neg_boundary(float3 coord)
              cl_image, defaultSampler, convert_float ##n (coord), 0);         \
   }
 
-#define DECL_WRITE_IMAGE(image_type, image_data_type, suffix, coord_type)     \
-  OVERLOADABLE void write_image ##suffix(write_only image_type cl_image,                 \
+#define DECL_WRITE_IMAGE(access_qual, image_type, image_data_type, suffix, coord_type)   \
+  OVERLOADABLE void write_image ##suffix(access_qual image_type cl_image,    \
                                          coord_type coord,                    \
                                          image_data_type color)               \
   {                                                                           \
@@ -411,13 +505,25 @@ INLINE_OVERLOADABLE float3 __gen_fixup_neg_boundary(float3 coord)
     __gen_ocl_write_image ##suffix(cl_image, fixedCoord, color);              \
   }
 
+#if (__OPENCL_C_VERSION__ >= 200)
 #define DECL_IMAGE(int_clamping_fix, image_type, image_data_type, suffix, n)  \
   DECL_READ_IMAGE0(int_clamping_fix, image_type,                              \
                    image_data_type, suffix, int ##n, n)                       \
   DECL_READ_IMAGE1(int_clamping_fix, image_type,                              \
                    image_data_type, suffix, float ##n, n)                     \
-  DECL_READ_IMAGE_NOSAMPLER(image_type, image_data_type, suffix, int ##n, n)  \
-  DECL_WRITE_IMAGE(image_type, image_data_type, suffix, int ##n)              \
+  DECL_READ_IMAGE_NOSAMPLER(read_only, image_type, image_data_type, suffix, int ##n, n)  \
+  DECL_READ_IMAGE_NOSAMPLER(read_write, image_type, image_data_type, suffix, int ##n, n) \
+  DECL_WRITE_IMAGE(write_only, image_type, image_data_type, suffix, int ##n) \
+  DECL_WRITE_IMAGE(read_write, image_type, image_data_type, suffix, int ##n)
+#else
+#define DECL_IMAGE(int_clamping_fix, image_type, image_data_type, suffix, n)  \
+  DECL_READ_IMAGE0(int_clamping_fix, image_type,                              \
+                   image_data_type, suffix, int ##n, n)                       \
+  DECL_READ_IMAGE1(int_clamping_fix, image_type,                              \
+                   image_data_type, suffix, float ##n, n)                     \
+  DECL_READ_IMAGE_NOSAMPLER(read_only, image_type, image_data_type, suffix, int ##n, n)  \
+  DECL_WRITE_IMAGE(write_only, image_type, image_data_type, suffix, int ##n)
+#endif
 
 // 1D
 #define DECL_IMAGE_TYPE(image_type, n)                                        \
@@ -432,9 +538,9 @@ DECL_IMAGE_TYPE(image3d_t, 3)
 DECL_IMAGE_TYPE(image2d_array_t, 4)
 DECL_IMAGE_TYPE(image2d_array_t, 3)
 
-#define DECL_READ_IMAGE1D_BUFFER_NOSAMPLER(image_type, image_data_type,       \
+#define DECL_READ_IMAGE1D_BUFFER_NOSAMPLER(access_qual, image_type, image_data_type, \
                                   suffix, coord_type)                         \
-  OVERLOADABLE image_data_type read_image ##suffix(read_only image_type cl_image,       \
+  OVERLOADABLE image_data_type read_image ##suffix(access_qual image_type cl_image,       \
                                                coord_type coord)              \
   {                                                                           \
     sampler_t defaultSampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE \
@@ -446,8 +552,8 @@ DECL_IMAGE_TYPE(image2d_array_t, 3)
              cl_image, defaultSampler, convert_float2(effectCoord), 0);       \
   }
 
-#define DECL_WRITE_IMAGE1D_BUFFER(image_type, image_data_type, suffix, coord_type)     \
-  OVERLOADABLE void write_image ##suffix(write_only image_type cl_image,                 \
+#define DECL_WRITE_IMAGE1D_BUFFER(access_qual, image_type, image_data_type, suffix, coord_type) \
+  OVERLOADABLE void write_image ##suffix(access_qual image_type cl_image,                 \
                                          coord_type coord,                    \
                                          image_data_type color)               \
   {                                                                           \
@@ -457,11 +563,20 @@ DECL_IMAGE_TYPE(image2d_array_t, 3)
     __gen_ocl_write_image ##suffix(cl_image, effectCoord, color);              \
   }
 
-
+#if (__OPENCL_C_VERSION__ >= 200)
 #define DECL_IMAGE_1DBuffer(int_clamping_fix, image_data_type, suffix)        \
-  DECL_READ_IMAGE1D_BUFFER_NOSAMPLER(image1d_buffer_t, image_data_type,       \
+  DECL_READ_IMAGE1D_BUFFER_NOSAMPLER(read_only, image1d_buffer_t, image_data_type,  \
                                      suffix, int)                             \
-  DECL_WRITE_IMAGE1D_BUFFER(image1d_buffer_t, image_data_type, suffix, int)
+  DECL_READ_IMAGE1D_BUFFER_NOSAMPLER(read_write, image1d_buffer_t, image_data_type, \
+                                     suffix, int)                             \
+  DECL_WRITE_IMAGE1D_BUFFER(write_only, image1d_buffer_t, image_data_type, suffix, int) \
+  DECL_WRITE_IMAGE1D_BUFFER(read_write, image1d_buffer_t, image_data_type, suffix, int)
+#else
+#define DECL_IMAGE_1DBuffer(int_clamping_fix, image_data_type, suffix)        \
+  DECL_READ_IMAGE1D_BUFFER_NOSAMPLER(read_only, image1d_buffer_t, image_data_type,       \
+                                     suffix, int)                             \
+  DECL_WRITE_IMAGE1D_BUFFER(write_only, image1d_buffer_t, image_data_type, suffix, int)
+#endif
 
 DECL_IMAGE_1DBuffer(GEN_FIX_INT_CLAMPING, int4, i)
 DECL_IMAGE_1DBuffer(GEN_FIX_INT_CLAMPING, uint4, ui)
@@ -535,12 +650,23 @@ INLINE_OVERLOADABLE int4 __gen_fixup_1darray_coord(int2 coord, image1d_array_t i
                                           convert_float2 (tmpCoord), 0);      \
   }
 
+#if (__OPENCL_C_VERSION__ >= 200)
 #define DECL_IMAGE_1DArray(int_clamping_fix, image_data_type, suffix)         \
   DECL_READ_IMAGE0_1DArray(int_clamping_fix, image_data_type, suffix, int2)   \
   DECL_READ_IMAGE1_1DArray(int_clamping_fix, image_data_type,                 \
                            suffix, float2)                                    \
-  DECL_READ_IMAGE_NOSAMPLER(image1d_array_t, image_data_type, suffix, int2, 2)\
-  DECL_WRITE_IMAGE(image1d_array_t, image_data_type, suffix, int2)            \
+  DECL_READ_IMAGE_NOSAMPLER(read_only, image1d_array_t, image_data_type, suffix, int2, 2) \
+  DECL_READ_IMAGE_NOSAMPLER(read_write, image1d_array_t, image_data_type, suffix, int2, 2)\
+  DECL_WRITE_IMAGE(write_only, image1d_array_t, image_data_type, suffix, int2) \
+  DECL_WRITE_IMAGE(read_write, image1d_array_t, image_data_type, suffix, int2)
+#else
+#define DECL_IMAGE_1DArray(int_clamping_fix, image_data_type, suffix)         \
+  DECL_READ_IMAGE0_1DArray(int_clamping_fix, image_data_type, suffix, int2)   \
+  DECL_READ_IMAGE1_1DArray(int_clamping_fix, image_data_type,                 \
+                           suffix, float2)                                    \
+  DECL_READ_IMAGE_NOSAMPLER(read_only, image1d_array_t, image_data_type, suffix, int2, 2) \
+  DECL_WRITE_IMAGE(write_only, image1d_array_t, image_data_type, suffix, int2)
+#endif
 
 DECL_IMAGE_1DArray(GEN_FIX_INT_CLAMPING, int4, i)
 DECL_IMAGE_1DArray(GEN_FIX_INT_CLAMPING, uint4, ui)
@@ -579,6 +705,15 @@ DECL_IMAGE_INFO_COMMON(write_only image3d_t)
 DECL_IMAGE_INFO_COMMON(write_only image2d_array_t)
 #endif
 
+#if (__OPENCL_C_VERSION__ >= 200)
+DECL_IMAGE_INFO_COMMON(read_write image1d_t)
+DECL_IMAGE_INFO_COMMON(read_write image1d_buffer_t)
+DECL_IMAGE_INFO_COMMON(read_write image1d_array_t)
+DECL_IMAGE_INFO_COMMON(read_write image2d_t)
+DECL_IMAGE_INFO_COMMON(read_write image3d_t)
+DECL_IMAGE_INFO_COMMON(read_write image2d_array_t)
+#endif
+
 // 2D extra Info
 OVERLOADABLE int get_image_height(read_only image2d_t image)
 {
@@ -594,6 +729,17 @@ OVERLOADABLE int get_image_height(write_only image2d_t image)
   return __gen_ocl_get_image_height(image);
 }
 OVERLOADABLE int2 get_image_dim(write_only image2d_t image)
+{
+  return (int2){get_image_width(image), get_image_height(image)};
+}
+#endif
+
+#if (__OPENCL_C_VERSION__ >= 200)
+OVERLOADABLE int get_image_height(read_write image2d_t image)
+{
+  return __gen_ocl_get_image_height(image);
+}
+OVERLOADABLE int2 get_image_dim(read_write image2d_t image)
 {
   return (int2){get_image_width(image), get_image_height(image)};
 }
@@ -633,6 +779,24 @@ OVERLOADABLE int4 get_image_dim(write_only image3d_t image)
                  0);
 }
 #endif
+
+#if (__OPENCL_C_VERSION__ >= 200)
+OVERLOADABLE int get_image_height(read_write image3d_t image)
+{
+  return __gen_ocl_get_image_height(image);
+}
+OVERLOADABLE int get_image_depth(read_write image3d_t image)
+{
+  return __gen_ocl_get_image_depth(image);
+}
+OVERLOADABLE int4 get_image_dim(read_write image3d_t image)
+{
+  return (int4) (get_image_width(image),
+                 get_image_height(image),
+                 get_image_depth(image),
+                 0);
+}
+#endif
 // 2D Array extra Info
 OVERLOADABLE int get_image_height(read_only image2d_array_t image)
 {
@@ -660,6 +824,20 @@ OVERLOADABLE size_t get_image_array_size(write_only image2d_array_t image)
   return __gen_ocl_get_image_depth(image);
 }
 #endif
+#if (__OPENCL_C_VERSION__ >= 200)
+OVERLOADABLE int get_image_height(read_write image2d_array_t image)
+{
+  return __gen_ocl_get_image_height(image);
+}
+OVERLOADABLE int2 get_image_dim(read_write image2d_array_t image)
+{
+  return (int2){get_image_width(image), get_image_height(image)};
+}
+OVERLOADABLE size_t get_image_array_size(read_write image2d_array_t image)
+{
+  return __gen_ocl_get_image_depth(image);
+}
+#endif
 // 1D Array info
 OVERLOADABLE size_t get_image_array_size(read_only image1d_array_t image)
 {
@@ -667,6 +845,12 @@ OVERLOADABLE size_t get_image_array_size(read_only image1d_array_t image)
 }
 #if __clang_major__*10 + __clang_minor__ >= 39
 OVERLOADABLE size_t get_image_array_size(write_only image1d_array_t image)
+{
+  return __gen_ocl_get_image_depth(image);
+}
+#endif
+#if (__OPENCL_C_VERSION__ >= 200)
+OVERLOADABLE size_t get_image_array_size(read_write image1d_array_t image)
 {
   return __gen_ocl_get_image_depth(image);
 }

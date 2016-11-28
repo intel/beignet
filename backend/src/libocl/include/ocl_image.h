@@ -20,28 +20,77 @@
 
 #include "ocl_types.h"
 
-OVERLOADABLE int4 read_imagei(read_only image1d_t cl_image, const sampler_t sampler, int coord);
-OVERLOADABLE int4 read_imagei(read_only image1d_t cl_image, const sampler_t sampler, float coord);
-OVERLOADABLE int4 read_imagei(read_only image1d_t cl_image, int coord);
-OVERLOADABLE void write_imagei(write_only image1d_t cl_image, int coord, int4 color);
-OVERLOADABLE void write_imagei(write_only image1d_t cl_image, float coord, int4 color);
-OVERLOADABLE uint4 read_imageui(read_only image1d_t cl_image, const sampler_t sampler, int coord);
-OVERLOADABLE uint4 read_imageui(read_only image1d_t cl_image, const sampler_t sampler, float coord);
-OVERLOADABLE uint4 read_imageui(read_only image1d_t cl_image, int coord);
-OVERLOADABLE void write_imageui(write_only image1d_t cl_image, int coord, uint4 color);
-OVERLOADABLE void write_imageui(write_only image1d_t cl_image, float coord, uint4 color);
-OVERLOADABLE float4 read_imagef(read_only image1d_t cl_image, const sampler_t sampler, int coord);
-OVERLOADABLE float4 read_imagef(read_only image1d_t cl_image, const sampler_t sampler, float coord);
-OVERLOADABLE float4 read_imagef(read_only image1d_t cl_image, int coord);
-OVERLOADABLE void write_imagef(write_only image1d_t cl_image, int coord, float4 color);
-OVERLOADABLE void write_imagef(write_only image1d_t cl_image, float coord, float4 color);
-OVERLOADABLE int4 read_imagei(read_only image1d_buffer_t cl_image, int coord);
-OVERLOADABLE void write_imagei(write_only image1d_buffer_t cl_image, int coord, int4 color);
-OVERLOADABLE uint4 read_imageui(read_only image1d_buffer_t cl_image, int coord);
-OVERLOADABLE void write_imageui(write_only image1d_buffer_t cl_image, int coord, uint4 color);
-OVERLOADABLE void write_imageui(write_only image1d_buffer_t cl_image, float coord, uint4 color);
-OVERLOADABLE float4 read_imagef(read_only image1d_buffer_t cl_image, int coord);
-OVERLOADABLE void write_imagef(write_only image1d_buffer_t cl_image, int coord, float4 color);
+#define int1 int
+#define float1 float
+
+#define DECL_IMAGE_READ_SAMPLE_RETTYPE(IMG_TYPE, DATA_YPE, SUFFIX, N) \
+  OVERLOADABLE DATA_YPE read_image ## SUFFIX(IMG_TYPE cl_image, const sampler_t sampler, int##N coord); \
+  OVERLOADABLE DATA_YPE read_image ## SUFFIX(IMG_TYPE cl_image, const sampler_t sampler, float##N coord);
+
+#define DECL_IMAGE_READ_NO_SAMPLE_RETTYPE(IMG_TYPE, DATA_YPE, SUFFIX, N) \
+  OVERLOADABLE DATA_YPE read_image ## SUFFIX(IMG_TYPE cl_image, int##N coord);
+
+#define DECL_IMAGE_WRITE_RETTYPE(IMG_TYPE, DATA_YPE, SUFFIX, N) \
+  OVERLOADABLE void write_image ## SUFFIX(IMG_TYPE cl_image, int##N coord, DATA_YPE color);
+
+#define DECL_IMAGE_TYPE_READ_NO_SAMPLE(IMG_TYPE, N)\
+    DECL_IMAGE_READ_NO_SAMPLE_RETTYPE(IMG_TYPE, int4, i, N) \
+    DECL_IMAGE_READ_NO_SAMPLE_RETTYPE(IMG_TYPE, uint4, ui, N) \
+    DECL_IMAGE_READ_NO_SAMPLE_RETTYPE(IMG_TYPE, float4, f, N)
+
+#define DECL_IMAGE_TYPE_READ_SAMPLE(IMG_TYPE, N)\
+    DECL_IMAGE_READ_SAMPLE_RETTYPE(IMG_TYPE, int4, i, N) \
+    DECL_IMAGE_READ_SAMPLE_RETTYPE(IMG_TYPE, uint4, ui, N) \
+    DECL_IMAGE_READ_SAMPLE_RETTYPE(IMG_TYPE, float4, f, N)
+
+#define DECL_IMAGE_TYPE_WRITE(IMG_TYPE, N)\
+    DECL_IMAGE_WRITE_RETTYPE(IMG_TYPE, int4, i, N) \
+    DECL_IMAGE_WRITE_RETTYPE(IMG_TYPE, uint4, ui, N) \
+    DECL_IMAGE_WRITE_RETTYPE(IMG_TYPE, float4, f, N)
+
+#if (__OPENCL_C_VERSION__ >= 200)
+#define DECL_IMAGE(IMG_TYPE, N) \
+    DECL_IMAGE_TYPE_READ_NO_SAMPLE(read_only IMG_TYPE, N) \
+    DECL_IMAGE_TYPE_READ_NO_SAMPLE(read_write IMG_TYPE, N) \
+    DECL_IMAGE_TYPE_READ_SAMPLE(read_only IMG_TYPE, N) \
+    DECL_IMAGE_TYPE_WRITE(write_only IMG_TYPE, N) \
+    DECL_IMAGE_TYPE_WRITE(read_write IMG_TYPE, N)
+#else
+#define DECL_IMAGE(IMG_TYPE, N) \
+    DECL_IMAGE_TYPE_READ_NO_SAMPLE(read_only IMG_TYPE, N) \
+    DECL_IMAGE_TYPE_READ_SAMPLE(read_only IMG_TYPE, N) \
+    DECL_IMAGE_TYPE_WRITE(write_only IMG_TYPE, N)
+#endif
+
+DECL_IMAGE(image1d_t, 1)
+DECL_IMAGE(image2d_t, 2)
+DECL_IMAGE(image1d_array_t, 2)
+DECL_IMAGE(image3d_t, 3)
+DECL_IMAGE(image3d_t, 4)
+DECL_IMAGE(image2d_array_t, 3)
+DECL_IMAGE(image2d_array_t, 4)
+
+#undef DECL_IMAGE
+
+#if (__OPENCL_C_VERSION__ >= 200)
+#define DECL_IMAGE(IMG_TYPE, N) \
+    DECL_IMAGE_TYPE_READ_NO_SAMPLE(read_only IMG_TYPE, N) \
+    DECL_IMAGE_TYPE_READ_NO_SAMPLE(read_write IMG_TYPE, N) \
+    DECL_IMAGE_TYPE_WRITE(write_only IMG_TYPE, N) \
+    DECL_IMAGE_TYPE_WRITE(read_write IMG_TYPE, N)
+#else
+#define DECL_IMAGE(IMG_TYPE, N) \
+    DECL_IMAGE_TYPE_READ_NO_SAMPLE(read_only IMG_TYPE, N) \
+    DECL_IMAGE_TYPE_WRITE(write_only IMG_TYPE, N)
+#endif
+
+DECL_IMAGE(image1d_buffer_t, 1)
+
+#undef int1
+#undef float1
+#undef DECL_IMAGE_TYPE_READ_NO_SAMPLE
+#undef DECL_IMAGE_TYPE_WRITE
+#undef DECL_IMAGE
 
 OVERLOADABLE int get_image_channel_data_type(read_only image1d_t image);
 OVERLOADABLE int get_image_channel_order(read_only image1d_t image);
@@ -50,37 +99,6 @@ OVERLOADABLE int get_image_width(read_only image1d_t image);
 OVERLOADABLE int get_image_channel_data_type(read_only image1d_buffer_t image);
 OVERLOADABLE int get_image_channel_order(read_only image1d_buffer_t image);
 OVERLOADABLE int get_image_width(read_only image1d_buffer_t image);
-
-OVERLOADABLE int4 read_imagei(read_only image2d_t cl_image, const sampler_t sampler, int2 coord);
-OVERLOADABLE int4 read_imagei(read_only image2d_t cl_image, const sampler_t sampler, float2 coord);
-OVERLOADABLE int4 read_imagei(read_only image2d_t cl_image, int2 coord);
-OVERLOADABLE void write_imagei(write_only image2d_t cl_image, int2 coord, int4 color);
-OVERLOADABLE void write_imagei(write_only image2d_t cl_image, float2 coord, int4 color);
-OVERLOADABLE uint4 read_imageui(read_only image2d_t cl_image, const sampler_t sampler, int2 coord);
-OVERLOADABLE uint4 read_imageui(read_only image2d_t cl_image, const sampler_t sampler, float2 coord);
-OVERLOADABLE uint4 read_imageui(read_only image2d_t cl_image, int2 coord);
-OVERLOADABLE void write_imageui(write_only image2d_t cl_image, int2 coord, uint4 color);
-OVERLOADABLE void write_imageui(write_only image2d_t cl_image, float2 coord, uint4 color);
-OVERLOADABLE float4 read_imagef(read_only image2d_t cl_image, const sampler_t sampler, int2 coord);
-OVERLOADABLE float4 read_imagef(read_only image2d_t cl_image, const sampler_t sampler, float2 coord);
-OVERLOADABLE float4 read_imagef(read_only image2d_t cl_image, int2 coord);
-OVERLOADABLE void write_imagef(write_only image2d_t cl_image, int2 coord, float4 color);
-OVERLOADABLE void write_imagef(write_only image2d_t cl_image, float2 coord, float4 color);
-OVERLOADABLE int4 read_imagei(read_only image1d_array_t cl_image, const sampler_t sampler, int2 coord);
-OVERLOADABLE int4 read_imagei(read_only image1d_array_t cl_image, const sampler_t sampler, float2 coord);
-OVERLOADABLE int4 read_imagei(read_only image1d_array_t cl_image, int2 coord);
-OVERLOADABLE void write_imagei(write_only image1d_array_t cl_image, int2 coord, int4 color);
-OVERLOADABLE void write_imagei(write_only image1d_array_t cl_image, float2 coord, int4 color);
-OVERLOADABLE uint4 read_imageui(read_only image1d_array_t cl_image, const sampler_t sampler, int2 coord);
-OVERLOADABLE uint4 read_imageui(read_only image1d_array_t cl_image, const sampler_t sampler, float2 coord);
-OVERLOADABLE uint4 read_imageui(read_only image1d_array_t cl_image, int2 coord);
-OVERLOADABLE void write_imageui(write_only image1d_array_t cl_image, int2 coord, uint4 color);
-OVERLOADABLE void write_imageui(write_only image1d_array_t cl_image, float2 coord, uint4 color);
-OVERLOADABLE float4 read_imagef(read_only image1d_array_t cl_image, const sampler_t sampler, int2 coord);
-OVERLOADABLE float4 read_imagef(read_only image1d_array_t cl_image, const sampler_t sampler, float2 coord);
-OVERLOADABLE float4 read_imagef(read_only image1d_array_t cl_image, int2 coord);
-OVERLOADABLE void write_imagef(write_only image1d_array_t cl_image, int2 coord, float4 color);
-OVERLOADABLE void write_imagef(write_only image1d_array_t cl_image, float2 coord, float4 color);
 
 OVERLOADABLE int get_image_channel_data_type(read_only image2d_t image);
 OVERLOADABLE int get_image_channel_order(read_only image2d_t image);
@@ -92,69 +110,6 @@ OVERLOADABLE int get_image_channel_data_type(read_only image1d_array_t image);
 OVERLOADABLE int get_image_channel_order(read_only image1d_array_t image);
 OVERLOADABLE int get_image_width(read_only image1d_array_t image);
 OVERLOADABLE size_t get_image_array_size(read_only image1d_array_t image);
-
-OVERLOADABLE int4 read_imagei(read_only image3d_t cl_image, const sampler_t sampler, int4 coord);
-OVERLOADABLE int4 read_imagei(read_only image3d_t cl_image, const sampler_t sampler, float4 coord);
-OVERLOADABLE int4 read_imagei(read_only image3d_t cl_image, int4 coord);
-OVERLOADABLE void write_imagei(write_only image3d_t cl_image, int4 coord, int4 color);
-OVERLOADABLE void write_imagei(write_only image3d_t cl_image, float4 coord, int4 color);
-OVERLOADABLE uint4 read_imageui(read_only image3d_t cl_image, const sampler_t sampler, int4 coord);
-OVERLOADABLE uint4 read_imageui(read_only image3d_t cl_image, const sampler_t sampler, float4 coord);
-OVERLOADABLE uint4 read_imageui(read_only image3d_t cl_image, int4 coord);
-OVERLOADABLE void write_imageui(write_only image3d_t cl_image, int4 coord, uint4 color);
-OVERLOADABLE void write_imageui(write_only image3d_t cl_image, float4 coord, uint4 color);
-OVERLOADABLE float4 read_imagef(read_only image3d_t cl_image, const sampler_t sampler, int4 coord);
-OVERLOADABLE float4 read_imagef(read_only image3d_t cl_image, const sampler_t sampler, float4 coord);
-OVERLOADABLE float4 read_imagef(read_only image3d_t cl_image, int4 coord);
-OVERLOADABLE void write_imagef(write_only image3d_t cl_image, int4 coord, float4 color);
-OVERLOADABLE void write_imagef(write_only image3d_t cl_image, float4 coord, float4 color);
-
-OVERLOADABLE int4 read_imagei(read_only image3d_t cl_image, const sampler_t sampler, int3 coord);
-OVERLOADABLE int4 read_imagei(read_only image3d_t cl_image, const sampler_t sampler, float3 coord);
-OVERLOADABLE int4 read_imagei(read_only image3d_t cl_image, int3 coord);
-OVERLOADABLE void write_imagei(write_only image3d_t cl_image, int3 coord, int4 color);
-OVERLOADABLE void write_imagei(write_only image3d_t cl_image, float3 coord, int4 color);
-OVERLOADABLE uint4 read_imageui(read_only image3d_t cl_image, const sampler_t sampler, int3 coord);
-OVERLOADABLE uint4 read_imageui(read_only image3d_t cl_image, const sampler_t sampler, float3 coord);
-OVERLOADABLE uint4 read_imageui(read_only image3d_t cl_image, int3 coord);
-OVERLOADABLE void write_imageui(write_only image3d_t cl_image, int3 coord, uint4 color);
-OVERLOADABLE void write_imageui(write_only image3d_t cl_image, float3 coord, uint4 color);
-OVERLOADABLE float4 read_imagef(read_only image3d_t cl_image, const sampler_t sampler, int3 coord);
-OVERLOADABLE float4 read_imagef(read_only image3d_t cl_image, const sampler_t sampler, float3 coord);
-OVERLOADABLE float4 read_imagef(read_only image3d_t cl_image, int3 coord);
-OVERLOADABLE void write_imagef(write_only image3d_t cl_image, int3 coord, float4 color);
-OVERLOADABLE void write_imagef(write_only image3d_t cl_image, float3 coord, float4 color);
-OVERLOADABLE int4 read_imagei(read_only image2d_array_t cl_image, const sampler_t sampler, int4 coord);
-OVERLOADABLE int4 read_imagei(read_only image2d_array_t cl_image, const sampler_t sampler, float4 coord);
-OVERLOADABLE int4 read_imagei(read_only image2d_array_t cl_image, int4 coord);
-OVERLOADABLE void write_imagei(write_only image2d_array_t cl_image, int4 coord, int4 color);
-OVERLOADABLE void write_imagei(write_only image2d_array_t cl_image, float4 coord, int4 color);
-OVERLOADABLE uint4 read_imageui(read_only image2d_array_t cl_image, const sampler_t sampler, int4 coord);
-OVERLOADABLE uint4 read_imageui(read_only image2d_array_t cl_image, const sampler_t sampler, float4 coord);
-OVERLOADABLE uint4 read_imageui(read_only image2d_array_t cl_image, int4 coord);
-OVERLOADABLE void write_imageui(write_only image2d_array_t cl_image, int4 coord, uint4 color);
-OVERLOADABLE void write_imageui(write_only image2d_array_t cl_image, float4 coord, uint4 color);
-OVERLOADABLE float4 read_imagef(read_only image2d_array_t cl_image, const sampler_t sampler, int4 coord);
-OVERLOADABLE float4 read_imagef(read_only image2d_array_t cl_image, const sampler_t sampler, float4 coord);
-OVERLOADABLE float4 read_imagef(read_only image2d_array_t cl_image, int4 coord);
-OVERLOADABLE void write_imagef(write_only image2d_array_t cl_image, int4 coord, float4 color);
-OVERLOADABLE void write_imagef(write_only image2d_array_t cl_image, float4 coord, float4 color);
-
-OVERLOADABLE int4 read_imagei(read_only image2d_array_t cl_image, const sampler_t sampler, int3 coord);
-OVERLOADABLE int4 read_imagei(read_only image2d_array_t cl_image, const sampler_t sampler, float3 coord);
-OVERLOADABLE int4 read_imagei(read_only image2d_array_t cl_image, int3 coord);
-OVERLOADABLE void write_imagei(write_only image2d_array_t cl_image, int3 coord, int4 color);
-OVERLOADABLE void write_imagei(write_only image2d_array_t cl_image, float3 coord, int4 color);
-OVERLOADABLE uint4 read_imageui(read_only image2d_array_t cl_image, const sampler_t sampler, int3 coord);
-OVERLOADABLE uint4 read_imageui(read_only image2d_array_t cl_image, const sampler_t sampler, float3 coord);
-OVERLOADABLE uint4 read_imageui(read_only image2d_array_t cl_image, int3 coord);
-OVERLOADABLE void write_imageui(write_only image2d_array_t cl_image, int3 coord, uint4 color);
-OVERLOADABLE void write_imageui(write_only image2d_array_t cl_image, float3 coord, uint4 color);
-OVERLOADABLE float4 read_imagef(read_only image2d_array_t cl_image, const sampler_t sampler, int3 coord);
-OVERLOADABLE float4 read_imagef(read_only image2d_array_t cl_image, const sampler_t sampler, float3 coord);
-OVERLOADABLE float4 read_imagef(read_only image2d_array_t cl_image, int3 coord);
-OVERLOADABLE void write_imagef(write_only image2d_array_t cl_image, int3 coord, float4 color);
-OVERLOADABLE void write_imagef(write_only image2d_array_t cl_image, float3 coord, float4 color);
 
 OVERLOADABLE int get_image_channel_data_type(read_only image3d_t image);
 OVERLOADABLE int get_image_channel_order(read_only image3d_t image);
@@ -203,6 +158,41 @@ OVERLOADABLE int get_image_width(write_only image2d_array_t image);
 OVERLOADABLE int get_image_height(write_only image2d_array_t image);
 OVERLOADABLE int2 get_image_dim(write_only image2d_array_t image);
 OVERLOADABLE size_t get_image_array_size(write_only image2d_array_t image);
+#endif
+
+#if (__OPENCL_C_VERSION__ >= 200)
+OVERLOADABLE int get_image_channel_data_type(read_write image1d_t image);
+OVERLOADABLE int get_image_channel_order(read_write image1d_t image);
+OVERLOADABLE int get_image_width(read_write image1d_t image);
+
+OVERLOADABLE int get_image_channel_data_type(read_write image1d_buffer_t image);
+OVERLOADABLE int get_image_channel_order(read_write image1d_buffer_t image);
+OVERLOADABLE int get_image_width(read_write image1d_buffer_t image);
+
+OVERLOADABLE int get_image_channel_data_type(read_write image2d_t image);
+OVERLOADABLE int get_image_channel_order(read_write image2d_t image);
+OVERLOADABLE int get_image_width(read_write image2d_t image);
+OVERLOADABLE int get_image_height(read_write image2d_t image);
+OVERLOADABLE int2 get_image_dim(read_write image2d_t image);
+
+OVERLOADABLE int get_image_channel_data_type(read_write image1d_array_t image);
+OVERLOADABLE int get_image_channel_order(read_write image1d_array_t image);
+OVERLOADABLE int get_image_width(read_write image1d_array_t image);
+OVERLOADABLE size_t get_image_array_size(read_write image1d_array_t image);
+
+OVERLOADABLE int get_image_channel_data_type(read_write image3d_t image);
+OVERLOADABLE int get_image_channel_order(read_write image3d_t image);
+OVERLOADABLE int get_image_width(read_write image3d_t image);
+OVERLOADABLE int get_image_height(read_write image3d_t image);
+OVERLOADABLE int get_image_depth(read_write image3d_t image);
+OVERLOADABLE int4 get_image_dim(read_write image3d_t image);
+
+OVERLOADABLE int get_image_channel_data_type(read_write image2d_array_t image);
+OVERLOADABLE int get_image_channel_order(read_write image2d_array_t image);
+OVERLOADABLE int get_image_width(read_write image2d_array_t image);
+OVERLOADABLE int get_image_height(read_write image2d_array_t image);
+OVERLOADABLE int2 get_image_dim(read_write image2d_array_t image);
+OVERLOADABLE size_t get_image_array_size(read_write image2d_array_t image);
 #endif
 
 #endif
