@@ -198,23 +198,29 @@ cl_command_queue_bind_surface(cl_command_queue queue, cl_kernel k, cl_gpgpu gpgp
 }
 
 LOCAL cl_int
-cl_command_queue_bind_exec_info(cl_command_queue queue, cl_kernel k, cl_gpgpu gpgpu, uint32_t max_bti)
+cl_command_queue_bind_exec_info(cl_command_queue queue, cl_kernel k, cl_gpgpu gpgpu, uint32_t *max_bti)
 {
   uint32_t i;
-  size_t mem_offset, bti = max_bti;
-  cl_mem svm_mem;
+  size_t mem_offset, bti = *max_bti;
+  cl_mem mem;
+  int32_t offset = interp_kernel_get_curbe_size(k->opaque);
 
   for (i = 0; i < k->exec_info_n; i++) {
     void *ptr = k->exec_info[i];
-    if((svm_mem = cl_context_get_svm_from_ptr(k->program->ctx, ptr)) != NULL) {
-      mem_offset = (size_t)ptr - (size_t)svm_mem->host_ptr;
+    mem = cl_context_get_svm_from_ptr(k->program->ctx, ptr);
+    if(mem == NULL)
+      mem = cl_context_get_mem_from_ptr(k->program->ctx, ptr);
+
+    if (mem) {
+      mem_offset = (size_t)ptr - (size_t)mem->host_ptr;
       /* only need realloc in surface state, don't need realloc in curbe */
-      cl_gpgpu_bind_buf(gpgpu, svm_mem->bo, -1, svm_mem->offset + mem_offset, svm_mem->size, bti++);
+      cl_gpgpu_bind_buf(gpgpu, mem->bo, offset + i * sizeof(ptr), mem->offset + mem_offset, mem->size, bti++);
       if(bti == BTI_WORKAROUND_IMAGE_OFFSET)
-        bti = max_bti + BTI_WORKAROUND_IMAGE_OFFSET;
+        bti = *max_bti + BTI_WORKAROUND_IMAGE_OFFSET;
       assert(bti < BTI_MAX_ID);
     }
   }
+  *max_bti = bti;
 
   return CL_SUCCESS;
 }
@@ -234,69 +240,16 @@ cl_kernel_check_args(cl_kernel k)
 }
 
 LOCAL cl_int
-cl_command_queue_ND_range_wrap(cl_command_queue queue,
-                               cl_kernel ker,
-                               cl_event event,
-                               const uint32_t work_dim,
-                               const size_t *global_wk_off,
-                               const size_t *global_wk_sz,
-                               const size_t *local_wk_sz)
-{
-  /* Used for non uniform work group size */
-  cl_int err = CL_SUCCESS;
-  int i,j,k;
-  const size_t global_wk_sz_div[3] = {
-    global_wk_sz[0]/local_wk_sz[0]*local_wk_sz[0],
-    global_wk_sz[1]/local_wk_sz[1]*local_wk_sz[1],
-    global_wk_sz[2]/local_wk_sz[2]*local_wk_sz[2]
-  };
-
-  const size_t global_wk_sz_rem[3] = {
-    global_wk_sz[0]%local_wk_sz[0],
-    global_wk_sz[1]%local_wk_sz[1],
-    global_wk_sz[2]%local_wk_sz[2]
-  };
-
-  const size_t *global_wk_all[2] = {global_wk_sz_div, global_wk_sz_rem};
-  /* Go through the at most 8 cases and euque if there is work items left */
-  for(i = 0; i < 2;i++) {
-    for(j = 0; j < 2;j++) {
-      for(k = 0; k < 2; k++) {
-        size_t global_wk_sz_use[3] = {global_wk_all[k][0],global_wk_all[j][1],global_wk_all[i][2]};
-        size_t global_dim_off[3] = {
-          k * global_wk_sz_div[0] / local_wk_sz[0],
-          j * global_wk_sz_div[1] / local_wk_sz[1],
-          i * global_wk_sz_div[2] / local_wk_sz[2]
-        };
-        size_t local_wk_sz_use[3] = {
-          k ? global_wk_sz_rem[0] : local_wk_sz[0],
-          j ? global_wk_sz_rem[1] : local_wk_sz[1],
-          i ? global_wk_sz_rem[2] : local_wk_sz[2]
-        };
-        if(local_wk_sz_use[0] == 0 || local_wk_sz_use[1] == 0 || local_wk_sz_use[2] == 0) continue;
-        TRY (cl_command_queue_ND_range_gen7, queue, ker, event, work_dim, global_wk_off,global_dim_off, global_wk_sz,global_wk_sz_use,local_wk_sz, local_wk_sz_use);
-        /* TODO: need to handle events for multiple enqueue, now is a workaroud for uniform group size */
-        if(!(global_wk_sz_rem[0] == 0 && global_wk_sz_rem[1] == 0 && global_wk_sz_rem[2] == 0))
-          err = cl_command_queue_wait_flush(queue);
-      }
-      if(work_dim < 2)
-        break;
-    }
-    if(work_dim < 3)
-      break;
-  }
-error:
-  return err;
-}
-
-LOCAL cl_int
 cl_command_queue_ND_range(cl_command_queue queue,
                           cl_kernel k,
                           cl_event event,
                           const uint32_t work_dim,
                           const size_t *global_wk_off,
+                          const size_t *global_dim_off,
                           const size_t *global_wk_sz,
-                          const size_t *local_wk_sz)
+                          const size_t *global_wk_sz_use,
+                          const size_t *local_wk_sz,
+                          const size_t *local_wk_sz_use)
 {
   if(b_output_kernel_perf)
     time_start(queue->ctx, cl_kernel_get_name(k), queue);
@@ -309,8 +262,10 @@ cl_command_queue_ND_range(cl_command_queue queue,
 
   if (ver == 7 || ver == 75 || ver == 8 || ver == 9)
     //TRY (cl_command_queue_ND_range_gen7, queue, k, work_dim, global_wk_off, global_wk_sz, local_wk_sz);
-    TRY (cl_command_queue_ND_range_wrap, queue, k, event, work_dim,
-         global_wk_off, global_wk_sz, local_wk_sz);
+    TRY (cl_command_queue_ND_range_gen7, queue, k, event, work_dim,
+                                global_wk_off, global_dim_off, global_wk_sz,
+                                global_wk_sz_use, local_wk_sz, local_wk_sz_use);
+
   else
     FATAL ("Unknown Gen Device");
 
@@ -344,6 +299,7 @@ cl_command_queue_flush_gpgpu(cl_gpgpu gpgpu)
     interp_output_profiling(profiling_info, cl_gpgpu_map_profiling_buffer(gpgpu));
     cl_gpgpu_unmap_profiling_buffer(gpgpu);
   }
+
   return CL_SUCCESS;
 }
 

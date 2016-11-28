@@ -74,7 +74,13 @@ cl_kernel_delete(cl_kernel k)
   if (k->exec_info)
     cl_free(k->exec_info);
 
+  if (k->device_enqueue_ptr)
+    cl_mem_svm_delete(k->program->ctx, k->device_enqueue_ptr);
+  if (k->device_enqueue_infos)
+    cl_free(k->device_enqueue_infos);
+
   CL_OBJECT_DESTROY_BASE(k);
+
   cl_free(k);
 }
 

@@ -26,6 +26,7 @@
 #include "cl_event.h"
 #include "cl_utils.h"
 #include "cl_alloc.h"
+#include "cl_device_enqueue.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -369,7 +370,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   cl_gpgpu_kernel kernel;
   const uint32_t simd_sz = cl_kernel_get_simd_width(ker);
   size_t i, batch_sz = 0u, local_sz = 0u;
-  size_t cst_sz = ker->curbe_sz= interp_kernel_get_curbe_size(ker->opaque);
+  size_t cst_sz = interp_kernel_get_curbe_size(ker->opaque);
   int32_t scratch_sz = interp_kernel_get_scratch_size(ker->opaque);
   size_t thread_n = 0u;
   int printf_num = 0;
@@ -377,6 +378,13 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   size_t global_size = global_wk_sz[0] * global_wk_sz[1] * global_wk_sz[2];
   void* printf_info = NULL;
   uint32_t max_bti = 0;
+
+  if (ker->exec_info_n > 0) {
+    cst_sz += ker->exec_info_n * sizeof(void *);
+    cst_sz = (cst_sz + 31) / 32 * 32;   //align to register size, hard code here.
+    ker->curbe = cl_realloc(ker->curbe, cst_sz);
+  }
+  ker->curbe_sz = cst_sz;
 
   /* Setup kernel */
   kernel.name = interp_kernel_get_name(ker->opaque);
@@ -436,7 +444,9 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   if(UNLIKELY(err = cl_command_queue_bind_image(queue, ker, gpgpu, &max_bti) != CL_SUCCESS))
     return err;
   /* Bind all exec infos */
-  cl_command_queue_bind_exec_info(queue, ker, gpgpu, max_bti);
+  cl_command_queue_bind_exec_info(queue, ker, gpgpu, &max_bti);
+  /* Bind device enqueue buffer */
+  cl_device_enqueue_bind_buffer(gpgpu, ker, &max_bti, &kernel);
   /* Bind all samplers */
   if (ker->vme)
     cl_gpgpu_bind_vme_state(gpgpu, ker->accel);
@@ -479,6 +489,7 @@ cl_command_queue_ND_range_gen7(cl_command_queue queue,
   /* Close the batch buffer and submit it */
   cl_gpgpu_batch_end(gpgpu, 0);
 
+  event->exec_data.queue = queue;
   event->exec_data.gpgpu = gpgpu;
   event->exec_data.type = EnqueueNDRangeKernel;
 

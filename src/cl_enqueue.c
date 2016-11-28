@@ -24,6 +24,7 @@
 #include "cl_command_queue.h"
 #include "cl_utils.h"
 #include "cl_alloc.h"
+#include "cl_device_enqueue.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -568,6 +569,12 @@ cl_enqueue_ndrange(enqueue_data *data, cl_int status)
 
   if (status == CL_SUBMITTED) {
     err = cl_command_queue_flush_gpgpu(data->gpgpu);
+    //if it is the last ndrange of an cl enqueue api,
+    //check the device enqueue information.
+    if (data->mid_event_of_enq == 0) {
+      assert(data->queue);
+      cl_device_enqueue_parse_result(data->queue, data->gpgpu);
+    }
   } else if (status == CL_COMPLETE) {
     void *batch_buf = cl_gpgpu_ref_batch_buf(data->gpgpu);
     cl_gpgpu_sync(batch_buf);

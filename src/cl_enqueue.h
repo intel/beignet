@@ -78,6 +78,9 @@ typedef struct _enqueue_data {
                                  void *svm_pointers[],
                                  void *user_data);  /* pointer to pfn_free_func of clEnqueueSVMFree */
   cl_gpgpu gpgpu;
+  cl_bool mid_event_of_enq;  /* For non-uniform ndrange, one enqueue have a sequence event, the
+                                last event need to parse device enqueue information.
+                                0 : last event; 1: non-last event */
 } enqueue_data;
 
 /* Do real enqueue commands */

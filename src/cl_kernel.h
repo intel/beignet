@@ -73,7 +73,11 @@ struct _cl_kernel {
 
   void* cmrt_kernel;          /* CmKernel* */
   uint32_t exec_info_n;       /* The kernel's exec info count */
-  void** exec_info;            /* The kernel's exec info */
+  void** exec_info;             /* The kernel's exec info */
+  cl_bool useDeviceEnqueue;     /* kernel use device enqueue */
+  void* device_enqueue_ptr;     /* device_enqueue buffer*/
+  uint32_t device_enqueue_info_n; /* count of parent kernel's arguments buffers, as child enqueues' exec info */
+  void** device_enqueue_infos;   /* parent kernel's arguments buffers, as child enqueues' exec info   */
 };
 
 #define CL_OBJECT_KERNEL_MAGIC 0x1234567890abedefLL

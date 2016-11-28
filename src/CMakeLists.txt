@@ -93,6 +93,8 @@ set(OPENCL_SRC
     cl_context.c
     cl_command_queue.c
     cl_command_queue.h
+    cl_device_enqueue.c
+    cl_device_enqueue.h
     cl_command_queue_gen7.c
     cl_command_queue_enqueue.c
     cl_utils.c

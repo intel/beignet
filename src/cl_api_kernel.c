@@ -207,33 +207,85 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
       break;
     }
 
-    e = cl_event_create(command_queue->ctx, command_queue, num_events_in_wait_list,
-                        event_wait_list, CL_COMMAND_NDRANGE_KERNEL, &err);
-    if (err != CL_SUCCESS) {
-      break;
-    }
+    int i,j,k;
+    const size_t global_wk_sz_div[3] = {
+      fixed_global_sz[0] / fixed_local_sz[0] * fixed_local_sz[0],
+      fixed_global_sz[1] / fixed_local_sz[1] * fixed_local_sz[1],
+      fixed_global_sz[2] / fixed_local_sz[2] * fixed_local_sz[2]
+    };
 
-    /* Do device specific checks are enqueue the kernel */
-    err = cl_command_queue_ND_range(command_queue, kernel, e, work_dim,
-                                    fixed_global_off, fixed_global_sz, fixed_local_sz);
-    if (err != CL_SUCCESS) {
-      break;
-    }
+    const size_t global_wk_sz_rem[3] = {
+      fixed_global_sz[0] % fixed_local_sz[0],
+      fixed_global_sz[1] % fixed_local_sz[1],
+      fixed_global_sz[2] % fixed_local_sz[2]
+    };
+    cl_uint count;
+    count = global_wk_sz_rem[0] ? 2 : 1;
+    count *= global_wk_sz_rem[1] ? 2 : 1;
+    count *= global_wk_sz_rem[2] ? 2 : 1;
 
-    /* We will flush the ndrange if no event depend. Else we will add it to queue list.
-       The finish or Complete status will always be done in queue list. */
-    event_status = cl_event_is_ready(e);
-    if (event_status < CL_COMPLETE) { // Error happend, cancel.
-      err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
-      break;
-    }
+    const size_t *global_wk_all[2] = {global_wk_sz_div, global_wk_sz_rem};
+    /* Go through the at most 8 cases and euque if there is work items left */
+    for (i = 0; i < 2;i++) {
+      for (j = 0; j < 2;j++) {
+        for (k = 0; k < 2; k++) {
+          size_t global_wk_sz_use[3] = {global_wk_all[k][0], global_wk_all[j][1], global_wk_all[i][2]};
+          size_t global_dim_off[3] = {
+            k * global_wk_sz_div[0] / fixed_local_sz[0],
+            j * global_wk_sz_div[1] / fixed_local_sz[1],
+            i * global_wk_sz_div[2] / fixed_local_sz[2]
+          };
+          size_t local_wk_sz_use[3] = {
+            k ? global_wk_sz_rem[0] : fixed_local_sz[0],
+            j ? global_wk_sz_rem[1] : fixed_local_sz[1],
+            i ? global_wk_sz_rem[2] : fixed_local_sz[2]
+          };
+          if (local_wk_sz_use[0] == 0 || local_wk_sz_use[1] == 0 || local_wk_sz_use[2] == 0)
+            continue;
 
-    err = cl_event_exec(e, (event_status == CL_COMPLETE ? CL_SUBMITTED : CL_QUEUED), CL_FALSE);
-    if (err != CL_SUCCESS) {
-      break;
-    }
+          e = cl_event_create(command_queue->ctx, command_queue, num_events_in_wait_list,
+                              event_wait_list, CL_COMMAND_NDRANGE_KERNEL, &err);
+          if (err != CL_SUCCESS) {
+            break;
+          }
 
-    cl_command_queue_enqueue_event(command_queue, e);
+          /* Do device specific checks are enqueue the kernel */
+          err = cl_command_queue_ND_range(command_queue, kernel, e, work_dim,
+                                          fixed_global_off, global_dim_off, fixed_global_sz,
+                                          global_wk_sz_use, fixed_local_sz, local_wk_sz_use);
+          if (err != CL_SUCCESS) {
+            break;
+          }
+          e->exec_data.mid_event_of_enq = (count > 1);
+          count--;
+
+          /* We will flush the ndrange if no event depend. Else we will add it to queue list.
+             The finish or Complete status will always be done in queue list. */
+          event_status = cl_event_is_ready(e);
+          if (event_status < CL_COMPLETE) { // Error happend, cancel.
+            err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
+            break;
+          } else if (event_status == CL_COMPLETE) {
+            err = cl_enqueue_handle(&e->exec_data, CL_SUBMITTED);
+            if (err != CL_SUCCESS) {
+              break;
+            }
+            e->status = CL_SUBMITTED;
+          }
+
+          cl_command_queue_enqueue_event(command_queue, e);
+
+          if (e->exec_data.mid_event_of_enq)
+            cl_event_delete(e);
+        }
+        if (err != CL_SUCCESS) {
+          break;
+        }
+      }
+      if (err != CL_SUCCESS) {
+        break;
+      }
+    }
   } while (0);
 
   if (err == CL_SUCCESS && event) {
