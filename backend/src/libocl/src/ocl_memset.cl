@@ -41,4 +41,7 @@ void __gen_memset_ ##NAME (DST_SPACE uchar* dst, uchar val, size_t size) { \
 DECL_MEMSET_FN(g, __global)
 DECL_MEMSET_FN(l, __local)
 DECL_MEMSET_FN(p, __private)
+#if (__OPENCL_C_VERSION__ >= 200)
+DECL_MEMSET_FN(n, __generic)
+#endif
 

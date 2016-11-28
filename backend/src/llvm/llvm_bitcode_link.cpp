@@ -191,6 +191,28 @@ namespace gbe
     builtinFuncs.push_back("__gen_memcpy_gc_align");
     builtinFuncs.push_back("__gen_memcpy_lc_align");
 
+    if (oclVersion >= 200) {
+      builtinFuncs.push_back("__gen_memcpy_gn");
+      builtinFuncs.push_back("__gen_memcpy_pn");
+      builtinFuncs.push_back("__gen_memcpy_ln");
+      builtinFuncs.push_back("__gen_memcpy_ng");
+      builtinFuncs.push_back("__gen_memcpy_np");
+      builtinFuncs.push_back("__gen_memcpy_nl");
+      builtinFuncs.push_back("__gen_memcpy_nc");
+      builtinFuncs.push_back("__gen_memcpy_nn");
+      builtinFuncs.push_back("__gen_memset_n");
+
+      builtinFuncs.push_back("__gen_memcpy_gn_align");
+      builtinFuncs.push_back("__gen_memcpy_pn_align");
+      builtinFuncs.push_back("__gen_memcpy_ln_align");
+      builtinFuncs.push_back("__gen_memcpy_ng_align");
+      builtinFuncs.push_back("__gen_memcpy_np_align");
+      builtinFuncs.push_back("__gen_memcpy_nl_align");
+      builtinFuncs.push_back("__gen_memcpy_nc_align");
+      builtinFuncs.push_back("__gen_memcpy_nn_align");
+      builtinFuncs.push_back("__gen_memset_n_align");
+    }
+
     for (Module::iterator SF = mod->begin(), E = mod->end(); SF != E; ++SF) {
       if (SF->isDeclaration()) continue;
       if (!isKernelFunction(*SF)) continue;

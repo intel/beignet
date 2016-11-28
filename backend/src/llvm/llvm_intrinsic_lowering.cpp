@@ -54,6 +54,8 @@ namespace gbe {
             return 'c';
           case 3:
             return 'l';
+          case 4:
+            return 'n';
           default:
             assert(0 && "Non support address space");
             return '\0';

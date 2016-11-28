@@ -37,6 +37,19 @@ void __gen_memcpy_ ##NAME (DST_SPACE uchar* dst, SRC_SPACE uchar* src, size_t si
   } \
 }
 
+#if (__OPENCL_C_VERSION__ >= 200)
+#define DECL_ONE_SPACE_MEMCOPY_FN(NAME, DST_SPACE) \
+  DECL_TWO_SPACE_MEMCOPY_FN( NAME## g, DST_SPACE, __global) \
+  DECL_TWO_SPACE_MEMCOPY_FN( NAME## l, DST_SPACE, __local) \
+  DECL_TWO_SPACE_MEMCOPY_FN( NAME## p, DST_SPACE, __private) \
+  DECL_TWO_SPACE_MEMCOPY_FN( NAME## n, DST_SPACE, __generic) \
+  DECL_TWO_SPACE_MEMCOPY_FN( NAME## c, DST_SPACE, __constant)
+
+DECL_ONE_SPACE_MEMCOPY_FN(g, __global)
+DECL_ONE_SPACE_MEMCOPY_FN(l, __local)
+DECL_ONE_SPACE_MEMCOPY_FN(p, __private)
+DECL_ONE_SPACE_MEMCOPY_FN(n, __generic)
+#else
 #define DECL_ONE_SPACE_MEMCOPY_FN(NAME, DST_SPACE) \
   DECL_TWO_SPACE_MEMCOPY_FN( NAME## g, DST_SPACE, __global) \
   DECL_TWO_SPACE_MEMCOPY_FN( NAME## l, DST_SPACE, __local) \
@@ -46,4 +59,6 @@ void __gen_memcpy_ ##NAME (DST_SPACE uchar* dst, SRC_SPACE uchar* src, size_t si
 DECL_ONE_SPACE_MEMCOPY_FN(g, __global)
 DECL_ONE_SPACE_MEMCOPY_FN(l, __local)
 DECL_ONE_SPACE_MEMCOPY_FN(p, __private)
+
+#endif
 
