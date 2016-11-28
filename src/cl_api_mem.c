@@ -1359,7 +1359,7 @@ clEnqueueMigrateMemObjects(cl_command_queue command_queue,
     }
 
     for (i = 0; i < num_mem_objects; i++) {
-      if (!CL_OBJECT_IS_BUFFER(mem_objects[i])) {
+      if (!CL_OBJECT_IS_MEM(mem_objects[i])) {
         err = CL_INVALID_MEM_OBJECT;
         break;
       }
