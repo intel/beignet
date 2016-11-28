@@ -40,6 +40,7 @@ struct BinInterpCallBackInitializer
     gbe_program_get_kernel_num = gbe::programGetKernelNum;
     gbe_program_get_kernel_by_name = gbe::programGetKernelByName;
     gbe_program_get_kernel = gbe::programGetKernel;
+    gbe_program_get_device_enqueue_kernel_name = gbe::programGetDeviceEnqueueKernelName;
     gbe_kernel_get_code_size = gbe::kernelGetCodeSize;
     gbe_kernel_get_code = gbe::kernelGetCode;
     gbe_kernel_get_arg_num = gbe::kernelGetArgNum;
@@ -77,6 +78,7 @@ struct BinInterpCallBackInitializer
     gbe_dup_printfset = gbe::kernelDupPrintfSet;
     gbe_release_printf_info = gbe::kernelReleasePrintfSet;
     gbe_output_printf = gbe::kernelOutputPrintf;
+    gbe_kernel_use_device_enqueue = gbe::kernelUseDeviceEnqueue;
   }
 
   ~BinInterpCallBackInitializer() {
