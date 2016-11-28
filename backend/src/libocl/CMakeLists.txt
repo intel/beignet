@@ -68,7 +68,7 @@ FOREACH(M ${OCL_COPY_MODULES_12})
     COPY_THE_SOURCE(OCL_SOURCE_FILES_12 ${M})
 ENDFOREACH(M)
 
-SET (OCL_COPY_MODULES_20 ocl_vload_20 ocl_atom_20 ocl_pipe)
+SET (OCL_COPY_MODULES_20 ocl_vload_20 ocl_atom_20 ocl_pipe ocl_enqueue)
 FOREACH(M ${OCL_COPY_MODULES_20})
     COPY_THE_HEADER(${M})
     COPY_THE_SOURCE(OCL_SOURCE_FILES_20 ${M})
@@ -157,7 +157,7 @@ FOREACH(M ${OCL_BASH_GENERATED_MODULES})
 ENDFOREACH(M) 
 
 SET (CLANG_OCL_FLAGS -fno-builtin -ffp-contract=off -triple spir -cl-kernel-arg-info -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND "-cl-std=CL1.2" -D__OPENCL_C_VERSION__=120)
-SET (CLANG_OCL_FLAGS_20 -fno-builtin -ffp-contract=off -triple spir64 -cl-kernel-arg-info -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND "-cl-std=CL2.0" -D__OPENCL_C_VERSION__=200)
+SET (CLANG_OCL_FLAGS_20 -fno-builtin -ffp-contract=off -triple spir64 -cl-kernel-arg-info -fblocks -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND "-cl-std=CL2.0" -D__OPENCL_C_VERSION__=200)
 
 MACRO(ADD_CL_TO_BC_TARGET _file _output _clang_flag)
     # CMake seems can not add pattern rule, use MACRO to replace.

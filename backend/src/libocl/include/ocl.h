@@ -100,6 +100,7 @@
 #include "ocl_atom_20.h"
 #include "ocl_pipe.h"
 #include "ocl_math_20.h"
+#include "ocl_enqueue.h"
 #else
 #include "ocl_vload.h"
 #include "ocl_atom.h"
