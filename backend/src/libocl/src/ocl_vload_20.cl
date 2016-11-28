@@ -16,7 +16,7 @@
  *
  */
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
-#include "ocl_vload20.h"
+#include "ocl_vload_20.h"
 #include "ocl_relational.h"
 
 // These loads and stores will use untyped reads and writes, so we can just
