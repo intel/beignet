@@ -2381,7 +2381,7 @@ clEnqueueFillImage(cl_command_queue command_queue,
       break;
     }
 
-    err = cl_image_fill(command_queue, fill_color, image, origin, region);
+    err = cl_image_fill(command_queue, e, fill_color, image, origin, region);
     if (err != CL_SUCCESS) {
       break;
     }

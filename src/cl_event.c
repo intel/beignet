@@ -162,7 +162,7 @@ cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type type,
   list_init(&e->callbacks);
   list_node_init(&e->enqueue_node);
 
-  assert(type >= CL_COMMAND_NDRANGE_KERNEL && type <= CL_COMMAND_FILL_IMAGE);
+  assert(type >= CL_COMMAND_NDRANGE_KERNEL && type <= CL_COMMAND_SVM_UNMAP);
   e->event_type = type;
   if (type == CL_COMMAND_USER) {
     e->status = CL_SUBMITTED;

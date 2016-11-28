@@ -178,19 +178,19 @@ cl_mem_allocate(enum cl_mem_type type,
             mem->is_svm = 1;
           /* userptr not support tiling */
           if (!is_tiled) {
-            if ((ALIGN((unsigned long)host_ptr, cacheline_size) == (unsigned long)host_ptr) &&
+            if(svm_mem != NULL) {  //SVM always paged alignment
+              mem->offset = 0;
+              mem->is_userptr = 1;
+              mem->bo = svm_mem->bo;
+              cl_mem_add_ref(svm_mem);
+              bufCreated = 1;
+            } else if ((ALIGN((unsigned long)host_ptr, cacheline_size) == (unsigned long)host_ptr) &&
                 (ALIGN((unsigned long)sz, cacheline_size) == (unsigned long)sz)) {
               void* aligned_host_ptr = (void*)(((unsigned long)host_ptr) & (~(page_size - 1)));
               mem->offset = host_ptr - aligned_host_ptr;
               mem->is_userptr = 1;
               size_t aligned_sz = ALIGN((mem->offset + sz), page_size);
-
-              if(svm_mem != NULL) {
-                mem->bo = svm_mem->bo;
-                cl_mem_add_ref(svm_mem);
-              } else
-                mem->bo = cl_buffer_alloc_userptr(bufmgr, "CL userptr memory object", aligned_host_ptr, aligned_sz, 0);
-
+              mem->bo = cl_buffer_alloc_userptr(bufmgr, "CL userptr memory object", aligned_host_ptr, aligned_sz, 0);
               bufCreated = 1;
             }
           }
@@ -1249,14 +1249,6 @@ cl_mem_delete(cl_mem mem)
     }
   }
 
-  if(mem->is_svm && mem->type != CL_MEM_SVM_TYPE) {
-    cl_mem svm_mem = cl_context_get_svm_from_ptr(mem->ctx, mem->host_ptr);
-    if(svm_mem)
-      cl_mem_delete(svm_mem);
-  }
-  /* Remove it from the list */
-  cl_context_remove_mem(mem->ctx, mem);
-
   /* Someone still mapped, unmap */
   if(mem->map_ref > 0) {
     assert(mem->mapped_ptr);
@@ -1286,9 +1278,16 @@ cl_mem_delete(cl_mem mem)
       buffer->parent->subs = buffer->sub_next;
     pthread_mutex_unlock(&buffer->parent->sub_lock);
     cl_mem_delete((cl_mem )(buffer->parent));
+  } else if (mem->is_svm && mem->type != CL_MEM_SVM_TYPE) {
+    cl_mem svm_mem = cl_context_get_svm_from_ptr(mem->ctx, mem->host_ptr);
+    if (svm_mem != NULL)
+      cl_mem_delete(svm_mem);
   } else if (LIKELY(mem->bo != NULL)) {
     cl_buffer_unreference(mem->bo);
   }
+
+  /* Remove it from the list */
+  cl_context_remove_mem(mem->ctx, mem);
 
   if ((mem->is_userptr &&
       (mem->flags & CL_MEM_ALLOC_HOST_PTR) &&
@@ -1480,7 +1479,7 @@ cl_mem_copy(cl_command_queue queue, cl_event event, cl_mem src_buf, cl_mem dst_b
 }
 
 LOCAL cl_int
-cl_image_fill(cl_command_queue queue, const void * pattern, struct _cl_mem_image* src_image,
+cl_image_fill(cl_command_queue queue, cl_event e, const void * pattern, struct _cl_mem_image* src_image,
            const size_t * origin, const size_t * region)
 {
   cl_int ret = CL_SUCCESS;
@@ -1560,7 +1559,7 @@ cl_image_fill(cl_command_queue queue, const void * pattern, struct _cl_mem_image
   cl_kernel_set_arg(ker, 6, sizeof(cl_int), &origin[1]);
   cl_kernel_set_arg(ker, 7, sizeof(cl_int), &origin[2]);
 
-  ret = cl_command_queue_ND_range(queue, ker, NULL, 3, global_off, global_sz, local_sz);
+  ret = cl_command_queue_ND_range(queue, ker, e, 3, global_off, global_sz, local_sz);
   cl_kernel_delete(ker);
   src_image->intel_fmt = savedIntelFmt;
   return ret;

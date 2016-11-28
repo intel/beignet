@@ -108,8 +108,6 @@ struct _cl_context {
   cl_uint queue_cookie;             /* Cookie will change every time we change queue list. */
   list_head mem_objects;            /* All memory object currently allocated */
   cl_uint mem_object_num;           /* All memory number currently allocated */
-  list_head svm_objects;            /* All svm object currently allocated */
-  cl_uint svm_object_num;           /* All svm number currently allocated */
   list_head samplers;               /* All sampler object currently allocated */
   cl_uint sampler_num;              /* All sampler number currently allocated */
   list_head events;                 /* All event object currently allocated */

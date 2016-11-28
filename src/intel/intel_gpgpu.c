@@ -1713,7 +1713,7 @@ intel_gpgpu_build_idrt_gen9(intel_gpgpu_t *gpgpu, cl_gpgpu_kernel *kernel)
 }
 
 static int
-intel_gpgpu_upload_curbes(intel_gpgpu_t *gpgpu, const void* data, uint32_t size)
+intel_gpgpu_upload_curbes_gen7(intel_gpgpu_t *gpgpu, const void* data, uint32_t size)
 {
   unsigned char *curbe = NULL;
   cl_gpgpu_kernel *k = gpgpu->ker;
@@ -1731,7 +1731,38 @@ intel_gpgpu_upload_curbes(intel_gpgpu_t *gpgpu, const void* data, uint32_t size)
   /* Now put all the relocations for our flat address space */
   for (i = 0; i < k->thread_n; ++i)
     for (j = 0; j < gpgpu->binded_n; ++j) {
-      *(uint32_t*)(curbe + gpgpu->binded_offset[j]+i*k->curbe_sz) = gpgpu->binded_buf[j]->offset + gpgpu->target_buf_offset[j];
+      *(uint32_t *)(curbe + gpgpu->binded_offset[j]+i*k->curbe_sz) = gpgpu->binded_buf[j]->offset64 + gpgpu->target_buf_offset[j];
+      drm_intel_bo_emit_reloc(gpgpu->aux_buf.bo,
+                              gpgpu->aux_offset.curbe_offset + gpgpu->binded_offset[j]+i*k->curbe_sz,
+                              gpgpu->binded_buf[j],
+                              gpgpu->target_buf_offset[j],
+                              I915_GEM_DOMAIN_RENDER,
+                              I915_GEM_DOMAIN_RENDER);
+    }
+  dri_bo_unmap(gpgpu->aux_buf.bo);
+  return 0;
+}
+
+static int
+intel_gpgpu_upload_curbes_gen8(intel_gpgpu_t *gpgpu, const void* data, uint32_t size)
+{
+  unsigned char *curbe = NULL;
+  cl_gpgpu_kernel *k = gpgpu->ker;
+  uint32_t i, j;
+
+  /* Upload the data first */
+  if (dri_bo_map(gpgpu->aux_buf.bo, 1) != 0) {
+    fprintf(stderr, "%s:%d: %s.\n", __FILE__, __LINE__, strerror(errno));
+    return -1;
+  }
+  assert(gpgpu->aux_buf.bo->virtual);
+  curbe = (unsigned char *) (gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.curbe_offset);
+  memcpy(curbe, data, size);
+
+  /* Now put all the relocations for our flat address space */
+  for (i = 0; i < k->thread_n; ++i)
+    for (j = 0; j < gpgpu->binded_n; ++j) {
+      *(size_t *)(curbe + gpgpu->binded_offset[j]+i*k->curbe_sz) = gpgpu->binded_buf[j]->offset64 + gpgpu->target_buf_offset[j];
       drm_intel_bo_emit_reloc(gpgpu->aux_buf.bo,
                               gpgpu->aux_offset.curbe_offset + gpgpu->binded_offset[j]+i*k->curbe_sz,
                               gpgpu->binded_buf[j],
@@ -2425,7 +2456,6 @@ intel_set_gpgpu_callbacks(int device_id)
   cl_gpgpu_set_stack = (cl_gpgpu_set_stack_cb *) intel_gpgpu_set_stack;
   cl_gpgpu_state_init = (cl_gpgpu_state_init_cb *) intel_gpgpu_state_init;
   cl_gpgpu_set_perf_counters = (cl_gpgpu_set_perf_counters_cb *) intel_gpgpu_set_perf_counters;
-  cl_gpgpu_upload_curbes = (cl_gpgpu_upload_curbes_cb *) intel_gpgpu_upload_curbes;
   cl_gpgpu_alloc_constant_buffer  = (cl_gpgpu_alloc_constant_buffer_cb *) intel_gpgpu_alloc_constant_buffer;
   cl_gpgpu_states_setup = (cl_gpgpu_states_setup_cb *) intel_gpgpu_states_setup;
   cl_gpgpu_upload_samplers = (cl_gpgpu_upload_samplers_cb *) intel_gpgpu_upload_samplers;
@@ -2474,7 +2504,8 @@ intel_set_gpgpu_callbacks(int device_id)
     intel_gpgpu_load_idrt = intel_gpgpu_load_idrt_gen8;
     cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler_gen8;
     intel_gpgpu_pipe_control = intel_gpgpu_pipe_control_gen8;
-	intel_gpgpu_select_pipeline = intel_gpgpu_select_pipeline_gen7;
+    intel_gpgpu_select_pipeline = intel_gpgpu_select_pipeline_gen7;
+    cl_gpgpu_upload_curbes = (cl_gpgpu_upload_curbes_cb *) intel_gpgpu_upload_curbes_gen8;
     return;
   }
   if (IS_GEN9(device_id)) {
@@ -2494,9 +2525,11 @@ intel_set_gpgpu_callbacks(int device_id)
     cl_gpgpu_bind_sampler = (cl_gpgpu_bind_sampler_cb *) intel_gpgpu_bind_sampler_gen8;
     intel_gpgpu_pipe_control = intel_gpgpu_pipe_control_gen8;
     intel_gpgpu_select_pipeline = intel_gpgpu_select_pipeline_gen9;
+    cl_gpgpu_upload_curbes = (cl_gpgpu_upload_curbes_cb *) intel_gpgpu_upload_curbes_gen8;
     return;
   }
 
+  cl_gpgpu_upload_curbes = (cl_gpgpu_upload_curbes_cb *) intel_gpgpu_upload_curbes_gen7;
   intel_gpgpu_set_base_address = intel_gpgpu_set_base_address_gen7;
   intel_gpgpu_load_vfe_state = intel_gpgpu_load_vfe_state_gen7;
   cl_gpgpu_walker = (cl_gpgpu_walker_cb *)intel_gpgpu_walker_gen7;

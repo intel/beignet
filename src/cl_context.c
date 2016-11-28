@@ -81,19 +81,6 @@ cl_context_add_mem(cl_context ctx, cl_mem mem) {
 }
 
 LOCAL void
-cl_context_add_svm(cl_context ctx, cl_mem mem) {
-  assert(mem->ctx == NULL);
-  cl_context_add_ref(ctx);
-
-  CL_OBJECT_LOCK(ctx);
-  list_add_tail(&ctx->svm_objects, &mem->base.node);
-  ctx->svm_object_num++;
-  CL_OBJECT_UNLOCK(ctx);
-
-  mem->ctx = ctx;
-}
-
-LOCAL void
 cl_context_remove_mem(cl_context ctx, cl_mem mem) {
   assert(mem->ctx == ctx);
   CL_OBJECT_LOCK(ctx);
@@ -481,6 +468,7 @@ cl_context_get_svm_from_ptr(cl_context ctx, const void * p)
     buf = (cl_mem)list_entry(pos, _cl_base_object, node);
     if(buf->host_ptr == NULL) continue;
     if(buf->is_svm == 0) continue;
+    if(buf->type != CL_MEM_SVM_TYPE) continue;
     if((size_t)buf->host_ptr <= (size_t)p &&
        (size_t)p < ((size_t)buf->host_ptr + buf->size))
       return buf;
