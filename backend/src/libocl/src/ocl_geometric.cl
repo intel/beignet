@@ -18,7 +18,11 @@
 #include "ocl_geometric.h"
 #include "ocl_common.h"
 #include "ocl_relational.h"
+#if (__OPENCL_C_VERSION__ >= 200)
+#include "ocl_math_20.h"
+#else
 #include "ocl_math.h"
+#endif
 #include "ocl_float.h"
 
 CONST float __gen_ocl_fabs(float x) __asm("llvm.fabs" ".f32");

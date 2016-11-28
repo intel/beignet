@@ -15,7 +15,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "ocl_math.h"
+#include "ocl_math_20.h"
 #include "ocl_float.h"
 #include "ocl_relational.h"
 #include "ocl_common.h"

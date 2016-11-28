@@ -16,7 +16,11 @@
  *
  */
 #include "ocl_image.h"
+#if (__OPENCL_C_VERSION__ >= 200)
+#include "ocl_math_20.h"
+#else
 #include "ocl_math.h"
+#endif
 #include "ocl_integer.h"
 #include "ocl_common.h"
 #include "ocl_convert.h"

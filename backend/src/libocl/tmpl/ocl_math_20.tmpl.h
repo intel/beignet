@@ -15,8 +15,8 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef __OCL_MATH_H__
-#define __OCL_MATH_H__
+#ifndef __OCL_MATH_20_H__
+#define __OCL_MATH_20_H__
 
 #include "ocl_types.h"
 

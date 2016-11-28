@@ -89,7 +89,6 @@
 #include "ocl_geometric.h"
 #include "ocl_image.h"
 #include "ocl_integer.h"
-#include "ocl_math.h"
 #include "ocl_memcpy.h"
 #include "ocl_memset.h"
 #include "ocl_misc.h"
@@ -100,9 +99,11 @@
 #include "ocl_vload_20.h"
 #include "ocl_atom_20.h"
 #include "ocl_pipe.h"
+#include "ocl_math_20.h"
 #else
 #include "ocl_vload.h"
 #include "ocl_atom.h"
+#include "ocl_math.h"
 #endif
 #include "ocl_workitem.h"
 #include "ocl_simd.h"
