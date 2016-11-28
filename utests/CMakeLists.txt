@@ -306,7 +306,8 @@ if (ENABLE_OPENCL_20)
       compiler_sampler.cpp
       compiler_generic_pointer.cpp
       runtime_pipe_query.cpp
-      compiler_pipe_builtin.cpp)
+      compiler_pipe_builtin.cpp
+      compiler_device_enqueue.cpp)
 endif (ENABLE_OPENCL_20)
 
 if (NOT_BUILD_STAND_ALONE_UTEST)
