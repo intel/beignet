@@ -60,6 +60,7 @@ namespace gbe
      this->setHeader(insn);
      this->setDst(insn, dest);
      this->setSrc0(insn, msg);
+     this->setSrc1(insn, GenRegister::immud(0));
      setSamplerMessage(insn, bti, sampler, msg_type,
                        response_length, msg_length,
                        header_present,

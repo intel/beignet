@@ -203,7 +203,6 @@ namespace gbe
                                         unsigned msg_length, unsigned response_length,
                                         bool header_present, bool end_of_thread)
   {
-     setSrc1(inst, GenRegister::immud(0));
      inst->bits3.generic_gen5.header_present = header_present;
      inst->bits3.generic_gen5.response_length = response_length;
      inst->bits3.generic_gen5.msg_length = msg_length;
@@ -897,20 +896,22 @@ namespace gbe
      this->setHeader(insn);
      this->setDst(insn, GenRegister::null());
      this->setSrc0(insn, src);
+     this->setSrc1(insn, GenRegister::immud(0));
      setMessageDescriptor(insn, GEN_SFID_MESSAGE_GATEWAY, 1, 0);
      insn->bits3.msg_gateway.sub_function_id = GEN_BARRIER_MSG;
      insn->bits3.msg_gateway.notify = 0x1;
   }
 
   void GenEncoder::FWD_GATEWAY_MSG(GenRegister src, uint32_t notifyN) {
-     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
-     this->setHeader(insn);
-     this->setDst(insn, GenRegister::null());
-     this->setSrc0(insn, src);
-     setMessageDescriptor(insn, GEN_SFID_MESSAGE_GATEWAY, 1, 0);
-     insn->bits3.msg_gateway.sub_function_id = GEN_FORWARD_MSG;
-     GBE_ASSERT(notifyN <= 2);
-     insn->bits3.msg_gateway.notify = notifyN;
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    this->setHeader(insn);
+    this->setDst(insn, GenRegister::null());
+    this->setSrc0(insn, src);
+    this->setSrc1(insn, GenRegister::immud(0));
+    setMessageDescriptor(insn, GEN_SFID_MESSAGE_GATEWAY, 1, 0);
+    insn->bits3.msg_gateway.sub_function_id = GEN_FORWARD_MSG;
+    GBE_ASSERT(notifyN <= 2);
+    insn->bits3.msg_gateway.notify = notifyN;
   }
 
   void GenEncoder::FENCE(GenRegister dst, bool flushRWCache) {
@@ -918,6 +919,7 @@ namespace gbe
     this->setHeader(insn);
     this->setDst(insn, dst);
     this->setSrc0(insn, dst);
+    this->setSrc1(insn, GenRegister::immud(0));
     setMessageDescriptor(insn, GEN_SFID_DATAPORT_DATA, 1, 1, 1);
     insn->bits3.gen7_memory_fence.msg_type = GEN_MEM_FENCE;
     insn->bits3.gen7_memory_fence.commit_enable = 0x1;
@@ -1178,6 +1180,7 @@ namespace gbe
      this->setHeader(insn);
      this->setDst(insn, dest);
      this->setSrc0(insn, msg);
+     this->setSrc1(insn, GenRegister::immud(0));
      setSamplerMessage(insn, bti, sampler, msg_type,
                        response_length, msg_length,
                        header_present,
@@ -1228,19 +1231,21 @@ namespace gbe
     this->setHeader(insn);
     this->setDst(insn, dest);
     this->setSrc0(insn, msg);
+    this->setSrc1(insn, GenRegister::immud(0));
     setVmeMessage(insn, bti, response_length, msg_length,
                   msg_type, vme_search_path_lut, lut_sub);
   }
 
   void GenEncoder::TYPED_WRITE(GenRegister msg, bool header_present, unsigned char bti)
   {
-     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
-     uint32_t msg_type = GEN_TYPED_WRITE;
-     uint32_t msg_length = header_present ? 9 : 8;
-     this->setHeader(insn);
-     this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));
-     this->setSrc0(insn, msg);
-     setTypedWriteMessage(insn, bti, msg_type, msg_length, header_present);
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    uint32_t msg_type = GEN_TYPED_WRITE;
+    uint32_t msg_length = header_present ? 9 : 8;
+    this->setHeader(insn);
+    this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UD));
+    this->setSrc0(insn, msg);
+    this->setSrc1(insn, GenRegister::immud(0));
+    setTypedWriteMessage(insn, bti, msg_type, msg_length, header_present);
   }
   static void setScratchMessage(GenEncoder *p,
                                    GenNativeInstruction *insn,
