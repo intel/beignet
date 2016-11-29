@@ -503,6 +503,18 @@ namespace gbe
     return setByteScatterMessageDesc(&insn, bti, elemSize);
   }
 
+  unsigned GenEncoder::generateByteScatterSendsMessageDesc(unsigned bti, unsigned elemSize) {
+    GenNativeInstruction insn;
+    memset(&insn, 0, sizeof(GenNativeInstruction));
+    return setByteScatterSendsMessageDesc(&insn, bti, elemSize);
+  }
+
+  unsigned GenEncoder::setByteScatterSendsMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemSize)
+  {
+    assert(0);
+    return 0;
+  }
+
   unsigned GenEncoder::setByteScatterMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemSize) {
     uint32_t msg_length = 0;
     uint32_t response_length = 0;
@@ -522,7 +534,7 @@ namespace gbe
     return insn->bits3.ud;
   }
 
-  void GenEncoder::BYTE_SCATTER(GenRegister msg, GenRegister bti, uint32_t elemSize) {
+  void GenEncoder::BYTE_SCATTER(GenRegister msg, GenRegister data, GenRegister bti, uint32_t elemSize) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
 
     this->setHeader(insn);

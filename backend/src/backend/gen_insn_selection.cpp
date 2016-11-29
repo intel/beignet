@@ -1771,7 +1771,6 @@ namespace gbe
                                        GenRegister bti, vector<GenRegister> temps) {
     unsigned dstNum = temps.size();
     SelectionInstruction *insn = this->appendInsn(SEL_OP_BYTE_SCATTER, dstNum, 3);
-    SelectionVector *vector = this->appendVector();
 
     if (bti.file != GEN_IMMEDIATE_VALUE) {
       insn->state.flag = 0;
@@ -1788,11 +1787,26 @@ namespace gbe
     insn->src(2) = bti;
     insn->extra.elem = elemSize;
 
-    // value and address are contiguous in the send
-    vector->regNum = 2;
-    vector->isSrc = 1;
-    vector->offsetID = 0;
-    vector->reg = &insn->src(0);
+    if (hasSends()) {
+      insn->extra.splitSend = 1;
+      SelectionVector *vector = this->appendVector();
+      vector->regNum = 1;
+      vector->isSrc = 1;
+      vector->offsetID = 0;
+      vector->reg = &insn->src(0);
+
+      vector = this->appendVector();
+      vector->regNum = 1;
+      vector->isSrc = 1;
+      vector->offsetID = 1;
+      vector->reg = &insn->src(1);
+    } else {
+      SelectionVector *vector = this->appendVector();
+      vector->regNum = 2;
+      vector->isSrc = 1;
+      vector->offsetID = 0;
+      vector->reg = &insn->src(0);
+    }
   }
 
   void Selection::Opaque::BYTE_GATHERA64(Reg dst, Reg addr, uint32_t elemSize) {

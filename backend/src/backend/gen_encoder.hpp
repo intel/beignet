@@ -185,7 +185,7 @@ namespace gbe
     /*! Byte gather (for unaligned bytes, shorts and ints) */
     void BYTE_GATHER(GenRegister dst, GenRegister src, GenRegister bti, uint32_t elemSize);
     /*! Byte scatter (for unaligned bytes, shorts and ints) */
-    void BYTE_SCATTER(GenRegister src, GenRegister bti, uint32_t elemSize);
+    virtual void BYTE_SCATTER(GenRegister addr, GenRegister data, GenRegister bti, uint32_t elemSize);
     /*! Byte gather a64 (for unaligned bytes, shorts and ints) */
     virtual void BYTE_GATHERA64(GenRegister dst, GenRegister src, uint32_t elemSize);
     /*! Byte scatter a64 (for unaligned bytes, shorts and ints) */
@@ -265,6 +265,7 @@ namespace gbe
     virtual unsigned setUntypedWriteSendsMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
     unsigned setByteGatherMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemSize);
     unsigned setByteScatterMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemSize);
+    virtual unsigned setByteScatterSendsMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemSize);
 
     unsigned generateAtomicMessageDesc(unsigned function, unsigned bti, unsigned srcNum);
     unsigned generateUntypedReadMessageDesc(unsigned bti, unsigned elemNum);
@@ -272,6 +273,7 @@ namespace gbe
     unsigned generateUntypedWriteSendsMessageDesc(unsigned bti, unsigned elemNum);
     unsigned generateByteGatherMessageDesc(unsigned bti, unsigned elemSize);
     unsigned generateByteScatterMessageDesc(unsigned bti, unsigned elemSize);
+    unsigned generateByteScatterSendsMessageDesc(unsigned bti, unsigned elemSize);
 
     virtual void setHeader(GenNativeInstruction *insn) = 0;
     virtual void setDst(GenNativeInstruction *insn, GenRegister dest) = 0;

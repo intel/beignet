@@ -143,4 +143,51 @@ namespace gbe
         gen9_insn->bits2.sends.sel_reg32_desc = 1;
     }
   }
+
+  unsigned Gen9Encoder::setByteScatterSendsMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemSize)
+  {
+    uint32_t msg_length = 0;
+    uint32_t response_length = 0;
+    if (this->curr.execWidth == 8) {
+      msg_length = 1;
+    } else if (this->curr.execWidth == 16) {
+      msg_length = 2;
+    } else
+      NOT_IMPLEMENTED;
+
+    setDPByteScatterGather(insn,
+                           bti,
+                           elemSize,
+                           GEN7_BYTE_SCATTER,
+                           msg_length,
+                           response_length);
+    return insn->bits3.ud;
+  }
+
+  void Gen9Encoder::BYTE_SCATTER(GenRegister addr, GenRegister data, GenRegister bti, uint32_t elemSize)
+  {
+    if (addr.reg() == data.reg())
+      Gen8Encoder::BYTE_SCATTER(addr, data, bti, elemSize);
+    else {
+      GenNativeInstruction *insn = this->next(GEN_OPCODE_SENDS);
+      Gen9NativeInstruction *gen9_insn = &insn->gen9_insn;
+
+      this->setHeader(insn);
+      insn->header.destreg_or_condmod = GEN_SFID_DATAPORT_DATA;
+
+      setSendsOperands(gen9_insn, GenRegister::null(), addr, data);
+      if (this->curr.execWidth == 8)
+        gen9_insn->bits2.sends.src1_length = 1;
+      else if (this->curr.execWidth == 16)
+        gen9_insn->bits2.sends.src1_length = 2;
+      else
+        assert(!"unsupported");
+
+      if (bti.file == GEN_IMMEDIATE_VALUE) {
+        gen9_insn->bits2.sends.sel_reg32_desc = 0;
+        setByteScatterSendsMessageDesc(insn, bti.value.ud, elemSize);
+      } else
+        gen9_insn->bits2.sends.sel_reg32_desc = 1;
+    }
+  }
 } /* End of the name space. */

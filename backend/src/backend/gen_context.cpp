@@ -2220,16 +2220,23 @@ namespace gbe
   }
 
   void GenContext::emitByteScatterInstruction(const SelectionInstruction &insn) {
-    const GenRegister src = ra->genReg(insn.src(0));
+    const GenRegister addr = ra->genReg(insn.src(0));
+    GenRegister data = ra->genReg(insn.src(1));
+    if (!insn.extra.splitSend)
+      data = addr;
     const uint32_t elemSize = insn.extra.elem;
     const GenRegister bti = ra->genReg(insn.src(2));
 
     if (bti.file == GEN_IMMEDIATE_VALUE) {
-      p->BYTE_SCATTER(src, bti, elemSize);
+      p->BYTE_SCATTER(addr, data, bti, elemSize);
     } else {
       const GenRegister tmp = ra->genReg(insn.dst(0));
       const GenRegister btiTmp = ra->genReg(insn.dst(1));
-      unsigned desc = p->generateByteScatterMessageDesc(0, elemSize);
+      unsigned desc = 0;
+      if (insn.extra.splitSend)
+        desc = p->generateByteScatterSendsMessageDesc(0, elemSize);
+      else
+        desc = p->generateByteScatterMessageDesc(0, elemSize);
 
       unsigned jip0 = beforeMessage(insn, bti, tmp, btiTmp, desc);
 
@@ -2237,7 +2244,7 @@ namespace gbe
       p->push();
         p->curr.predicate = GEN_PREDICATE_NORMAL;
         p->curr.useFlag(insn.state.flag, insn.state.subFlag);
-        p->BYTE_SCATTER(src, GenRegister::addr1(0), elemSize);
+        p->BYTE_SCATTER(addr, data, GenRegister::addr1(0), elemSize);
       p->pop();
       afterMessage(insn, bti, tmp, btiTmp, jip0);
     }
