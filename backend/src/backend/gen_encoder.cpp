@@ -237,8 +237,7 @@ namespace gbe
       NOT_SUPPORTED;
   }
 
-  static void setDPByteScatterGather(GenEncoder *p,
-                                     GenNativeInstruction *insn,
+  void GenEncoder::setDPByteScatterGather(GenNativeInstruction *insn,
                                      uint32_t bti,
                                      uint32_t elem_size,
                                      uint32_t msg_type,
@@ -246,13 +245,13 @@ namespace gbe
                                      uint32_t response_length)
   {
     const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA;
-    p->setMessageDescriptor(insn, sfid, msg_length, response_length);
+    setMessageDescriptor(insn, sfid, msg_length, response_length);
     insn->bits3.gen7_byte_rw.msg_type = msg_type;
     insn->bits3.gen7_byte_rw.bti = bti;
     insn->bits3.gen7_byte_rw.data_size = elem_size;
-    if (p->curr.execWidth == 8)
+    if (curr.execWidth == 8)
       insn->bits3.gen7_byte_rw.simd_mode = GEN_BYTE_SCATTER_SIMD8;
-    else if (p->curr.execWidth == 16)
+    else if (curr.execWidth == 16)
       insn->bits3.gen7_byte_rw.simd_mode = GEN_BYTE_SCATTER_SIMD16;
     else
       NOT_SUPPORTED;
@@ -472,8 +471,7 @@ namespace gbe
       response_length = 2;
     } else
       NOT_IMPLEMENTED;
-    setDPByteScatterGather(this,
-                           insn,
+    setDPByteScatterGather(insn,
                            bti,
                            elemSize,
                            GEN7_BYTE_GATHER,
@@ -515,8 +513,7 @@ namespace gbe
     } else
       NOT_IMPLEMENTED;
 
-    setDPByteScatterGather(this,
-                           insn,
+    setDPByteScatterGather(insn,
                            bti,
                            elemSize,
                            GEN7_BYTE_SCATTER,

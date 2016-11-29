@@ -84,7 +84,7 @@ namespace gbe
       NOT_SUPPORTED;
   }
 
-  static void setDPByteScatterGather(GenEncoder *p,
+  static void setDPByteScatterGatherA64(GenEncoder *p,
                                      GenNativeInstruction *insn,
                                      uint32_t bti,
                                      uint32_t block_size,
@@ -350,7 +350,7 @@ namespace gbe
     GBE_ASSERT(this->curr.execWidth == 8);
     const uint32_t msg_length = 2;
     const uint32_t response_length = 1;
-    setDPByteScatterGather(this,
+    setDPByteScatterGatherA64(this,
                            insn,
                            0xff,
                            0x0,
@@ -375,7 +375,7 @@ namespace gbe
     this->setSrc1(insn, GenRegister::immud(0));
     const uint32_t msg_length = 3;
     const uint32_t response_length = 0;
-    setDPByteScatterGather(this,
+    setDPByteScatterGatherA64(this,
                            insn,
                            0xff,
                            0x0,

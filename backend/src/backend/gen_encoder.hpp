@@ -247,6 +247,8 @@ namespace gbe
     ////////////////////////////////////////////////////////////////////////
     // Helper functions to encode
     ////////////////////////////////////////////////////////////////////////
+    void setDPByteScatterGather(GenNativeInstruction *insn, uint32_t bti, uint32_t elem_size,
+                                     uint32_t msg_type, uint32_t msg_length, uint32_t response_length);
     virtual void setDPUntypedRW(GenNativeInstruction *insn, uint32_t bti, uint32_t rgba,
                                 uint32_t msg_type, uint32_t msg_length,
                                 uint32_t response_length);
