@@ -199,7 +199,7 @@ namespace gbe
     return insn->bits3.ud;
   }
 
-  void Gen75Encoder::UNTYPED_WRITE(GenRegister msg, GenRegister bti, uint32_t elemNum) {
+  void Gen75Encoder::UNTYPED_WRITE(GenRegister msg, GenRegister data, GenRegister bti, uint32_t elemNum) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     assert(elemNum >= 1 || elemNum <= 4);
     this->setHeader(insn);

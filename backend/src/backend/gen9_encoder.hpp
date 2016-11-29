@@ -47,7 +47,9 @@ namespace gbe
                 uint32_t return_format,
                 bool isLD,
                 bool isUniform);
-
+    void setSendsOperands(Gen9NativeInstruction *gen9_insn, GenRegister dst, GenRegister src0, GenRegister src1);
+    virtual void UNTYPED_WRITE(GenRegister addr, GenRegister data, GenRegister bti, uint32_t elemNum);
+    virtual unsigned setUntypedWriteSendsMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
   };
 }
 #endif /* __GBE_GEN9_ENCODER_HPP__ */

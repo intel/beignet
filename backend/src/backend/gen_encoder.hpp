@@ -177,7 +177,7 @@ namespace gbe
     /*! Untyped read (upto 4 channels) */
     virtual void UNTYPED_READ(GenRegister dst, GenRegister src, GenRegister bti, uint32_t elemNum);
     /*! Untyped write (upto 4 channels) */
-    virtual void UNTYPED_WRITE(GenRegister src, GenRegister bti, uint32_t elemNum);
+    virtual void UNTYPED_WRITE(GenRegister addr, GenRegister data, GenRegister bti, uint32_t elemNum);
     /*! Untyped read A64(upto 4 channels) */
     virtual void UNTYPED_READA64(GenRegister dst, GenRegister src, uint32_t elemNum);
     /*! Untyped write (upto 4 channels) */
@@ -260,12 +260,14 @@ namespace gbe
     virtual unsigned setAtomicA64MessageDesc(GenNativeInstruction *insn, unsigned function, unsigned bti, unsigned srcNum, int type_long);
     virtual unsigned setUntypedReadMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
     virtual unsigned setUntypedWriteMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
+    virtual unsigned setUntypedWriteSendsMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum);
     unsigned setByteGatherMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemSize);
     unsigned setByteScatterMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemSize);
 
     unsigned generateAtomicMessageDesc(unsigned function, unsigned bti, unsigned srcNum);
     unsigned generateUntypedReadMessageDesc(unsigned bti, unsigned elemNum);
     unsigned generateUntypedWriteMessageDesc(unsigned bti, unsigned elemNum);
+    unsigned generateUntypedWriteSendsMessageDesc(unsigned bti, unsigned elemNum);
     unsigned generateByteGatherMessageDesc(unsigned bti, unsigned elemSize);
     unsigned generateByteScatterMessageDesc(unsigned bti, unsigned elemSize);
 

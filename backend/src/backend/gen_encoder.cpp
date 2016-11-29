@@ -410,6 +410,18 @@ namespace gbe
     return insn->bits3.ud;
   }
 
+  unsigned GenEncoder::generateUntypedWriteSendsMessageDesc(unsigned bti, unsigned elemNum) {
+    GenNativeInstruction insn;
+    memset(&insn, 0, sizeof(GenNativeInstruction));
+    return setUntypedWriteSendsMessageDesc(&insn, bti, elemNum);
+  }
+
+  unsigned GenEncoder::setUntypedWriteSendsMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum)
+  {
+    assert(0);
+    return 0;
+  }
+
   void GenEncoder::UNTYPED_READA64(GenRegister dst, GenRegister src, uint32_t elemNum) {
     assert(0);
   }
@@ -422,7 +434,7 @@ namespace gbe
     assert(0);
   }
 
-  void GenEncoder::UNTYPED_WRITE(GenRegister msg, GenRegister bti, uint32_t elemNum) {
+  void GenEncoder::UNTYPED_WRITE(GenRegister msg, GenRegister data, GenRegister bti, uint32_t elemNum) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     assert(elemNum >= 1 || elemNum <= 4);
     this->setHeader(insn);

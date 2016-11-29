@@ -47,7 +47,7 @@ namespace gbe
     virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum);
     virtual void ATOMICA64(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum);
     virtual void UNTYPED_READ(GenRegister dst, GenRegister src, GenRegister bti, uint32_t elemNum);
-    virtual void UNTYPED_WRITE(GenRegister src, GenRegister bti, uint32_t elemNum);
+    virtual void UNTYPED_WRITE(GenRegister src, GenRegister data, GenRegister bti, uint32_t elemNum);
     virtual void UNTYPED_READA64(GenRegister dst, GenRegister src, uint32_t elemNum);
     virtual void UNTYPED_WRITEA64(GenRegister src, uint32_t elemNum);
     virtual void BYTE_GATHERA64(GenRegister dst, GenRegister src, uint32_t elemSize);

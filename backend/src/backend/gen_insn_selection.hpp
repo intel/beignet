@@ -104,6 +104,7 @@ namespace gbe
         uint16_t function:8;
         /*! elemSize for byte scatters / gathers, elemNum for untyped msg, operand number for atomic */
         uint16_t elem:8;
+        uint16_t splitSend:1;
       };
       struct {
         /*! Number of sources in the tuple */

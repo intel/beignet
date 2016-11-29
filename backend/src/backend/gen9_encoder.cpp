@@ -26,6 +26,14 @@
  **********************************************************************/
 
 #include "backend/gen9_encoder.hpp"
+#include "backend/gen9_instruction.hpp"
+static const uint32_t untypedRWMask[] = {
+  GEN_UNTYPED_ALPHA|GEN_UNTYPED_BLUE|GEN_UNTYPED_GREEN|GEN_UNTYPED_RED,
+  GEN_UNTYPED_ALPHA|GEN_UNTYPED_BLUE|GEN_UNTYPED_GREEN,
+  GEN_UNTYPED_ALPHA|GEN_UNTYPED_BLUE,
+  GEN_UNTYPED_ALPHA,
+  0
+};
 
 namespace gbe
 {
@@ -65,5 +73,74 @@ namespace gbe
                        response_length, msg_length,
                        header_present,
                        simd_mode, return_format);
+  }
+
+  void Gen9Encoder::setSendsOperands(Gen9NativeInstruction *gen9_insn, GenRegister dst, GenRegister src0, GenRegister src1)
+  {
+    assert(dst.subnr == 0 && src0.subnr == 0 && src1.subnr == 0);
+
+    if (dst.file == GEN_ARCHITECTURE_REGISTER_FILE)
+      gen9_insn->bits1.sends.dest_reg_file_0 = 0;
+    else if (dst.file == GEN_GENERAL_REGISTER_FILE)
+      gen9_insn->bits1.sends.dest_reg_file_0 = 1;
+    else
+      assert(!"should not reach here");
+
+    gen9_insn->bits1.sends.src1_reg_file_0 = 1;
+    gen9_insn->bits1.sends.src1_reg_nr = src1.nr;
+    gen9_insn->bits1.sends.dest_subreg_nr = 0;
+    gen9_insn->bits1.sends.dest_reg_nr = dst.nr;
+    gen9_insn->bits1.sends.dest_address_mode = 0;  //direct mode
+    gen9_insn->bits2.sends.src0_subreg_nr = 0;
+    gen9_insn->bits2.sends.src0_reg_nr = src0.nr;
+    gen9_insn->bits2.sends.src0_address_mode = 0;
+  }
+
+  unsigned Gen9Encoder::setUntypedWriteSendsMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemNum)
+  {
+    uint32_t msg_length = 0;
+    uint32_t response_length = 0;
+    if (this->curr.execWidth == 8) {
+      msg_length = 1;
+    } else if (this->curr.execWidth == 16) {
+      msg_length = 2;
+    }
+    else
+      NOT_IMPLEMENTED;
+    setDPUntypedRW(insn,
+                   bti,
+                   untypedRWMask[elemNum],
+                   GEN75_P1_UNTYPED_SURFACE_WRITE,
+                   msg_length,
+                   response_length);
+    return insn->bits3.ud;
+  }
+
+  void Gen9Encoder::UNTYPED_WRITE(GenRegister addr, GenRegister data, GenRegister bti, uint32_t elemNum)
+  {
+    if (addr.reg() == data.reg())
+      Gen8Encoder::UNTYPED_WRITE(addr, data, bti, elemNum);
+    else {
+      GenNativeInstruction *insn = this->next(GEN_OPCODE_SENDS);
+      Gen9NativeInstruction *gen9_insn = &insn->gen9_insn;
+      assert(elemNum >= 1 || elemNum <= 4);
+
+      this->setHeader(insn);
+      insn->header.destreg_or_condmod = GEN_SFID_DATAPORT1_DATA;
+
+      setSendsOperands(gen9_insn, GenRegister::null(), addr, data);
+      if (this->curr.execWidth == 8)
+        gen9_insn->bits2.sends.src1_length = elemNum;
+      else if (this->curr.execWidth == 16)
+        gen9_insn->bits2.sends.src1_length = 2 * elemNum;
+      else
+        assert(!"unsupported");
+
+      if (bti.file == GEN_IMMEDIATE_VALUE) {
+        gen9_insn->bits2.sends.sel_reg32_desc = 0;
+        setUntypedWriteSendsMessageDesc(insn, bti.value.ud, elemNum);
+      } else
+        gen9_insn->bits2.sends.sel_reg32_desc = 1;
+    }
   }
 } /* End of the name space. */

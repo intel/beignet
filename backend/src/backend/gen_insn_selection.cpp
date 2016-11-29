@@ -373,7 +373,9 @@ namespace gbe
     /*! spill a register (insert spill/unspill instructions) */
     INLINE bool spillRegs(const SpilledRegs &spilledRegs, uint32_t registerPool);
     bool has32X32Mul() const { return bHas32X32Mul; }
+    bool hasSends() const { return bHasSends; }
     void setHas32X32Mul(bool b) { bHas32X32Mul = b; }
+    void setHasSends(bool b) { bHasSends = b; }
     bool hasLongType() const { return bHasLongType; }
     bool hasDoubleType() const { return bHasDoubleType; }
     bool hasHalfType() const { return bHasHalfType; }
@@ -822,6 +824,7 @@ namespace gbe
     bool bHasDoubleType;
     bool bHasHalfType;
     bool bLongRegRestrict;
+    bool bHasSends;
     uint32_t ldMsgOrder;
     bool slowByteGather;
     INLINE ir::LabelIndex newAuxLabel()
@@ -864,7 +867,7 @@ namespace gbe
     maxInsnNum(ctx.getFunction().getLargestBlockSize()), dagPool(maxInsnNum),
     stateNum(0), vectorNum(0), bwdCodeGeneration(false), storeThreadMap(false),
     currAuxLabel(ctx.getFunction().labelNum()), bHas32X32Mul(false), bHasLongType(false),
-    bHasDoubleType(false), bHasHalfType(false), bLongRegRestrict(false),
+    bHasDoubleType(false), bHasHalfType(false), bLongRegRestrict(false), bHasSends(false),
     ldMsgOrder(LD_MSG_ORDER_IVB), slowByteGather(false)
   {
     const ir::Function &fn = ctx.getFunction();
@@ -1665,7 +1668,6 @@ namespace gbe
     unsigned dstNum = temps.size();
     unsigned srcNum = elemNum + 2 + temps.size();
     SelectionInstruction *insn = this->appendInsn(SEL_OP_UNTYPED_WRITE, dstNum, srcNum);
-    SelectionVector *vector = this->appendVector();
 
     if (bti.file != GEN_IMMEDIATE_VALUE) {
       insn->state.flag = 0;
@@ -1685,11 +1687,26 @@ namespace gbe
     }
     insn->extra.elem = elemNum;
 
+    if (hasSends()) {
+      insn->extra.splitSend = 1;
+      SelectionVector *vector = this->appendVector();
+      vector->regNum = elemNum;
+      vector->reg = &insn->src(1);
+      vector->offsetID = 1;
+      vector->isSrc = 1;
+      vector = this->appendVector();
+      vector->regNum = 1;
+      vector->reg = &insn->src(0);
+      vector->offsetID = 0;
+      vector->isSrc = 1;
+    } else {
     // Sends require contiguous allocation for the sources
+      SelectionVector *vector = this->appendVector();
     vector->regNum = elemNum+1;
     vector->reg = &insn->src(0);
     vector->offsetID = 0;
     vector->isSrc = 1;
+    }
   }
 
   void Selection::Opaque::UNTYPED_WRITEA64(const GenRegister *src,
@@ -2718,6 +2735,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     this->opaque->setLdMsgOrder(LD_MSG_ORDER_SKL);
     this->opaque->setSlowByteGather(false);
     this->opaque->setHasHalfType(true);
+    this->opaque->setHasSends(true);
     opt_features = SIOF_LOGICAL_SRCMOD;
   }
 
