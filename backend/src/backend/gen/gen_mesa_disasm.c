@@ -50,6 +50,7 @@
 
 #include "backend/gen_defs.hpp"
 #include "backend/gen7_instruction.hpp"
+#include "backend/gen9_instruction.hpp"
 #include "src/cl_device_data.h"
 
 static const struct {
@@ -104,6 +105,7 @@ static const struct {
 
   [GEN_OPCODE_SEND] = { .name = "send", .nsrc = 2, .ndst = 1 },
   [GEN_OPCODE_SENDC] = { .name = "sendc", .nsrc = 2, .ndst = 1 },
+  [GEN_OPCODE_SENDS] = { .name = "sends", .nsrc = 2, .ndst = 1 },
   [GEN_OPCODE_NOP] = { .name = "nop", .nsrc = 0, .ndst = 0 },
   [GEN_OPCODE_JMPI] = { .name = "jmpi", .nsrc = 0, .ndst = 0 },
   [GEN_OPCODE_BRD] = { .name = "brd", .nsrc = 0, .ndst = 0 },
@@ -1411,7 +1413,8 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
     }
 
   } else if (OPCODE(inst) != GEN_OPCODE_SEND &&
-             OPCODE(inst) != GEN_OPCODE_SENDC) {
+             OPCODE(inst) != GEN_OPCODE_SENDC &&
+             OPCODE(inst) != GEN_OPCODE_SENDS) {
     err |= control(file, "conditional modifier", conditional_modifier,
                    COND_DST_OR_MODIFIER(inst), NULL);
     if (COND_DST_OR_MODIFIER(inst))
@@ -1426,7 +1429,20 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
     string(file, ")");
   }
 
-  if (opcode[OPCODE(inst)].nsrc == 3) {
+  if (OPCODE(inst) == GEN_OPCODE_SENDS) {
+    const union Gen9NativeInstruction *gen9_insn = (const union Gen9NativeInstruction *)inst;
+    pad(file, 16);
+    if (gen9_insn->bits1.sends.dest_reg_file_0 == 0)
+      reg(file, GEN_ARCHITECTURE_REGISTER_FILE, gen9_insn->bits1.sends.dest_reg_nr);
+    else
+      format(file, "g%d", gen9_insn->bits1.sends.dest_reg_nr);
+    pad(file, 32);
+    format(file, "g%d(addLen:%d)", gen9_insn->bits2.sends.src0_reg_nr, GENERIC_MSG_LENGTH(inst));
+    pad(file, 48);
+    format(file, "g%d(dataLen:%d)", gen9_insn->bits1.sends.src1_reg_nr, gen9_insn->bits2.sends.src1_length);
+    pad(file, 64);
+    format(file, "0x%08x", gen9_insn->bits3.ud);
+  } else if (opcode[OPCODE(inst)].nsrc == 3) {
     pad(file, 16);
     err |= dest_3src(file, inst);
 
@@ -1469,7 +1485,8 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
   }
 
   if (OPCODE(inst) == GEN_OPCODE_SEND ||
-      OPCODE(inst) == GEN_OPCODE_SENDC) {
+      OPCODE(inst) == GEN_OPCODE_SENDC ||
+      OPCODE(inst) == GEN_OPCODE_SENDS) {
     enum GenMessageTarget target = COND_DST_OR_MODIFIER(inst);
 
     newline(file);
@@ -1484,7 +1501,13 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
                      target, &space);
     }
 
-    if (GEN_BITS_FIELD2(inst, bits1.da1.src1_reg_file, bits2.da1.src1_reg_file) == GEN_IMMEDIATE_VALUE) {
+    int immbti = 0;
+    if (OPCODE(inst) == GEN_OPCODE_SENDS) {
+      const union Gen9NativeInstruction *gen9_insn = (const union Gen9NativeInstruction *)inst;
+      immbti = !(gen9_insn->bits2.sends.sel_reg32_desc);
+    } else
+      immbti = (GEN_BITS_FIELD2(inst, bits1.da1.src1_reg_file, bits2.da1.src1_reg_file) == GEN_IMMEDIATE_VALUE);
+    if (immbti) {
       switch (target) {
         case GEN_SFID_VIDEO_MOTION_EST:
           format(file, " (bti: %d, msg_type: %d)",

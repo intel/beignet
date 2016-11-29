@@ -54,6 +54,7 @@
 #include <stdint.h>
 #include "backend/gen7_instruction.hpp"
 #include "backend/gen8_instruction.hpp"
+#include "backend/gen9_instruction.hpp"
 
 /////////////////////////////////////////////////////////////////////////////
 // Gen EU defines
@@ -148,6 +149,7 @@ enum opcode {
   GEN_OPCODE_WAIT = 48,
   GEN_OPCODE_SEND = 49,
   GEN_OPCODE_SENDC = 50,
+  GEN_OPCODE_SENDS = 51,
   GEN_OPCODE_MATH = 56,
   GEN_OPCODE_ADD = 64,
   GEN_OPCODE_MUL = 65,
@@ -559,6 +561,7 @@ union GenNativeInstruction
   };
   union Gen7NativeInstruction gen7_insn;
   union Gen8NativeInstruction gen8_insn;
+  union Gen9NativeInstruction gen9_insn;
 
   //Gen7 & Gen8 common field
   struct {
