@@ -176,10 +176,15 @@ ELSE(DRM_INTEL_FOUND)
 ENDIF(DRM_INTEL_FOUND)
 
 # CMRT
+#disable CMRT as default, since we do not see real case,
+#but see build issue of this feature
+OPTION(INVOKE_CMRT "Enable CMRT" OFF)
+IF(INVOKE_CMRT)
 pkg_check_modules(CMRT libcmrt)
 IF(CMRT_FOUND)
 INCLUDE_DIRECTORIES(${CMRT_INCLUDE_DIRS})
 ENDIF(CMRT_FOUND)
+ENDIF(INVOKE_CMRT)
 
 # Threads
 Find_Package(Threads)
