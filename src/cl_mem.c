@@ -636,7 +636,7 @@ cl_mem_new_sub_buffer(cl_mem buffer,
   mem->bo = buffer->bo;
   mem->size = info->size;
   sub_buf->sub_offset = info->origin;
-  if (buffer->flags & CL_MEM_USE_HOST_PTR || buffer->flags & CL_MEM_COPY_HOST_PTR) {
+  if (buffer->flags & CL_MEM_USE_HOST_PTR || buffer->flags & CL_MEM_COPY_HOST_PTR || buffer->flags & CL_MEM_ALLOC_HOST_PTR) {
     mem->host_ptr = buffer->host_ptr;
   }
 
