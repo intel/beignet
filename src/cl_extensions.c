@@ -152,6 +152,7 @@ cl_intel_platform_extension_init(cl_platform_id intel_platform)
   static int ext_initialized = 0;
 
   /* The EXT should be only inited once. */
+  (void) ext_initialized;
   assert(!ext_initialized);
   check_basic_extension(&intel_platform_extensions);
   check_opt1_extension(&intel_platform_extensions);

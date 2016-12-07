@@ -313,6 +313,7 @@ namespace ir {
         Instruction *insn = const_cast<Instruction*>(use->getInstruction());
         const Opcode opcode = insn->getOpcode();
         const uint32_t dstNum = insn->getDstNum();
+        (void) dstNum;
         GBE_ASSERT(dstNum == 1 || opcode == OP_LOAD);
         const Register dst = insn->getDst();
         auto it = addPtrInsns.find(derivedRegs[i]);

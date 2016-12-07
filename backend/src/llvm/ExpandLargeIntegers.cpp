@@ -438,6 +438,7 @@ static void convertInstruction(Instruction *Inst, ConversionState &State,
       State.recordConverted(Trunc, NewInst);
     } else {
       TypePair Tys = getExpandedIntTypes(Trunc->getType());
+      (void) OpTys;
       assert(Tys.Lo == OpTys.Lo);
       Value *Lo = Ops.Lo;
       Value *Hi = IRB.CreateTrunc(Ops.Hi, Tys.Hi, Twine(Name, ".hi"));

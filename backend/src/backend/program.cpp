@@ -875,6 +875,7 @@ namespace gbe {
         break;
       }
     }
+    (void) findOcl;
     assert(findOcl);
     if (OCL_OUTPUT_KERNEL_SOURCE) {
       if(options) {

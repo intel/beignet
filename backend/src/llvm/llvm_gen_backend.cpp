@@ -4171,7 +4171,6 @@ namespace gbe
 
   void GenWriter::emitAtomicRMWInst(AtomicRMWInst &I) {
     // Get the function arguments
-    llvm::AtomicOrdering Order = I.getOrdering();
     llvm::AtomicRMWInst::BinOp llvmOpcode = I.getOperation();
     Value *llvmPtr = I.getOperand(0);
     ir::AtomicOps opcode = atomicOpsLLVMToGen(llvmOpcode);
@@ -4908,6 +4907,7 @@ namespace gbe
             bool isFloatCoord = coordType == ir::TYPE_FLOAT;
             bool requiredFloatCoord = samplerOffset == 0;
 
+            (void) isFloatCoord;
             GBE_ASSERT(isFloatCoord == requiredFloatCoord);
 
             vector<ir::Register> dstTupleData, srcTupleData;
@@ -5283,6 +5283,7 @@ namespace gbe
             Value *bti = getBtiRegister(llvmPtr);
             GBE_ASSERT(isa<ConstantInt>(bti)); //Should never be mixed pointer.
             uint32_t index = cast<ConstantInt>(bti)->getZExtValue();
+            (void) index;
             GBE_ASSERT(btiToGen(index) == ir::MEM_GLOBAL);
             ++AI;
             GBE_ASSERT(AI != AE);

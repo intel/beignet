@@ -187,6 +187,7 @@ clSVMAlloc (cl_context context,
 {
   cl_int err = CL_SUCCESS;
   CHECK_CONTEXT (context);
+  (void) err;
   return cl_mem_svm_allocate(context, flags, size, alignment);
 error:
   return NULL;
@@ -197,6 +198,7 @@ clSVMFree (cl_context context, void* svm_pointer)
 {
   cl_int err = CL_SUCCESS;
   CHECK_CONTEXT (context);
+  (void) err;
   return cl_mem_svm_delete(context, svm_pointer);
 error:
   return;

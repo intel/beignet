@@ -2654,6 +2654,7 @@ namespace gbe
     uint32_t tsType = insn.extra.timestampType;
     GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
 
+    (void) tsType;
     GBE_ASSERT(tsType == 1);
     GenRegister tmArf = GenRegister::tm0();
     GenRegister profilingReg[5];
@@ -2779,6 +2780,7 @@ namespace gbe
     GenRegister tmp = ra->genReg(insn.dst(0));
     uint32_t profilingType = insn.extra.profilingType;
     uint32_t bti = insn.extra.profilingBTI;
+    (void) profilingType;
     GBE_ASSERT(profilingType == 1);
     GenRegister flagReg = GenRegister::flag(insn.state.flag, insn.state.subFlag);
     GenRegister lastTsReg = GenRegister::toUniform(profilingReg[3], GEN_TYPE_UL);
