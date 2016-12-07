@@ -373,6 +373,8 @@ endif ()
 if (COMPILER STREQUAL "CLANG")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-tautological-compare")
 endif ()
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations" )
 
 ADD_LIBRARY(utests SHARED ${utests_sources})
 
