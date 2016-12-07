@@ -2728,6 +2728,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     this->opaque->setLdMsgOrder(LD_MSG_ORDER_SKL);
     this->opaque->setSlowByteGather(false);
     this->opaque->setHasHalfType(true);
+    this->opaque->setHasSends(true);
     opt_features = SIOF_LOGICAL_SRCMOD;
   }
 
