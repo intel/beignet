@@ -58,7 +58,7 @@ namespace ir
       proLog = ((proLog << 32) & 0xffffffff00000000) + log->timestampPrologLo;
       uint64_t epiLog = log->timestampEpilogHi;
       epiLog = ((epiLog << 32) & 0xffffffff00000000) + log->timestampEpilogLo;
-      printf(" | dispatch Mask:%4x prolog:%10lu  epilog:%10lu |\n", log->dispatchMask, proLog, epiLog);
+      printf(" | dispatch Mask:%4x prolog:%10" PRIu64 "  epilog:%10" PRIu64 " |\n", log->dispatchMask, proLog, epiLog);
 
       printf(" | globalX:%4d~%4d  globalY:%4d~%4d  globalZ:%4d~%4d |\n", log->gidXStart, log->gidXEnd,
           log->gidYStart, log->gidYEnd, log->gidZStart, log->gidZEnd);

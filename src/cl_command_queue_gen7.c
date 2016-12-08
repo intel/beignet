@@ -133,7 +133,7 @@ cl_upload_constant_buffer(cl_command_queue queue, cl_kernel ker, cl_gpgpu gpgpu)
     if (constant_addrspace >= 0) {
       size_t global_const_size = interp_program_get_global_constant_size(ker->program->opaque);
       if (global_const_size > 0) {
-        *(uint64_t*)(ker->curbe + constant_addrspace) = (uint64_t)ker->program->global_data_ptr;
+        *(char **)(ker->curbe + constant_addrspace) = ker->program->global_data_ptr;
         cl_gpgpu_bind_buf(gpgpu, ker->program->global_data, constant_addrspace, 0, ALIGN(global_const_size, getpagesize()), BTI_CONSTANT);
       }
     }

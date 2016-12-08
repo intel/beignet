@@ -337,13 +337,13 @@ cl_get_kernel_arg_info(cl_kernel k, cl_uint arg_index, cl_kernel_arg_info param_
     if (!param_value) return CL_SUCCESS;
     if (param_value_size < sizeof(cl_kernel_arg_address_qualifier))
       return CL_INVALID_VALUE;
-    if ((cl_ulong)ret_info == 0) {
+    if ((size_t)ret_info == 0) {
       *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ADDRESS_PRIVATE;
-    } else if ((cl_ulong)ret_info == 1 || (cl_ulong)ret_info == 4) {
+    } else if ((size_t)ret_info == 1 || (size_t)ret_info == 4) {
       *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ADDRESS_GLOBAL;
-    } else if ((cl_ulong)ret_info == 2) {
+    } else if ((size_t)ret_info == 2) {
       *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ADDRESS_CONSTANT;
-    } else if ((cl_ulong)ret_info == 3) {
+    } else if ((size_t)ret_info == 3) {
       *(cl_kernel_arg_address_qualifier *)param_value = CL_KERNEL_ARG_ADDRESS_LOCAL;
     } else {
       /* If no address qualifier is specified, the default address qualifier
