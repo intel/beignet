@@ -169,7 +169,7 @@ namespace gbe
   SelectionInstruction::SelectionInstruction(SelectionOpcode op, uint32_t dst, uint32_t src) :
     parent(NULL), opcode(op), dstNum(dst), srcNum(src)
   {
-    extra.function = 0;
+    extra = { 0 };
   }
 
   void SelectionInstruction::prepend(SelectionInstruction &other) {
