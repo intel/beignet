@@ -2465,8 +2465,9 @@ namespace gbe
 
   void GenContext::emitTypedWriteInstruction(const SelectionInstruction &insn) {
     const GenRegister header = GenRegister::retype(ra->genReg(insn.src(0)), GEN_TYPE_UD);
+    GenRegister data = ra->genReg(insn.src(5));
     const uint32_t bti = insn.getbti();
-    p->TYPED_WRITE(header, true, bti);
+    p->TYPED_WRITE(header, data, true, bti, insn.extra.typedWriteSplitSend);
   }
 
   static void calcGID(GenRegister& reg, GenRegister& tmp, int flag, int subFlag, int dim, GenContext *gc)

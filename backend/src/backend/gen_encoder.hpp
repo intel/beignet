@@ -234,8 +234,10 @@ namespace gbe
 
     /*! TypedWrite instruction for texture */
     virtual void TYPED_WRITE(GenRegister header,
+                             GenRegister data,
                              bool header_present,
-                             unsigned char bti);
+                             unsigned char bti,
+                             bool useSends);
     /*! Extended math function (2 sources) */
     void MATH(GenRegister dst, uint32_t function, GenRegister src0, GenRegister src1);
     /*! Extended math function (1 source) */

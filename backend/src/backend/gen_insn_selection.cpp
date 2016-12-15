@@ -2824,7 +2824,6 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     uint32_t elemID = 0;
     uint32_t i;
     SelectionInstruction *insn = this->appendInsn(SEL_OP_TYPED_WRITE, 0, msgNum);
-    SelectionVector *msgVector = this->appendVector();;
 
     for( i = 0; i < msgNum; ++i, ++elemID)
       insn->src(elemID) = msgs[i];
@@ -2832,11 +2831,31 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     insn->setbti(bti);
     insn->extra.msglen = msgNum;
     insn->extra.is3DWrite = is3D;
-    // Sends require contiguous allocation
-    msgVector->regNum = msgNum;
-    msgVector->isSrc = 1;
-    msgVector->offsetID = 0;
-    msgVector->reg = &insn->src(0);
+
+    if (hasSends()) {
+      assert(msgNum == 9);
+      insn->extra.typedWriteSplitSend = 1;
+      //header + coords
+      SelectionVector *msgVector = this->appendVector();
+      msgVector->regNum = 5;
+      msgVector->isSrc = 1;
+      msgVector->offsetID = 0;
+      msgVector->reg = &insn->src(0);
+
+      //data
+      msgVector = this->appendVector();
+      msgVector->regNum = 4;
+      msgVector->isSrc = 1;
+      msgVector->offsetID = 5;
+      msgVector->reg = &insn->src(5);
+    } else {
+      // Send require contiguous allocation
+      SelectionVector *msgVector = this->appendVector();
+      msgVector->regNum = msgNum;
+      msgVector->isSrc = 1;
+      msgVector->offsetID = 0;
+      msgVector->reg = &insn->src(0);
+    }
   }
 
   Selection::~Selection(void) { GBE_DELETE(this->opaque); }

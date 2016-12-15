@@ -146,6 +146,28 @@ namespace gbe
     }
   }
 
+  void Gen9Encoder::TYPED_WRITE(GenRegister header, GenRegister data, bool header_present, unsigned char bti, bool useSends)
+  {
+    if (!useSends)
+      Gen8Encoder::TYPED_WRITE(header, data, header_present, bti, false);
+    else {
+      GBE_ASSERT(header.reg() != data.reg());
+
+      GenNativeInstruction *insn = this->next(GEN_OPCODE_SENDS);
+      Gen9NativeInstruction *gen9_insn = &insn->gen9_insn;
+      assert(header_present);
+
+      this->setHeader(insn);
+      insn->header.destreg_or_condmod = GEN_SFID_DATAPORT1_DATA;
+
+      setSendsOperands(gen9_insn, GenRegister::null(), header, data);
+      gen9_insn->bits2.sends.src1_length = 4;   //src0_length: 5(header+u+v+w+lod), src1_length: 4(data)
+
+      gen9_insn->bits2.sends.sel_reg32_desc = 0;
+      setTypedWriteMessage(insn, bti, GEN_TYPED_WRITE, 5, header_present);
+    }
+  }
+
   unsigned Gen9Encoder::setByteScatterSendsMessageDesc(GenNativeInstruction *insn, unsigned bti, unsigned elemSize)
   {
     uint32_t msg_length = 0;

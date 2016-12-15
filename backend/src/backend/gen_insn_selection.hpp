@@ -126,6 +126,7 @@ namespace gbe
         uint16_t bti:8;
         uint16_t msglen:5;
         uint16_t is3DWrite:1;
+        uint16_t typedWriteSplitSend:1;
       };
       struct {
         uint16_t rdbti:8;

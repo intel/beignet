@@ -1257,7 +1257,7 @@ namespace gbe
                   msg_type, vme_search_path_lut, lut_sub);
   }
 
-  void GenEncoder::TYPED_WRITE(GenRegister msg, bool header_present, unsigned char bti)
+  void GenEncoder::TYPED_WRITE(GenRegister msg, GenRegister data, bool header_present, unsigned char bti, bool useSends)
   {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     uint32_t msg_type = GEN_TYPED_WRITE;
