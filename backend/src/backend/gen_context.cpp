@@ -1893,26 +1893,34 @@ namespace gbe
   }
 
   void GenContext::emitAtomicInstruction(const SelectionInstruction &insn) {
-    const GenRegister src = ra->genReg(insn.src(0));
+    const GenRegister addr = ra->genReg(insn.src(0));
     const GenRegister dst = ra->genReg(insn.dst(0));
     const uint32_t function = insn.extra.function;
     unsigned srcNum = insn.extra.elem;
 
+    GenRegister data = addr;
+    if (srcNum > 1)
+      data = ra->genReg(insn.src(1));
+
     const GenRegister bti = ra->genReg(insn.src(srcNum));
 
     if (bti.file == GEN_IMMEDIATE_VALUE) {
-      p->ATOMIC(dst, function, src, bti, srcNum);
+      p->ATOMIC(dst, function, addr, data, bti, srcNum, insn.extra.splitSend);
     } else {
       GenRegister flagTemp = ra->genReg(insn.dst(1));
       GenRegister btiTmp = ra->genReg(insn.dst(2));
 
-      unsigned desc = p->generateAtomicMessageDesc(function, 0, srcNum);
+      unsigned desc = 0;
+      if (insn.extra.splitSend)
+        desc = p->generateAtomicMessageDesc(function, 0, 1);
+      else
+        desc = p->generateAtomicMessageDesc(function, 0, srcNum);
 
       unsigned jip0 = beforeMessage(insn, bti, flagTemp, btiTmp, desc);
       p->push();
         p->curr.predicate = GEN_PREDICATE_NORMAL;
         p->curr.useFlag(insn.state.flag, insn.state.subFlag);
-        p->ATOMIC(dst, function, src, GenRegister::addr1(0), srcNum);
+        p->ATOMIC(dst, function, addr, data, GenRegister::addr1(0), srcNum, insn.extra.splitSend);
       p->pop();
       afterMessage(insn, bti, flagTemp, btiTmp, jip0);
     }
@@ -2833,7 +2841,7 @@ namespace gbe
       p->pop();
       p->curr.useFlag(insn.state.flag, insn.state.subFlag);
       p->curr.predicate = GEN_PREDICATE_NORMAL;
-      p->ATOMIC(incRes, GEN_ATOMIC_OP_INC, sndMsg, GenRegister::immud(bti), 1);
+      p->ATOMIC(incRes, GEN_ATOMIC_OP_INC, sndMsg, sndMsg, GenRegister::immud(bti), 1, false);
     } p->pop();
 
     // Calculate the final addr
@@ -3496,7 +3504,7 @@ namespace gbe
         p->MOV(data, GenRegister::immud(insn.extra.printfSize + 12));
       } p->pop();
 
-      p->ATOMIC(addr, GEN_ATOMIC_OP_ADD, addr, GenRegister::immud(insn.extra.printfBTI), 2);
+      p->ATOMIC(addr, GEN_ATOMIC_OP_ADD, addr, addr, GenRegister::immud(insn.extra.printfBTI), 2, false);
       /* Write out the header. */
       p->MOV(data, GenRegister::immud(0xAABBCCDD));
       p->UNTYPED_WRITE(addr, addr, GenRegister::immud(insn.extra.printfBTI), 1, false);

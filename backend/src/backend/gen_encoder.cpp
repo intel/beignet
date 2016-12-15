@@ -633,14 +633,14 @@ namespace gbe
     return 0;
   }
 
-  void GenEncoder::ATOMIC(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum) {
+  void GenEncoder::ATOMIC(GenRegister dst, uint32_t function, GenRegister addr, GenRegister data, GenRegister bti, uint32_t srcNum, bool useSends) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
 
     this->setHeader(insn);
     insn->header.destreg_or_condmod = GEN_SFID_DATAPORT_DATA;
 
     this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
-    this->setSrc0(insn, GenRegister::ud8grf(src.nr, 0));
+    this->setSrc0(insn, GenRegister::ud8grf(addr.nr, 0));
     if (bti.file == GEN_IMMEDIATE_VALUE) {
       this->setSrc1(insn, GenRegister::immud(0));
       setAtomicMessageDesc(insn, function, bti.value.ud, srcNum);

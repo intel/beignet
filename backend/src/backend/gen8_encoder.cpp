@@ -153,7 +153,7 @@ namespace gbe
     return gen8_insn->bits3.ud;
   }
 
-  void Gen8Encoder::ATOMIC(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum) {
+  void Gen8Encoder::ATOMIC(GenRegister dst, uint32_t function, GenRegister src, GenRegister data, GenRegister bti, uint32_t srcNum, bool useSends) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
 
     this->setHeader(insn);

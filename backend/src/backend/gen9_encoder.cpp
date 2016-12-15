@@ -194,4 +194,32 @@ namespace gbe
         gen9_insn->bits2.sends.sel_reg32_desc = 1;
     }
   }
+
+  void Gen9Encoder::ATOMIC(GenRegister dst, uint32_t function, GenRegister addr, GenRegister data, GenRegister bti, uint32_t srcNum, bool useSends)
+  {
+    if (!useSends)
+      Gen8Encoder::ATOMIC(dst, function, addr, data, bti, srcNum, false);
+    else {
+      GBE_ASSERT(addr.reg() != data.reg());
+
+      GenNativeInstruction *insn = this->next(GEN_OPCODE_SENDS);
+      Gen9NativeInstruction *gen9_insn = &insn->gen9_insn;
+      this->setHeader(insn);
+      insn->header.destreg_or_condmod = GEN_SFID_DATAPORT1_DATA;
+
+      setSendsOperands(gen9_insn, dst, addr, data);
+      if (this->curr.execWidth == 8)
+        gen9_insn->bits2.sends.src1_length = srcNum - 1;
+      else if (this->curr.execWidth == 16)
+        gen9_insn->bits2.sends.src1_length = 2 * (srcNum - 1);
+      else
+        NOT_SUPPORTED;
+
+      if (bti.file == GEN_IMMEDIATE_VALUE) {
+        gen9_insn->bits2.sends.sel_reg32_desc = 0;
+        setAtomicMessageDesc(insn, function, bti.value.ud, 1);
+      } else
+        gen9_insn->bits2.sends.sel_reg32_desc = 1;
+    }
+  }
 } /* End of the name space. */

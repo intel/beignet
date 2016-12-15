@@ -1376,11 +1376,26 @@ namespace gbe
     insn->extra.function = function;
     insn->extra.elem = msgPayload;
 
-    SelectionVector *vector = this->appendVector();
-    vector->regNum = msgPayload; //bti not included in SelectionVector
-    vector->offsetID = 0;
-    vector->reg = &insn->src(0);
-    vector->isSrc = 1;
+    if (hasSends() && msgPayload > 1) {
+      insn->extra.splitSend = 1;
+      SelectionVector *vector = this->appendVector();
+      vector->regNum = 1;
+      vector->offsetID = 0;
+      vector->reg = &insn->src(0);
+      vector->isSrc = 1;
+
+      vector = this->appendVector();
+      vector->regNum = msgPayload - 1;
+      vector->offsetID = 1;
+      vector->reg = &insn->src(1);
+      vector->isSrc = 1;
+    } else {
+      SelectionVector *vector = this->appendVector();
+      vector->regNum = msgPayload; //bti not included in SelectionVector
+      vector->offsetID = 0;
+      vector->reg = &insn->src(0);
+      vector->isSrc = 1;
+    }
   }
 
   void Selection::Opaque::ATOMICA64(Reg dst, uint32_t function,

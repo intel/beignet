@@ -171,7 +171,7 @@ namespace gbe
     /*! Wait instruction (used for the barrier) */
     void WAIT(uint32_t n = 0);
     /*! Atomic instructions */
-    virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum);
+    virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister addr, GenRegister data, GenRegister bti, uint32_t srcNum, bool useSends);
     /*! AtomicA64 instructions */
     virtual void ATOMICA64(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum);
     /*! Untyped read (upto 4 channels) */
