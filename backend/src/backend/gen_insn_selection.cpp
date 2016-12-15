@@ -6809,86 +6809,97 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
   {
     INLINE bool emitOne(Selection::Opaque &sel, const ir::TypedWriteInstruction &insn, bool &markChildren) const
     {
-      using namespace ir;
-      const uint32_t simdWidth = sel.ctx.getSimdWidth();
-      GenRegister msgs[9]; // (header + U + V + R + LOD + 4)
-      const uint32_t msgNum = (8 / (simdWidth / 8)) + 1;
-      const uint32_t dim = insn.getSrcNum() - 4;
-
-      if (simdWidth == 16) {
-        for(uint32_t i = 0; i < msgNum; i++)
-          msgs[i] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-      } else {
-        uint32_t valueID = 0;
-        uint32_t msgID = 0;
-        msgs[msgID++] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-        for(; msgID < 1 + dim; msgID++, valueID++)
-          msgs[msgID] = sel.selReg(insn.getSrc(msgID - 1), insn.getCoordType());
-
-        // fake v.
-        if (dim < 2)
-          msgs[msgID++] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-        // fake w.
-        if (dim < 3)
-          msgs[msgID++] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-        // LOD.
-        msgs[msgID++] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
-        for(; valueID < insn.getSrcNum(); msgID++, valueID++)
-          msgs[msgID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
-      }
-
+      const GenRegister header = GenRegister::ud8grf(sel.reg(ir::FAMILY_REG));
       sel.push();
       sel.curr.predicate = GEN_PREDICATE_NONE;
       sel.curr.noMask = 1;
-      sel.MOV(msgs[0], GenRegister::immud(0));
+      sel.MOV(header, GenRegister::immud(0));
       sel.curr.execWidth = 1;
-
-      GenRegister channelEn = sel.getOffsetReg(msgs[0], 0, 7*4);
+      GenRegister channelEn = sel.getOffsetReg(header, 0, 7*4);
       // Enable all channels.
       sel.MOV(channelEn, GenRegister::immud(0xffff));
-      sel.curr.execWidth = 8;
-      // Set zero LOD.
-      if (simdWidth == 8)
-        sel.MOV(msgs[4], GenRegister::immud(0));
-      else
-        sel.MOV(GenRegister::Qn(msgs[2], 0), GenRegister::immud(0));
       sel.pop();
 
-      uint32_t bti = insn.getImageIndex();
-      if (simdWidth == 8)
-        sel.TYPED_WRITE(msgs, msgNum, bti, dim == 3);
-      else {
-        sel.push();
-        sel.curr.execWidth = 8;
-        for( uint32_t quarter = 0; quarter < 2; quarter++)
-        {
-          #define QUARTER_MOV0(msgs, msgid, src) \
-                    sel.MOV(GenRegister::Qn(GenRegister::retype(msgs[msgid/2], GEN_TYPE_UD), msgid % 2), \
-                            GenRegister::Qn(src, quarter))
-
-          #define QUARTER_MOV1(msgs, msgid, src) \
-                  sel.MOV(GenRegister::Qn(GenRegister::retype(msgs[msgid/2], src.type), msgid % 2), \
-                          GenRegister::Qn(src, quarter))
-          sel.curr.quarterControl = (quarter == 0) ? GEN_COMPRESSION_Q1 : GEN_COMPRESSION_Q2;
-          // Set U,V,W
-          QUARTER_MOV0(msgs, 1, sel.selReg(insn.getSrc(0), insn.getCoordType()));
-          if (dim > 1)
-            QUARTER_MOV0(msgs, 2, sel.selReg(insn.getSrc(1), insn.getCoordType()));
-          if (dim > 2)
-            QUARTER_MOV0(msgs, 3, sel.selReg(insn.getSrc(2), insn.getCoordType()));
-          // Set R, G, B, A
-          QUARTER_MOV1(msgs, 5, sel.selReg(insn.getSrc(dim), insn.getSrcType()));
-          QUARTER_MOV1(msgs, 6, sel.selReg(insn.getSrc(dim + 1), insn.getSrcType()));
-          QUARTER_MOV1(msgs, 7, sel.selReg(insn.getSrc(dim + 2), insn.getSrcType()));
-          QUARTER_MOV1(msgs, 8, sel.selReg(insn.getSrc(dim + 3), insn.getSrcType()));
-          sel.TYPED_WRITE(msgs, msgNum, bti, dim == 3);
-          #undef QUARTER_MOV0
-          #undef QUARTER_MOV1
-        }
-        sel.pop();
-      }
+      const uint32_t simdWidth = sel.ctx.getSimdWidth();
+      if (simdWidth == 16)
+        emitWithSimd16(sel, insn, markChildren, header);
+      else if (simdWidth == 8)
+        emitWithSimd8(sel, insn, markChildren, header);
+      else
+        NOT_SUPPORTED;
       return true;
     }
+
+    INLINE bool emitWithSimd16(Selection::Opaque &sel, const ir::TypedWriteInstruction &insn, bool &markChildren, const GenRegister& header) const
+    {
+      using namespace ir;
+
+      GenRegister msgs[9]; // (header + U + V + W + LOD + 4)
+      msgs[0] = header;
+      for (uint32_t i = 1; i < 9; ++i) {
+        //SIMD16 will be split into two SIMD8,
+        //each virtual reg in msgs requires one physical reg with 8 DWORDs (32 bytes),
+        //so, declare with FAMILY_WORD, and the allocated size will be sizeof(WORD)*SIMD16 = 32 bytes
+        msgs[i] = sel.selReg(sel.reg(FAMILY_WORD), TYPE_U32);
+      }
+
+      const uint32_t dims = insn.getSrcNum() - 4;
+      uint32_t bti = insn.getImageIndex();
+
+      sel.push();
+      sel.curr.execWidth = 8;
+      for (uint32_t i = 0; i < 2; ++i) { //SIMD16 split to two SIMD8
+        sel.curr.quarterControl = (i == 0) ? GEN_COMPRESSION_Q1 : GEN_COMPRESSION_Q2;
+        uint32_t msgid = 1;
+        for (uint32_t dim = 0; dim < dims; ++dim) {  //the coords
+          GenRegister coord = sel.selReg(insn.getSrc(dim), insn.getCoordType());
+          sel.MOV(GenRegister::retype(msgs[msgid++], coord.type), GenRegister::Qn(coord, i));
+        }
+
+        while (msgid < 5)  //fill fake coords
+          sel.MOV(msgs[msgid++], GenRegister::immud(0));
+
+        for (uint32_t j = 0; j < 4; ++j) {  //the data
+          GenRegister data = sel.selReg(insn.getSrc(j + dims), insn.getSrcType());
+          sel.MOV(GenRegister::retype(msgs[msgid++], data.type), GenRegister::Qn(data, i));
+        }
+
+        sel.TYPED_WRITE(msgs, 9, bti, dims == 3);
+      }
+      sel.pop();
+      return true;
+    }
+
+    INLINE bool emitWithSimd8(Selection::Opaque &sel, const ir::TypedWriteInstruction &insn, bool &markChildren, const GenRegister& header) const
+    {
+      using namespace ir;
+      GenRegister msgs[9]; // (header + U + V + W + LOD + 4)
+      msgs[0] = header;
+
+      const uint32_t dims = insn.getSrcNum() - 4;
+      uint32_t bti = insn.getImageIndex();
+      uint32_t msgid = 1;
+
+      for (uint32_t dim = 0; dim < dims; ++dim) {  //the coords
+        GenRegister coord = sel.selReg(insn.getSrc(dim), insn.getCoordType());
+        msgs[msgid++] = coord;
+      }
+
+      while (msgid < 5) {  //fill fake coords
+        GenRegister fake = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+        sel.MOV(fake, GenRegister::immud(0));
+        msgs[msgid++] = fake;
+      }
+
+      for (uint32_t j = 0; j < 4; ++j) {  //the data
+        GenRegister data = sel.selReg(insn.getSrc(j + dims), insn.getSrcType());
+        msgs[msgid++] = data;
+      }
+
+      sel.TYPED_WRITE(msgs, 9, bti, dims == 3);
+      return true;
+    }
+
     DECL_CTOR(TypedWriteInstruction, 1, 1);
   };
 
