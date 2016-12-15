@@ -969,8 +969,6 @@ namespace gbe
     const GenRegister addr = ra->genReg(insn.src(elemNum));
     const GenRegister bti = ra->genReg(insn.src(elemNum*2+1));
     GenRegister data = ra->genReg(insn.src(elemNum+1));
-    if (!insn.extra.splitSend)
-      data = addr;
 
     /* Because BDW's store and load send instructions for 64 bits require the bti to be surfaceless,
        which we can not accept. We just fallback to 2 DW untypewrite here. */
@@ -981,7 +979,7 @@ namespace gbe
     }
 
     if (bti.file == GEN_IMMEDIATE_VALUE) {
-      p->UNTYPED_WRITE(addr, data, bti, elemNum*2);
+      p->UNTYPED_WRITE(addr, data, bti, elemNum*2, insn.extra.splitSend);
     } else {
       const GenRegister tmp = ra->genReg(insn.dst(elemNum));
       const GenRegister btiTmp = ra->genReg(insn.dst(elemNum + 1));
@@ -997,7 +995,7 @@ namespace gbe
       p->push();
         p->curr.predicate = GEN_PREDICATE_NORMAL;
         p->curr.useFlag(insn.state.flag, insn.state.subFlag);
-        p->UNTYPED_WRITE(addr, data, GenRegister::addr1(0), elemNum*2);
+        p->UNTYPED_WRITE(addr, data, GenRegister::addr1(0), elemNum*2, insn.extra.splitSend);
       p->pop();
       afterMessage(insn, bti, tmp, btiTmp, jip0);
     }
@@ -1358,7 +1356,7 @@ namespace gbe
       nextDst = GenRegister::Qn(tempDst, 1);
       p->MOV(nextDst, nextSrc);
     p->pop();
-    p->UNTYPED_WRITE(addr, addr, GenRegister::immud(bti), 1);
+    p->UNTYPED_WRITE(addr, addr, GenRegister::immud(bti), 1, false);
     p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
 
     p->push();
@@ -1374,7 +1372,7 @@ namespace gbe
       nextDst = GenRegister::Qn(tempDst, 1);
       p->MOV(nextDst, nextSrc);
     p->pop();
-    p->UNTYPED_WRITE(addr, addr, GenRegister::immud(bti), 1);
+    p->UNTYPED_WRITE(addr, addr, GenRegister::immud(bti), 1, false);
     p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
   }
 
@@ -1801,7 +1799,7 @@ namespace gbe
       p->curr.execWidth = 8;
       p->MUL(msgAddr, threadId, GenRegister::immd(0x8));
       p->ADD(msgAddr, msgAddr, msgSlmOff);
-      p->UNTYPED_WRITE(msg, msg, GenRegister::immw(0xFE), 2);
+      p->UNTYPED_WRITE(msg, msg, GenRegister::immw(0xFE), 2, false);
     }
     else
     {
@@ -1809,7 +1807,7 @@ namespace gbe
       p->MOV(msgData, threadData);
       p->MUL(msgAddr, threadId, GenRegister::immd(0x4));
       p->ADD(msgAddr, msgAddr, msgSlmOff);
-      p->UNTYPED_WRITE(msg, msg, GenRegister::immw(0xFE), 1);
+      p->UNTYPED_WRITE(msg, msg, GenRegister::immw(0xFE), 1, false);
     }
 
     /* init partialData register, it will hold the final result */

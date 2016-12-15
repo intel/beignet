@@ -84,7 +84,7 @@ namespace gbe
     else if (dst.file == GEN_GENERAL_REGISTER_FILE)
       gen9_insn->bits1.sends.dest_reg_file_0 = 1;
     else
-      assert(!"should not reach here");
+      NOT_SUPPORTED;
 
     gen9_insn->bits1.sends.src1_reg_file_0 = 1;
     gen9_insn->bits1.sends.src1_reg_nr = src1.nr;
@@ -116,11 +116,13 @@ namespace gbe
     return insn->bits3.ud;
   }
 
-  void Gen9Encoder::UNTYPED_WRITE(GenRegister addr, GenRegister data, GenRegister bti, uint32_t elemNum)
+  void Gen9Encoder::UNTYPED_WRITE(GenRegister addr, GenRegister data, GenRegister bti, uint32_t elemNum, bool useSends)
   {
-    if (addr.reg() == data.reg())
-      Gen8Encoder::UNTYPED_WRITE(addr, data, bti, elemNum);
+    if (!useSends)
+      Gen8Encoder::UNTYPED_WRITE(addr, data, bti, elemNum, false);
     else {
+      GBE_ASSERT(addr.reg() != data.reg());
+
       GenNativeInstruction *insn = this->next(GEN_OPCODE_SENDS);
       Gen9NativeInstruction *gen9_insn = &insn->gen9_insn;
       assert(elemNum >= 1 || elemNum <= 4);
@@ -134,7 +136,7 @@ namespace gbe
       else if (this->curr.execWidth == 16)
         gen9_insn->bits2.sends.src1_length = 2 * elemNum;
       else
-        assert(!"unsupported");
+        NOT_SUPPORTED;
 
       if (bti.file == GEN_IMMEDIATE_VALUE) {
         gen9_insn->bits2.sends.sel_reg32_desc = 0;
@@ -164,11 +166,13 @@ namespace gbe
     return insn->bits3.ud;
   }
 
-  void Gen9Encoder::BYTE_SCATTER(GenRegister addr, GenRegister data, GenRegister bti, uint32_t elemSize)
+  void Gen9Encoder::BYTE_SCATTER(GenRegister addr, GenRegister data, GenRegister bti, uint32_t elemSize, bool useSends)
   {
-    if (addr.reg() == data.reg())
-      Gen8Encoder::BYTE_SCATTER(addr, data, bti, elemSize);
+    if (!useSends)
+      Gen8Encoder::BYTE_SCATTER(addr, data, bti, elemSize, false);
     else {
+      GBE_ASSERT(addr.reg() != data.reg());
+
       GenNativeInstruction *insn = this->next(GEN_OPCODE_SENDS);
       Gen9NativeInstruction *gen9_insn = &insn->gen9_insn;
 
@@ -181,7 +185,7 @@ namespace gbe
       else if (this->curr.execWidth == 16)
         gen9_insn->bits2.sends.src1_length = 2;
       else
-        assert(!"unsupported");
+        NOT_SUPPORTED;
 
       if (bti.file == GEN_IMMEDIATE_VALUE) {
         gen9_insn->bits2.sends.sel_reg32_desc = 0;

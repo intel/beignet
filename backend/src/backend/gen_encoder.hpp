@@ -177,7 +177,7 @@ namespace gbe
     /*! Untyped read (upto 4 channels) */
     virtual void UNTYPED_READ(GenRegister dst, GenRegister src, GenRegister bti, uint32_t elemNum);
     /*! Untyped write (upto 4 channels) */
-    virtual void UNTYPED_WRITE(GenRegister addr, GenRegister data, GenRegister bti, uint32_t elemNum);
+    virtual void UNTYPED_WRITE(GenRegister addr, GenRegister data, GenRegister bti, uint32_t elemNum, bool useSends);
     /*! Untyped read A64(upto 4 channels) */
     virtual void UNTYPED_READA64(GenRegister dst, GenRegister src, uint32_t elemNum);
     /*! Untyped write (upto 4 channels) */
@@ -185,7 +185,7 @@ namespace gbe
     /*! Byte gather (for unaligned bytes, shorts and ints) */
     void BYTE_GATHER(GenRegister dst, GenRegister src, GenRegister bti, uint32_t elemSize);
     /*! Byte scatter (for unaligned bytes, shorts and ints) */
-    virtual void BYTE_SCATTER(GenRegister addr, GenRegister data, GenRegister bti, uint32_t elemSize);
+    virtual void BYTE_SCATTER(GenRegister addr, GenRegister data, GenRegister bti, uint32_t elemSize, bool useSends);
     /*! Byte gather a64 (for unaligned bytes, shorts and ints) */
     virtual void BYTE_GATHERA64(GenRegister dst, GenRegister src, uint32_t elemSize);
     /*! Byte scatter a64 (for unaligned bytes, shorts and ints) */

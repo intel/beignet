@@ -433,7 +433,7 @@ namespace gbe
     assert(0);
   }
 
-  void GenEncoder::UNTYPED_WRITE(GenRegister msg, GenRegister data, GenRegister bti, uint32_t elemNum) {
+  void GenEncoder::UNTYPED_WRITE(GenRegister msg, GenRegister data, GenRegister bti, uint32_t elemNum, bool useSends) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     assert(elemNum >= 1 || elemNum <= 4);
     this->setHeader(insn);
@@ -534,7 +534,7 @@ namespace gbe
     return insn->bits3.ud;
   }
 
-  void GenEncoder::BYTE_SCATTER(GenRegister msg, GenRegister data, GenRegister bti, uint32_t elemSize) {
+  void GenEncoder::BYTE_SCATTER(GenRegister msg, GenRegister data, GenRegister bti, uint32_t elemSize, bool useSends) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
 
     this->setHeader(insn);
