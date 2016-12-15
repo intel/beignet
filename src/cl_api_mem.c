@@ -84,6 +84,7 @@ clGetMemObjectInfo(cl_mem memobj,
   case CL_MEM_USES_SVM_POINTER: {
     src_ptr = &memobj->is_svm;
     src_size = sizeof(memobj->is_svm);
+    break;
   }
   case CL_MEM_MAP_COUNT:
     src_ptr = &memobj->map_ref;
