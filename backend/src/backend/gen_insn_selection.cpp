@@ -1625,7 +1625,6 @@ namespace gbe
       // dst: srcNum, (flagTemp)
       // src: srcNum, addr, srcNum, bti.
       insn = this->appendInsn(SEL_OP_WRITE64, dstNum, srcNum*2 + 2);
-      vector = this->appendVector();
 
       for (uint32_t elemID = 0; elemID < srcNum; ++elemID)
         insn->src(elemID) = src[elemID];
@@ -1646,10 +1645,29 @@ namespace gbe
       }
       insn->extra.elem = srcNum;
 
-      vector->regNum = srcNum + 1;
-      vector->offsetID = srcNum;
-      vector->reg = &insn->src(srcNum);
-      vector->isSrc = 1;
+      if (hasSends()) {
+        insn->extra.splitSend = 1;
+
+        //addr regs
+        vector = this->appendVector();
+        vector->regNum = 1;
+        vector->offsetID = srcNum;
+        vector->reg = &insn->src(srcNum);
+        vector->isSrc = 1;
+
+        //data regs
+        vector = this->appendVector();
+        vector->regNum = srcNum;
+        vector->offsetID = srcNum+1;
+        vector->reg = &insn->src(srcNum+1);
+        vector->isSrc = 1;
+      } else {
+        vector = this->appendVector();
+        vector->regNum = srcNum + 1;
+        vector->offsetID = srcNum;
+        vector->reg = &insn->src(srcNum);
+        vector->isSrc = 1;
+      }
     }
 
     if (bti.file != GEN_IMMEDIATE_VALUE) {
