@@ -891,6 +891,8 @@ namespace gbe {
 
     if (options) {
       char *c_str = (char *)malloc(sizeof(char) * (strlen(options) + 1));
+      if (c_str == NULL)
+        return false;
       memcpy(c_str, options, strlen(options) + 1);
       std::string optionStr(c_str);
       const std::string unsupportedOptions("-cl-denorms-are-zero, -cl-strict-aliasing, -cl-opt-disable,"

@@ -151,6 +151,7 @@ static Value *convertConstant(Constant *C, bool SignExt=false) {
   } else {
     errs() << "Value: " << *C << "\n";
     report_fatal_error("Unexpected constant value");
+    return NULL;
   }
 }
 

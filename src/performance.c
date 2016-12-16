@@ -54,6 +54,8 @@ static context_storage_node * find_context(cl_context context)
   if(NULL == record.context_storage)
   {
     record.context_storage = (context_storage_node *) malloc(sizeof(context_storage_node));
+    if (record.context_storage == NULL)
+      return NULL;
     record.context_storage->context_id = (uintptr_t)context;
     record.context_storage->kernels_storage = NULL;
     record.context_storage->kernel_max_time = 0.0f;
@@ -96,6 +98,8 @@ static kernel_storage_node * find_kernel(context_storage_node *p_context, const 
   if(NULL == p_context->kernels_storage)
   {
     p_context->kernels_storage = (kernel_storage_node *)malloc(sizeof(kernel_storage_node));
+    if (p_context->kernels_storage == NULL)
+      return NULL;
     p_context->kernel_count++;
     strncpy(p_context->kernels_storage->kernel_name,kernel_name, MAX_KERNEL_NAME_LENGTH);
     p_context->kernels_storage->kernel_name[MAX_KERNEL_NAME_LENGTH - 1] = '\0';
@@ -188,6 +192,8 @@ static void print_time_info()
     kernel_storage_node *p_kernel = p_context->kernels_storage;
     kernel_storage_node *p_tmp_kernel = p_kernel;
     time_element *te = (time_element *)malloc(sizeof(time_element)*p_context->kernel_count);
+    if (te == NULL)
+      return;
     memset(te, 0, sizeof(time_element)*p_context->kernel_count);
     int i = -1, j = 0, k = 0;
     while(NULL != p_tmp_kernel)

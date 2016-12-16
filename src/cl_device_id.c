@@ -1389,7 +1389,7 @@ cl_check_builtin_kernel_dimension(cl_kernel kernel, cl_device_id device)
   const char * n = cl_kernel_get_name(kernel);
   const char * builtin_kernels_2d = "__cl_copy_image_2d_to_2d;__cl_copy_image_2d_to_buffer;__cl_copy_buffer_to_image_2d;__cl_fill_image_2d;__cl_fill_image_2d_array;";
   const char * builtin_kernels_3d = "__cl_copy_image_3d_to_2d;__cl_copy_image_2d_to_3d;__cl_copy_image_3d_to_3d;__cl_copy_image_3d_to_buffer;__cl_copy_buffer_to_image_3d;__cl_fill_image_3d";
-    if (!strstr(device->built_in_kernels, n)){
+    if (n == NULL || !strstr(device->built_in_kernels, n)){
       return 0;
     }else if(strstr(builtin_kernels_2d, n)){
       return 2;

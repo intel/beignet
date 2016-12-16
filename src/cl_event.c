@@ -271,7 +271,7 @@ cl_event_create(cl_context ctx, cl_command_queue queue, cl_uint num_events,
       CL_OBJECT_UNLOCK(queue);
 
       for (i = 0; i < num_events; i++) {
-        assert(event_list[i]);
+        assert(event_list && event_list[i]);
         assert(event_list[i]->ctx == ctx);
         assert(CL_OBJECT_IS_EVENT(event_list[i]));
         cl_event_add_ref(event_list[i]);

@@ -547,7 +547,9 @@ namespace gbe {
         if (strstr(options, "-cl-fast-relaxed-math") != NULL)
           fast_relaxed_math = 1;
 
-    char *options_str = (char *)malloc(sizeof(char) * (strlen(options) + 1));
+      char *options_str = (char *)malloc(sizeof(char) * (strlen(options) + 1));
+      if (options_str == NULL)
+        return;
       memcpy(options_str, options, strlen(options) + 1);
       std::string optionStr(options_str);
       while (end != std::string::npos) {
@@ -568,11 +570,11 @@ namespace gbe {
     GenProgram* p = (GenProgram*) program;
     p->fast_relaxed_math = fast_relaxed_math;
     if (!dumpASMFileName.empty()) {
-        p->asm_file_name = dumpASMFileName.c_str();
-        FILE *asmDumpStream = fopen(dumpASMFileName.c_str(), "w");
-        if (asmDumpStream)
-          fclose(asmDumpStream);
-      }
+      p->asm_file_name = dumpASMFileName.c_str();
+      FILE *asmDumpStream = fopen(dumpASMFileName.c_str(), "w");
+      if (asmDumpStream)
+        fclose(asmDumpStream);
+    }
     // Try to compile the program
     acquireLLVMContextLock();
     llvm::Module* module = (llvm::Module*)p->module;

@@ -435,7 +435,8 @@ cl_kernel_setup(cl_kernel k, gbe_kernel opaque)
   k->opaque = opaque;
 
   const char* kname = cl_kernel_get_name(k);
-  if (strncmp(kname, "block_motion_estimate_intel", sizeof("block_motion_estimate_intel")) == 0)
+  if (kname != NULL &&
+      strncmp(kname, "block_motion_estimate_intel", sizeof("block_motion_estimate_intel")) == 0)
     k->vme = 1;
   else
     k->vme = 0;

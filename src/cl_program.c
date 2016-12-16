@@ -413,7 +413,7 @@ cl_program_create_with_built_in_kernles(cl_context     ctx,
       for (i = 0; i < ctx->built_in_prgs->ker_n; ++i) {
         assert(ctx->built_in_prgs->ker[i]);
         const char *ker_name = cl_kernel_get_name(ctx->built_in_prgs->ker[i]);
-        if (strcmp(ker_name, kernel) == 0) {
+        if (ker_name != NULL && strcmp(ker_name, kernel) == 0) {
           break;
         }
       }
@@ -539,7 +539,7 @@ static int check_cl_version_option(cl_program p, const char* options) {
   const char* s = NULL;
   int ver1 = 0;
   int ver2 = 0;
-  char version_str[64];
+  char version_str[64] = {0};
 
   if (options && (s = strstr(options, "-cl-std="))) {
 
@@ -945,7 +945,7 @@ cl_program_create_kernel(cl_program p, const char *name, cl_int *errcode_ret)
   for (i = 0; i < p->ker_n; ++i) {
     assert(p->ker[i]);
     const char *ker_name = cl_kernel_get_name(p->ker[i]);
-    if (strcmp(ker_name, name) == 0) {
+    if (ker_name != NULL && strcmp(ker_name, name) == 0) {
       from = p->ker[i];
       break;
     }
@@ -1004,10 +1004,13 @@ cl_program_get_kernel_names(cl_program p, size_t size, char *names, size_t *size
     return;
   }
 
-  ker_name = cl_kernel_get_name(p->ker[i]);
-  len = strlen(ker_name);
-  if(names) {
-    strncpy(names, cl_kernel_get_name(p->ker[0]), size - 1);
+  ker_name = cl_kernel_get_name(p->ker[0]);
+  if (ker_name != NULL)
+    len = strlen(ker_name);
+  else
+    len = 0;
+  if(names && ker_name) {
+    strncpy(names, ker_name, size - 1);
     names[size - 1] = '\0';
     if(size < len - 1) {
       if(size_ret) *size_ret = size;
@@ -1015,12 +1018,15 @@ cl_program_get_kernel_names(cl_program p, size_t size, char *names, size_t *size
     }
     size = size - len - 1;  //sub \0
   }
-  if(size_ret) *size_ret = strlen(ker_name) + 1;  //add NULL
+  if(size_ret) *size_ret = len + 1;  //add NULL
 
   for (i = 1; i < p->ker_n; ++i) {
     ker_name = cl_kernel_get_name(p->ker[i]);
-    len = strlen(ker_name);
-    if(names) {
+    if (ker_name != NULL)
+      len = strlen(ker_name);
+    else
+      len = 0;
+    if(names && ker_name) {
       strncat(names, ";", size);
       if(size >= 1)
         strncat(names, ker_name, size - 1);
