@@ -36,27 +36,41 @@
 #include <stdio.h>
 #include <string.h>
 
-LOCAL cl_command_queue
+static cl_command_queue
 cl_command_queue_new(cl_context ctx)
 {
   cl_command_queue queue = NULL;
 
   assert(ctx);
-  TRY_ALLOC_NO_ERR (queue, CALLOC(struct _cl_command_queue));
+  queue = cl_calloc(1, sizeof(_cl_command_queue));
+  if (queue == NULL)
+    return NULL;
+
   CL_OBJECT_INIT_BASE(queue, CL_OBJECT_COMMAND_QUEUE_MAGIC);
-  cl_command_queue_init_enqueue(queue);
+  if (cl_command_queue_init_enqueue(queue) != CL_SUCCESS) {
+    cl_free(queue);
+    return NULL;
+  }
 
   /* Append the command queue in the list */
   cl_context_add_queue(ctx, queue);
-  queue->ctx = ctx;
-  queue->cmrt_event = NULL;
-
-exit:
   return queue;
-error:
-  cl_command_queue_delete(queue);
-  queue = NULL;
-  goto exit;
+}
+
+LOCAL cl_command_queue
+cl_create_command_queue(cl_context ctx, cl_device_id device,
+                        cl_command_queue_properties properties, cl_int *errcode_ret)
+{
+  cl_command_queue queue = cl_command_queue_new(ctx);
+  if (queue == NULL) {
+    *errcode_ret = CL_OUT_OF_HOST_MEMORY;
+  }
+
+  queue->props = properties;
+  queue->device = device;
+
+  *errcode_ret = CL_SUCCESS;
+  return queue;
 }
 
 LOCAL void

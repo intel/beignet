@@ -403,32 +403,6 @@ cl_context_add_ref(cl_context ctx)
   CL_OBJECT_INC_REF(ctx);
 }
 
-LOCAL cl_command_queue
-cl_context_create_queue(cl_context ctx,
-                        cl_device_id device,
-                        cl_command_queue_properties properties, /* XXX */
-                        cl_int *errcode_ret)
-{
-  cl_command_queue queue = NULL;
-  cl_int err = CL_SUCCESS;
-
-
-
-  /* We create the command queue and store it in the context list of queues */
-  TRY_ALLOC (queue, cl_command_queue_new(ctx));
-  queue->props = properties;
-  queue->device = device;
-
-exit:
-  if (errcode_ret)
-    *errcode_ret = err;
-  return queue;
-error:
-  cl_command_queue_delete(queue);
-  queue = NULL;
-  goto exit;
-}
-
 cl_buffer_mgr
 cl_context_get_bufmgr(cl_context ctx)
 {

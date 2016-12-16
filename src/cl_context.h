@@ -167,12 +167,6 @@ extern void cl_context_delete(cl_context);
 /* Increment the context reference counter */
 extern void cl_context_add_ref(cl_context);
 
-/* Create the command queue from the given context and device */
-extern cl_command_queue cl_context_create_queue(cl_context,
-                                                cl_device_id,
-                                                cl_command_queue_properties,
-                                                cl_int*);
-
 /* Enqueue a ND Range kernel */
 extern cl_int cl_context_ND_kernel(cl_context,
                                    cl_command_queue,

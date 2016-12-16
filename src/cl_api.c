@@ -163,34 +163,6 @@ clReleaseDevice(cl_device_id device)
 }
 
 cl_command_queue
-clCreateCommandQueue(cl_context                   context,
-                     cl_device_id                 device,
-                     cl_command_queue_properties  properties,
-                     cl_int *                     errcode_ret)
-{
-  cl_command_queue queue = NULL;
-  cl_int err = CL_SUCCESS;
-  CHECK_CONTEXT (context);
-
-  err = cl_devices_list_include_check(context->device_num, context->devices, 1, &device);
-  if (err)
-    goto error;
-
-  INVALID_VALUE_IF (properties & ~(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE));
-
-  if(properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) {/*not supported now.*/
-    err = CL_INVALID_QUEUE_PROPERTIES;
-    goto error;
-  }
-
-  queue = cl_context_create_queue(context, device, properties, &err);
-error:
-  if (errcode_ret)
-    *errcode_ret = err;
-  return queue;
-}
-
-cl_command_queue
 clCreateCommandQueueWithProperties(cl_context                         context,
                                    cl_device_id                       device,
                                    const cl_queue_properties*         properties,
@@ -267,16 +239,6 @@ error:
   if (errcode_ret)
     *errcode_ret = err;
   return queue;
-}
-
-cl_int
-clRetainCommandQueue(cl_command_queue command_queue)
-{
-  cl_int err = CL_SUCCESS;
-  CHECK_QUEUE (command_queue);
-  cl_command_queue_add_ref(command_queue);
-error:
-  return err;
 }
 
 cl_mem

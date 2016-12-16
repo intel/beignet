@@ -40,7 +40,7 @@ typedef struct _cl_command_queue_enqueue_worker {
 typedef _cl_command_queue_enqueue_worker *cl_command_queue_enqueue_worker;
 
 /* Basically, this is a (kind-of) batch buffer */
-struct _cl_command_queue {
+typedef struct _cl_command_queue {
   _cl_base_object base;
   _cl_command_queue_enqueue_worker worker;
   cl_context ctx;                      /* Its parent context */
@@ -50,10 +50,8 @@ struct _cl_command_queue {
   cl_int barrier_events_size;          /* The size of array that wait_events point to */
   cl_command_queue_properties props;   /* Queue properties */
   cl_mem perf;                         /* Where to put the perf counters */
-
-  void* cmrt_event;                    /* the latest CmEvent* of the command queue */
   cl_uint size;                        /* Store the specified size for queueu */
-};
+} _cl_command_queue;;
 
 #define CL_OBJECT_COMMAND_QUEUE_MAGIC 0x83650a12b79ce4efLL
 #define CL_OBJECT_IS_COMMAND_QUEUE(obj) ((obj &&                           \
@@ -61,9 +59,8 @@ struct _cl_command_queue {
          CL_OBJECT_GET_REF(obj) >= 1))
 
 /* Allocate and initialize a new command queue. Also insert it in the list of
- * command queue in the associated context
- */
-extern cl_command_queue cl_command_queue_new(cl_context);
+ * command queue in the associated context */
+extern cl_command_queue cl_create_command_queue(cl_context, cl_device_id, cl_command_queue_properties, cl_int*);
 
 /* Destroy and deallocate the command queue */
 extern void cl_command_queue_delete(cl_command_queue);

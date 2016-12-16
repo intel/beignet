@@ -16,8 +16,46 @@
  *
  */
 #include "cl_command_queue.h"
+#include "cl_device_id.h"
 #include "CL/cl.h"
 #include <stdio.h>
+
+cl_command_queue
+clCreateCommandQueue(cl_context context,
+                     cl_device_id device,
+                     cl_command_queue_properties properties,
+                     cl_int *errcode_ret)
+{
+  cl_command_queue queue = NULL;
+  cl_int err = CL_SUCCESS;
+
+  do {
+    if (!CL_OBJECT_IS_CONTEXT(context)) {
+      err = CL_INVALID_CONTEXT;
+      break;
+    }
+
+    err = cl_devices_list_include_check(context->device_num, context->devices, 1, &device);
+    if (err)
+      break;
+
+    if (properties & ~(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE)) {
+      err = CL_INVALID_VALUE;
+      break;
+    }
+
+    if (properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) { /*not supported now.*/
+      err = CL_INVALID_QUEUE_PROPERTIES;
+      break;
+    }
+
+    queue = cl_create_command_queue(context, device, properties, &err);
+  } while (0);
+
+  if (errcode_ret)
+    *errcode_ret = err;
+  return queue;
+}
 
 cl_int
 clGetCommandQueueInfo(cl_command_queue command_queue,
@@ -76,6 +114,16 @@ clFinish(cl_command_queue command_queue)
   }
 
   return cl_command_queue_wait_finish(command_queue);
+}
+
+cl_int
+clRetainCommandQueue(cl_command_queue command_queue)
+{
+  if (!CL_OBJECT_IS_COMMAND_QUEUE(command_queue)) {
+    return CL_INVALID_COMMAND_QUEUE;
+  }
+  cl_command_queue_add_ref(command_queue);
+  return CL_SUCCESS;
 }
 
 cl_int
