@@ -89,10 +89,12 @@ namespace {
 char StripAttributes::ID = 0;
 
 bool StripAttributes::runOnFunction(Function &Func) {
-  if (!gbe::isKernelFunction(Func))
-    Func.addFnAttr(Attribute::AlwaysInline);
   Func.setCallingConv(CallingConv::C);
   Func.setLinkage(GlobalValue::ExternalLinkage);
+  if (!gbe::isKernelFunction(Func)) {
+    Func.addFnAttr(Attribute::AlwaysInline);
+    Func.setLinkage(GlobalValue::LinkOnceAnyLinkage);
+  }
 
   for (Function::iterator BB = Func.begin(), E = Func.end();
        BB != E; ++BB) {

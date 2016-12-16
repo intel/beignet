@@ -136,6 +136,9 @@ namespace gbe
     MPM.add(createBasicAliasAnalysisPass());
 #endif
     MPM.add(createIntrinsicLoweringPass());
+    MPM.add(createBarrierNodupPass(false));   // remove noduplicate fnAttr before inlining.
+    MPM.add(createFunctionInliningPass(20000));
+    MPM.add(createBarrierNodupPass(true));    // restore noduplicate fnAttr after inlining.
     MPM.add(createStripAttributesPass());     // Strip unsupported attributes and calling conventions.
     MPM.add(createSamplerFixPass());
     MPM.add(createGlobalOptimizerPass());     // Optimize out global vars
@@ -146,9 +149,6 @@ namespace gbe
     MPM.add(createInstructionCombiningPass());// Clean up after IPCP & DAE
     MPM.add(createCFGSimplificationPass());   // Clean up after IPCP & DAE
     MPM.add(createPruneEHPass());             // Remove dead EH info
-    MPM.add(createBarrierNodupPass(false));   // remove noduplicate fnAttr before inlining.
-    MPM.add(createFunctionInliningPass(20000));
-    MPM.add(createBarrierNodupPass(true));    // restore noduplicate fnAttr after inlining.
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
     MPM.add(createPostOrderFunctionAttrsLegacyPass());
 #elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
