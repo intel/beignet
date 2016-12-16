@@ -233,7 +233,7 @@ clCreateCommandQueueWithProperties(cl_context                         context,
   if(queue_sz == 0xFFFFFFFF) queue_sz = device->queue_on_device_preferred_size;
   INVALID_VALUE_IF (queue_sz > device->queue_on_device_max_size);
 
-  queue = cl_context_create_queue(context, device, prop, &err);
+  queue = cl_create_command_queue(context, device, prop, &err);
   queue->size = queue_sz;
 error:
   if (errcode_ret)
@@ -790,31 +790,6 @@ clGetSupportedImageFormats(cl_context         ctx,
                                    num_entries,
                                    image_formats,
                                    num_image_formats);
-
-error:
-  return err;
-}
-
-cl_int
-clSetMemObjectDestructorCallback(cl_mem  memobj,
-                                 void (CL_CALLBACK *pfn_notify) (cl_mem, void*),
-                                 void * user_data)
-{
-  cl_int err = CL_SUCCESS;
-  CHECK_MEM(memobj);
-  INVALID_VALUE_IF (pfn_notify == 0);
-
-  cl_mem_dstr_cb *cb = (cl_mem_dstr_cb*)malloc(sizeof(cl_mem_dstr_cb));
-  if (!cb) {
-    err = CL_OUT_OF_HOST_MEMORY;
-    goto error;
-  }
-
-  memset(cb, 0, sizeof(cl_mem_dstr_cb));
-  cb->pfn_notify = pfn_notify;
-  cb->user_data = user_data;
-  cb->next = memobj->dstr_cb;
-  memobj->dstr_cb = cb;
 
 error:
   return err;

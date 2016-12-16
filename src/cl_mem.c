@@ -143,6 +143,7 @@ cl_mem_allocate(enum cl_mem_type type,
   }
 
   CL_OBJECT_INIT_BASE(mem, CL_OBJECT_MEM_MAGIC);
+  list_init(&mem->dstr_cb_head);
   mem->type = type;
   mem->flags = flags;
   mem->is_userptr = 0;
@@ -450,6 +451,7 @@ cl_mem_new_sub_buffer(cl_mem buffer,
   mem = &sub_buf->base;
 
   CL_OBJECT_INIT_BASE(mem, CL_OBJECT_MEM_MAGIC);
+  list_init(&mem->dstr_cb_head);
   mem->type = CL_MEM_SUBBUFFER_TYPE;
   mem->flags = flags;
   mem->offset = buffer->offset;
@@ -606,6 +608,7 @@ void* cl_mem_svm_allocate(cl_context ctx, cl_svm_mem_flags flags,
 
   mem->type = CL_MEM_SVM_TYPE;
   CL_OBJECT_INIT_BASE(mem, CL_OBJECT_MEM_MAGIC);
+  list_init(&mem->dstr_cb_head);
   mem->flags = flags | CL_MEM_USE_HOST_PTR;
   mem->is_userptr = 0;
   mem->is_svm = 0;
@@ -1207,6 +1210,8 @@ LOCAL void
 cl_mem_delete(cl_mem mem)
 {
   cl_int i;
+  cl_mem_dstr_cb cb = NULL;
+
   if (UNLIKELY(mem == NULL))
     return;
   if (CL_OBJECT_DEC_REF(mem) > 1)
@@ -1221,6 +1226,14 @@ cl_mem_delete(cl_mem mem)
   if (mem->cmrt_mem != NULL)
     cmrt_destroy_memory(mem);
 #endif
+
+  /* First, call all the callbacks registered by user. */
+  while (!list_empty(&mem->dstr_cb_head)) {
+    cb = list_entry(mem->dstr_cb_head.next, _cl_mem_dstr_cb, node);
+    list_del(&cb->node);
+    cb->pfn_notify(mem, cb->user_data);
+    cl_free(cb);
+  }
 
   /* iff we are a image, delete the 1d buffer if has. */
   if (IS_IMAGE(mem)) {
@@ -1258,16 +1271,6 @@ cl_mem_delete(cl_mem mem)
 
   if (mem->mapped_ptr)
     free(mem->mapped_ptr);
-
-  if (mem->dstr_cb) {
-    cl_mem_dstr_cb *cb = mem->dstr_cb;
-    while (mem->dstr_cb) {
-      cb = mem->dstr_cb;
-      cb->pfn_notify(mem, cb->user_data);
-      mem->dstr_cb = cb->next;
-      free(cb);
-    }
-  }
 
   /* Iff we are sub, do nothing for bo release. */
   if (mem->type == CL_MEM_SUBBUFFER_TYPE) {
@@ -2455,4 +2458,24 @@ error:
   if (err != CL_SUCCESS)
     *mem_ptr = NULL;
   return err;
+}
+
+LOCAL cl_int
+cl_mem_set_destructor_callback(cl_mem memobj,
+                               void(CL_CALLBACK *pfn_notify)(cl_mem, void *), void *user_data)
+{
+  cl_mem_dstr_cb cb = cl_calloc(1, sizeof(_cl_mem_dstr_cb));
+  if (cb == NULL) {
+    return CL_OUT_OF_HOST_MEMORY;
+  }
+
+  memset(cb, 0, sizeof(_cl_mem_dstr_cb));
+  list_init(&cb->node);
+  cb->pfn_notify = pfn_notify;
+  cb->user_data = user_data;
+
+  CL_OBJECT_LOCK(memobj);
+  list_add(&cb->node, &memobj->dstr_cb_head, memobj->dstr_cb_head.next);
+  CL_OBJECT_UNLOCK(memobj);
+  return CL_SUCCESS;
 }

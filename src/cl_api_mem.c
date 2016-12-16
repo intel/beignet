@@ -23,6 +23,20 @@
 #include "CL/cl.h"
 
 cl_int
+clSetMemObjectDestructorCallback(cl_mem memobj,
+                                 void(CL_CALLBACK *pfn_notify)(cl_mem, void *),
+                                 void *user_data)
+{
+  if (!CL_OBJECT_IS_MEM(memobj))
+    return CL_INVALID_MEM_OBJECT;
+
+  if (pfn_notify == NULL)
+    return CL_INVALID_VALUE;
+
+  return cl_mem_set_destructor_callback(memobj, pfn_notify, user_data);
+}
+
+cl_int
 clGetMemObjectInfo(cl_mem memobj,
                    cl_mem_info param_name,
                    size_t param_value_size,

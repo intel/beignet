@@ -64,10 +64,11 @@ typedef struct _cl_mapped_ptr {
 }cl_mapped_ptr;
 
 typedef struct _cl_mem_dstr_cb {
-  struct _cl_mem_dstr_cb * next;
+  list_head node;    /* Mem callback list node */
   void (CL_CALLBACK *pfn_notify)(cl_mem memobj, void *user_data);
   void *user_data;
-}cl_mem_dstr_cb;
+} _cl_mem_dstr_cb;
+typedef _cl_mem_dstr_cb* cl_mem_dstr_cb;
 
 /* Used for buffers and images */
 enum cl_mem_type {
@@ -94,7 +95,7 @@ typedef  struct _cl_mem {
   int mapped_ptr_sz;        /* The array size of mapped_ptr. */
   int map_ref;              /* The mapped count. */
   uint8_t mapped_gtt;       /* This object has mapped gtt, for unmap. */
-  cl_mem_dstr_cb *dstr_cb;  /* The destroy callback. */
+  list_head dstr_cb_head;   /* All destroy callbacks. */
   uint8_t is_userptr;       /* CL_MEM_USE_HOST_PTR is enabled */
   cl_bool is_svm;           /* This object  is svm */
   size_t offset;            /* offset of host_ptr to the page beginning, only for CL_MEM_USE_HOST_PTR*/
@@ -363,5 +364,7 @@ extern cl_mem cl_mem_new_image_from_fd(cl_context ctx,
 extern cl_int cl_mem_record_map_mem(cl_mem mem, void *ptr, void **mem_ptr, size_t offset,
                       size_t size, const size_t *origin, const size_t *region);
 
+extern cl_int cl_mem_set_destructor_callback(cl_mem memobj,
+                      void(CL_CALLBACK *pfn_notify)(cl_mem, void *), void *user_data);
 #endif /* __CL_MEM_H__ */
 
