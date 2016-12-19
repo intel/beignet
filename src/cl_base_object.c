@@ -66,7 +66,7 @@ cl_object_destroy_base(cl_base_object obj)
 }
 
 LOCAL cl_int
-cl_object_take_ownership(cl_base_object obj, cl_int wait)
+cl_object_take_ownership(cl_base_object obj, cl_int wait, cl_bool withlock)
 {
   pthread_t self;
 
@@ -74,21 +74,26 @@ cl_object_take_ownership(cl_base_object obj, cl_int wait)
 
   self = pthread_self();
 
-  pthread_mutex_lock(&obj->mutex);
+  if (withlock == CL_FALSE)
+    pthread_mutex_lock(&obj->mutex);
 
   if (pthread_equal(obj->owner, self)) { // Already get
-    pthread_mutex_unlock(&obj->mutex);
+    if (withlock == CL_FALSE)
+      pthread_mutex_unlock(&obj->mutex);
     return 1;
   }
 
   if (pthread_equal(obj->owner, invalid_thread_id)) {
     obj->owner = self;
-    pthread_mutex_unlock(&obj->mutex);
+
+    if (withlock == CL_FALSE)
+      pthread_mutex_unlock(&obj->mutex);
     return 1;
   }
 
   if (wait == 0) {
-    pthread_mutex_unlock(&obj->mutex);
+    if (withlock == CL_FALSE)
+      pthread_mutex_unlock(&obj->mutex);
     return 0;
   }
 
@@ -97,21 +102,27 @@ cl_object_take_ownership(cl_base_object obj, cl_int wait)
   }
 
   obj->owner = self;
-  pthread_mutex_unlock(&obj->mutex);
+
+  if (withlock == CL_FALSE)
+    pthread_mutex_unlock(&obj->mutex);
+
   return 1;
 }
 
 LOCAL void
-cl_object_release_ownership(cl_base_object obj)
+cl_object_release_ownership(cl_base_object obj, cl_bool withlock)
 {
   assert(CL_OBJECT_IS_VALID(obj));
 
-  pthread_mutex_lock(&obj->mutex);
+  if (withlock == CL_FALSE)
+    pthread_mutex_lock(&obj->mutex);
+
   assert(pthread_equal(pthread_self(), obj->owner));
   obj->owner = invalid_thread_id;
   pthread_cond_broadcast(&obj->cond);
 
-  pthread_mutex_unlock(&obj->mutex);
+  if (withlock == CL_FALSE)
+    pthread_mutex_unlock(&obj->mutex);
 }
 
 LOCAL void

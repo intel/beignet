@@ -1151,57 +1151,6 @@ error:
   return err;
 }
 
-
-cl_int
-clGetEventProfilingInfo(cl_event             event,
-                        cl_profiling_info    param_name,
-                        size_t               param_value_size,
-                        void *               param_value,
-                        size_t *             param_value_size_ret)
-{
-  cl_int err = CL_SUCCESS;
-  cl_ulong ret_val;
-
-  CHECK_EVENT(event);
-  //cl_event_update_status(event, 0);
-
-  if (event->event_type == CL_COMMAND_USER ||
-      !(event->queue->props & CL_QUEUE_PROFILING_ENABLE) ||
-          event->status != CL_COMPLETE) {
-    err = CL_PROFILING_INFO_NOT_AVAILABLE;
-    goto error;
-  }
-
-  if (param_value && param_value_size < sizeof(cl_ulong)) {
-    err = CL_INVALID_VALUE;
-    goto error;
-  }
-
-  if (param_name == CL_PROFILING_COMMAND_QUEUED) {
-    ret_val = event->queued_timestamp;
-  } else if (param_name == CL_PROFILING_COMMAND_SUBMIT) {
-    ret_val= event->queued_timestamp + cl_event_get_timestamp_delta(event->timestamp[0],event->timestamp[1]);
-  } else if (param_name == CL_PROFILING_COMMAND_START) {
-    err = cl_event_get_timestamp(event, CL_PROFILING_COMMAND_START);
-    ret_val = event->queued_timestamp + cl_event_get_start_timestamp(event);
-  } else if (param_name == CL_PROFILING_COMMAND_END) {
-    err = cl_event_get_timestamp(event, CL_PROFILING_COMMAND_END);
-    ret_val =  event->queued_timestamp + cl_event_get_end_timestamp(event);
-  } else {
-    err = CL_INVALID_VALUE;
-    goto error;
-  }
-
-  if (err == CL_SUCCESS) {
-    if (param_value)
-      *(cl_ulong*)param_value = ret_val;
-    if (param_value_size_ret)
-      *param_value_size_ret = sizeof(cl_ulong);
-  }
-error:
-  return err;
-}
-
 cl_mem clCreatePipe (cl_context context,
                      cl_mem_flags flags,
                      cl_uint pipe_packet_size,

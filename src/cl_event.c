@@ -23,46 +23,107 @@
 #include <string.h>
 #include <stdio.h>
 
-LOCAL cl_int
-cl_event_get_timestamp(cl_event event, cl_profiling_info param_name)
+// TODO: Need to move it to some device related file later.
+static void
+cl_event_update_timestamp_gen(cl_event event, cl_int status)
 {
-  // TODO:
-  return CL_INVALID_VALUE;
+  cl_ulong ts = 0;
+
+  if ((event->exec_data.type == EnqueueCopyBufferRect) ||
+      (event->exec_data.type == EnqueueCopyBuffer) ||
+      (event->exec_data.type == EnqueueCopyImage) ||
+      (event->exec_data.type == EnqueueCopyBufferToImage) ||
+      (event->exec_data.type == EnqueueCopyImageToBuffer) ||
+      (event->exec_data.type == EnqueueNDRangeKernel) ||
+      (event->exec_data.type == EnqueueFillBuffer) ||
+      (event->exec_data.type == EnqueueFillImage)) {
+
+    if (status == CL_QUEUED || status == CL_SUBMITTED) {
+      cl_gpgpu_event_get_gpu_cur_timestamp(event->queue->ctx->drv, &ts);
+
+      if (ts == CL_EVENT_INVALID_TIMESTAMP)
+        ts++;
+      event->timestamp[CL_QUEUED - status] = ts;
+      return;
+    } else if (status == CL_RUNNING) {
+      assert(event->exec_data.gpgpu);
+      return; // Wait for the event complete and get run and complete then.
+    } else {
+      assert(event->exec_data.gpgpu);
+      cl_gpgpu_event_get_exec_timestamp(event->exec_data.gpgpu, 0, &ts);
+      if (ts == CL_EVENT_INVALID_TIMESTAMP)
+        ts++;
+      event->timestamp[2] = ts;
+      cl_gpgpu_event_get_exec_timestamp(event->exec_data.gpgpu, 1, &ts);
+      if (ts == CL_EVENT_INVALID_TIMESTAMP)
+        ts++;
+      event->timestamp[3] = ts;
+      return;
+    }
+  } else {
+    cl_gpgpu_event_get_gpu_cur_timestamp(event->queue->ctx->drv, &ts);
+    if (ts == CL_EVENT_INVALID_TIMESTAMP)
+      ts++;
+    event->timestamp[CL_QUEUED - status] = ts;
+    return;
+  }
 }
 
-LOCAL cl_ulong
-cl_event_get_timestamp_delta(cl_ulong start_timestamp, cl_ulong end_timestamp)
+LOCAL void
+cl_event_update_timestamp(cl_event event, cl_int from, cl_int to)
 {
-  cl_ulong ret_val;
+  int i;
+  cl_bool re_cal = CL_FALSE;
+  cl_ulong ts[4];
 
-  if (end_timestamp > start_timestamp) {
-    ret_val = end_timestamp - start_timestamp;
-  } else {
-    /*if start time stamp is greater than end timstamp then set ret value to max*/
-    ret_val = ((cl_ulong)1 << 32);
+  assert(from >= to);
+  assert(from >= CL_COMPLETE || from <= CL_QUEUED);
+  assert(to >= CL_COMPLETE || to <= CL_QUEUED);
+
+  if (event->event_type == CL_COMMAND_USER)
+    return;
+
+  assert(event->queue);
+  if ((event->queue->props & CL_QUEUE_PROFILING_ENABLE) == 0)
+    return;
+
+  i = CL_QUEUED - from;
+  if (event->timestamp[i] == CL_EVENT_INVALID_TIMESTAMP)
+    cl_event_update_timestamp_gen(event, from);
+  i++;
+
+  for (; i <= CL_QUEUED - to; i++) {
+    cl_event_update_timestamp_gen(event, CL_QUEUED - i);
   }
 
-  return ret_val;
-}
+  if (to == CL_COMPLETE) {
+    // TODO: Need to set the CL_PROFILING_COMMAND_COMPLETE when enable child enqueue.
+    // Just a duplicate of event complete time now.
+    event->timestamp[4] = event->timestamp[3];
 
-LOCAL cl_ulong
-cl_event_get_start_timestamp(cl_event event)
-{
-  cl_ulong ret_val;
+    /* If timestamp overflow, set queued time to 0 and re-calculate. */
+    for (i = 0; i < 4; i++) {
+      if (event->timestamp[i + 1] < event->timestamp[i]) {
+        re_cal = CL_TRUE;
+        break;
+      }
+    }
 
-  ret_val = cl_event_get_timestamp_delta(event->timestamp[0], event->timestamp[2]);
+    if (re_cal) {
+      for (i = 3; i >= 0; i--) {
+        if (event->timestamp[i + 1] < event->timestamp[i]) { //overflow
+          ts[i] = event->timestamp[i + 1] + (CL_EVENT_INVALID_TIMESTAMP - event->timestamp[i]);
+        } else {
+          ts[i] = event->timestamp[i + 1] - event->timestamp[i];
+        }
+      }
 
-  return ret_val;
-}
-
-LOCAL cl_ulong
-cl_event_get_end_timestamp(cl_event event)
-{
-  cl_ulong ret_val;
-
-  ret_val = cl_event_get_timestamp_delta(event->timestamp[0], event->timestamp[3]);
-
-  return ret_val;
+      event->timestamp[0] = 0;
+      for (i = 1; i < 5; i++) {
+        event->timestamp[i] = event->timestamp[i - 1] + ts[i - 1];
+      }
+    }
+  }
 }
 
 LOCAL void
@@ -88,6 +149,7 @@ static cl_event
 cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type type,
              cl_uint num_events, cl_event *event_list)
 {
+  int i;
   cl_event e = cl_calloc(1, sizeof(_cl_event));
   if (e == NULL)
     return NULL;
@@ -115,6 +177,10 @@ cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type type,
 
   e->depend_events = event_list;
   e->depend_event_num = num_events;
+  for (i = 0; i < 4; i++) {
+    e->timestamp[i] = CL_EVENT_INVALID_TIMESTAMP;
+  }
+
   return e;
 }
 
@@ -315,6 +381,16 @@ cl_event_set_status(cl_event event, cl_int status)
   if (status >= event->status) { // Should never go back.
     CL_OBJECT_UNLOCK(event);
     return CL_INVALID_OPERATION;
+  }
+
+  if (status >= CL_COMPLETE && !CL_EVENT_IS_USER(event) &&
+      (event->queue->props & CL_QUEUE_PROFILING_ENABLE) != 0) {
+    // Call update_timestamp without event lock.
+    CL_OBJECT_TAKE_OWNERSHIP_WITHLOCK(event, 1);
+    CL_OBJECT_UNLOCK(event);
+    cl_event_update_timestamp(event, event->status, status);
+    CL_OBJECT_LOCK(event);
+    CL_OBJECT_RELEASE_OWNERSHIP_WITHLOCK(event);
   }
 
   event->status = status;

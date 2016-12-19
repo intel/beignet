@@ -318,6 +318,7 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
 
       ptr = data->ptr;
       e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
+      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else {
       err = cl_enqueue_handle(data, CL_SUBMITTED); // Submit to get the address.
       if (err != CL_SUCCESS) {
@@ -410,6 +411,7 @@ clEnqueueUnmapMemObject(cl_command_queue command_queue,
       }
 
       e->status = CL_COMPLETE;
+      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else { // May need to wait some event to complete.
       cl_command_queue_enqueue_event(command_queue, e);
     }
@@ -513,6 +515,7 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
       }
 
       e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
+      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else {
       cl_command_queue_enqueue_event(command_queue, e);
     }
@@ -616,6 +619,7 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
       }
 
       e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
+      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else {
       cl_command_queue_enqueue_event(command_queue, e);
     }
@@ -765,6 +769,7 @@ clEnqueueReadBufferRect(cl_command_queue command_queue,
       }
 
       e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
+      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else {
       cl_command_queue_enqueue_event(command_queue, e);
     }
@@ -916,6 +921,7 @@ clEnqueueWriteBufferRect(cl_command_queue command_queue,
       }
 
       e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
+      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else {
       cl_command_queue_enqueue_event(command_queue, e);
     }
@@ -1601,6 +1607,7 @@ clEnqueueMapImage(cl_command_queue command_queue,
 
       ptr = data->ptr;
       e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
+      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else {
       err = cl_enqueue_handle(data, CL_SUBMITTED); // Submit to get the address.
       if (err != CL_SUCCESS) {
@@ -1798,6 +1805,7 @@ clEnqueueReadImage(cl_command_queue command_queue,
       }
 
       e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
+      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else {
       cl_command_queue_enqueue_event(command_queue, e);
     }
@@ -1950,6 +1958,7 @@ clEnqueueWriteImage(cl_command_queue command_queue,
       }
 
       e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
+      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else {
       cl_command_queue_enqueue_event(command_queue, e);
     }

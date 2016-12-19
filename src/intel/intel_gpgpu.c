@@ -2277,10 +2277,10 @@ intel_gpgpu_read_ts_reg_baytrail(drm_intel_bufmgr *bufmgr)
 
 /* We want to get the current time of GPU. */
 static void
-intel_gpgpu_event_get_gpu_cur_timestamp(intel_gpgpu_t* gpgpu, uint64_t* ret_ts)
+intel_gpgpu_event_get_gpu_cur_timestamp(intel_driver_t* gen_driver, uint64_t* ret_ts)
 {
   uint64_t result = 0;
-  drm_intel_bufmgr *bufmgr = gpgpu->drv->bufmgr;
+  drm_intel_bufmgr *bufmgr = gen_driver->bufmgr;
 
   /* Get the ts that match the bspec */
   result = intel_gpgpu_read_ts_reg(bufmgr);
@@ -2292,15 +2292,13 @@ intel_gpgpu_event_get_gpu_cur_timestamp(intel_gpgpu_t* gpgpu, uint64_t* ret_ts)
 
 /* Get the GPU execute time. */
 static void
-intel_gpgpu_event_get_exec_timestamp(intel_gpgpu_t* gpgpu, intel_event_t *event,
-				     int index, uint64_t* ret_ts)
+intel_gpgpu_event_get_exec_timestamp(intel_gpgpu_t* gpgpu, int index, uint64_t* ret_ts)
 {
   uint64_t result = 0;
-
-  assert(event->ts_buf != NULL);
+  assert(gpgpu->time_stamp_b.bo);
   assert(index == 0 || index == 1);
-  drm_intel_gem_bo_map_gtt(event->ts_buf);
-  uint64_t* ptr = event->ts_buf->virtual;
+  drm_intel_gem_bo_map_gtt(gpgpu->time_stamp_b.bo);
+  uint64_t* ptr = gpgpu->time_stamp_b.bo->virtual;
   result = ptr[index];
 
   /* According to BSpec, the timestamp counter should be 36 bits,
@@ -2311,7 +2309,7 @@ intel_gpgpu_event_get_exec_timestamp(intel_gpgpu_t* gpgpu, intel_event_t *event,
   result = (result & 0x0FFFFFFFF) * 80; //convert to nanoseconds
   *ret_ts = result;
 
-  drm_intel_gem_bo_unmap_gtt(event->ts_buf);
+  drm_intel_gem_bo_unmap_gtt(gpgpu->time_stamp_b.bo);
 }
 
 static int

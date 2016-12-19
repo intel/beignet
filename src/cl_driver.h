@@ -262,11 +262,11 @@ typedef void (cl_gpgpu_event_delete_cb)(cl_gpgpu_event);
 extern cl_gpgpu_event_delete_cb *cl_gpgpu_event_delete;
 
 /* Get a event time stamp */
-typedef void (cl_gpgpu_event_get_exec_timestamp_cb)(cl_gpgpu, cl_gpgpu_event, int, uint64_t*);
+typedef void (cl_gpgpu_event_get_exec_timestamp_cb)(cl_gpgpu, int, uint64_t*);
 extern cl_gpgpu_event_get_exec_timestamp_cb *cl_gpgpu_event_get_exec_timestamp;
 
 /* Get current GPU time stamp */
-typedef void (cl_gpgpu_event_get_gpu_cur_timestamp_cb)(cl_gpgpu, uint64_t*);
+typedef void (cl_gpgpu_event_get_gpu_cur_timestamp_cb)(cl_driver, uint64_t*);
 extern cl_gpgpu_event_get_gpu_cur_timestamp_cb *cl_gpgpu_event_get_gpu_cur_timestamp;
 
 /* Get current batch buffer handle */

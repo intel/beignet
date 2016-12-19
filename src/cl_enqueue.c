@@ -572,9 +572,6 @@ cl_enqueue_ndrange(enqueue_data *data, cl_int status)
     void *batch_buf = cl_gpgpu_ref_batch_buf(data->gpgpu);
     cl_gpgpu_sync(batch_buf);
     cl_gpgpu_unref_batch_buf(batch_buf);
-    /* Finished, we can release the gpgpu now. */
-    cl_gpgpu_delete(data->gpgpu);
-    data->gpgpu = NULL;
   }
 
   return err;
@@ -626,12 +623,6 @@ cl_enqueue_delete(enqueue_data *data)
 LOCAL cl_int
 cl_enqueue_handle(enqueue_data *data, cl_int status)
 {
-  /* if need profiling, add the submit timestamp here. */
-  //  if (event && event->event_type != CL_COMMAND_USER &&
-  //      event->queue->props & CL_QUEUE_PROFILING_ENABLE) {
-  //    cl_event_get_timestamp(event, CL_PROFILING_COMMAND_SUBMIT);
-  //  }
-
   switch (data->type) {
   case EnqueueReturnSuccesss:
     return CL_SUCCESS;

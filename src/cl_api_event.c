@@ -290,3 +290,44 @@ clGetEventInfo(cl_event event,
   return cl_get_info_helper(src_ptr, src_size,
                             param_value, param_value_size, param_value_size_ret);
 }
+
+cl_int
+clGetEventProfilingInfo(cl_event event,
+                        cl_profiling_info param_name,
+                        size_t param_value_size,
+                        void *param_value,
+                        size_t *param_value_size_ret)
+{
+  cl_ulong ret_val;
+
+  if (!CL_OBJECT_IS_EVENT(event)) {
+    return CL_INVALID_EVENT;
+  }
+
+  assert(event->event_type == CL_COMMAND_USER || event->queue != NULL);
+  if (event->event_type == CL_COMMAND_USER ||
+      !(event->queue->props & CL_QUEUE_PROFILING_ENABLE) ||
+      cl_event_get_status(event) != CL_COMPLETE) {
+    return CL_PROFILING_INFO_NOT_AVAILABLE;
+  }
+
+  if (param_value && param_value_size < sizeof(cl_ulong)) {
+    return CL_INVALID_VALUE;
+  }
+
+  if (param_name < CL_PROFILING_COMMAND_QUEUED ||
+      param_name > CL_PROFILING_COMMAND_COMPLETE) {
+    return CL_INVALID_VALUE;
+  }
+
+  ret_val = event->timestamp[param_name - CL_PROFILING_COMMAND_QUEUED];
+  if (ret_val == CL_EVENT_INVALID_TIMESTAMP) {
+    return CL_INVALID_VALUE;
+  }
+
+  if (param_value)
+    *(cl_ulong *)param_value = ret_val;
+  if (param_value_size_ret)
+    *param_value_size_ret = sizeof(cl_ulong);
+  return CL_SUCCESS;
+}

@@ -135,6 +135,8 @@ LOCAL void
 cl_command_queue_enqueue_event(cl_command_queue queue, cl_event event)
 {
   CL_OBJECT_INC_REF(event);
+  cl_event_update_timestamp(event, CL_QUEUED, event->status);
+
   assert(CL_OBJECT_IS_COMMAND_QUEUE(queue));
   CL_OBJECT_LOCK(queue);
   assert(queue->worker.quit == CL_FALSE);

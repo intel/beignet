@@ -48,8 +48,7 @@ typedef struct _cl_event {
   cl_uint depend_event_num;   /* The depend events number. */
   list_head callbacks;        /* The events The event callback functions */
   list_node enqueue_node;     /* The node in the enqueue list. */
-  cl_ulong timestamp[4];      /* The time stamps for profiling. */
-  cl_ulong queued_timestamp;
+  cl_ulong timestamp[5];      /* The time stamps for profiling. */
   enqueue_data exec_data; /* Context for execute this event. */
 } _cl_event;
 
@@ -61,6 +60,8 @@ typedef struct _cl_event {
 #define CL_EVENT_IS_MARKER(E) (E->event_type == CL_COMMAND_MARKER)
 #define CL_EVENT_IS_BARRIER(E) (E->event_type == CL_COMMAND_BARRIER)
 #define CL_EVENT_IS_USER(E) (E->event_type == CL_COMMAND_USER)
+
+#define CL_EVENT_INVALID_TIMESTAMP 0xFFFFFFFFFFFFFFFF
 
 /* Create a new event object */
 extern cl_event cl_event_create(cl_context ctx, cl_command_queue queue, cl_uint num_events,
@@ -78,11 +79,8 @@ extern cl_int cl_event_set_callback(cl_event event, cl_int exec_type,
                                     cl_event_notify_cb pfn_notify, void *user_data);
 extern cl_int cl_event_wait_for_events_list(cl_uint num_events, const cl_event *event_list);
 extern cl_int cl_event_wait_for_event_ready(cl_event event);
-extern cl_ulong cl_event_get_timestamp_delta(cl_ulong start_timestamp, cl_ulong end_timestamp);
-extern cl_ulong cl_event_get_start_timestamp(cl_event event);
-extern cl_ulong cl_event_get_end_timestamp(cl_event event);
-extern cl_int cl_event_get_timestamp(cl_event event, cl_profiling_info param_name);
 extern cl_event cl_event_create_marker_or_barrier(cl_command_queue queue, cl_uint num_events_in_wait_list,
                                                   const cl_event *event_wait_list, cl_bool is_barrier,
                                                   cl_int* error);
+extern void cl_event_update_timestamp(cl_event event, cl_int from_status, cl_int to_status);
 #endif /* __CL_EVENT_H__ */
