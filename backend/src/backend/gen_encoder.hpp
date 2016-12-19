@@ -288,18 +288,24 @@ namespace gbe
     virtual bool canHandleLong(uint32_t opcode, GenRegister dst, GenRegister src0,
                             GenRegister src1 = GenRegister::null());
     virtual void handleDouble(GenEncoder *p, uint32_t opcode, GenRegister dst, GenRegister src0, GenRegister src1 = GenRegister::null());
+
+    /*! OBlock helper function */
+    uint32_t getOBlockSize(uint32_t oword_size, bool low_half = true);
+    void setMBlockRW(GenNativeInstruction *insn, uint32_t bti, uint32_t msg_type, uint32_t msg_length, uint32_t response_length);
+    void setOBlockRW(GenNativeInstruction *insn, uint32_t bti, uint32_t block_size, uint32_t msg_type, uint32_t msg_length, uint32_t response_lengtha);
+
     /*! OBlock read */
-    void OBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t elemSize);
+    void OBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t ow_size);
     /*! OBlock write */
-    void OBWRITE(GenRegister header, uint32_t bti, uint32_t elemSize);
+    void OBWRITE(GenRegister header, uint32_t bti, uint32_t ow_size);
     /*! MBlock read */
-    virtual void MBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t elemSize);
+    virtual void MBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t response_size);
     /*! MBlock write */
-    virtual void MBWRITE(GenRegister header, uint32_t bti, uint32_t elemSize);
+    virtual void MBWRITE(GenRegister header, uint32_t bti, uint32_t data_size);
     /*! A64 OBlock read */
-    virtual void OBREADA64(GenRegister dst, GenRegister header, uint32_t bti, uint32_t elemSize);
+    virtual void OBREADA64(GenRegister dst, GenRegister header, uint32_t bti, uint32_t ow_size);
     /*! A64 OBlock write */
-    virtual void OBWRITEA64(GenRegister header, uint32_t bti, uint32_t elemSize);
+    virtual void OBWRITEA64(GenRegister header, uint32_t bti, uint32_t ow_size);
 
     GBE_CLASS(GenEncoder); //!< Use custom allocators
     virtual void alu3(uint32_t opcode, GenRegister dst,

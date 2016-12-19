@@ -257,32 +257,47 @@ namespace gbe
       NOT_SUPPORTED;
   }
 
-  static void setOBlockRW(GenEncoder *p,
-                          GenNativeInstruction *insn,
-                          uint32_t bti,
-                          uint32_t size,
-                          uint32_t msg_type,
-                          uint32_t msg_length,
-                          uint32_t response_length)
+  void GenEncoder::setOBlockRW(GenNativeInstruction *insn,
+                               uint32_t bti,
+                               uint32_t block_size,
+                               uint32_t msg_type,
+                               uint32_t msg_length,
+                               uint32_t response_length)
   {
     const GenMessageTarget sfid = GEN_SFID_DATAPORT_DATA;
-    p->setMessageDescriptor(insn, sfid, msg_length, response_length);
-    assert(size == 0 || size == 1 || size == 2 || size == 4 || size == 8);
+    setMessageDescriptor(insn, sfid, msg_length, response_length);
     insn->bits3.gen7_oblock_rw.msg_type = msg_type;
     insn->bits3.gen7_oblock_rw.bti = bti;
-    insn->bits3.gen7_oblock_rw.block_size = size <=  2 ? size : (size == 4 ? 3 : 4);
+    insn->bits3.gen7_oblock_rw.block_size = block_size;
     insn->bits3.gen7_oblock_rw.header_present = 1;
   }
 
-  static void setMBlockRW(GenEncoder *p,
-                          GenNativeInstruction *insn,
-                          uint32_t bti,
-                          uint32_t msg_type,
-                          uint32_t msg_length,
-                          uint32_t response_length)
+  uint32_t GenEncoder::getOBlockSize(uint32_t oword_size, bool low_half)
+  {
+    /* 000: 1 OWord, read into or written from the low 128 bits of the destination register.
+     * 001: 1 OWord, read into or written from the high 128 bits of the destination register.
+     * 010: 2 OWords
+     * 011: 4 OWords
+     * 100: 8 OWords */
+    switch(oword_size)
+    {
+      case 1: return low_half ? 0 : 1;
+      case 2: return 2;
+      case 4: return 3;
+      case 8: return 4;
+      default: NOT_SUPPORTED;
+    }
+    return 0;
+  }
+
+  void GenEncoder::setMBlockRW(GenNativeInstruction *insn,
+                               uint32_t bti,
+                               uint32_t msg_type,
+                               uint32_t msg_length,
+                               uint32_t response_length)
   {
     const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA;
-    p->setMessageDescriptor(insn, sfid, msg_length, response_length);
+    setMessageDescriptor(insn, sfid, msg_length, response_length);
     insn->bits3.gen7_mblock_rw.msg_type = msg_type;
     insn->bits3.gen7_mblock_rw.bti = bti;
     insn->bits3.gen7_mblock_rw.header_present = 1;
@@ -1312,80 +1327,72 @@ namespace gbe
      setScratchMessage(this, insn, offset, block_size, channel_mode, GEN_SCRATCH_READ, 1, dst_num);
   }
 
-  void GenEncoder::OBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t size) {
+  void GenEncoder::OBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t ow_size) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     const uint32_t msg_length = 1;
-    uint32_t rsize = size / 2;
-    uint32_t msgsize = size;
-    // When size is 1 OWord, which means half a reg, we need to know which half to use
-    if (size == 1) {
-      if (dst.subnr == 0)
-        msgsize = 0;
-      else
-        msgsize = 1;
-    }
-    rsize = rsize == 0 ? 1 : rsize;
-    const uint32_t response_length = rsize; // Size is in regs
+    uint32_t sizeinreg = ow_size / 2;
+    // half reg should also have size 1
+    sizeinreg = sizeinreg == 0 ? 1 : sizeinreg;
+    const uint32_t block_size = getOBlockSize(ow_size, dst.subnr == 0);
+    const uint32_t response_length = sizeinreg; // Size is in reg
+
     this->setHeader(insn);
     this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
     this->setSrc0(insn, GenRegister::ud8grf(header.nr, 0));
     this->setSrc1(insn, GenRegister::immud(0));
-    setOBlockRW(this,
-                insn,
+    setOBlockRW(insn,
                 bti,
-                msgsize,
+                block_size,
                 GEN7_UNALIGNED_OBLOCK_READ,
                 msg_length,
                 response_length);
   }
 
-  void GenEncoder::OBWRITE(GenRegister header, uint32_t bti, uint32_t size) {
+  void GenEncoder::OBWRITE(GenRegister header, uint32_t bti, uint32_t ow_size) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
-    uint32_t rsize = size / 2;
-    rsize = rsize == 0 ? 1 : rsize;
-    const uint32_t msg_length = 1 + rsize; // Size is in owords
+    uint32_t sizeinreg = ow_size / 2;
+    // half reg should also have size 1
+    sizeinreg = sizeinreg == 0 ? 1 : sizeinreg;
+    const uint32_t msg_length = 1 + sizeinreg; // Size is in reg and header
     const uint32_t response_length = 0;
-    uint32_t msgsize = size;
-    msgsize = msgsize == 1 ? 0 : msgsize;
+    const uint32_t block_size = getOBlockSize(ow_size);
+
     this->setHeader(insn);
     this->setSrc0(insn, GenRegister::ud8grf(header.nr, 0));
     this->setSrc1(insn, GenRegister::immud(0));
     this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UW));
-    setOBlockRW(this,
-                insn,
+    setOBlockRW(insn,
                 bti,
-                msgsize,
+                block_size,
                 GEN7_OBLOCK_WRITE,
                 msg_length,
                 response_length);
   }
 
-  void GenEncoder::MBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t size) {
+  void GenEncoder::MBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t response_size) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     const uint32_t msg_length = 1;
-    const uint32_t response_length = size; // Size of registers
+    const uint32_t response_length = response_size; // Size of registers
     this->setHeader(insn);
     this->setDst(insn, GenRegister::ud8grf(dst.nr, 0));
     this->setSrc0(insn, GenRegister::ud8grf(header.nr, 0));
     this->setSrc1(insn, GenRegister::immud(0));
-    setMBlockRW(this,
-                insn,
+    setMBlockRW(insn,
                 bti,
                 GEN75_P1_MEDIA_BREAD,
                 msg_length,
                 response_length);
   }
 
-  void GenEncoder::MBWRITE(GenRegister header, uint32_t bti, uint32_t size) {
+  void GenEncoder::MBWRITE(GenRegister header, uint32_t bti, uint32_t data_size) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
-    const uint32_t msg_length = 1 + size;
+    const uint32_t msg_length = 1 + data_size;
     const uint32_t response_length = 0; // Size of registers
     this->setHeader(insn);
     this->setDst(insn, GenRegister::retype(GenRegister::null(), GEN_TYPE_UW));
     this->setSrc0(insn, GenRegister::ud8grf(header.nr, 0));
     this->setSrc1(insn, GenRegister::immud(0));
-    setMBlockRW(this,
-                insn,
+    setMBlockRW(insn,
                 bti,
                 GEN75_P1_MEDIA_TYPED_BWRITE,
                 msg_length,

@@ -840,20 +840,15 @@ namespace gbe
     gen8_insn->bits3.gen8_block_rw_a64.header_present = 1;
   }
 
-  void Gen8Encoder::OBREADA64(GenRegister dst, GenRegister header, uint32_t bti, uint32_t size) {
-   GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+  void Gen8Encoder::OBREADA64(GenRegister dst, GenRegister header, uint32_t bti, uint32_t ow_size) {
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     const uint32_t msg_length = 1;
-    uint32_t rsize = size / 2;
-    uint32_t msgsize = size;
-    // When size is 1 OWord, which means half a reg, we need to know which half to use
-    if (size == 1) {
-      if (dst.subnr == 0)
-        msgsize = 0;
-      else
-        msgsize = 1;
-    }
-    rsize = rsize == 0 ? 1 : rsize;
-    const uint32_t response_length = rsize; // Size is in regs
+    uint32_t sizeinreg = ow_size / 2;
+    // half reg should also have size 1
+    sizeinreg = sizeinreg == 0 ? 1 : sizeinreg;
+    const uint32_t block_size = getOBlockSize(ow_size, dst.subnr == 0);
+    const uint32_t response_length = sizeinreg; // Size is in reg
+
     this->setHeader(insn);
     this->setDst(insn, GenRegister::uw16grf(dst.nr, 0));
     this->setSrc0(insn, GenRegister::ud8grf(header.nr, 0));
@@ -861,21 +856,22 @@ namespace gbe
     setOBlockRWA64(this,
                    insn,
                    bti,
-                   msgsize,
+                   block_size,
                    GEN8_P1_BLOCK_READ_A64,
                    msg_length,
                    response_length);
 
   }
 
-  void Gen8Encoder::OBWRITEA64(GenRegister header, uint32_t bti, uint32_t size) {
-   GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
-    uint32_t rsize = size / 2;
-    rsize = rsize == 0 ? 1 : rsize;
-    const uint32_t msg_length = 1 + rsize; // Size is in owords
+  void Gen8Encoder::OBWRITEA64(GenRegister header, uint32_t bti, uint32_t ow_size) {
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    uint32_t sizeinreg = ow_size / 2;
+    // half reg should also have size 1
+    sizeinreg = sizeinreg == 0 ? 1 : sizeinreg;
+    const uint32_t msg_length = 1 + sizeinreg; // Size is in reg and header
     const uint32_t response_length = 0;
-    uint32_t msgsize = size;
-    msgsize = msgsize == 1 ? 0 : msgsize;
+    const uint32_t block_size = getOBlockSize(ow_size);
+
     this->setHeader(insn);
     this->setSrc0(insn, GenRegister::ud8grf(header.nr, 0));
     this->setSrc1(insn, GenRegister::immud(0));
@@ -883,7 +879,7 @@ namespace gbe
     setOBlockRWA64(this,
                    insn,
                    bti,
-                   msgsize,
+                   block_size,
                    GEN8_P1_BLOCK_WRITE_A64,
                    msg_length,
                    response_length);
