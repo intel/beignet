@@ -67,24 +67,6 @@ typedef intptr_t cl_device_partition_property;
 	  return RET; \
 	} while(0)
 
-static cl_int
-cl_check_device_type(cl_device_type device_type)
-{
-  const cl_device_type valid =  CL_DEVICE_TYPE_GPU
-                              | CL_DEVICE_TYPE_CPU
-                              | CL_DEVICE_TYPE_ACCELERATOR
-                              | CL_DEVICE_TYPE_DEFAULT
-                              | CL_DEVICE_TYPE_CUSTOM;
-
-  if( (device_type & valid) == 0) {
-    return CL_INVALID_DEVICE_TYPE;
-  }
-  if(UNLIKELY(!(device_type & CL_DEVICE_TYPE_DEFAULT) && !(device_type & CL_DEVICE_TYPE_GPU)))
-    return CL_DEVICE_NOT_FOUND;
-
-  return CL_SUCCESS;
-}
-
 cl_int
 clGetPlatformIDs(cl_uint          num_entries,
                  cl_platform_id * platforms,
@@ -96,70 +78,6 @@ clGetPlatformIDs(cl_uint          num_entries,
     return CL_INVALID_VALUE;
 
   return cl_get_platform_ids(num_entries, platforms, num_platforms);
-}
-
-cl_int
-clGetDeviceIDs(cl_platform_id platform,
-               cl_device_type device_type,
-               cl_uint        num_entries,
-               cl_device_id * devices,
-               cl_uint *      num_devices)
-{
-  cl_int err = CL_SUCCESS;
-
-  /* Check parameter consistency */
-  if (UNLIKELY(devices == NULL && num_devices == NULL))
-    return CL_INVALID_VALUE;
-  if (UNLIKELY(platform && platform != cl_get_platform_default()))
-    return CL_INVALID_PLATFORM;
-  if (UNLIKELY(devices && num_entries == 0))
-    return CL_INVALID_VALUE;
-
-  err = cl_check_device_type(device_type);
-  if(err != CL_SUCCESS)
-    return err;
-
-  return cl_get_device_ids(platform,
-                           device_type,
-                           num_entries,
-                           devices,
-                           num_devices);
-}
-
-cl_int
-clCreateSubDevices(cl_device_id                         in_device,
-                   const cl_device_partition_property * properties,
-                   cl_uint                              num_devices,
-                   cl_device_id *                       out_devices,
-                   cl_uint *                            num_devices_ret)
-{
-  /* Check parameter consistency */
-  if (UNLIKELY(out_devices == NULL && num_devices_ret == NULL))
-    return CL_INVALID_VALUE;
-  if (UNLIKELY(in_device == NULL && properties == NULL))
-    return CL_INVALID_VALUE;
-
-  *num_devices_ret = 0;
-  return CL_INVALID_DEVICE_PARTITION_COUNT;
-}
-
-cl_int
-clRetainDevice(cl_device_id device)
-{
-  // XXX stub for C++ Bindings
-  return CL_SUCCESS;
-}
-
-cl_int
-clReleaseDevice(cl_device_id device)
-{
-#ifdef HAS_CMRT
-  if (device->cmrt_device != NULL)
-    cmrt_destroy_device(device);
-#endif
-
-  // XXX stub for C++ Bindings
-  return CL_SUCCESS;
 }
 
 cl_command_queue
