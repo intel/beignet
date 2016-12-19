@@ -60,14 +60,12 @@ typedef struct _cl_command_queue {
 
 /* Allocate and initialize a new command queue. Also insert it in the list of
  * command queue in the associated context */
-extern cl_command_queue cl_create_command_queue(cl_context, cl_device_id, cl_command_queue_properties, cl_int*);
-
+extern cl_command_queue cl_create_command_queue(cl_context, cl_device_id,
+                                                cl_command_queue_properties, cl_uint, cl_int*);
 /* Destroy and deallocate the command queue */
 extern void cl_command_queue_delete(cl_command_queue);
-
 /* Keep one more reference on the queue */
 extern void cl_command_queue_add_ref(cl_command_queue);
-
 /* Map ND range kernel from OCL API */
 extern cl_int cl_command_queue_ND_range(cl_command_queue queue,
                                         cl_kernel ker,
@@ -76,28 +74,20 @@ extern cl_int cl_command_queue_ND_range(cl_command_queue queue,
                                         const size_t *global_work_offset,
                                         const size_t *global_work_size,
                                         const size_t *local_work_size);
-
 /* The memory object where to report the performance */
 extern cl_int cl_command_queue_set_report_buffer(cl_command_queue, cl_mem);
-
 /* Flush for the specified gpgpu */
 extern int cl_command_queue_flush_gpgpu(cl_gpgpu);
-
 /* Bind all the surfaces in the GPGPU state */
 extern cl_int cl_command_queue_bind_surface(cl_command_queue, cl_kernel, cl_gpgpu, uint32_t *);
-
 /* Bind all the image surfaces in the GPGPU state */
 extern cl_int cl_command_queue_bind_image(cl_command_queue, cl_kernel, cl_gpgpu, uint32_t *);
-
 /* Bind all exec info to bind table */
 extern cl_int cl_command_queue_bind_exec_info(cl_command_queue, cl_kernel, cl_gpgpu, uint32_t);
-
 /* Insert a user event to command's wait_events */
 extern void cl_command_queue_insert_event(cl_command_queue, cl_event);
-
 /* Remove a user event from command's wait_events */
 extern void cl_command_queue_remove_event(cl_command_queue, cl_event);
-
 extern void cl_command_queue_insert_barrier_event(cl_command_queue queue, cl_event event);
 extern void cl_command_queue_remove_barrier_event(cl_command_queue queue, cl_event event);
 extern void cl_command_queue_notify(cl_command_queue queue);

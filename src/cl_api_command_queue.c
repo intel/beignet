@@ -20,6 +20,7 @@
 #include "CL/cl.h"
 #include <stdio.h>
 
+/* Depreciated in 2.0 later */
 cl_command_queue
 clCreateCommandQueue(cl_context context,
                      cl_device_id device,
@@ -49,7 +50,99 @@ clCreateCommandQueue(cl_context context,
       break;
     }
 
-    queue = cl_create_command_queue(context, device, properties, &err);
+    queue = cl_create_command_queue(context, device, properties, 0, &err);
+  } while (0);
+
+  if (errcode_ret)
+    *errcode_ret = err;
+  return queue;
+}
+
+/* 2.0 new API for create command queue. */
+cl_command_queue
+clCreateCommandQueueWithProperties(cl_context context,
+                                   cl_device_id device,
+                                   const cl_queue_properties *properties,
+                                   cl_int *errcode_ret)
+{
+  cl_command_queue queue = NULL;
+  cl_int err = CL_SUCCESS;
+  cl_command_queue_properties prop = 0xFFFFFFFF;
+  cl_uint queue_sz = 0xFFFFFFFF;
+
+  do {
+    if (!CL_OBJECT_IS_CONTEXT(context)) {
+      err = CL_INVALID_CONTEXT;
+      break;
+    }
+
+    err = cl_devices_list_include_check(context->device_num, context->devices, 1, &device);
+    if (err)
+      break;
+
+    if (properties) {
+      cl_ulong que_type;
+      cl_ulong que_val;
+      cl_uint i;
+      for (i = 0; (que_type = properties[i++]) != 0; i++) {
+        que_val = properties[i];
+        switch (que_type) {
+        case CL_QUEUE_PROPERTIES:
+          if (prop != 0xFFFFFFFF)
+            err = CL_INVALID_VALUE;
+          else {
+            switch (que_val) {
+            case 0:
+            case CL_QUEUE_PROFILING_ENABLE:
+            case CL_QUEUE_PROFILING_ENABLE |
+              CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE:
+            case CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE:
+            case CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE:
+            case CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE |
+              CL_QUEUE_ON_DEVICE_DEFAULT:
+            case CL_QUEUE_PROFILING_ENABLE |
+              CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE:
+            case CL_QUEUE_PROFILING_ENABLE |
+              CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE |
+              CL_QUEUE_ON_DEVICE_DEFAULT:
+              prop = que_val;
+              break;
+            default:
+              err = CL_INVALID_VALUE;
+              break;
+            }
+          }
+          break;
+        case CL_QUEUE_SIZE:
+          queue_sz = que_val;
+          break;
+        default:
+          err = CL_INVALID_VALUE;
+          break;
+        }
+      }
+
+      if (err) /* break the while and return some err. */
+        break;
+    }
+
+    /* Set some paramters to default val. */
+    if (prop == 0xFFFFFFFF)
+      prop = 0;
+    if (queue_sz != 0xFFFFFFFF)
+      if (!(prop & CL_QUEUE_ON_DEVICE)) {
+        err = CL_INVALID_VALUE;
+        break;
+      }
+    if (queue_sz == 0xFFFFFFFF)
+      queue_sz = device->queue_on_device_preferred_size;
+
+    if (queue_sz > device->queue_on_device_max_size) {
+      err = CL_INVALID_VALUE;
+      break;
+    }
+
+    queue = cl_create_command_queue(context, device, prop, queue_sz, &err);
   } while (0);
 
   if (errcode_ret)

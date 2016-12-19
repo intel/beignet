@@ -58,8 +58,8 @@ cl_command_queue_new(cl_context ctx)
 }
 
 LOCAL cl_command_queue
-cl_create_command_queue(cl_context ctx, cl_device_id device,
-                        cl_command_queue_properties properties, cl_int *errcode_ret)
+cl_create_command_queue(cl_context ctx, cl_device_id device, cl_command_queue_properties properties,
+                        cl_uint queue_size, cl_int *errcode_ret)
 {
   cl_command_queue queue = cl_command_queue_new(ctx);
   if (queue == NULL) {
@@ -68,6 +68,7 @@ cl_create_command_queue(cl_context ctx, cl_device_id device,
 
   queue->props = properties;
   queue->device = device;
+  queue->size = queue_size;
 
   *errcode_ret = CL_SUCCESS;
   return queue;
