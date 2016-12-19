@@ -2240,7 +2240,6 @@ namespace gbe
   void Selection::Opaque::PRINTF(uint8_t bti, GenRegister tmp0, GenRegister tmp1,
                GenRegister src[8], int srcNum, uint16_t num, bool isContinue, uint32_t totalSize) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_PRINTF, 2, srcNum);
-    SelectionVector *vector = this->appendVector();
 
     for (int i = 0; i < srcNum; i++)
       insn->src(i) = src[i];
@@ -2248,10 +2247,26 @@ namespace gbe
     insn->dst(0) = tmp0;
     insn->dst(1) = tmp1;
 
-    vector->regNum = 2;
-    vector->reg = &insn->dst(0);
-    vector->offsetID = 0;
-    vector->isSrc = 0;
+    if (hasSends()) {
+      insn->extra.printfSplitSend = 1;
+      SelectionVector *vector = this->appendVector();
+      vector->regNum = 1;
+      vector->reg = &insn->dst(0);
+      vector->offsetID = 0;
+      vector->isSrc = 0;
+
+      vector = this->appendVector();
+      vector->regNum = 1;
+      vector->reg = &insn->dst(1);
+      vector->offsetID = 1;
+      vector->isSrc = 0;
+    } else {
+      SelectionVector *vector = this->appendVector();
+      vector->regNum = 2;
+      vector->reg = &insn->dst(0);
+      vector->offsetID = 0;
+      vector->isSrc = 0;
+    }
 
     insn->extra.printfSize = static_cast<uint16_t>(totalSize);
     insn->extra.continueFlag = isContinue;

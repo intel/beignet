@@ -3479,13 +3479,13 @@ namespace gbe
   }
 
   void GenContext::emitPrintfLongInstruction(GenRegister& addr, GenRegister& data,
-                                             GenRegister& src, uint32_t bti) {
+                                             GenRegister& src, uint32_t bti, bool useSends) {
     p->MOV(GenRegister::retype(data, GEN_TYPE_UD), src.bottom_half());
-    p->UNTYPED_WRITE(addr, addr, GenRegister::immud(bti), 1, false);
+    p->UNTYPED_WRITE(addr, data, GenRegister::immud(bti), 1, useSends);
     p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
 
     p->MOV(GenRegister::retype(data, GEN_TYPE_UD), src.top_half(this->simdWidth));
-    p->UNTYPED_WRITE(addr, addr, GenRegister::immud(bti), 1, false);
+    p->UNTYPED_WRITE(addr, data, GenRegister::immud(bti), 1, useSends);
     p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
   }
 
@@ -3497,6 +3497,7 @@ namespace gbe
 
     GenRegister addr = GenRegister::retype(tmp0, GEN_TYPE_UD);
     GenRegister data = GenRegister::retype(tmp1, GEN_TYPE_UD);
+    bool useSends = insn.extra.printfSplitSend;
 
     if (!insn.extra.continueFlag) {
       p->push(); {
@@ -3507,18 +3508,18 @@ namespace gbe
         p->MOV(data, GenRegister::immud(insn.extra.printfSize + 12));
       } p->pop();
 
-      p->ATOMIC(addr, GEN_ATOMIC_OP_ADD, addr, addr, GenRegister::immud(insn.extra.printfBTI), 2, false);
+      p->ATOMIC(addr, GEN_ATOMIC_OP_ADD, addr, data, GenRegister::immud(insn.extra.printfBTI), 2, useSends);
       /* Write out the header. */
       p->MOV(data, GenRegister::immud(0xAABBCCDD));
-      p->UNTYPED_WRITE(addr, addr, GenRegister::immud(insn.extra.printfBTI), 1, false);
+      p->UNTYPED_WRITE(addr, data, GenRegister::immud(insn.extra.printfBTI), 1, useSends);
 
       p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
       p->MOV(data, GenRegister::immud(insn.extra.printfSize + 12));
-      p->UNTYPED_WRITE(addr, addr, GenRegister::immud(insn.extra.printfBTI), 1, false);
+      p->UNTYPED_WRITE(addr, data, GenRegister::immud(insn.extra.printfBTI), 1, useSends);
 
       p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
       p->MOV(data, GenRegister::immud(insn.extra.printfNum));
-      p->UNTYPED_WRITE(addr, addr, GenRegister::immud(insn.extra.printfBTI), 1, false);
+      p->UNTYPED_WRITE(addr, data, GenRegister::immud(insn.extra.printfBTI), 1, useSends);
 
       p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
     }
@@ -3528,14 +3529,14 @@ namespace gbe
       src = ra->genReg(insn.src(i));
       if (src.type == GEN_TYPE_UD || src.type == GEN_TYPE_D || src.type == GEN_TYPE_F) {
         p->MOV(GenRegister::retype(data, src.type), src);
-        p->UNTYPED_WRITE(addr, addr, GenRegister::immud(insn.extra.printfBTI), 1, false);
+        p->UNTYPED_WRITE(addr, data, GenRegister::immud(insn.extra.printfBTI), 1, useSends);
         p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
       } else if (src.type == GEN_TYPE_B || src.type == GEN_TYPE_UB ) {
         p->MOV(GenRegister::retype(data, GEN_TYPE_UD), src);
-        p->UNTYPED_WRITE(addr, addr, GenRegister::immud(insn.extra.printfBTI), 1, false);
+        p->UNTYPED_WRITE(addr, data, GenRegister::immud(insn.extra.printfBTI), 1, useSends);
         p->ADD(addr, addr, GenRegister::immud(sizeof(uint32_t)));
       } else if (src.type == GEN_TYPE_L || src.type == GEN_TYPE_UL ) {
-        emitPrintfLongInstruction(addr, data, src, insn.extra.printfBTI);
+        emitPrintfLongInstruction(addr, data, src, insn.extra.printfBTI, useSends);
       }
     }
   }

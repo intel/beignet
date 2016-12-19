@@ -160,6 +160,7 @@ namespace gbe
         uint32_t printfBTI:8;
         uint32_t continueFlag:8;
         uint16_t printfSize;
+        uint16_t printfSplitSend:1;
       };
       struct {
         uint16_t workgroupOp;
