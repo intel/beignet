@@ -1917,7 +1917,8 @@ namespace ir {
       }
 
       out << " %" << this->getDst(fn, 0);
-      out << " %" << this->getSrc(fn, 0);
+      for (uint32_t i = 0; i < this->getSrcNum(); ++i)
+        out << " %" << this->getSrc(fn, i);
 
       if (this->workGroupOp == WORKGROUP_OP_BROADCAST) {
         do {
@@ -1942,7 +1943,7 @@ namespace ir {
         } while(0);
       }
 
-      out << "TheadID Map at SLM: " << this->slmAddr;
+      out << " (TheadID Map at SLM: " << this->slmAddr << ")";
     }
 
     INLINE void SubGroupInstruction::out(std::ostream &out, const Function &fn) const {
