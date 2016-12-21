@@ -64,8 +64,8 @@ typedef struct _cl_mapped_ptr {
 }cl_mapped_ptr;
 
 typedef struct _cl_mem_dstr_cb {
-  list_head node;    /* Mem callback list node */
-  void (CL_CALLBACK *pfn_notify)(cl_mem memobj, void *user_data);
+  list_node node; /* Mem callback list node */
+  void(CL_CALLBACK *pfn_notify)(cl_mem memobj, void *user_data);
   void *user_data;
 } _cl_mem_dstr_cb;
 typedef _cl_mem_dstr_cb* cl_mem_dstr_cb;

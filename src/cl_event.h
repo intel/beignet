@@ -32,7 +32,7 @@ typedef struct _cl_event_user_callback {
   cl_bool executed;              /* Indicat the callback function been called or not */
   cl_event_notify_cb pfn_notify; /* Callback function */
   void *user_data;               /* Callback user data */
-  list_head node;                /* Event callback list node */
+  list_node node;                /* Event callback list node */
 } _cl_event_user_callback;
 
 typedef _cl_event_user_callback *cl_event_user_callback;
@@ -47,7 +47,7 @@ typedef struct _cl_event {
   cl_event *depend_events;    /* The events must complete before this. */
   cl_uint depend_event_num;   /* The depend events number. */
   list_head callbacks;        /* The events The event callback functions */
-  list_head enqueue_node;     /* The node in the enqueue list. */
+  list_node enqueue_node;     /* The node in the enqueue list. */
   cl_ulong timestamp[4];      /* The time stamps for profiling. */
   cl_ulong queued_timestamp;
   enqueue_data exec_data; /* Context for execute this event. */

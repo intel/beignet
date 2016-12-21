@@ -99,7 +99,7 @@ cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type type,
   e->queue = queue;
 
   list_init(&e->callbacks);
-  list_init(&e->enqueue_node);
+  list_node_init(&e->enqueue_node);
 
   assert(type >= CL_COMMAND_NDRANGE_KERNEL && type <= CL_COMMAND_FILL_IMAGE);
   e->event_type = type;
@@ -132,7 +132,7 @@ cl_event_delete(cl_event event)
 
   cl_enqueue_delete(&event->exec_data);
 
-  assert(list_empty(&event->enqueue_node));
+  assert(list_node_out_of_list(&event->enqueue_node));
 
   if (event->depend_events) {
     assert(event->depend_event_num);
@@ -144,8 +144,8 @@ cl_event_delete(cl_event event)
 
   /* Free all the callbacks. Last ref, no need to lock. */
   while (!list_empty(&event->callbacks)) {
-    cb = list_entry(event->callbacks.next, _cl_event_user_callback, node);
-    list_del(&cb->node);
+    cb = list_entry(event->callbacks.head_node.n, _cl_event_user_callback, node);
+    list_node_del(&cb->node);
     cl_free(cb);
   }
 
@@ -261,7 +261,7 @@ cl_event_set_callback(cl_event event, cl_int exec_type, cl_event_notify_cb pfn_n
       break;
     }
 
-    list_init(&cb->node);
+    list_node_init(&cb->node);
     cb->pfn_notify = pfn_notify;
     cb->user_data = user_data;
     cb->status = exec_type;
@@ -269,7 +269,7 @@ cl_event_set_callback(cl_event event, cl_int exec_type, cl_event_notify_cb pfn_n
 
     CL_OBJECT_LOCK(event);
     if (event->status > exec_type) {
-      list_add_tail(&cb->node, &event->callbacks);
+      list_add_tail(&event->callbacks, &cb->node);
       cb = NULL;
     } else {
       /* The state has already OK, call it immediately. */
@@ -293,8 +293,8 @@ LOCAL cl_int
 cl_event_set_status(cl_event event, cl_int status)
 {
   list_head tmp_callbacks;
-  list_head *n;
-  list_head *pos;
+  list_node *n;
+  list_node *pos;
   cl_bool notify_queue = CL_FALSE;
   cl_event_user_callback cb;
 
@@ -324,8 +324,7 @@ cl_event_set_status(cl_event event, cl_int status)
     do {
       status = event->status;
       list_init(&tmp_callbacks);
-      list_replace(&event->callbacks, &tmp_callbacks);
-      list_init(&event->callbacks);
+      list_move(&event->callbacks, &tmp_callbacks);
       /* Call all the callbacks without lock. */
       CL_OBJECT_UNLOCK(event);
 
@@ -338,7 +337,7 @@ cl_event_set_status(cl_event event, cl_int status)
         if (cb->status < status)
           continue;
 
-        list_del(&cb->node);
+        list_node_del(&cb->node);
         cb->executed = CL_TRUE;
         cb->pfn_notify(event, status, cb->user_data);
         cl_free(cb);
@@ -347,7 +346,7 @@ cl_event_set_status(cl_event event, cl_int status)
       CL_OBJECT_LOCK(event);
 
       // Set back the uncalled callbacks.
-      list_splice_tail(&tmp_callbacks, &event->callbacks);
+      list_merge(&event->callbacks, &tmp_callbacks);
 
       /* Status may changed because we unlock. need to check again. */
     } while (status != event->status);

@@ -46,7 +46,7 @@ cl_context_add_queue(cl_context ctx, cl_command_queue queue) {
   cl_context_add_ref(ctx);
 
   CL_OBJECT_LOCK(ctx);
-  list_add_tail(&queue->base.node, &ctx->queues);
+  list_add_tail(&ctx->queues, &queue->base.node);
   ctx->queue_num++;
   ctx->queue_cookie++;
   CL_OBJECT_UNLOCK(ctx);
@@ -58,7 +58,7 @@ LOCAL void
 cl_context_remove_queue(cl_context ctx, cl_command_queue queue) {
   assert(queue->ctx == ctx);
   CL_OBJECT_LOCK(ctx);
-  list_del(&queue->base.node);
+  list_node_del(&queue->base.node);
   ctx->queue_num--;
   ctx->queue_cookie++;
   CL_OBJECT_UNLOCK(ctx);
@@ -73,7 +73,7 @@ cl_context_add_mem(cl_context ctx, cl_mem mem) {
   cl_context_add_ref(ctx);
 
   CL_OBJECT_LOCK(ctx);
-  list_add_tail(&mem->base.node, &ctx->mem_objects);
+  list_add_tail(&ctx->mem_objects, &mem->base.node);
   ctx->mem_object_num++;
   CL_OBJECT_UNLOCK(ctx);
 
@@ -86,7 +86,7 @@ cl_context_add_svm(cl_context ctx, cl_mem mem) {
   cl_context_add_ref(ctx);
 
   CL_OBJECT_LOCK(ctx);
-  list_add_tail(&mem->base.node, &ctx->svm_objects);
+  list_add_tail(&ctx->svm_objects, &mem->base.node);
   ctx->svm_object_num++;
   CL_OBJECT_UNLOCK(ctx);
 
@@ -97,7 +97,7 @@ LOCAL void
 cl_context_remove_mem(cl_context ctx, cl_mem mem) {
   assert(mem->ctx == ctx);
   CL_OBJECT_LOCK(ctx);
-  list_del(&mem->base.node);
+  list_node_del(&mem->base.node);
   ctx->mem_object_num--;
   CL_OBJECT_UNLOCK(ctx);
 
@@ -111,7 +111,7 @@ cl_context_add_sampler(cl_context ctx, cl_sampler sampler) {
   cl_context_add_ref(ctx);
 
   CL_OBJECT_LOCK(ctx);
-  list_add_tail(&sampler->base.node, &ctx->samplers);
+  list_add_tail(&ctx->samplers, &sampler->base.node);
   ctx->sampler_num++;
   CL_OBJECT_UNLOCK(ctx);
 
@@ -122,7 +122,7 @@ LOCAL void
 cl_context_remove_sampler(cl_context ctx, cl_sampler sampler) {
   assert(sampler->ctx == ctx);
   CL_OBJECT_LOCK(ctx);
-  list_del(&sampler->base.node);
+  list_node_del(&sampler->base.node);
   ctx->sampler_num--;
   CL_OBJECT_UNLOCK(ctx);
 
@@ -136,7 +136,7 @@ cl_context_add_event(cl_context ctx, cl_event event) {
   cl_context_add_ref(ctx);
 
   CL_OBJECT_LOCK(ctx);
-  list_add_tail(&event->base.node, &ctx->events);
+  list_add_tail(&ctx->events, &event->base.node);
   ctx->event_num++;
   CL_OBJECT_UNLOCK(ctx);
 
@@ -147,7 +147,7 @@ LOCAL void
 cl_context_remove_event(cl_context ctx, cl_event event) {
   assert(event->ctx == ctx);
   CL_OBJECT_LOCK(ctx);
-  list_del(&event->base.node);
+  list_node_del(&event->base.node);
   ctx->event_num--;
   CL_OBJECT_UNLOCK(ctx);
 
@@ -161,7 +161,7 @@ cl_context_add_program(cl_context ctx, cl_program program) {
   cl_context_add_ref(ctx);
 
   CL_OBJECT_LOCK(ctx);
-  list_add_tail(&program->base.node, &ctx->programs);
+  list_add_tail(&ctx->programs, &program->base.node);
   ctx->program_num++;
   CL_OBJECT_UNLOCK(ctx);
 
@@ -172,7 +172,7 @@ LOCAL void
 cl_context_remove_program(cl_context ctx, cl_program program) {
   assert(program->ctx == ctx);
   CL_OBJECT_LOCK(ctx);
-  list_del(&program->base.node);
+  list_node_del(&program->base.node);
   ctx->program_num--;
   CL_OBJECT_UNLOCK(ctx);
 
@@ -474,7 +474,7 @@ unlock:
 cl_mem
 cl_context_get_svm_from_ptr(cl_context ctx, const void * p)
 {
-  struct list_head *pos;
+  struct list_node *pos;
   cl_mem buf;
 
   list_for_each (pos, (&ctx->mem_objects)) {

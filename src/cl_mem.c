@@ -269,7 +269,7 @@ error:
 LOCAL cl_int
 cl_mem_is_valid(cl_mem mem, cl_context ctx)
 {
-  struct list_head *pos;
+  struct list_node *pos;
   cl_base_object pbase_object;
 
   CL_OBJECT_LOCK(ctx);
@@ -1229,8 +1229,8 @@ cl_mem_delete(cl_mem mem)
 
   /* First, call all the callbacks registered by user. */
   while (!list_empty(&mem->dstr_cb_head)) {
-    cb = list_entry(mem->dstr_cb_head.next, _cl_mem_dstr_cb, node);
-    list_del(&cb->node);
+    cb = list_entry(mem->dstr_cb_head.head_node.n, _cl_mem_dstr_cb, node);
+    list_node_del(&cb->node);
     cb->pfn_notify(mem, cb->user_data);
     cl_free(cb);
   }
@@ -2470,12 +2470,12 @@ cl_mem_set_destructor_callback(cl_mem memobj,
   }
 
   memset(cb, 0, sizeof(_cl_mem_dstr_cb));
-  list_init(&cb->node);
+  list_node_init(&cb->node);
   cb->pfn_notify = pfn_notify;
   cb->user_data = user_data;
 
   CL_OBJECT_LOCK(memobj);
-  list_add(&cb->node, &memobj->dstr_cb_head, memobj->dstr_cb_head.next);
+  list_add(&memobj->dstr_cb_head, &cb->node);
   CL_OBJECT_UNLOCK(memobj);
   return CL_SUCCESS;
 }

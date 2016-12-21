@@ -29,7 +29,7 @@ cl_object_init_base(cl_base_object obj, cl_ulong magic)
   pthread_mutex_init(&obj->mutex, NULL);
   pthread_cond_init(&obj->cond, NULL);
   obj->owner = invalid_thread_id;
-  list_init(&obj->node);
+  list_node_init(&obj->node);
 }
 
 LOCAL void
@@ -54,9 +54,9 @@ cl_object_destroy_base(cl_base_object obj)
     assert(0);
   }
 
-  if (!list_empty(&obj->node)) {
+  if (!list_node_out_of_list(&obj->node)) {
     DEBUGP(DL_ERROR, "CL object %p, call destroy while still belong to some object %p",
-           obj, obj->node.prev);
+           obj, obj->node.p);
     assert(0);
   }
 

@@ -47,7 +47,7 @@ typedef struct _cl_base_object {
   DEFINE_ICD(dispatch);  /* Dispatch function table for icd */
   cl_ulong magic;        /* Magic number for each CL object */
   atomic_t ref;          /* Reference for each CL object */
-  list_head node;        /* CL object node belong to some container */
+  list_node node;        /* CL object node belong to some container */
   pthread_mutex_t mutex; /* THe mutex to protect this object MT safe */
   pthread_cond_t cond;   /* Condition to wait for getting the object */
   pthread_t owner;       /* The thread which own this object */

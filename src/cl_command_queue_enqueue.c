@@ -29,8 +29,8 @@ worker_thread_function(void *Arg)
   cl_command_queue queue = worker->queue;
   cl_event e;
   cl_uint cookie = -1;
-  list_head *pos;
-  list_head *n;
+  list_node *pos;
+  list_node *n;
   list_head ready_list;
   cl_int exec_status;
 
@@ -63,8 +63,8 @@ worker_thread_function(void *Arg)
     {
       e = list_entry(pos, _cl_event, enqueue_node);
       if (cl_event_is_ready(e) <= CL_COMPLETE) {
-        list_del(&e->enqueue_node);
-        list_add_tail(&e->enqueue_node, &ready_list);
+        list_node_del(&e->enqueue_node);
+        list_add_tail(&ready_list, &e->enqueue_node);
       }
     }
 
@@ -105,7 +105,7 @@ worker_thread_function(void *Arg)
     list_for_each_safe(pos, n, &ready_list)
     {
       e = list_entry(pos, _cl_event, enqueue_node);
-      list_del(&e->enqueue_node);
+      list_node_del(&e->enqueue_node);
       cl_event_delete(e);
     }
 
@@ -138,8 +138,8 @@ cl_command_queue_enqueue_event(cl_command_queue queue, cl_event event)
   assert(CL_OBJECT_IS_COMMAND_QUEUE(queue));
   CL_OBJECT_LOCK(queue);
   assert(queue->worker.quit == CL_FALSE);
-  assert(list_empty(&event->enqueue_node));
-  list_add_tail(&event->enqueue_node, &queue->worker.enqueued_events);
+  assert(list_node_out_of_list(&event->enqueue_node));
+  list_add_tail(&queue->worker.enqueued_events, &event->enqueue_node);
   queue->worker.cookie++;
   CL_OBJECT_NOTIFY_COND(queue);
   CL_OBJECT_UNLOCK(queue);
@@ -167,8 +167,8 @@ LOCAL void
 cl_command_queue_destroy_enqueue(cl_command_queue queue)
 {
   cl_command_queue_enqueue_worker worker = &queue->worker;
-  list_head *pos;
-  list_head *n;
+  list_node *pos;
+  list_node *n;
   cl_event e;
 
   assert(worker->queue == queue);
@@ -190,7 +190,7 @@ cl_command_queue_destroy_enqueue(cl_command_queue queue)
     list_for_each_safe(pos, n, &worker->enqueued_events)
     {
       e = list_entry(pos, _cl_event, enqueue_node);
-      list_del(&e->enqueue_node);
+      list_node_del(&e->enqueue_node);
       cl_event_set_status(e, -1); // Give waiters a chance to wakeup.
       cl_event_delete(e);
     }
@@ -202,7 +202,7 @@ LOCAL cl_event *
 cl_command_queue_record_in_queue_events(cl_command_queue queue, cl_uint *list_num)
 {
   int event_num = 0;
-  list_head *pos;
+  list_node *pos;
   cl_command_queue_enqueue_worker worker = &queue->worker;
   cl_event *enqueued_list = NULL;
   int i;

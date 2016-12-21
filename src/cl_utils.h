@@ -359,79 +359,55 @@ static INLINE int atomic_read(atomic_t *v) {
 static INLINE int atomic_inc(atomic_t *v) { return atomic_add(v, 1); }
 static INLINE int atomic_dec(atomic_t *v) { return atomic_add(v, -1); }
 
-/* The list. */
+/* Define one list node. */
+typedef struct list_node {
+  struct list_node *n;
+  struct list_node *p;
+} list_node;
 typedef struct list_head {
-  struct list_head *next, *prev;
+  list_node head_node;
 } list_head;
 
-static inline void list_init(struct list_head *head)
+static inline void list_node_init(list_node *node)
 {
-  head->next = head->prev = head;
+  node->n = node;
+  node->p = node;
 }
-static inline void list_add(struct list_head *the_new,
-                            struct list_head *prev, struct list_head *next)
+static inline int list_node_out_of_list(const struct list_node *node)
 {
-  next->prev = the_new;
-  the_new->next = next;
-  the_new->prev = prev;
-  prev->next = the_new;
+  return node->n == node;
 }
-static inline void list_add_tail(struct list_head *the_new, struct list_head *head)
+static inline void list_init(list_head *head)
 {
-  list_add(the_new, head->prev, head);
+  head->head_node.n = &head->head_node;
+  head->head_node.p = &head->head_node;
 }
-static inline void list_del(struct list_head *node)
+extern void list_node_insert_before(list_node *node, list_node *the_new);
+extern void list_node_insert_after(list_node *node, list_node *the_new);
+static inline void list_node_del(struct list_node *node)
 {
-  node->next->prev = node->prev;
-  node->prev->next = node->next;
-  node->prev = node->next = node;
+  node->n->p = node->p;
+  node->p->n = node->n;
+  /* And all point to self for safe. */
+  node->p = node;
+  node->n = node;
 }
-static inline void list_replace(struct list_head *the_old, struct list_head *the_new)
+static inline void list_add(list_head *head, list_node *the_new)
 {
-  the_new->next = the_old->next;
-  the_new->next->prev = the_new;
-  the_new->prev = the_old->prev;
-  the_new->prev->next = the_new;
+  list_node_insert_after(&head->head_node, the_new);
+}
+static inline void list_add_tail(list_head *head, list_node *the_new)
+{
+  list_node_insert_before(&head->head_node, the_new);
 }
 static inline int list_empty(const struct list_head *head)
 {
-  return head->next == head;
+  return head->head_node.n == &head->head_node;
 }
-static inline int list_is_last(const struct list_head *list, const struct list_head *head)
-{
-  return list->next == head;
-}
-static inline void __list_splice(struct list_head *list,
-                                 struct list_head *prev, struct list_head *next)
-{
-  struct list_head *first = list->next;
-  struct list_head *last = list->prev;
-
-  first->prev = prev;
-  prev->next = first;
-
-  last->next = next;
-  next->prev = last;
-
-  list_init(list);
-}
-/**
- * list_splice - join two lists
- */
-static inline void list_splice(struct list_head *list, struct list_head *head)
-{
-  if (!list_empty(list))
-    __list_splice(list, head, head->next);
-}
-
-/**
- * list_splice_tail - join two lists, each list being a queue
- */
-static inline void list_splice_tail(struct list_head *list, struct list_head *head)
-{
-  if (!list_empty(list))
-    __list_splice(list, head->prev, head);
-}
+/* Move the content from one head to another. */
+extern void list_move(struct list_head *the_old, struct list_head *the_new);
+/* Merge the content of the two lists to one head. */
+extern void list_merge(struct list_head *head, struct list_head *to_merge);
 
 #undef offsetof
 #ifdef __compiler_offsetof
@@ -439,17 +415,17 @@ static inline void list_splice_tail(struct list_head *list, struct list_head *he
 #else
 #define offsetof(TYPE, MEMBER) ((size_t) & ((TYPE *)0)->MEMBER)
 #endif
-#define container_of(ptr, type, member) ({                      \
-      const typeof( ((type *)0)->member ) *__mptr = (ptr);      \
+#define list_entry(ptr, type, member) ({                      \
+      const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
       (type *)( (char *)__mptr - offsetof(type,member) ); })
-#define list_entry(ptr, type, member) container_of(ptr, type, member)
 
 #define list_for_each(pos, head) \
-  for (pos = (head)->next; pos != (head); pos = pos->next)
+  for (pos = (head)->head_node.n; pos != &((head)->head_node); pos = pos->n)
 
-#define list_for_each_safe(pos, n, head)                 \
-  for (pos = (head)->next, n = pos->next; pos != (head); \
-       pos = n, n = pos->next)
+#define list_for_each_safe(pos, ne, head)                                   \
+  for (pos = (head)->head_node.n, ne = pos->n; pos != &((head)->head_node); \
+       pos = ne, ne = pos->n)
 
-extern cl_int cl_get_info_helper(const void *src, size_t src_size, void *dst, size_t dst_size, size_t *ret_size);
+extern cl_int cl_get_info_helper(const void *src, size_t src_size, void *dst,
+                                 size_t dst_size, size_t *ret_size);
 #endif /* __CL_UTILS_H__ */
