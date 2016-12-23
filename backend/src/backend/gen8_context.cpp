@@ -1738,7 +1738,7 @@ namespace gbe
     GenRegister barrierId = ra->genReg(GenRegister::ud1grf(ir::ocl::barrierid));
     GenRegister localBarrier = ra->genReg(insn.src(5));
 
-    uint32_t wg_op = insn.extra.workgroupOp;
+    uint32_t wg_op = insn.extra.wgop.workgroupOp;
     uint32_t simd = p->curr.execWidth;
     int32_t jip0, jip1;
 
@@ -1757,8 +1757,8 @@ namespace gbe
     /* use of continuous GRF allocation from insn selection */
     GenRegister msg = GenRegister::retype(ra->genReg(insn.dst(2)), dst.type);
     GenRegister msgSlmOff = GenRegister::retype(ra->genReg(insn.src(4)), GEN_TYPE_UD);
-    GenRegister msgAddr = GenRegister::retype(GenRegister::offset(msg, 0), GEN_TYPE_UD);
-    GenRegister msgData = GenRegister::retype(GenRegister::offset(msg, 1), dst.type);
+    GenRegister msgAddr = GenRegister::retype(msg, GEN_TYPE_UD);
+    GenRegister msgData = GenRegister::retype(ra->genReg(insn.dst(3)), dst.type);
 
     /* do some calculation within each thread */
     wgOpPerformThread(dst, theVal, threadData, tmp, simd, wg_op, p);
@@ -1799,7 +1799,7 @@ namespace gbe
       p->curr.execWidth = 8;
       p->MUL(msgAddr, threadId, GenRegister::immd(0x8));
       p->ADD(msgAddr, msgAddr, msgSlmOff);
-      p->UNTYPED_WRITE(msg, msg, GenRegister::immw(0xFE), 2, false);
+      p->UNTYPED_WRITE(msgAddr, msgData, GenRegister::immw(0xFE), 2, insn.extra.wgop.splitSend);
     }
     else
     {
@@ -1807,7 +1807,7 @@ namespace gbe
       p->MOV(msgData, threadData);
       p->MUL(msgAddr, threadId, GenRegister::immd(0x4));
       p->ADD(msgAddr, msgAddr, msgSlmOff);
-      p->UNTYPED_WRITE(msg, msg, GenRegister::immw(0xFE), 1, false);
+      p->UNTYPED_WRITE(msgAddr, msgData, GenRegister::immw(0xFE), 1, insn.extra.wgop.splitSend);
     }
 
     /* init partialData register, it will hold the final result */
@@ -1945,7 +1945,7 @@ namespace gbe
     const GenRegister theVal = GenRegister::retype(ra->genReg(insn.src(0)), dst.type);
     GenRegister threadData = ra->genReg(insn.src(1));
 
-    uint32_t wg_op = insn.extra.workgroupOp;
+    uint32_t wg_op = insn.extra.wgop.workgroupOp;
     uint32_t simd = p->curr.execWidth;
 
     /* masked elements should be properly set to init value */

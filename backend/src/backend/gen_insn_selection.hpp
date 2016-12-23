@@ -159,7 +159,10 @@ namespace gbe
         uint32_t continueFlag:8;
         uint16_t printfSize;
       };
-      uint32_t workgroupOp;
+      struct {
+        uint16_t workgroupOp;
+        uint16_t splitSend:1;
+      }wgop;
     } extra;
     /*! Gen opcode */
     uint8_t opcode;

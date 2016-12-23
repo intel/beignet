@@ -753,7 +753,7 @@ namespace gbe
                       GenRegister tmpData1,
                       GenRegister localThreadID, GenRegister localThreadNUM,
                       GenRegister tmpData2, GenRegister slmOff,
-                      vector<GenRegister> msg, uint32_t msgSizeReq,
+                      vector<GenRegister> msg,
                       GenRegister localBarrier);
     /*! Sub Group Operations */
     void SUBGROUP_OP(uint32_t wg_op, Reg dst, GenRegister src,
@@ -2255,19 +2255,11 @@ namespace gbe
                                        GenRegister tmpData2,
                                        GenRegister slmOff,
                                        vector<GenRegister> msg,
-                                       uint32_t msgSizeReq,
                                        GenRegister localBarrier)
   {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_WORKGROUP_OP, 2 + msg.size(), 6);
-    SelectionVector *vector = this->appendVector();
 
-    /* allocate continuous GRF registers for READ/WRITE to SLM */
-    GBE_ASSERT(msg.size() >= msgSizeReq);
-    vector->regNum = msg.size();
-    vector->offsetID = 0;
-    vector->reg = &insn->dst(2);
-    vector->isSrc = 0;
-    insn->extra.workgroupOp = wg_op;
+    insn->extra.wgop.workgroupOp = wg_op;
 
     insn->dst(0) = dst;
     insn->dst(1) = tmpData1;
@@ -2280,6 +2272,29 @@ namespace gbe
     insn->src(3) = tmpData2;
     insn->src(4) = slmOff;
     insn->src(5) = localBarrier;
+
+    if (hasSends()) {
+      insn->extra.wgop.splitSend = 1;
+      SelectionVector *vector = this->appendVector();
+
+      vector->regNum = 1;
+      vector->offsetID = 2;
+      vector->reg = &insn->dst(2);
+      vector->isSrc = 0;
+
+      vector = this->appendVector();
+      vector->regNum = msg.size() - 1;
+      vector->offsetID = 3;
+      vector->reg = &insn->dst(3);
+      vector->isSrc = 0;
+    } else {
+      /* allocate continuous GRF registers for READ/WRITE to SLM */
+      SelectionVector *vector = this->appendVector();
+      vector->regNum = msg.size();
+      vector->offsetID = 2;
+      vector->reg = &insn->dst(2);
+      vector->isSrc = 0;
+    }
   }
 
   void Selection::Opaque::SUBGROUP_OP(uint32_t wg_op,
@@ -2290,7 +2305,7 @@ namespace gbe
   {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_SUBGROUP_OP, 2, 2);
 
-    insn->extra.workgroupOp = wg_op;
+    insn->extra.wgop.workgroupOp = wg_op;
 
     insn->dst(0) = dst;
     insn->dst(1) = tmpData1;
@@ -7577,10 +7592,15 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       GenRegister localBarrier = GenRegister::ud8grf(sel.reg(FAMILY_DWORD));
 
       /* Allocate registers for message sending
-       * (read/write to shared local memory) */
+       * (read/write to shared local memory),
+       * only one data (ud/ul) is needed for thread communication,
+       * we will always use SIMD8 to do the read/write
+       */
       vector<GenRegister> msg;
-      for(uint32_t i = 0; i < 6; i++)
-        msg.push_back(sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32));
+      msg.push_back(GenRegister::ud8grf(sel.reg(ir::FAMILY_REG)));  //address
+      msg.push_back(GenRegister::ud8grf(sel.reg(ir::FAMILY_REG)));  //data
+      if(dst.type == GEN_TYPE_UL || dst.type == GEN_TYPE_L)
+        msg.push_back(GenRegister::ud8grf(sel.reg(ir::FAMILY_REG)));  //data
 
       /* Insert a barrier to make sure all the var we are interested in
          have been assigned the final value. */
@@ -7592,7 +7612,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
 
       /* Perform workgroup op */
       sel.WORKGROUP_OP(workGroupOp, dst, src, tmpData1,
-                       localThreadID, localThreadNUM, tmpData2, slmOff, msg, 6,
+                       localThreadID, localThreadNUM, tmpData2, slmOff, msg,
                        localBarrier);
 
       return true;
