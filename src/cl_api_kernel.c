@@ -226,13 +226,11 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
     if (event_status < CL_COMPLETE) { // Error happend, cancel.
       err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
       break;
-    } else if (event_status == CL_COMPLETE) {
-      err = cl_enqueue_handle(&e->exec_data, CL_SUBMITTED);
-      if (err != CL_SUCCESS) {
-        break;
-      }
+    }
 
-      e->status = CL_SUBMITTED;
+    err = cl_event_exec(e, (event_status == CL_COMPLETE ? CL_SUBMITTED : CL_QUEUED), CL_FALSE);
+    if (err != CL_SUCCESS) {
+      break;
     }
 
     cl_command_queue_enqueue_event(command_queue, e);
@@ -349,19 +347,13 @@ clEnqueueNativeKernel(cl_command_queue command_queue,
     new_mem_list = NULL;
     new_args_mem_loc = NULL; // Event delete will free them.
 
-    if (e_status == CL_COMPLETE) {
-      // Sync mode, no need to queue event.
-      err = cl_enqueue_handle(data, CL_COMPLETE);
-      if (err != CL_SUCCESS) {
-        assert(err < 0);
-        e->status = err;
-        break;
-      }
-
-      e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
-    } else {
-      cl_command_queue_enqueue_event(command_queue, e);
+    err = cl_event_exec(e, (e_status == CL_COMPLETE ? CL_COMPLETE : CL_QUEUED), CL_FALSE);
+    if (err != CL_SUCCESS) {
+      break;
     }
+
+    if (e_status != CL_COMPLETE)
+      cl_command_queue_enqueue_event(command_queue, e);
   } while (0);
 
   if (err != CL_SUCCESS) {

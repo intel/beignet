@@ -57,6 +57,8 @@ typedef struct _cl_event {
          ((cl_base_object)obj)->magic == CL_OBJECT_EVENT_MAGIC &&  \
          CL_OBJECT_GET_REF(obj) >= 1))
 
+#define CL_EVENT_STATE_UNKNOWN 0x4
+
 #define CL_EVENT_IS_MARKER(E) (E->event_type == CL_COMMAND_MARKER)
 #define CL_EVENT_IS_BARRIER(E) (E->event_type == CL_COMMAND_BARRIER)
 #define CL_EVENT_IS_USER(E) (E->event_type == CL_COMMAND_USER)
@@ -68,7 +70,7 @@ extern cl_event cl_event_create(cl_context ctx, cl_command_queue queue, cl_uint 
                                 const cl_event *event_list, cl_command_type type, cl_int *errcode_ret);
 extern cl_int cl_event_check_waitlist(cl_uint num_events_in_wait_list, const cl_event *event_wait_list,
                                       cl_event* event, cl_context ctx);
-extern void cl_event_exec(cl_event event, cl_int exec_status);
+extern cl_uint cl_event_exec(cl_event event, cl_int exec_to_status, cl_bool ignore_depends);
 /* 0 means ready, >0 means not ready, <0 means error. */
 extern cl_int cl_event_is_ready(cl_event event);
 extern cl_int cl_event_get_status(cl_event event);
@@ -82,5 +84,5 @@ extern cl_int cl_event_wait_for_event_ready(cl_event event);
 extern cl_event cl_event_create_marker_or_barrier(cl_command_queue queue, cl_uint num_events_in_wait_list,
                                                   const cl_event *event_wait_list, cl_bool is_barrier,
                                                   cl_int* error);
-extern void cl_event_update_timestamp(cl_event event, cl_int from_status, cl_int to_status);
+extern void cl_event_update_timestamp(cl_event event, cl_int status);
 #endif /* __CL_EVENT_H__ */

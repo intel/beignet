@@ -58,6 +58,12 @@ cl_event_update_timestamp_gen(cl_event event, cl_int status)
       if (ts == CL_EVENT_INVALID_TIMESTAMP)
         ts++;
       event->timestamp[3] = ts;
+
+      /* Set the submit time the same as running time if it is later. */
+      if (event->timestamp[1] > event->timestamp[2] ||
+          event->timestamp[2] - event->timestamp[1] > 0x0FFFFFFFFFF /*Overflowed */)
+        event->timestamp[1] = event->timestamp[2];
+
       return;
     }
   } else {
@@ -70,15 +76,13 @@ cl_event_update_timestamp_gen(cl_event event, cl_int status)
 }
 
 LOCAL void
-cl_event_update_timestamp(cl_event event, cl_int from, cl_int to)
+cl_event_update_timestamp(cl_event event, cl_int state)
 {
   int i;
   cl_bool re_cal = CL_FALSE;
   cl_ulong ts[4];
 
-  assert(from >= to);
-  assert(from >= CL_COMPLETE || from <= CL_QUEUED);
-  assert(to >= CL_COMPLETE || to <= CL_QUEUED);
+  assert(state >= CL_COMPLETE || state <= CL_QUEUED);
 
   if (event->event_type == CL_COMMAND_USER)
     return;
@@ -87,16 +91,11 @@ cl_event_update_timestamp(cl_event event, cl_int from, cl_int to)
   if ((event->queue->props & CL_QUEUE_PROFILING_ENABLE) == 0)
     return;
 
-  i = CL_QUEUED - from;
-  if (event->timestamp[i] == CL_EVENT_INVALID_TIMESTAMP)
-    cl_event_update_timestamp_gen(event, from);
-  i++;
+  /* Should not record the timestamp twice. */
+  assert(event->timestamp[CL_QUEUED - state] == CL_EVENT_INVALID_TIMESTAMP);
+  cl_event_update_timestamp_gen(event, state);
 
-  for (; i <= CL_QUEUED - to; i++) {
-    cl_event_update_timestamp_gen(event, CL_QUEUED - i);
-  }
-
-  if (to == CL_COMPLETE) {
+  if (state == CL_COMPLETE) {
     // TODO: Need to set the CL_PROFILING_COMMAND_COMPLETE when enable child enqueue.
     // Just a duplicate of event complete time now.
     event->timestamp[4] = event->timestamp[3];
@@ -168,7 +167,7 @@ cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type type,
   if (type == CL_COMMAND_USER) {
     e->status = CL_SUBMITTED;
   } else {
-    e->status = CL_QUEUED;
+    e->status = CL_EVENT_STATE_UNKNOWN;
   }
 
   if (type == CL_COMMAND_USER) {
@@ -383,16 +382,6 @@ cl_event_set_status(cl_event event, cl_int status)
     return CL_INVALID_OPERATION;
   }
 
-  if (status >= CL_COMPLETE && !CL_EVENT_IS_USER(event) &&
-      (event->queue->props & CL_QUEUE_PROFILING_ENABLE) != 0) {
-    // Call update_timestamp without event lock.
-    CL_OBJECT_TAKE_OWNERSHIP_WITHLOCK(event, 1);
-    CL_OBJECT_UNLOCK(event);
-    cl_event_update_timestamp(event, event->status, status);
-    CL_OBJECT_LOCK(event);
-    CL_OBJECT_RELEASE_OWNERSHIP_WITHLOCK(event);
-  }
-
   event->status = status;
 
   /* Call all the callbacks. */
@@ -572,39 +561,60 @@ cl_event_check_waitlist(cl_uint num_events_in_wait_list, const cl_event *event_w
   return err;
 }
 
-LOCAL void
-cl_event_exec(cl_event event, cl_int exec_status)
+/* When we call this function, all the events it depends
+   on should already be ready, unless ignore_depends is set. */
+LOCAL cl_uint
+cl_event_exec(cl_event event, cl_int exec_to_status, cl_bool ignore_depends)
 {
   /* We are MT safe here, no one should call this
      at the same time. No need to lock */
   cl_int ret = CL_SUCCESS;
-  cl_int status = cl_event_get_status(event);
+  cl_int cur_status = cl_event_get_status(event);
   cl_int depend_status;
+  cl_int s;
 
-  if (status < CL_COMPLETE || status <= exec_status) {
-    return;
+  assert(exec_to_status >= CL_COMPLETE);
+  assert(exec_to_status <= CL_QUEUED);
+  if (cur_status < CL_COMPLETE) {
+    return cur_status;
   }
 
   depend_status = cl_event_is_ready(event);
-  assert(depend_status <= CL_COMPLETE);
+  assert(depend_status <= CL_COMPLETE || ignore_depends || exec_to_status == CL_QUEUED);
   if (depend_status < CL_COMPLETE) { // Error happend, cancel exec.
     ret = cl_event_set_status(event, depend_status);
-    return;
+    return depend_status;
   }
 
-  /* Do the according thing based on event type. */
-  ret = cl_enqueue_handle(&event->exec_data, exec_status);
-
-  if (ret != CL_SUCCESS) {
-    assert(ret < 0);
-    DEBUGP(DL_WARNING, "Exec event %p error, type is %d, error staus is %d",
-           event, event->event_type, ret);
-    ret = cl_event_set_status(event, ret);
-    assert(ret == CL_SUCCESS);
-  } else {
-    ret = cl_event_set_status(event, exec_status);
-    assert(ret == CL_SUCCESS);
+  if (cur_status <= exec_to_status) {
+    return ret;
   }
+
+  /* Exec to the target status. */
+  for (s = cur_status - 1; s >= exec_to_status; s--) {
+    assert(s >= CL_COMPLETE);
+    ret = cl_enqueue_handle(&event->exec_data, s);
+
+    if (ret != CL_SUCCESS) {
+      assert(ret < 0);
+      DEBUGP(DL_WARNING, "Exec event %p error, type is %d, error staus is %d",
+             event, event->event_type, ret);
+      ret = cl_event_set_status(event, ret);
+      assert(ret == CL_SUCCESS);
+      return ret; // Failed and we never do further.
+    } else {
+      assert(!CL_EVENT_IS_USER(event));
+      if ((event->queue->props & CL_QUEUE_PROFILING_ENABLE) != 0) {
+        /* record the timestamp before actually doing something. */
+        cl_event_update_timestamp(event, s);
+      }
+
+      ret = cl_event_set_status(event, s);
+      assert(ret == CL_SUCCESS);
+    }
+  }
+
+  return ret;
 }
 
 /* 0 means ready, >0 means not ready, <0 means error. */

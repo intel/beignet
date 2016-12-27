@@ -107,7 +107,7 @@ clGetMemObjectInfo(cl_mem memobj,
     } else if (memobj->type == CL_MEM_IMAGE_TYPE) {
       parent = memobj;
     } else if (memobj->type == CL_MEM_BUFFER1D_IMAGE_TYPE) {
-      struct _cl_mem_buffer1d_image* image_buffer = (struct _cl_mem_buffer1d_image*)memobj;
+      struct _cl_mem_buffer1d_image *image_buffer = (struct _cl_mem_buffer1d_image *)memobj;
       parent = image_buffer->descbuffer;
     } else
       parent = NULL;
@@ -309,31 +309,21 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
 
     if (e_status == CL_COMPLETE) {
       // Sync mode, no need to queue event.
-      err = cl_enqueue_handle(data, CL_COMPLETE);
+      err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
-        assert(err < 0);
-        e->status = err;
         break;
       }
-
-      ptr = data->ptr;
-      e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
-      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else {
-      err = cl_enqueue_handle(data, CL_SUBMITTED); // Submit to get the address.
+      err = cl_event_exec(e, CL_SUBMITTED, CL_TRUE); // Submit to get the address.
       if (err != CL_SUCCESS) {
-        assert(err < 0);
-        e->status = err;
         break;
       }
-
-      e->status = CL_SUBMITTED;
-      ptr = data->ptr;
-      assert(ptr);
 
       cl_command_queue_enqueue_event(command_queue, e);
     }
 
+    ptr = data->ptr;
+    assert(ptr);
     err = cl_mem_record_map_mem(buffer, ptr, &mem_ptr, offset, size, NULL, NULL);
     assert(err == CL_SUCCESS);
   } while (0);
@@ -403,16 +393,15 @@ clEnqueueUnmapMemObject(cl_command_queue command_queue,
     data->ptr = mapped_ptr;
 
     if (e_status == CL_COMPLETE) { // No need to wait
-      err = cl_enqueue_handle(data, CL_COMPLETE);
+      err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
-        assert(err < 0);
-        e->status = err;
         break;
       }
-
-      e->status = CL_COMPLETE;
-      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else { // May need to wait some event to complete.
+      err = cl_event_exec(e, CL_QUEUED, CL_FALSE);
+      if (err != CL_SUCCESS) {
+        break;
+      }
       cl_command_queue_enqueue_event(command_queue, e);
     }
   } while (0);
@@ -507,16 +496,15 @@ clEnqueueReadBuffer(cl_command_queue command_queue,
 
     if (e_status == CL_COMPLETE) {
       // Sync mode, no need to queue event.
-      err = cl_enqueue_handle(data, CL_COMPLETE);
+      err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
-        assert(err < 0);
-        e->status = err;
         break;
       }
-
-      e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
-      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else {
+      err = cl_event_exec(e, CL_QUEUED, CL_FALSE);
+      if (err != CL_SUCCESS) {
+        break;
+      }
       cl_command_queue_enqueue_event(command_queue, e);
     }
   } while (0);
@@ -611,16 +599,15 @@ clEnqueueWriteBuffer(cl_command_queue command_queue,
 
     if (e_status == CL_COMPLETE) {
       // Sync mode, no need to queue event.
-      err = cl_enqueue_handle(data, CL_COMPLETE);
+      err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
-        assert(err < 0);
-        e->status = err;
         break;
       }
-
-      e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
-      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else {
+      err = cl_event_exec(e, CL_QUEUED, CL_FALSE);
+      if (err != CL_SUCCESS) {
+        break;
+      }
       cl_command_queue_enqueue_event(command_queue, e);
     }
   } while (0);
@@ -761,16 +748,15 @@ clEnqueueReadBufferRect(cl_command_queue command_queue,
 
     if (e_status == CL_COMPLETE) {
       // Sync mode, no need to queue event.
-      err = cl_enqueue_handle(data, CL_COMPLETE);
+      err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
-        assert(err < 0);
-        e->status = err;
         break;
       }
-
-      e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
-      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else {
+      err = cl_event_exec(e, CL_QUEUED, CL_FALSE);
+      if (err != CL_SUCCESS) {
+        break;
+      }
       cl_command_queue_enqueue_event(command_queue, e);
     }
   } while (0);
@@ -913,16 +899,15 @@ clEnqueueWriteBufferRect(cl_command_queue command_queue,
 
     if (e_status == CL_COMPLETE) {
       // Sync mode, no need to queue event.
-      err = cl_enqueue_handle(data, CL_COMPLETE);
+      err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
-        assert(err < 0);
-        e->status = err;
         break;
       }
-
-      e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
-      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else {
+      err = cl_event_exec(e, CL_QUEUED, CL_FALSE);
+      if (err != CL_SUCCESS) {
+        break;
+      }
       cl_command_queue_enqueue_event(command_queue, e);
     }
   } while (0);
@@ -1029,13 +1014,11 @@ clEnqueueCopyBuffer(cl_command_queue command_queue,
     if (e_status < CL_COMPLETE) { // Error happend, cancel.
       err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
       break;
-    } else if (e_status == CL_COMPLETE) {
-      err = cl_enqueue_handle(&e->exec_data, CL_SUBMITTED);
-      if (err != CL_SUCCESS) {
-        break;
-      }
+    }
 
-      e->status = CL_SUBMITTED;
+    err = cl_event_exec(e, e_status == CL_COMPLETE ? CL_SUBMITTED : CL_QUEUED, CL_FALSE);
+    if (err != CL_SUCCESS) {
+      break;
     }
 
     cl_command_queue_enqueue_event(command_queue, e);
@@ -1224,12 +1207,10 @@ clEnqueueCopyBufferRect(cl_command_queue command_queue,
       err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
       break;
     } else if (e_status == CL_COMPLETE) {
-      err = cl_enqueue_handle(&e->exec_data, CL_SUBMITTED);
+      err = cl_event_exec(e, CL_SUBMITTED, CL_FALSE);
       if (err != CL_SUCCESS) {
         break;
       }
-
-      e->status = CL_SUBMITTED;
     }
 
     cl_command_queue_enqueue_event(command_queue, e);
@@ -1324,13 +1305,11 @@ clEnqueueFillBuffer(cl_command_queue command_queue,
     if (e_status < CL_COMPLETE) { // Error happend, cancel.
       err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
       break;
-    } else if (e_status == CL_COMPLETE) {
-      err = cl_enqueue_handle(&e->exec_data, CL_SUBMITTED);
-      if (err != CL_SUCCESS) {
-        break;
-      }
+    }
 
-      e->status = CL_SUBMITTED;
+    err = cl_event_exec(e, e_status == CL_COMPLETE ? CL_SUBMITTED : CL_QUEUED, CL_FALSE);
+    if (err != CL_SUCCESS) {
+      break;
     }
 
     cl_command_queue_enqueue_event(command_queue, e);
@@ -1413,13 +1392,11 @@ clEnqueueMigrateMemObjects(cl_command_queue command_queue,
     if (e_status < CL_COMPLETE) { // Error happend, cancel.
       err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
       break;
-    } else if (e_status == CL_COMPLETE) {
-      err = cl_enqueue_handle(&e->exec_data, CL_SUBMITTED);
-      if (err != CL_SUCCESS) {
-        break;
-      }
+    }
 
-      e->status = CL_SUBMITTED;
+    err = cl_event_exec(e, e_status == CL_COMPLETE ? CL_SUBMITTED : CL_QUEUED, CL_FALSE);
+    if (err != CL_SUCCESS) {
+      break;
     }
 
     cl_command_queue_enqueue_event(command_queue, e);
@@ -1598,30 +1575,21 @@ clEnqueueMapImage(cl_command_queue command_queue,
 
     if (e_status == CL_COMPLETE) {
       // Sync mode, no need to queue event.
-      err = cl_enqueue_handle(data, CL_COMPLETE);
+      err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
-        assert(err < 0);
-        e->status = err;
         break;
       }
-
-      ptr = data->ptr;
-      e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
-      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else {
-      err = cl_enqueue_handle(data, CL_SUBMITTED); // Submit to get the address.
+      err = cl_event_exec(e, CL_SUBMITTED, CL_TRUE); // Submit to get the address.
       if (err != CL_SUCCESS) {
-        assert(err < 0);
-        e->status = err;
         break;
       }
-
-      e->status = CL_SUBMITTED;
-      ptr = data->ptr;
-      assert(ptr);
 
       cl_command_queue_enqueue_event(command_queue, e);
     }
+
+    ptr = data->ptr;
+    assert(ptr);
 
     /* Store and write back map info. */
     if (mem->flags & CL_MEM_USE_HOST_PTR) {
@@ -1797,16 +1765,15 @@ clEnqueueReadImage(cl_command_queue command_queue,
 
     if (e_status == CL_COMPLETE) {
       // Sync mode, no need to queue event.
-      err = cl_enqueue_handle(data, CL_COMPLETE);
+      err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
-        assert(err < 0);
-        e->status = err;
         break;
       }
-
-      e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
-      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else {
+      err = cl_event_exec(e, CL_QUEUED, CL_FALSE);
+      if (err != CL_SUCCESS) {
+        break;
+      }
       cl_command_queue_enqueue_event(command_queue, e);
     }
   } while (0);
@@ -1950,16 +1917,15 @@ clEnqueueWriteImage(cl_command_queue command_queue,
 
     if (e_status == CL_COMPLETE) {
       // Sync mode, no need to queue event.
-      err = cl_enqueue_handle(data, CL_COMPLETE);
+      err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
-        assert(err < 0);
-        e->status = err;
         break;
       }
-
-      e->status = CL_COMPLETE; // Just set the status, no notify. No one depend on us now.
-      cl_event_update_timestamp(e, CL_QUEUED, CL_COMPLETE);
     } else {
+      err = cl_event_exec(e, CL_QUEUED, CL_FALSE);
+      if (err != CL_SUCCESS) {
+        break;
+      }
       cl_command_queue_enqueue_event(command_queue, e);
     }
   } while (0);
@@ -2093,13 +2059,11 @@ clEnqueueCopyImage(cl_command_queue command_queue,
     if (e_status < CL_COMPLETE) { // Error happend, cancel.
       err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
       break;
-    } else if (e_status == CL_COMPLETE) {
-      err = cl_enqueue_handle(&e->exec_data, CL_SUBMITTED);
-      if (err != CL_SUCCESS) {
-        break;
-      }
+    }
 
-      e->status = CL_SUBMITTED;
+    err = cl_event_exec(e, e_status == CL_COMPLETE ? CL_SUBMITTED : CL_QUEUED, CL_FALSE);
+    if (err != CL_SUCCESS) {
+      break;
     }
 
     cl_command_queue_enqueue_event(command_queue, e);
@@ -2206,13 +2170,11 @@ clEnqueueCopyImageToBuffer(cl_command_queue command_queue,
     if (e_status < CL_COMPLETE) { // Error happend, cancel.
       err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
       break;
-    } else if (e_status == CL_COMPLETE) {
-      err = cl_enqueue_handle(&e->exec_data, CL_SUBMITTED);
-      if (err != CL_SUCCESS) {
-        break;
-      }
+    }
 
-      e->status = CL_SUBMITTED;
+    err = cl_event_exec(e, e_status == CL_COMPLETE ? CL_SUBMITTED : CL_QUEUED, CL_FALSE);
+    if (err != CL_SUCCESS) {
+      break;
     }
 
     cl_command_queue_enqueue_event(command_queue, e);
@@ -2320,13 +2282,11 @@ clEnqueueCopyBufferToImage(cl_command_queue command_queue,
     if (e_status < CL_COMPLETE) { // Error happend, cancel.
       err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
       break;
-    } else if (e_status == CL_COMPLETE) {
-      err = cl_enqueue_handle(&e->exec_data, CL_SUBMITTED);
-      if (err != CL_SUCCESS) {
-        break;
-      }
+    }
 
-      e->status = CL_SUBMITTED;
+    err = cl_event_exec(e, e_status == CL_COMPLETE ? CL_SUBMITTED : CL_QUEUED, CL_FALSE);
+    if (err != CL_SUCCESS) {
+      break;
     }
 
     cl_command_queue_enqueue_event(command_queue, e);
@@ -2432,13 +2392,11 @@ clEnqueueFillImage(cl_command_queue command_queue,
     if (e_status < CL_COMPLETE) { // Error happend, cancel.
       err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
       break;
-    } else if (e_status == CL_COMPLETE) {
-      err = cl_enqueue_handle(&e->exec_data, CL_SUBMITTED);
-      if (err != CL_SUCCESS) {
-        break;
-      }
+    }
 
-      e->status = CL_SUBMITTED;
+    err = cl_event_exec(e, e_status == CL_COMPLETE ? CL_SUBMITTED : CL_QUEUED, CL_FALSE);
+    if (err != CL_SUCCESS) {
+      break;
     }
 
     cl_command_queue_enqueue_event(command_queue, e);

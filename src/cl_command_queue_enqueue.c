@@ -84,7 +84,7 @@ worker_thread_function(void *Arg)
     list_for_each_safe(pos, n, &ready_list)
     {
       e = list_entry(pos, _cl_event, enqueue_node);
-      cl_event_exec(e, exec_status);
+      cl_event_exec(e, exec_status, CL_FALSE);
     }
 
     /* Notify all waiting for flush. */
@@ -93,12 +93,10 @@ worker_thread_function(void *Arg)
     CL_OBJECT_NOTIFY_COND(queue);
     CL_OBJECT_UNLOCK(queue);
 
-    for (exec_status = CL_RUNNING; exec_status >= CL_COMPLETE; exec_status--) {
-      list_for_each_safe(pos, n, &ready_list)
-      {
-        e = list_entry(pos, _cl_event, enqueue_node);
-        cl_event_exec(e, exec_status);
-      }
+    list_for_each_safe(pos, n, &ready_list)
+    {
+      e = list_entry(pos, _cl_event, enqueue_node);
+      cl_event_exec(e, CL_COMPLETE, CL_FALSE);
     }
 
     /* Clear and delete all the events. */
@@ -135,8 +133,6 @@ LOCAL void
 cl_command_queue_enqueue_event(cl_command_queue queue, cl_event event)
 {
   CL_OBJECT_INC_REF(event);
-  cl_event_update_timestamp(event, CL_QUEUED, event->status);
-
   assert(CL_OBJECT_IS_COMMAND_QUEUE(queue));
   CL_OBJECT_LOCK(queue);
   assert(queue->worker.quit == CL_FALSE);
