@@ -992,110 +992,119 @@ int cl_check_half(void)
   return 1;
 }
 
-uint32_t __half_to_float(uint16_t h, bool* isInf, bool* infSign)
+uint32_t __half_to_float(uint16_t h, bool *isInf, bool *infSign)
 {
-  struct __FP32 {
-    uint32_t mantissa:23;
-    uint32_t exponent:8;
-    uint32_t sign:1;
-  };
-  struct __FP16 {
-    uint32_t mantissa:10;
-    uint32_t exponent:5;
-    uint32_t sign:1;
-  };
-  uint32_t f;
-  __FP32 o;
-  memset(&o, 0, sizeof(o));
-  __FP16 i;
-  memcpy(&i, &h, sizeof(uint16_t));
+  uint32_t out_val = 0;
+  uint16_t sign = (h & 0x8000) >> 15;
+  uint16_t exp = (h & 0x7c00) >> 10;
+  uint16_t fraction = h & 0x03ff;
 
   if (isInf)
     *isInf = false;
   if (infSign)
     *infSign = false;
 
-  if (i.exponent == 0 && i.mantissa == 0) // (Signed) zero
-    o.sign = i.sign;
-  else {
-    if (i.exponent == 0) { // Denormal (converts to normalized)
-      // Adjust mantissa so it's normalized (and keep
-      // track of exponent adjustment)
-      int e = -1;
-      uint m = i.mantissa;
-      do {
-        e++;
-        m <<= 1;
-      } while ((m & 0x400) == 0);
+  if (exp == 0 && fraction == 0) { // (Signed) zero
+    return (sign << 31);
+  }
 
-      o.mantissa = (m & 0x3ff) << 13;
-      o.exponent = 127 - 15 - e;
-      o.sign = i.sign;
-    } else if (i.exponent == 0x1f) { // Inf/NaN
-      // NOTE: Both can be handled with same code path
-      // since we just pass through mantissa bits.
-      o.mantissa = i.mantissa << 13;
-      o.exponent = 255;
-      o.sign = i.sign;
+  if (exp == 0) { // subnormal mode
+    assert(fraction > 0);
+    exp = -1;
+    do {
+      fraction = fraction << 1;
+      exp++;
+    } while ((fraction & 0x400) == 0);
+    exp = 127 - exp - 15;
+    out_val = (sign << 31) | ((exp & 0xff) << 23) | ((fraction & 0x3ff) << 13);
+    return out_val;
+  }
 
-      if (isInf) {
-        *isInf = (i.mantissa == 0);
-        if (infSign)
-          *infSign = !i.sign;
-      }
-    } else { // Normalized number
-      o.mantissa = i.mantissa << 13;
-      o.exponent = 127 - 15 + i.exponent;
-      o.sign = i.sign;
+  if (exp == 0x1f) {     // inf or NAN
+    if (fraction == 0) { // inf
+      out_val = (sign << 31) | (255 << 23);
+      if (isInf)
+        *isInf = true;
+      if (infSign)
+        *infSign = (sign == 0) ? 1 : 0;
+
+      return out_val;
+    } else { // NAN mode
+      out_val = (sign << 31) | (255 << 23) | 0x7fffff;
+      return out_val;
     }
   }
 
-  memcpy(&f, &o, sizeof(uint32_t));
-  return f;
+  // Easy case, just convert.
+  exp = 127 - 15 + exp;
+  out_val = (sign << 31) | ((exp & 0xff) << 23) | ((fraction & 0x3ff) << 13);
+  return out_val;
 }
-
 
 uint16_t __float_to_half(uint32_t x)
 {
-  uint16_t bits = (x >> 16) & 0x8000; /* Get the sign */
-  uint16_t m = (x >> 12) & 0x07ff; /* Keep one extra bit for rounding */
-  unsigned int e = (x >> 23) & 0xff; /* Using int is faster here */
+  uint16_t sign = (x & 0x80000000) >> 31;
+  uint16_t exp = (x & 0x7F800000) >> 23;
+  uint32_t fraction = (x & 0x7fffff);
+  uint16_t out_val = 0;
 
-  /* If zero, or denormal, or exponent underflows too much for a denormal
-   * half, return signed zero. */
-  if (e < 103)
-    return bits;
-
-  /* If NaN, return NaN. If Inf or exponent overflow, return Inf. */
-  if (e > 142) {
-    bits |= 0x7c00u;
-    /* If exponent was 0xff and one mantissa bit was set, it means NaN,
-     * not Inf, so make sure we set one mantissa bit too. */
-    bits |= e == 255 && (x & 0x007fffffu);
-    return bits;
+  /* Handle the float NAN format. */
+  if (exp == 0xFF && fraction != 0) {
+    /* return a NAN half. */
+    out_val = (sign << 15) | (0x7C00) | (fraction & 0x3ff);
+    return out_val;
   }
 
-  /* If exponent underflows but not too much, return a denormal */
-  if (e < 113) {
-    m |= 0x0800u;
-    /* Extra rounding may overflow and set mantissa to 0 and exponent
-     * to 1, which is OK. */
-    bits |= (m >> (114 - e)) + ((m >> (113 - e)) & 1);
-    return bits;
+  /* Float exp is from -126~127, half exp is from -14~15 */
+  if (exp - 127 > 15) { // Should overflow.
+    /* return +- inf. */
+    out_val = (sign << 15) | (0x7C00);
+    return out_val;
   }
 
-  bits |= ((e - 112) << 10) | (m >> 1);
-  /* Extra rounding. An overflow will set mantissa to 0 and increment
-   * the exponent, which is OK. */
-  bits += m & 1;
-  return bits;
+  /* half has 10 bits fraction, so have chance to convet to
+     (-1)^sign X 2^(-14) X 0.fraction form. But if the
+     exp - 127 < -14 - 10, we must have unerflow. */
+  if (exp < -14 + 127 - 10) { // Should underflow.
+    /* Return zero without subnormal numbers. */
+    out_val = (sign << 15);
+    return out_val;
+  }
+
+  if (exp < -14 + 127) { //May underflow, but may use subnormal numbers
+    int shift = -(exp - 127 + 14);
+    assert(shift > 0);
+    assert(shift <= 10);
+    fraction = fraction | 0x0800000; // in 1.significantbits2, add the 1
+    fraction = fraction >> shift;
+    // To half fraction
+    fraction = (fraction & 0x7ff000) >> 12;
+    out_val = (sign << 15) | ((fraction >> 1) & 0x3ff);
+    if (fraction & 0x01)
+      out_val++;
+    return out_val;
+  }
+
+  /* Easy case, just convert. */
+  fraction = (fraction & 0x7ff000) >> 12;
+  exp = exp - 127 + 15;
+  assert(exp > 0);
+  assert(exp < 0x01f);
+  out_val = (sign << 15) | (exp << 10) | ((fraction >> 1) & 0x3ff);
+  if (fraction & 0x01)
+    out_val++;
+  return out_val;
 }
-uint32_t as_uint(float f) {
+
+uint32_t as_uint(float f)
+{
   union uint32_cast _tmp;
   _tmp._float = f;
   return _tmp._uint;
 }
-float as_float(uint32_t i) {
+
+float as_float(uint32_t i)
+{
   union uint32_cast _tmp;
   _tmp._uint = i;
   return _tmp._float;
