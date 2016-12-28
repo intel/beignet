@@ -297,11 +297,11 @@ namespace gbe
     /*! OBlock read */
     void OBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t ow_size);
     /*! OBlock write */
-    void OBWRITE(GenRegister header, uint32_t bti, uint32_t ow_size);
+    virtual void OBWRITE(GenRegister header, GenRegister data, uint32_t bti, uint32_t ow_size, bool useSends);
     /*! MBlock read */
     virtual void MBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t response_size);
     /*! MBlock write */
-    virtual void MBWRITE(GenRegister header, uint32_t bti, uint32_t data_size);
+    virtual void MBWRITE(GenRegister header, GenRegister data, uint32_t bti, uint32_t data_size, bool useSends);
     /*! A64 OBlock read */
     virtual void OBREADA64(GenRegister dst, GenRegister header, uint32_t bti, uint32_t ow_size);
     /*! A64 OBlock write */

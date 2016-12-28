@@ -1348,7 +1348,7 @@ namespace gbe
                 response_length);
   }
 
-  void GenEncoder::OBWRITE(GenRegister header, uint32_t bti, uint32_t ow_size) {
+  void GenEncoder::OBWRITE(GenRegister header, GenRegister data, uint32_t bti, uint32_t ow_size, bool useSends) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     uint32_t sizeinreg = ow_size / 2;
     // half reg should also have size 1
@@ -1384,7 +1384,7 @@ namespace gbe
                 response_length);
   }
 
-  void GenEncoder::MBWRITE(GenRegister header, uint32_t bti, uint32_t data_size) {
+  void GenEncoder::MBWRITE(GenRegister header, GenRegister data, uint32_t bti, uint32_t data_size, bool useSends) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     const uint32_t msg_length = 1 + data_size;
     const uint32_t response_length = 0; // Size of registers

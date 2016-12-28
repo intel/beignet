@@ -3569,13 +3569,14 @@ namespace gbe
 
   void GenContext::emitOBWriteInstruction(const SelectionInstruction &insn) {
     const GenRegister header = ra->genReg(insn.src(0));
+    const GenRegister data = ra->genReg(insn.src(1));
     const uint32_t bti = insn.getbti();
     const uint32_t ow_size = insn.extra.elem;
     bool isA64 = bti == 255;
     if (isA64)
        p->OBWRITEA64(header, bti, ow_size);
     else
-       p->OBWRITE(header, bti, ow_size);
+       p->OBWRITE(header, data, bti, ow_size, insn.extra.splitSend);
   }
 
   void GenContext::emitMBReadInstruction(const SelectionInstruction &insn) {
@@ -3587,8 +3588,9 @@ namespace gbe
 
   void GenContext::emitMBWriteInstruction(const SelectionInstruction &insn) {
     const GenRegister header = ra->genReg(insn.dst(0));
+    const GenRegister data = ra->genReg(insn.dst(1));
     const size_t data_size = insn.extra.elem;
-    p->MBWRITE(header, insn.getbti(), data_size);
+    p->MBWRITE(header, data, insn.getbti(), data_size, insn.extra.splitSend);
   }
 
   BVAR(OCL_OUTPUT_REG_ALLOC, false);

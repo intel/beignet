@@ -244,4 +244,61 @@ namespace gbe
         gen9_insn->bits2.sends.sel_reg32_desc = 1;
     }
   }
+
+  void Gen9Encoder::OBWRITE(GenRegister header, GenRegister data, uint32_t bti, uint32_t ow_size, bool useSends)
+  {
+    if (!useSends)
+      Gen8Encoder::OBWRITE(header, data, bti, ow_size, false);
+    else {
+      GBE_ASSERT(data.reg() != header.reg());
+      GenNativeInstruction *insn = this->next(GEN_OPCODE_SENDS);
+      Gen9NativeInstruction *gen9_insn = &insn->gen9_insn;
+
+      this->setHeader(insn);
+      insn->header.destreg_or_condmod = GEN_SFID_DATAPORT_DATA;
+
+      setSendsOperands(gen9_insn, GenRegister::null(), header, data);
+
+      uint32_t dataRegs = ow_size / 2;
+      // half reg should also have size 1
+      if (dataRegs == 0)
+        dataRegs = 1;
+      gen9_insn->bits2.sends.src1_length = dataRegs;
+
+      const uint32_t block_size = getOBlockSize(ow_size);
+      const uint32_t msg_length = 1;
+      const uint32_t response_length = 0;
+      setOBlockRW(insn,
+                bti,
+                block_size,
+                GEN7_OBLOCK_WRITE,
+                msg_length,
+                response_length);
+    }
+  }
+
+  void Gen9Encoder::MBWRITE(GenRegister header, GenRegister data, uint32_t bti, uint32_t data_size, bool useSends)
+  {
+    if (!useSends)
+      Gen8Encoder::MBWRITE(header, data, bti, data_size, false);
+    else {
+      GBE_ASSERT(data.reg() != header.reg());
+      GenNativeInstruction *insn = this->next(GEN_OPCODE_SENDS);
+      Gen9NativeInstruction *gen9_insn = &insn->gen9_insn;
+
+      this->setHeader(insn);
+      insn->header.destreg_or_condmod = GEN_SFID_DATAPORT_DATA;
+
+      setSendsOperands(gen9_insn, GenRegister::null(), header, data);
+      gen9_insn->bits2.sends.src1_length = data_size;
+
+      const uint32_t msg_length = 1;
+      const uint32_t response_length = 0;
+      setMBlockRW(insn,
+                bti,
+                GEN75_P1_MEDIA_TYPED_BWRITE,
+                msg_length,
+                response_length);
+    }
+  }
 } /* End of the name space. */

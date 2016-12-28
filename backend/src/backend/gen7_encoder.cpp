@@ -280,7 +280,7 @@ namespace gbe
                 response_length);
   }
 
-  void Gen7Encoder::MBWRITE(GenRegister header, uint32_t bti, uint32_t size) {
+  void Gen7Encoder::MBWRITE(GenRegister header, GenRegister data, uint32_t bti, uint32_t size, bool useSends) {
     GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
     const uint32_t msg_length = 1 + size;
     const uint32_t response_length = 0; // Size of registers

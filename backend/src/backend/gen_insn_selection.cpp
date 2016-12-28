@@ -2324,18 +2324,33 @@ namespace gbe
                                   uint32_t bti,
                                   uint32_t ow_size) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_OBWRITE, 0, vec_size + 1);
-    SelectionVector *vector = this->appendVector();
     insn->src(0) = header;
     for (uint32_t i = 0; i < vec_size; ++i)
       insn->src(i + 1) = values[i];
     insn->setbti(bti);
     insn->extra.elem = ow_size; // number of OWord_size
 
-    // tmp regs for OWORD write header and values
-    vector->regNum = vec_size + 1;
-    vector->reg = &insn->src(0);
-    vector->offsetID = 0;
-    vector->isSrc = 1;
+    if (hasSends()) {
+      insn->extra.splitSend = 1;
+      SelectionVector *vector = this->appendVector();
+      vector->regNum = 1;
+      vector->reg = &insn->src(0);
+      vector->offsetID = 0;
+      vector->isSrc = 1;
+
+      vector = this->appendVector();
+      vector->regNum = vec_size;
+      vector->reg = &insn->src(1);
+      vector->offsetID = 1;
+      vector->isSrc = 1;
+    } else {
+      // tmp regs for OWORD write header and values
+      SelectionVector *vector = this->appendVector();
+      vector->regNum = vec_size + 1;
+      vector->reg = &insn->src(0);
+      vector->offsetID = 0;
+      vector->isSrc = 1;
+    }
 
   }
 
@@ -2366,18 +2381,33 @@ namespace gbe
                                   uint32_t bti,
                                   uint32_t data_size) {
     SelectionInstruction *insn = this->appendInsn(SEL_OP_MBWRITE, 0, 1 + tmp_size);
-    SelectionVector *vector = this->appendVector();
     insn->src(0) = header;
     for (uint32_t i = 0; i < tmp_size; ++i)
       insn->src(1 + i) = values[i];
     insn->setbti(bti);
     insn->extra.elem = data_size; // msg data part size
 
-    // We need to put the header and the data together
-    vector->regNum = 1 + tmp_size;
-    vector->reg = &insn->src(0);
-    vector->offsetID = 0;
-    vector->isSrc = 1;
+    if (hasSends()) {
+      insn->extra.splitSend = 1;
+      SelectionVector *vector = this->appendVector();
+      vector->regNum = 1;
+      vector->reg = &insn->src(0);
+      vector->offsetID = 0;
+      vector->isSrc = 1;
+
+      vector = this->appendVector();
+      vector->regNum = tmp_size;
+      vector->reg = &insn->src(1);
+      vector->offsetID = 1;
+      vector->isSrc = 1;
+    } else {
+      // We need to put the header and the data together
+      SelectionVector *vector = this->appendVector();
+      vector->regNum = 1 + tmp_size;
+      vector->reg = &insn->src(0);
+      vector->offsetID = 0;
+      vector->isSrc = 1;
+    }
   }
 
   // Boiler plate to initialize the selection library at c++ pre-main

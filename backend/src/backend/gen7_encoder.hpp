@@ -45,7 +45,7 @@ namespace gbe
     /*! MBlock read */
     virtual void MBREAD(GenRegister dst, GenRegister header, uint32_t bti, uint32_t elemSize);
     /*! MBlock write */
-    virtual void MBWRITE(GenRegister header, uint32_t bti, uint32_t elemSize);
+    virtual void MBWRITE(GenRegister header, GenRegister data, uint32_t bti, uint32_t elemSize, bool useSends);
   };
 }
 #endif /* __GBE_GEN7_ENCODER_HPP__ */
