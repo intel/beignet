@@ -534,7 +534,7 @@ cl_event_check_waitlist(cl_uint num_events_in_wait_list, const cl_event *event_w
     /* check the event and context */
     for (i = 0; i < num_events_in_wait_list; i++) {
       if (!CL_OBJECT_IS_EVENT(event_wait_list[i])) {
-        err = CL_INVALID_EVENT;
+        err = CL_INVALID_EVENT_WAIT_LIST;
         break;
       }
 
