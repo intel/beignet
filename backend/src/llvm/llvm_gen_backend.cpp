@@ -1437,8 +1437,8 @@ namespace gbe
       }
     }
     // storing/loading pointer would introduce revisit
-    for (std::vector<Value *>::iterator iter = revisit.begin(); iter != revisit.end(); ++iter) {
-      findPointerEscape(*iter, mixedPtr, true, revisit);
+    for (size_t i = 0; i < revisit.size(); ++i) {
+      findPointerEscape(revisit[i], mixedPtr, true, revisit);
     }
 
     // the second pass starts from mixed pointer
