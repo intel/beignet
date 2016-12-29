@@ -103,13 +103,11 @@ namespace gbe {
       }
 
       void setUnrollID(Loop *L, bool enable) {
-        if (!enable && disabledLoops.find(L) != disabledLoops.end())
-           return;
+        assert(enable);
         LLVMContext &Context = L->getHeader()->getContext();
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
         SmallVector<Metadata *, 2> forceUnroll;
         forceUnroll.push_back(MDString::get(Context, "llvm.loop.unroll.enable"));
-        forceUnroll.push_back(ConstantAsMetadata::get(ConstantInt::get(Type::getInt1Ty(Context), enable)));
         MDNode *forceUnrollNode = MDNode::get(Context, forceUnroll);
         SmallVector<Metadata *, 4> Vals;
         Vals.push_back(NULL);
@@ -127,8 +125,6 @@ namespace gbe {
         // Set operand 0 to refer to the loop id itself.
         NewLoopID->replaceOperandWith(0, NewLoopID);
         L->setLoopID(NewLoopID);
-        if (!enable)
-          disabledLoops.insert(L);
       }
 
       static bool hasPrivateLoadStore(Loop *L) {
@@ -190,7 +186,8 @@ namespace gbe {
 
         if (currTripCount > 32) {
           shouldUnroll = false;
-          setUnrollID(currL, false);
+          //Don't change the unrollID if doesn't force unroll.
+          //setUnrollID(currL, false);
           return shouldUnroll;
         }
 
@@ -206,7 +203,8 @@ namespace gbe {
               parentTripCount = SE->getSmallConstantTripCount(parentL, parentExitBlock);
           }
           if (parentTripCount != 0 && currTripCount * parentTripCount > 32) {
-            setUnrollID(parentL, false);
+            //Don't change the unrollID if doesn't force unroll.
+            //setUnrollID(parentL, false);
 #if LLVM_VERSION_MAJOR == 3 &&  LLVM_VERSION_MINOR >= 8
             loopInfo.markAsRemoved(parentL);
 #else
@@ -243,8 +241,6 @@ namespace gbe {
       virtual const char *getPassName() const {
         return "SPIR backend: custom loop unrolling pass";
       }
-    private:
-      std::set<Loop *> disabledLoops;
 
     };
 
