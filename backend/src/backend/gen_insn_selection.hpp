@@ -82,6 +82,8 @@ namespace gbe
     bool isBranch(void) const;
     /*! Is it a label instruction (i.e. change the implicit mask) */
     bool isLabel(void) const;
+    /*! Is the src's gen register region is same as all dest regs' region  */
+    bool sameAsDstRegion(uint32_t srcID);
     /*! Is it a simple navtive instruction (i.e. will be one simple ISA) */
     bool isNative(void) const;
     /*! Get the destination register */

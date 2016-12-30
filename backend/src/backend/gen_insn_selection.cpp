@@ -234,6 +234,19 @@ namespace gbe
     return this->opcode == SEL_OP_LABEL;
   }
 
+  bool SelectionInstruction::sameAsDstRegion(uint32_t srcID) {
+    assert(srcID < srcNum);
+    if (dstNum == 0)
+      return true;
+    GenRegister &srcReg = this->src(srcID);
+    for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
+      const GenRegister &dstReg = this->dst(dstID);
+      if (!dstReg.isSameRegion(srcReg))
+        return false;
+    }
+    return true;
+  }
+
   bool SelectionInstruction::isNative(void) const {
     return this->opcode == SEL_OP_NOT         || /* ALU1 */
            this->opcode == SEL_OP_LZD         ||

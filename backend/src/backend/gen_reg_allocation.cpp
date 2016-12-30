@@ -1267,7 +1267,9 @@ namespace gbe
           this->intervals[reg].conflictReg = conflictReg;
           int insnsrcID = insnID;
           // If instruction is simple, src and dst can be reused and they will have different IDs
-          if (insn.isNative())
+          // insn may be split in the encoder, if register region are not same, can't be reused.
+          // Because hard to check split or not here, so only check register regio.
+          if (insn.isNative() && insn.sameAsDstRegion(srcID))
             insnsrcID -= 1;
           this->intervals[reg].minID = std::min(this->intervals[reg].minID, insnsrcID);
           this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, insnsrcID);

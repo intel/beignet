@@ -293,6 +293,14 @@ namespace gbe
       return r;
     }
 
+    INLINE bool isSameRegion(GenRegister reg) const {
+      return reg.file == file &&
+             typeSize(reg.type) == typeSize(type) &&
+             reg.vstride == vstride &&
+             reg.width == width &&
+             reg.hstride == hstride;
+    }
+
     static INLINE uint32_t grfOffset(GenRegister reg) {
       return reg.nr * GEN_REG_SIZE + reg.subnr;
     }
