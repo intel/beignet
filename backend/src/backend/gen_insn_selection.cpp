@@ -2358,7 +2358,8 @@ namespace gbe
     insn->setbti(bti);
     insn->extra.elem = ow_size; // number of OWord_size
 
-    if (hasSends()) {
+    // For A64 write, we did not add sends support yet.
+    if (hasSends() && bti != 255) {
       insn->extra.splitSend = 1;
       SelectionVector *vector = this->appendVector();
       vector->regNum = 1;
@@ -5301,6 +5302,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       const uint32_t genType = type == TYPE_U32 ? GEN_TYPE_UD : GEN_TYPE_UW;
       const RegisterFamily family = getFamily(type);
       bool isA64 = SI == 255;
+      uint32_t offset_size = isA64 ? 128 : 8;
 
       const GenRegister header = GenRegister::ud8grf(sel.reg(FAMILY_REG));
       vector<GenRegister> valuesVec;
@@ -5364,7 +5366,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
             {
               // Update the address in header
               sel.curr.execWidth = 1;
-              sel.ADD(headeraddr, headeraddr, GenRegister::immud(8));
+              sel.ADD(headeraddr, headeraddr, GenRegister::immud(offset_size));
             }
             sel.pop();
           }

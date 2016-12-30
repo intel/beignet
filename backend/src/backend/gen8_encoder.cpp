@@ -829,14 +829,13 @@ namespace gbe
   {
     const GenMessageTarget sfid = GEN_SFID_DATAPORT1_DATA;
     p->setMessageDescriptor(insn, sfid, msg_length, response_length);
-    assert(size == 0 || size == 1 || size == 2 || size == 4 || size == 8);
     Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
 
     gen8_insn->bits3.gen8_block_rw_a64.msg_type = msg_type;
     gen8_insn->bits3.gen8_block_rw_a64.bti = bti;
     // For OWord Block read, we use unaligned read
     gen8_insn->bits3.gen8_block_rw_a64.msg_sub_type = msg_type == GEN8_P1_BLOCK_READ_A64 ? 1 : 0;
-    gen8_insn->bits3.gen8_block_rw_a64.block_size = size <=  2 ? size : (size == 4 ? 3 : 4);
+    gen8_insn->bits3.gen8_block_rw_a64.block_size = size;
     gen8_insn->bits3.gen8_block_rw_a64.header_present = 1;
   }
 
