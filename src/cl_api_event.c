@@ -105,12 +105,10 @@ clEnqueueMarkerWithWaitList(cl_command_queue command_queue,
       err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
       break;
     } else if (e_status == CL_COMPLETE) {
-      err = cl_enqueue_handle(&e->exec_data, CL_COMPLETE);
+      err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
         break;
       }
-
-      e->status = CL_COMPLETE;
     } else {
       cl_command_queue_enqueue_event(command_queue, e);
     }
@@ -164,12 +162,10 @@ clEnqueueBarrierWithWaitList(cl_command_queue command_queue,
       err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
       break;
     } else if (e_status == CL_COMPLETE) {
-      err = cl_enqueue_handle(&e->exec_data, CL_COMPLETE);
+      err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
         break;
       }
-
-      e->status = CL_COMPLETE;
       /* Already a completed barrier, no need to insert to queue. */
     } else {
       cl_command_queue_insert_barrier_event(command_queue, e);

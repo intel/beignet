@@ -266,11 +266,10 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
             err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
             break;
           } else if (event_status == CL_COMPLETE) {
-            err = cl_enqueue_handle(&e->exec_data, CL_SUBMITTED);
+            err = cl_event_exec(e, CL_SUBMITTED, CL_FALSE);
             if (err != CL_SUCCESS) {
               break;
             }
-            e->status = CL_SUBMITTED;
           }
 
           cl_command_queue_enqueue_event(command_queue, e);
