@@ -17,6 +17,7 @@
  */
 #include "cl_context.h"
 #include "cl_program.h"
+#include "cl_device_id.h"
 #include <string.h>
 
 cl_int
