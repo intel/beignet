@@ -44,7 +44,7 @@ namespace gbe
     virtual void patchJMPI(uint32_t insnID, int32_t jip, int32_t uip);
     virtual void ATOMIC(GenRegister dst, uint32_t function, GenRegister src, GenRegister bti, uint32_t srcNum, bool useSends);
     virtual void UNTYPED_READ(GenRegister dst, GenRegister src, GenRegister bti, uint32_t elemNum);
-    virtual void UNTYPED_WRITE(GenRegister src, GenRegister data, GenRegister bti, uint32_t elemNum);
+    virtual void UNTYPED_WRITE(GenRegister src, GenRegister data, GenRegister bti, uint32_t elemNum, bool useSends);
     virtual void setHeader(GenNativeInstruction *insn);
     virtual void setDPUntypedRW(GenNativeInstruction *insn, uint32_t bti, uint32_t rgba,
                    uint32_t msg_type, uint32_t msg_length, uint32_t response_length);
