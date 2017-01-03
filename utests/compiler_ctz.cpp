@@ -19,7 +19,7 @@ void test(const char *kernel_name)
 
   OCL_MAP_BUFFER(0);
   for (uint32_t i = 0; i < n; ++i) {
-      ((U*)buf_data[0])[i] = 1l << i;
+      ((U*)buf_data[0])[i] = 1ll << i;
       if(i == sizeof(U)*8)
         ((U*)buf_data[0])[i] = 0;
   }
