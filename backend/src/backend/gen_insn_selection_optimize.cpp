@@ -22,7 +22,7 @@ namespace gbe
     uint32_t height = execWidth / width;
     uint32_t vstride = GenRegister::vstride_size(reg);
     uint32_t hstride = GenRegister::hstride_size(reg);
-    uint32_t base = reg.subnr;
+    uint32_t base = reg.nr * GEN_REG_SIZE + reg.subnr;
     for (uint32_t i = 0; i < height; ++i) {
       uint32_t offsetInByte = base;
       for (uint32_t j = 0; j < width; ++j) {
@@ -132,7 +132,7 @@ namespace gbe
     for (ReplaceInfoMap::iterator pos = replaceInfoMap.begin(); pos != replaceInfoMap.end(); ++pos) {
       ReplaceInfo* info = pos->second;
       if (info->intermedia.reg() == var.reg()) {   //intermedia is overwritten
-        if (info->intermedia.quarter == var.quarter && info->intermedia.subnr == var.subnr) {
+        if (info->intermedia.quarter == var.quarter && info->intermedia.subnr == var.subnr && info->intermedia.nr == var.nr) {
           // We need to check the if intermedia is fully overwritten, they may be in some prediction state.
           if (CanBeReplaced(info, insn, var))
             doReplacement(info);
@@ -207,7 +207,8 @@ namespace gbe
     if (info->insn.state.inversePredicate != insn.state.inversePredicate)
       return false;
 
-    if (info->intermedia.type == var.type && info->intermedia.quarter == var.quarter && info->intermedia.subnr == var.subnr) {
+    if (info->intermedia.type == var.type && info->intermedia.quarter == var.quarter &&
+        info->intermedia.subnr == var.subnr && info->intermedia.nr == var.nr) {
       uint32_t elements = CalculateElements(var, insn.state.execWidth);  //considering width, hstrid, vstrid and execWidth
       if (info->elements == elements)
         return true;

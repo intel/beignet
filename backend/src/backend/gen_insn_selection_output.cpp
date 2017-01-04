@@ -45,7 +45,7 @@ namespace gbe
           cout << "(abs)";
         cout << "%" << reg.value.reg;
         if (reg.subphysical)
-          cout << "." << reg.subnr;
+          cout << "." << reg.subnr + reg.nr * GEN_REG_SIZE;
 
         if (dst)
           cout << "<" << GenRegister::hstride_size(reg) << ">";
