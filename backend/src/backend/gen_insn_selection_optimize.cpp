@@ -18,7 +18,8 @@ namespace gbe
     uint32_t elements = 0;
     uint32_t elementSize = typeSize(reg.type);
     uint32_t width = GenRegister::width_size(reg);
-    assert(execWidth >= width);
+    // reg may be other insn's source, this insn's width don't force large then execWidth.
+    //assert(execWidth >= width);
     uint32_t height = execWidth / width;
     uint32_t vstride = GenRegister::vstride_size(reg);
     uint32_t hstride = GenRegister::hstride_size(reg);

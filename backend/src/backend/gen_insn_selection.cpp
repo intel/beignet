@@ -4819,9 +4819,9 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
 
       GenRegister headeraddr;
       if (isA64)
-        headeraddr = GenRegister::retype(sel.getOffsetReg(header, 0, 0), GEN_TYPE_UL);
+        headeraddr = GenRegister::toUniform(sel.getOffsetReg(header, 0, 0), GEN_TYPE_UL);
       else
-        headeraddr = sel.getOffsetReg(header, 0, 2 * 4);
+        headeraddr = GenRegister::toUniform(sel.getOffsetReg(header, 0, 2 * 4), GEN_TYPE_UD);
       // Make header
       sel.push();
       {
@@ -5327,9 +5327,9 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
 
       GenRegister headeraddr;
       if (isA64)
-        headeraddr = GenRegister::retype(sel.getOffsetReg(header, 0, 0), GEN_TYPE_UL);
+        headeraddr = GenRegister::toUniform(sel.getOffsetReg(header, 0, 0), GEN_TYPE_UL);
       else
-        headeraddr = sel.getOffsetReg(header, 0, 2 * 4);
+        headeraddr = GenRegister::toUniform(sel.getOffsetReg(header, 0, 2 * 4), GEN_TYPE_UD);
       // Make header
       sel.push();
       {
