@@ -162,6 +162,7 @@ clEnqueueBarrierWithWaitList(cl_command_queue command_queue,
       err = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
       break;
     } else if (e_status == CL_COMPLETE) {
+      cl_command_queue_insert_barrier_event(command_queue, e);
       err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
         break;
