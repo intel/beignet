@@ -22,6 +22,7 @@
 
 #include "backend/gen9_context.hpp"
 #include "backend/gen_insn_selection.hpp"
+#include "backend/gen_program.hpp"
 
 namespace gbe
 {
@@ -167,6 +168,67 @@ namespace gbe
       p->MOV(GenRegister::retype(GenRegister::addr1(i*2), GEN_TYPE_UD),
              GenRegister::immud(new_a0[i*2 + 1] << 16 | new_a0[i*2]));
     }
+    p->pop();
+  }
+
+  void BxtContext::emitStackPointer(void) {
+    using namespace ir;
+
+    // Only emit stack pointer computation if we use a stack
+    if (kernel->getStackSize() == 0)
+      return;
+
+    // Check that everything is consistent in the kernel code
+    const uint32_t perLaneSize = kernel->getStackSize();
+    GBE_ASSERT(perLaneSize > 0);
+
+    const GenRegister selStatckPtr = this->simdWidth == 8 ?
+      GenRegister::ud8grf(ir::ocl::stackptr) :
+      GenRegister::ud16grf(ir::ocl::stackptr);
+    const GenRegister stackptr = ra->genReg(selStatckPtr);
+    // borrow block ip as temporary register as we will
+    // initialize block ip latter.
+    const GenRegister tmpReg = GenRegister::retype(GenRegister::vec1(getBlockIP()), GEN_TYPE_UW);
+    const GenRegister tmpReg_ud = GenRegister::retype(tmpReg, GEN_TYPE_UD);
+
+    loadLaneID(stackptr);
+
+    // We compute the per-lane stack pointer here
+    // threadId * perThreadSize + laneId*perLaneSize or
+    // (threadId * simdWidth + laneId)*perLaneSize
+    // let private address start from zero
+    //p->MOV(stackptr, GenRegister::immud(0));
+    p->push();
+      p->curr.execWidth = 1;
+      p->curr.predicate = GEN_PREDICATE_NONE;
+      p->AND(tmpReg, GenRegister::ud1grf(0,5), GenRegister::immuw(0x1ff)); //threadId
+      p->MUL(tmpReg, tmpReg, GenRegister::immuw(this->simdWidth));  //threadId * simdWidth
+      p->curr.execWidth = this->simdWidth;
+      p->ADD(stackptr, GenRegister::unpacked_uw(stackptr), tmpReg);  //threadId * simdWidth + laneId, must < 64K
+      p->curr.execWidth = 1;
+      p->MOV(tmpReg_ud, GenRegister::immud(perLaneSize));
+      p->curr.execWidth = this->simdWidth;
+      p->MUL(stackptr, tmpReg_ud, GenRegister::unpacked_uw(stackptr)); // (threadId * simdWidth + laneId)*perLaneSize
+      if (fn.getPointerFamily() == ir::FAMILY_QWORD) {
+        const GenRegister selStatckPtr2 = this->simdWidth == 8 ?
+          GenRegister::ul8grf(ir::ocl::stackptr) :
+          GenRegister::ul16grf(ir::ocl::stackptr);
+        GenRegister stackptr2 = ra->genReg(selStatckPtr2);
+        GenRegister sp = GenRegister::unpacked_ud(stackptr2.nr, stackptr2.subnr);
+        int simdWidth = p->curr.execWidth;
+        if (simdWidth == 16) {
+          // we need do second quarter first, because the dst type is QW,
+          // while the src is DW. If we do first quater first, the 1st
+          // quarter's dst would contain the 2nd quarter's src.
+          p->curr.execWidth = 8;
+          p->curr.quarterControl = GEN_COMPRESSION_Q2;
+          p->MOV(GenRegister::Qn(sp, 1), GenRegister::Qn(stackptr,1));
+          p->MOV(GenRegister::Qn(stackptr2, 1), GenRegister::Qn(sp,1));
+        }
+        p->curr.quarterControl = GEN_COMPRESSION_Q1;
+        p->MOV(sp, stackptr);
+        p->MOV(stackptr2, sp);
+      }
     p->pop();
   }
 

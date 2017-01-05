@@ -125,6 +125,7 @@ namespace gbe
     virtual void newSelection(void);
     virtual void calculateFullU64MUL(GenRegister src0, GenRegister src1, GenRegister dst_h,
                                            GenRegister dst_l, GenRegister s0l_s1h, GenRegister s0h_s1l);
+    virtual void emitStackPointer(void);
   };
 }
 #endif /* __GBE_GEN8_CONTEXT_HPP__ */
