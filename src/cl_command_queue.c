@@ -81,19 +81,11 @@ cl_command_queue_delete(cl_command_queue queue)
   if (CL_OBJECT_DEC_REF(queue) > 1)
     return;
 
+  cl_context_remove_queue(queue->ctx, queue);
+
   cl_command_queue_destroy_enqueue(queue);
 
-#ifdef HAS_CMRT
-  if (queue->cmrt_event != NULL)
-    cmrt_destroy_event(queue);
-#endif
-
-  // If there is a list of valid events, we need to give them
-  // a chance to call the call-back function.
-  //cl_event_update_last_events(queue,1);
-
   cl_mem_delete(queue->perf);
-  cl_context_remove_queue(queue->ctx, queue);
   if (queue->barrier_events) {
     cl_free(queue->barrier_events);
   }

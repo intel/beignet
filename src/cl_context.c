@@ -46,9 +46,11 @@ cl_context_add_queue(cl_context ctx, cl_command_queue queue) {
   cl_context_add_ref(ctx);
 
   CL_OBJECT_LOCK(ctx);
+  while (ctx->queue_modify_disable) {
+    CL_OBJECT_WAIT_ON_COND(ctx);
+  }
   list_add_tail(&ctx->queues, &queue->base.node);
   ctx->queue_num++;
-  ctx->queue_cookie++;
   CL_OBJECT_UNLOCK(ctx);
 
   queue->ctx = ctx;
@@ -57,10 +59,13 @@ cl_context_add_queue(cl_context ctx, cl_command_queue queue) {
 LOCAL void
 cl_context_remove_queue(cl_context ctx, cl_command_queue queue) {
   assert(queue->ctx == ctx);
+
   CL_OBJECT_LOCK(ctx);
+  while (ctx->queue_modify_disable) {
+    CL_OBJECT_WAIT_ON_COND(ctx);
+  }
   list_node_del(&queue->base.node);
   ctx->queue_num--;
-  ctx->queue_cookie++;
   CL_OBJECT_UNLOCK(ctx);
 
   cl_context_delete(ctx);
@@ -333,7 +338,7 @@ cl_context_new(struct _cl_context_prop *props, cl_uint dev_num, cl_device_id* al
   list_init(&ctx->samplers);
   list_init(&ctx->events);
   list_init(&ctx->programs);
-  ctx->queue_cookie = 1;
+  ctx->queue_modify_disable = CL_FALSE;
   TRY_ALLOC_NO_ERR (ctx->drv, cl_driver_new(props));
   ctx->props = *props;
   ctx->ver = cl_driver_get_ver(ctx->drv);

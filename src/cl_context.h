@@ -105,7 +105,7 @@ struct _cl_context {
   cl_uint device_num;               /* Devices number of this context */
   list_head queues;                 /* All command queues currently allocated */
   cl_uint queue_num;                /* All queue number currently allocated */
-  cl_uint queue_cookie;             /* Cookie will change every time we change queue list. */
+  cl_uint queue_modify_disable;     /* Temp disable queue list change. */
   list_head mem_objects;            /* All memory object currently allocated */
   cl_uint mem_object_num;           /* All memory number currently allocated */
   list_head samplers;               /* All sampler object currently allocated */

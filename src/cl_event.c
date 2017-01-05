@@ -428,10 +428,7 @@ cl_event_set_status(cl_event event, cl_int status)
 
   /* Need to notify all the command queue within the same context. */
   if (notify_queue) {
-    cl_command_queue *q_list = NULL;
-    cl_uint queue_num = 0;
-    int i = 0;
-    int cookie = 0;
+    cl_command_queue queue = NULL;
 
     /*First, we need to remove it from queue's barrier list. */
     if (CL_EVENT_IS_BARRIER(event)) {
@@ -441,37 +438,22 @@ cl_event_set_status(cl_event event, cl_int status)
 
     /* Then, notify all the queues within the same context. */
     CL_OBJECT_LOCK(event->ctx);
-    do {
-      queue_num = event->ctx->queue_num;
-      cookie = event->ctx->queue_cookie;
-
-      if (queue_num > 0) {
-        q_list = cl_calloc(queue_num, sizeof(cl_command_queue));
-        assert(q_list);
-        i = 0;
-        list_for_each(pos, &event->ctx->queues)
-        {
-          q_list[i] = (cl_command_queue)(list_entry(pos, _cl_base_object, node));
-          assert(i < queue_num);
-          i++;
-        }
-
-        CL_OBJECT_UNLOCK(event->ctx); // Update status without context lock.
-
-        for (i = 0; i < queue_num; i++) {
-          cl_command_queue_notify(q_list[i]);
-        }
-
-        CL_OBJECT_LOCK(event->ctx); // Lock again.
-      } else {
-        /* No queue? Just do nothing. */
-      }
-
-    } while (cookie != event->ctx->queue_cookie); // Some queue may be added when we unlock.
+    /* Disable remove and add queue to the context temporary. We need to
+       make sure all the queues in the context currently are valid. */
+    event->ctx->queue_modify_disable++;
     CL_OBJECT_UNLOCK(event->ctx);
-
-    if (q_list)
-      cl_free(q_list);
+    list_for_each(pos, &event->ctx->queues)
+    {
+      queue = (cl_command_queue)(list_entry(pos, _cl_base_object, node));
+      assert(queue != NULL);
+      cl_command_queue_notify(queue);
+    }
+    CL_OBJECT_LOCK(event->ctx);
+    /* Disable remove and add queue to the context temporary. We need to
+       make sure all the queues in the context currently are valid. */
+    event->ctx->queue_modify_disable--;
+    CL_OBJECT_NOTIFY_COND(event->ctx);
+    CL_OBJECT_UNLOCK(event->ctx);
   }
 
   return CL_SUCCESS;
