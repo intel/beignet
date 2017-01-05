@@ -276,12 +276,17 @@ clEnqueueSVMFree (cl_command_queue command_queue,
     data->size      = num_svm_pointers;
     data->ptr       = user_data;
 
-    if (e_status == CL_COMPLETE) { // No need to wait
+    if (e_status == CL_COMPLETE) {
+      // Sync mode, no need to queue event.
       err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
         break;
       }
-    } else { // May need to wait some event to complete.
+    } else {
+      err = cl_event_exec(e, CL_QUEUED, CL_FALSE);
+      if (err != CL_SUCCESS) {
+        break;
+      }
       cl_command_queue_enqueue_event(command_queue, e);
     }
   } while (0);
@@ -417,12 +422,17 @@ cl_int clEnqueueSVMMemcpy (cl_command_queue command_queue,
     data->const_ptr    = src_ptr;
     data->size         = size;
 
-    if (e_status == CL_COMPLETE) { // No need to wait
+    if (e_status == CL_COMPLETE) {
+      // Sync mode, no need to queue event.
       err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
         break;
       }
-    } else { // May need to wait some event to complete.
+    } else {
+      err = cl_event_exec(e, CL_QUEUED, CL_FALSE);
+      if (err != CL_SUCCESS) {
+        break;
+      }
       cl_command_queue_enqueue_event(command_queue, e);
     }
   } while(0);
@@ -501,15 +511,19 @@ cl_int clEnqueueSVMMemFill (cl_command_queue command_queue,
     data->pattern_size = pattern_size;
     data->size         = size;
 
-    if (e_status == CL_COMPLETE) { // No need to wait
+    if (e_status == CL_COMPLETE) {
+      // Sync mode, no need to queue event.
       err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
         break;
       }
-    } else { // May need to wait some event to complete.
+    } else {
+      err = cl_event_exec(e, CL_QUEUED, CL_FALSE);
+      if (err != CL_SUCCESS) {
+        break;
+      }
       cl_command_queue_enqueue_event(command_queue, e);
     }
-
   } while(0);
 
   if (err == CL_SUCCESS && event) {
