@@ -667,7 +667,7 @@ namespace gbe {
     // The ParseCommandLineOptions used for mllvm args can not be used with multithread
     // and GVN now have a 100 inst limit on block scan. Now only pass a bigger limit
     // for each context only once, this can also fix multithread bug.
-#if LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MINOR >= 8
     static bool ifsetllvm = false;
     if(!ifsetllvm) {
       args.push_back("-mllvm");
