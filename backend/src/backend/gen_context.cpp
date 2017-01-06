@@ -3309,10 +3309,12 @@ namespace gbe
     {
       GenRegister threadDataL = GenRegister::retype(threadData, GEN_TYPE_D);
       GenRegister threadDataH = threadDataL.offset(threadDataL, 0, 4);
-      p->MOV(msgData.offset(msgData, 0), threadDataL);
-      p->MOV(msgData.offset(msgData, 1), threadDataH);
-
+      GenRegister msgDataL = GenRegister::retype(msgData, GEN_TYPE_D);
+      GenRegister msgDataH = msgDataL.offset(msgDataL, 1);
       p->curr.execWidth = 8;
+      p->MOV(msgDataL, threadDataL);
+      p->MOV(msgDataH, threadDataH);
+
       p->MUL(msgAddr, threadId, GenRegister::immd(0x8));
       p->ADD(msgAddr, msgAddr, msgSlmOff);
       p->UNTYPED_WRITE(msg, msg, GenRegister::immw(0xFE), 2, false);
@@ -3408,30 +3410,38 @@ namespace gbe
       else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MIN
         || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MIN)
       {
-        p->SEL_CMP(GEN_CONDITIONAL_LE, dst, dst, partialData);
         /* workaround QW datatype on CMP */
         if(dst.type == GEN_TYPE_UL || dst.type == GEN_TYPE_L){
-            p->SEL_CMP(GEN_CONDITIONAL_LE, dst.offset(dst, 1, 0),
-                       dst.offset(dst, 1, 0), partialData);
-            p->SEL_CMP(GEN_CONDITIONAL_LE, dst.offset(dst, 2, 0),
-                       dst.offset(dst, 2, 0), partialData);
-            p->SEL_CMP(GEN_CONDITIONAL_LE, dst.offset(dst, 3, 0),
-                       dst.offset(dst, 3, 0), partialData);
-        }
+          p->push();
+            p->curr.execWidth = 8;
+            p->SEL_CMP(GEN_CONDITIONAL_LE, dst, dst, partialData);
+            if (simd == 16) {
+              p->curr.execWidth = 8;
+              p->curr.quarterControl = GEN_COMPRESSION_Q2;
+              p->SEL_CMP(GEN_CONDITIONAL_LE, GenRegister::Qn(dst, 1),
+                         GenRegister::Qn(dst, 1), GenRegister::Qn(partialData, 1));
+            }
+          p->pop();
+        } else
+          p->SEL_CMP(GEN_CONDITIONAL_LE, dst, dst, partialData);
       }
       else if(wg_op == ir::WORKGROUP_OP_INCLUSIVE_MAX
         || wg_op == ir::WORKGROUP_OP_EXCLUSIVE_MAX)
       {
-        p->SEL_CMP(GEN_CONDITIONAL_GE, dst, dst, partialData);
         /* workaround QW datatype on CMP */
         if(dst.type == GEN_TYPE_UL || dst.type == GEN_TYPE_L){
-            p->SEL_CMP(GEN_CONDITIONAL_GE, dst.offset(dst, 1, 0),
-                       dst.offset(dst, 1, 0), partialData);
-            p->SEL_CMP(GEN_CONDITIONAL_GE, dst.offset(dst, 2, 0),
-                       dst.offset(dst, 2, 0), partialData);
-            p->SEL_CMP(GEN_CONDITIONAL_GE, dst.offset(dst, 3, 0),
-                       dst.offset(dst, 3, 0), partialData);
-        }
+          p->push();
+            p->curr.execWidth = 8;
+            p->SEL_CMP(GEN_CONDITIONAL_GE, dst, dst, partialData);
+            if (simd == 16) {
+              p->curr.execWidth = 8;
+              p->curr.quarterControl = GEN_COMPRESSION_Q2;
+              p->SEL_CMP(GEN_CONDITIONAL_GE, GenRegister::Qn(dst, 1),
+                         GenRegister::Qn(dst, 1), GenRegister::Qn(partialData, 1));
+            }
+          p->pop();
+        } else
+          p->SEL_CMP(GEN_CONDITIONAL_GE, dst, dst, partialData);
       }
     }
 
