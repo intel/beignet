@@ -134,11 +134,12 @@ intel_driver_aub_dump(driver);
 return 1;
 }
 
-static void
+static int
 intel_driver_context_init(intel_driver_t *driver)
 {
 driver->ctx = drm_intel_gem_context_create(driver->bufmgr);
-assert(driver->ctx);
+if (!driver->ctx)
+  return 0;
 driver->null_bo = NULL;
 #ifdef HAS_BO_SET_SOFTPIN
 drm_intel_bo *bo = dri_bo_alloc(driver->bufmgr, "null_bo", 64*1024, 4096);
@@ -148,6 +149,7 @@ drm_intel_bo_set_softpin_offset(bo, 0);
 drm_intel_bo_disable_reuse(bo);
 driver->null_bo = bo;
 #endif
+return 1;
 }
 
 static void
@@ -168,7 +170,7 @@ driver->locked = 0;
 pthread_mutex_init(&driver->ctxmutex, NULL);
 
 if (!intel_driver_memman_init(driver)) return 0;
-intel_driver_context_init(driver);
+if (!intel_driver_context_init(driver)) return 0;
 
 #if EMULATE_GEN
 driver->gen_ver = EMULATE_GEN;
