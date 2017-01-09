@@ -2063,8 +2063,8 @@ namespace gbe
     if (bti.file == GEN_IMMEDIATE_VALUE) {
       p->UNTYPED_READ(dst, src, bti, elemNum);
     } else {
-      const GenRegister tmp = ra->genReg(insn.dst(elemNum));
-      const GenRegister btiTmp = ra->genReg(insn.dst(elemNum + 1));
+      const GenRegister tmp = ra->genReg(insn.dst(insn.extra.elem));
+      const GenRegister btiTmp = ra->genReg(insn.dst(insn.extra.elem + 1));
       unsigned desc = p->generateUntypedReadMessageDesc(0, elemNum);
 
       unsigned jip0 = beforeMessage(insn, bti, tmp, btiTmp, desc);
