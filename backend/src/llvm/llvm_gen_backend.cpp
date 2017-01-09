@@ -929,7 +929,8 @@ namespace gbe
               pointerOrigMap.insert(std::make_pair(work, pointers));
             } else {
               // update the pointer source here,
-              (*ptrIter).second[0] = ptr;
+              if ((!isa<SelectInst>(work) && !isa<PHINode>(work)))
+                (*ptrIter).second[0] = ptr;
             }
 
             continue;
@@ -975,7 +976,8 @@ namespace gbe
             pointerOrigMap.insert(std::make_pair(pointer, pointers));
           } else {
             // update the pointer source here,
-            (*ptrIter).second[0] = ptr;
+            if ((!isa<SelectInst>(pointer) && !isa<PHINode>(pointer)))
+              (*ptrIter).second[0] = ptr;
           }
         } else {
           workList.push_back(theUser);
