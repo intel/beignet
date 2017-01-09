@@ -281,7 +281,7 @@ namespace gbe
     return CPV;
   }
 
-#define TYPESIZE(TYPE,VECT,SZ) else if(name == std::string(#TYPE).append(#VECT)) return VECT*SZ;
+#define TYPESIZE(TYPE,VECT,SZ) else if( name == std::string(#TYPE).append(" __attribute__((ext_vector_type("#VECT")))") ) return VECT*SZ;
 #define TYPESIZEVEC(TYPE,SZ)\
   else if(name == #TYPE) return SZ;\
   TYPESIZE(TYPE,2,SZ)\
@@ -293,21 +293,22 @@ namespace gbe
   static uint32_t getTypeSize(Module* M, const ir::Unit &unit, std::string& name) {
       if(name == "size_t") return sizeof(size_t);
       TYPESIZEVEC(char,1)
-      TYPESIZEVEC(uchar,1)
+      TYPESIZEVEC(unsigned char,1)
       TYPESIZEVEC(short,2)
-      TYPESIZEVEC(ushort,2)
+      TYPESIZEVEC(unsigned short,2)
       TYPESIZEVEC(half,2)
       TYPESIZEVEC(int,4)
-      TYPESIZEVEC(uint,4)
+      TYPESIZEVEC(unsigned int,4)
       TYPESIZEVEC(float,4)
       TYPESIZEVEC(double,8)
       TYPESIZEVEC(long,8)
-      TYPESIZEVEC(ulong,8)
+      TYPESIZEVEC(unsigned long,8)
       else{
         StructType *StrTy = M->getTypeByName("struct."+name);
         if(StrTy)
           return getTypeByteSize(unit,StrTy);
       }
+      GBE_ASSERTM(false, "Unspported type name");
       return 0;
   }
 #undef TYPESIZEVEC
