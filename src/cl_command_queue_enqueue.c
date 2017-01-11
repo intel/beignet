@@ -122,7 +122,7 @@ cl_command_queue_notify(cl_command_queue queue)
     return;
   }
 
-  assert(CL_OBJECT_IS_COMMAND_QUEUE(queue));
+  assert(queue && (((cl_base_object)queue)->magic == CL_OBJECT_COMMAND_QUEUE_MAGIC));
   CL_OBJECT_LOCK(queue);
   queue->worker.cookie++;
   CL_OBJECT_NOTIFY_COND(queue);

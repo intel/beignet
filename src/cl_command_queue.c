@@ -81,6 +81,9 @@ cl_command_queue_delete(cl_command_queue queue)
   if (CL_OBJECT_DEC_REF(queue) > 1)
     return;
 
+  /* Before we destroy the queue, we should make sure all
+     the commands in the queue are finished. */
+  cl_command_queue_wait_finish(queue);
   cl_context_remove_queue(queue->ctx, queue);
 
   cl_command_queue_destroy_enqueue(queue);
