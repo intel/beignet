@@ -64,6 +64,7 @@ cl_create_command_queue(cl_context ctx, cl_device_id device, cl_command_queue_pr
   cl_command_queue queue = cl_command_queue_new(ctx);
   if (queue == NULL) {
     *errcode_ret = CL_OUT_OF_HOST_MEMORY;
+    return NULL;
   }
 
   queue->props = properties;

@@ -86,8 +86,8 @@ namespace gbe
     INLINE void getRegAttrib(ir::Register reg, uint32_t &regSize, ir::RegisterFamily *regFamily = NULL) const {
       // Note that byte vector registers use two bytes per byte (and can be
       // interleaved)
-      static const size_t familyVectorSize[] = {2,2,2,4,8};
-      static const size_t familyScalarSize[] = {2,2,2,4,8};
+      static const size_t familyVectorSize[] = {2,2,2,4,8,16,32};
+      static const size_t familyScalarSize[] = {2,2,2,4,8,16,32};
       using namespace ir;
       const bool isScalar = ctx.sel->isScalarReg(reg);
       const RegisterData regData = ctx.sel->getRegisterData(reg);

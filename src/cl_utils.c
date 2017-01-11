@@ -76,7 +76,7 @@ cl_get_info_helper(const void *src, size_t src_size, void *dst, size_t dst_size,
   if (dst && dst_size < src_size)
     return CL_INVALID_VALUE;
 
-  if (dst_size) {
+  if (dst && dst_size) {
     memcpy(dst, src, src_size);
   }
 

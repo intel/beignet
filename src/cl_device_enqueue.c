@@ -75,6 +75,7 @@ cl_device_enqueue_bind_buffer(cl_gpgpu gpgpu, cl_kernel ker, uint32_t *max_bti, 
     }
 
     mem = cl_context_get_svm_from_ptr(ker->program->ctx, ker->device_enqueue_ptr);
+    assert(mem);
     cl_gpgpu_bind_buf(gpgpu, mem->bo, offset, 0, buf_size, *max_bti);
 
     cl_gpgpu_set_kernel(gpgpu, ker);
@@ -146,6 +147,7 @@ cl_device_enqueue_parse_result(cl_command_queue queue, cl_gpgpu gpgpu)
     type = ndrange_info->type;
     dim = (type & 0xf0) >> 4;
     type = type & 0xf;
+    assert(dim <= 2);
     for(i = 0; i <= dim; i++) {
       fixed_global_sz[i] = ndrange_info->global_work_size[i];
       if(type > 1)
@@ -161,6 +163,7 @@ cl_device_enqueue_parse_result(cl_command_queue queue, cl_gpgpu gpgpu)
 
     kernel_name = interp_program_get_device_enqueue_kernel_name(ker->program->opaque, block->index);
     child_ker = cl_program_create_kernel(ker->program, kernel_name, NULL);
+    assert(child_ker);
     cl_kernel_set_arg_svm_pointer(child_ker, 0, block);
     int index = 1;
     for(i=0; i<slm_size/sizeof(int); i++, index++) {
