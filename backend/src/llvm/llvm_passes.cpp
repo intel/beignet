@@ -78,8 +78,8 @@ namespace gbe
       major = mdconst::extract<ConstantInt>(node->getOperand(0))->getZExtValue();
       minor = mdconst::extract<ConstantInt>(node->getOperand(1))->getZExtValue();
 #else
-      major = cast<ConstantInt>(MD->getOperand(0))->getZExtValue();
-      minor = cast<ConstantInt>(MD->getOperand(1))->getZExtValue();
+      major = cast<ConstantInt>(node->getOperand(0))->getZExtValue();
+      minor = cast<ConstantInt>(node->getOperand(1))->getZExtValue();
 #endif
       oclVersion = major * 100 + minor * 10;
     }

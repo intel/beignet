@@ -15,7 +15,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
+#include <list>
 #include "llvm_includes.hpp"
 
 #include "ir/unit.hpp"
@@ -84,6 +84,7 @@ namespace gbe {
 
   Function* setFunctionAsKernel(Module *mod, Function *Fn)
   {
+#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR >= 9)
     LLVMContext &Context = mod->getContext();
     Type *intTy = IntegerType::get(mod->getContext(), 32);
     SmallVector<llvm::Metadata *, 5> kernelMDArgs;
@@ -148,7 +149,6 @@ namespace gbe {
     }
 
     //If run to here, llvm version always > 3.9, add the version check just for build.
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR >= 9)
     NewFn->setMetadata("kernel_arg_addr_space",
                     llvm::MDNode::get(Context, addressQuals));
     NewFn->setMetadata("kernel_arg_access_qual",
@@ -161,8 +161,11 @@ namespace gbe {
                     llvm::MDNode::get(Context, argTypeQuals));
     NewFn->setMetadata("kernel_arg_name",
                     llvm::MDNode::get(Context, argNames));
-#endif
     return NewFn;
+#else
+    assert(0);  //only opencl 2.0 could reach hear.
+    return Fn;
+#endif
   }
 
   Instruction* replaceInst(Instruction *I, Value *v)
