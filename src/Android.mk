@@ -84,12 +84,23 @@ $(shell $(LOCAL_PATH)/git_sha1.sh $(LOCAL_PATH) ${GIT_SHA1})
 LOCAL_SRC_FILES:= \
     $(addprefix kernels/,$(addsuffix _str.c, $(KERNEL_NAMES))) \
     $(addprefix kernels/,$(addsuffix _str.c, $(BUILT_IN_NAME))) \
+    cl_base_object.c \
     cl_api.c \
+    cl_api_platform_id.c \
+    cl_api_device_id.c \
+    cl_api_mem.c \
+    cl_api_kernel.c \
+    cl_api_command_queue.c \
+    cl_api_event.c \
+    cl_api_context.c \
+    cl_api_sampler.c \
+    cl_api_program.c \
     cl_alloc.c \
     cl_kernel.c \
     cl_program.c \
     cl_gbe_loader.cpp \
     cl_sampler.c \
+    cl_accelerator_intel.c \
     cl_event.c \
     cl_enqueue.c \
     cl_image.c \
@@ -101,15 +112,16 @@ LOCAL_SRC_FILES:= \
     cl_command_queue.c \
     cl_command_queue.h \
     cl_command_queue_gen7.c \
-    cl_thread.c \
+    cl_command_queue_enqueue.c \
+    cl_device_enqueue.c \
+    cl_utils.c \
     cl_driver.h \
     cl_driver.cpp \
     cl_driver_defs.c \
     intel/intel_gpgpu.c \
     intel/intel_batchbuffer.c \
     intel/intel_driver.c \
-    performance.c \
-    cl_accelerator_intel.c
+    performance.c
 
 LOCAL_SHARED_LIBRARIES := \
 libgbe \

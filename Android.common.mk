@@ -2,7 +2,7 @@
 
 #include $(CLEAR_VARS)
 TOP_C_INCLUDE := bionic $(BEIGNET_ROOT_PATH)/include
-TOP_CPPFLAGS := -Wall -Wno-invalid-offsetof -mfpmath=sse -fno-rtti -Wcast-align -std=c++0x -msse2 -msse3 -mssse3 -msse4.1 -D__ANDROID__
+TOP_CPPFLAGS := -Wall -Wno-invalid-offsetof -mfpmath=sse -fno-rtti -Wcast-align -std=c++11 -msse2 -msse3 -mssse3 -msse4.1 -D__ANDROID__
 TOP_CFLAGS := -Wall -mfpmath=sse -msse2 -Wcast-align -msse2 -msse3 -mssse3 -msse4.1 -D__ANDROID__
 
 LLVM_INCLUDE_DIRS := external/llvm/device/include\

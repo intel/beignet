@@ -62,6 +62,8 @@ BACKEND_SRC_FILES:= \
     ir/immediate.cpp \
     ir/structurizer.hpp \
     ir/structurizer.cpp \
+    ir/reloc.hpp \
+    ir/reloc.cpp \
     backend/context.cpp \
     backend/context.hpp \
     backend/program.cpp \
@@ -80,6 +82,7 @@ BACKEND_SRC_FILES:= \
     llvm/PromoteIntegers.cpp \
     llvm/ExpandLargeIntegers.cpp \
     llvm/StripAttributes.cpp \
+    llvm/llvm_device_enqueue.cpp \
     llvm/llvm_to_gen.cpp \
     llvm/llvm_loadstore_optimization.cpp \
     llvm/llvm_gen_backend.hpp \
@@ -140,12 +143,16 @@ $(shell echo "  #define INTERP_OBJECT_DIR \"/system/lib64/libgbeinterp.so\"" >> 
 $(shell echo "  #define OCL_BITCODE_BIN \"/system/lib/ocl/beignet.bc\"" >> $(gbe_config_file))
 $(shell echo "  #define OCL_HEADER_DIR \"/system/lib/ocl/include\"" >> $(gbe_config_file))
 $(shell echo "  #define OCL_PCH_OBJECT \"/system/lib/ocl/beignet.pch\"" >> $(gbe_config_file))
+$(shell echo "  #define OCL_BITCODE_BIN_20 \"/system/lib/ocl/beignet_20.bc\"" >> $(gbe_config_file))
+$(shell echo "  #define OCL_PCH_OBJECT_20 \"/system/lib/ocl/beigneti_20.pch\"" >> $(gbe_config_file))
 $(shell echo "#else /*__x86_64__*/" >> $(gbe_config_file))
 $(shell echo "  #define GBE_OBJECT_DIR \"/system/lib/libgbe.so\"" >> $(gbe_config_file))
 $(shell echo "  #define INTERP_OBJECT_DIR \"/system/lib/libgbeinterp.so\"" >> $(gbe_config_file))
 $(shell echo "  #define OCL_BITCODE_BIN \"/system/lib/ocl/beignet.bc\"" >> $(gbe_config_file))
 $(shell echo "  #define OCL_HEADER_DIR \"/system/lib/ocl/include\"" >> $(gbe_config_file))
 $(shell echo "  #define OCL_PCH_OBJECT \"/system/lib/ocl/beignet.pch\"" >> $(gbe_config_file))
+$(shell echo "  #define OCL_BITCODE_BIN_20 \"/system/lib/ocl/beignet_20.bc\"" >> $(gbe_config_file))
+$(shell echo "  #define OCL_PCH_OBJECT_20 \"/system/lib/ocl/beigneti_20.pch\"" >> $(gbe_config_file))
 $(shell echo "#endif" >> $(gbe_config_file))
 $(shell echo "#else /*__ANDROID__*/" >> $(gbe_config_file))
 $(shell echo "  #define GBE_OBJECT_DIR \"\"" >> $(gbe_config_file))
@@ -153,6 +160,8 @@ $(shell echo "  #define INTERP_OBJECT_DIR \"\"" >> $(gbe_config_file))
 $(shell echo "  #define OCL_BITCODE_BIN \"`pwd $(TOP)`/$(generated_path)\"" >> $(gbe_config_file))
 $(shell echo "  #define OCL_HEADER_DIR \"`pwd $(TOP)`/$(generated_path)/libocl/include\"" >> $(gbe_config_file))
 $(shell echo "  #define OCL_PCH_OBJECT \"`pwd $(TOP)`/$(generated_path)\"" >> $(gbe_config_file))
+$(shell echo "  #define OCL_BITCODE_BIN_20 \"`pwd $(TOP)`/$(generated_path)\"" >> $(gbe_config_file))
+$(shell echo "  #define OCL_PCH_OBJECT_20 \"`pwd $(TOP)`/$(generated_path)\"" >> $(gbe_config_file))
 $(shell echo "#endif" >> $(gbe_config_file))
 
 #Build HOST libgbe.so
@@ -162,6 +171,8 @@ LOCAL_C_INCLUDES := $(TOP_C_INCLUDE) \
                     $(LLVM_INCLUDE_DIRS)
 LOCAL_CPPFLAGS +=  $(LLVM_CFLAGS) -std=c++11 -fexceptions -DGBE_DEBUG=0 -DGBE_COMPILER_AVAILABLE=1 -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
 LOCAL_CFLAGS +=  $(LLVM_CFLAGS) -fexceptions -DGBE_DEBUG=0 -DGBE_COMPILER_AVAILABLE=1 -DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND
+LOCAL_CPPFLAGS += -Wno-extra-semi -Wno-gnu-anonymous-struct -Wno-nested-anon-types
+LOCAL_CFLAGS += -Wno-extra-semi -Wno-gnu-anonymous-struct -Wno-nested-anon-types
 LOCAL_LDLIBS += -lpthread -lm -ldl -lLLVM -lclang
 #LOCAL_STATIC_LIBRARIES := $(CLANG_MODULE_LIBS)
 LOCAL_SHARED_LIBRARIES := libclang

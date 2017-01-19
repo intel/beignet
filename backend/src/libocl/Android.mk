@@ -86,4 +86,3 @@ $(shell $(HOST_OUT)/bin/llvm-link -o ${generated_sources}/../beignet.bc $(addpre
 
 $(shell $(HOST_OUT)/bin/clang -cc1 ${CLANG_OCL_FLAGS} -triple spir -I ${generated_sources}/include/ --relocatable-pch -emit-pch -isysroot ${generated_sources} -x cl ${generated_sources}/include/ocl.h -o ${generated_sources}/../beignet.pch)
 
-
