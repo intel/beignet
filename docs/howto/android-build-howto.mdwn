@@ -1,0 +1,64 @@
+Android build HowTo
+===================
+
+Beignet supports android system, but there are several android versions, Beignet
+only provide the android 5.1.1 (lollipop)'s build files. This document describes
+how to build and install the Beignet driver and utests to android devices.
+Please notice that, Beignet disable PCH in the android, so the kernel's compiling is very
+slow, we recommend used cross-compiler and OpenCL's binary program in android.
+
+Prerequisite
+-------------
+You must have the android's source code and have built the android system successfully.
+
+Build Beignet
+-------------
+
+Beignet is just similar as other android native libraries, the steps are as below.
+
+- Add the Beignet to android source code tree.
+  Put Beignet's source code to the appropriate directory under android source code,
+  such as vendor/intel/ufo or external.
+
+- Set up android's environment and choose a target
+  Run `source build/envsetup.sh` and `lunch`.
+
+- Build clang target library.
+  Android only build clang for host, Beignet depends on target libclang.so. Beignet provide
+  lollipop's patch for clang (version 3.5) to build target libclang.so, you can download the patch
+  from [this patch](https://01.org/sites/default/files/enable-clang-device-build-for-beignet.patch).
+  Change directory to external/clang, run `git apply` to apply the patch, and run `mm` to build
+  libclang.so.
+
+- Change to Beignet's directory, and make.
+  Run `mm -B`, if failed first time, run `mm -B` again. When finish, the Beignet libraries and
+  utests binary would be generated in the out/target/product/<target>/system/
+
+Install Beignet to target device
+--------------------------------
+To install Beignet, you need `adb push` all Beignet and clang libraries to the device's correspondent
+directory, include following files:
+out/target/product/<target>/system/lib64/libclang.so to /system/lib64/
+out/target/product/<target>/system/lib64/libcl.so to /system/lib64/
+out/target/product/<target>/system/lib64/libgbeinterp.so to /system/lib64/
+out/target/product/<target>/system/lib64/libgbe.so to /system/lib64/
+out/target/product/<target>/system/lib/libclang.so to /system/lib/
+out/target/product/<target>/system/lib/libcl.so to /system/lib/
+out/target/product/<target>/system/lib/libgbeinterp.so to /system/lib/
+out/target/product/<target>/system/lib/libgbe.so to /system/lib/
+
+Additionally, the bitcode file and ocl head file also need copy to device, as following:
+out/target/product/<target>/gen/SHARED_LIBRARIES/libgbe_intermediates/beignet.bc  to /system/lib/ocl/
+out/target/product/<target>/gen/SHARED_LIBRARIES/libgbe_intermediates/libocl/include/  to /system/lib/ocl/include/
+
+If your application is linked to libOpenCL.so, you also need create a soft link `ln -s libcl.so libOpenCL.so`.
+
+If you want to run utests in the device, you all need copy the utests files:
+out/target/product/<target>/system/bin/utest_run-x86 to /system/bin/utest_run-x86
+out/target/product/<target>/system/bin/utest_run-x86_64 to /system/bin/utest_run-x86_64
+out/target/product/<target>/system/lib64/libutests.so to /system/lib64/
+out/target/product/<target>/system/lib/libcl.so to /system/lib/
+
+You also need copy the utests' kernels to the device:
+<Beignet path>/kernels/ to /system/lib/ocl/
+and set the environment variable "OCL_KERNEL_PATH=/system/lib/ocl/kernels/"before run utests.
