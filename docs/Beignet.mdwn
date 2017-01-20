@@ -158,6 +158,18 @@ Supported Targets
  * 6th Generation Intel Core Processors "Skylake" and "Kabylake".
  * 5th Generation Intel Atom Processors "Broxten" or "Apollolake".
 
+OpenCL 2.0
+----------
+From release v1.3.0, beignet support OpenCL 2.0. By default, OpenCL 2.0 support is disabled, you can enable it when cmake with option
+-DENABLE_OPENCL_20=1. Please remember that to enable OpenCL 2.0, there are some dependencies. First, OpenCL 2.0 only support the targets
+from Skylake, include Skylake, Kabylake and Apollolake. Then, clang supports all OpenCL 2.0 feature from 3.9. So to enable OpenCL 2.0,
+you must update LLVM/clang to 3.9 or later. And also requeires libdrm at least 2.4.66.
+After enable OpenCL 2.0, beignet complies with OpenCL 2.0 spec, but some OpenCL 2.0 features are simulated by software, there is no performance
+gain, such as pipe and device queues, especially device queues.
+If you build beignet with OpenCL 2.0 enabled and your kernel don't use the OpenCL 2.0 features, please pass a build option -cl-std=CL1.2 for
+performance, the OpenCL 2.0 uses more registers and has lots of int64 operations, which may hurt performance, and beignet will continue to improve
+OpenCL 2.0 performance.
+
 Known Issues
 ------------
 
