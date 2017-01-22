@@ -308,7 +308,7 @@ namespace gbe
         if(StrTy)
           return getTypeByteSize(unit,StrTy);
       }
-      GBE_ASSERTM(false, "Unspported type name");
+      GBE_ASSERTM(false, "Unsupported type name");
       return 0;
   }
 #undef TYPESIZEVEC
