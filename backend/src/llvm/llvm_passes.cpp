@@ -276,8 +276,6 @@ namespace gbe
         uint32_t align = getAlignmentByte(unit, elementType);
         size += getPadding(size, align);
 
-        Constant* newConstSize = 
-          ConstantInt::get(IntegerType::get(GEPInst->getContext(), ptrSize), size);
 
         Value *operand = GEPInst->getOperand(op); 
 
@@ -308,13 +306,22 @@ namespace gbe
           }
         }
 #endif
-        Value* tmpMul = operand;
+        Value* tmpOffset = operand;
         if (size != 1) {
-          tmpMul = BinaryOperator::Create(Instruction::Mul, newConstSize, operand,
-                                         "", GEPInst);
+          if (isPowerOf<2>(size)) {
+            Constant* shiftAmnt =
+              ConstantInt::get(IntegerType::get(GEPInst->getContext(), ptrSize), logi2(size));
+            tmpOffset = BinaryOperator::Create(Instruction::Shl, operand, shiftAmnt,
+                                           "", GEPInst);
+          } else{
+            Constant* sizeConst =
+              ConstantInt::get(IntegerType::get(GEPInst->getContext(), ptrSize), size);
+            tmpOffset = BinaryOperator::Create(Instruction::Mul, sizeConst, operand,
+                                           "", GEPInst);
+          }
         }
         currentAddrInst = 
-          BinaryOperator::Create(Instruction::Add, currentAddrInst, tmpMul,
+          BinaryOperator::Create(Instruction::Add, currentAddrInst, tmpOffset,
               "", GEPInst);
       }
 
