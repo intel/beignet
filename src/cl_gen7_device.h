@@ -21,7 +21,7 @@
 .max_parameter_size = 1024,
 .global_mem_cache_line_size = 64, /* XXX */
 .global_mem_cache_size = 8 << 10, /* XXX */
-.local_mem_type = CL_GLOBAL,
+.local_mem_type = CL_LOCAL,
 .local_mem_size = 64 << 10,
 .scratch_mem_size = 12 << 10,
 .max_mem_alloc_size = 2 * 1024 * 1024 * 1024ul,
