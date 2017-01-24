@@ -939,18 +939,23 @@ int cl_check_subgroups_short(void)
   return 1;
 }
 
-int cl_check_ocl20(void)
+int cl_check_ocl20(bool or_beignet)
 {
   size_t param_value_size;
   size_t ret_sz;
   OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_OPENCL_C_VERSION, 0, 0, &param_value_size);
   if(param_value_size == 0) {
     printf("Not OpenCL 2.0 device, ");
+    if(or_beignet){
     if(cl_check_beignet()) {
       printf("Beignet extension test!");
       return 1;
     } else {
       printf("Not beignet device , Skip!");
+      return 0;
+    }
+    }else{
+      printf("Skip!");
       return 0;
     }
   }
@@ -961,11 +966,16 @@ int cl_check_ocl20(void)
   if(!strstr(device_version_str, "2.0")) {
     free(device_version_str);
     printf("Not OpenCL 2.0 device, ");
-    if(cl_check_beignet()) {
-      printf("Beignet extension test!");
-      return 1;
-    } else {
-      printf("Not beignet device , Skip!");
+    if(or_beignet){
+      if(cl_check_beignet()) {
+        printf("Beignet extension test!");
+        return 1;
+      } else {
+        printf("Not beignet device , Skip!");
+        return 0;
+      }
+    }else{
+      printf("Skip!");
       return 0;
     }
   }
