@@ -22,7 +22,6 @@ static int init_program(const char* name, cl_context ctx, cl_program *pg )
 void compiler_program_global()
 {
   const int n = 16;
-  int cpu_src[16];
   cl_int err;
 
   // Setup kernel and buffers
@@ -50,7 +49,7 @@ void compiler_program_global()
 
   OCL_MAP_BUFFER(0);
   for (int i = 0; i <  n; ++i)
-    cpu_src[i] = ((int*)buf_data[0])[i] = i;
+    ((int*)buf_data[0])[i] = i;
   OCL_UNMAP_BUFFER(0);
 
   // Run the kernel on GPU
