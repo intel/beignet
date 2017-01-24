@@ -3,6 +3,8 @@
 template<typename T>
 void test(const char* kernelName)
 {
+  if(!cl_check_ocl20(false))
+    return;
   const int n = 16;
   T cpu_src[16];
 

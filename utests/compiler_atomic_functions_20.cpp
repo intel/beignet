@@ -58,6 +58,8 @@ static void cpu_compiler_atomic(int *dst, int *src)
 
 static void compiler_atomic_functions(const char* kernel_name)
 {
+  if(!cl_check_ocl20(false))
+    return;
   const size_t n = GROUP_NUM * LOCAL_SIZE;
   int cpu_dst[24] = {0}, cpu_src[256];
 
@@ -65,7 +67,7 @@ static void compiler_atomic_functions(const char* kernel_name)
   locals[0] = LOCAL_SIZE;
 
   // Setup kernel and buffers
-  OCL_CREATE_KERNEL_FROM_FILE("compiler_atomic_functions_20", kernel_name);
+  OCL_CALL(cl_kernel_init, "compiler_atomic_functions_20.cl", kernel_name, SOURCE, "-cl-std=CL2.0");
   OCL_CREATE_BUFFER(buf[0], 0, 24 * sizeof(int), NULL);
   OCL_CREATE_BUFFER(buf[1], 0, locals[0] * sizeof(int), NULL);
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);

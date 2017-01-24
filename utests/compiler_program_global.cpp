@@ -21,6 +21,8 @@ static int init_program(const char* name, cl_context ctx, cl_program *pg )
 
 void compiler_program_global()
 {
+  if(!cl_check_ocl20(false))
+    return;
   const int n = 16;
   cl_int err;
 

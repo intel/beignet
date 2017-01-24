@@ -1,6 +1,8 @@
 #include <string.h>
 #include "utest_helper.hpp"
 static void runtime_pipe_query(void) {
+  if(!cl_check_ocl20(false))
+    return;
   const size_t w = 16;
   const size_t sz = 8;
   cl_uint retnum, retsz;

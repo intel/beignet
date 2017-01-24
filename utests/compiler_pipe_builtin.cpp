@@ -8,11 +8,13 @@ typedef struct{
 #define PIPE_BUILTIN(TYPE,GROUP) \
 static void compiler_pipe_##GROUP##_##TYPE(void) \
 { \
+  if(!cl_check_ocl20(false))\
+    return;\
   const size_t w = 16;  \
   uint32_t ans_host = 0;  \
   uint32_t ans_device = 0;  \
   /* pipe write kernel*/  \
-  OCL_CREATE_KERNEL_FROM_FILE("compiler_pipe_builtin", "compiler_pipe_"#GROUP"_write_"#TYPE);  \
+  OCL_CALL(cl_kernel_init, "compiler_pipe_builtin.cl", "compiler_pipe_"#GROUP"_write_"#TYPE, SOURCE, "-cl-std=CL2.0");\
   OCL_CALL2(clCreatePipe, buf[0], ctx, 0, sizeof(TYPE), w, NULL);\
   OCL_CREATE_BUFFER(buf[1], CL_MEM_READ_WRITE, w * sizeof(TYPE), NULL);\
   OCL_MAP_BUFFER(1);\
@@ -26,7 +28,7 @@ static void compiler_pipe_##GROUP##_##TYPE(void) \
   OCL_NDRANGE(1);\
   OCL_CALL(clReleaseKernel, kernel);\
   /* pipe read kernel */\
-  OCL_CREATE_KERNEL_FROM_FILE("compiler_pipe_builtin", "compiler_pipe_"#GROUP"_read_"#TYPE);\
+  OCL_CALL(cl_kernel_init, "compiler_pipe_builtin.cl", "compiler_pipe_"#GROUP"_read_"#TYPE, SOURCE, "-cl-std=CL2.0");\
   OCL_CREATE_BUFFER(buf[2], CL_MEM_READ_WRITE, w * sizeof(TYPE), NULL);\
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);\
   OCL_SET_ARG(1, sizeof(cl_mem), &buf[2]);\
@@ -52,8 +54,9 @@ PIPE_BUILTIN(mystruct, workgroup)
 static void compiler_pipe_query(void) {
   const size_t w = 32;
   const size_t sz = 16;
+  if(!cl_check_ocl20(false)){return;}
   /* pipe write kernel */
-  OCL_CREATE_KERNEL_FROM_FILE("compiler_pipe_builtin", "compiler_pipe_query");
+  OCL_CALL(cl_kernel_init, "compiler_pipe_builtin.cl", "compiler_pipe_query", SOURCE, "-cl-std=CL2.0");
   OCL_CALL2(clCreatePipe, buf[0], ctx, 0, sizeof(uint32_t), w, NULL);
   OCL_CREATE_BUFFER(buf[1], CL_MEM_READ_WRITE, sz * sizeof(uint32_t), NULL);
   OCL_SET_ARG(0, sizeof(cl_mem), &buf[0]);

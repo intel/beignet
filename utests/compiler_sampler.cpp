@@ -3,6 +3,8 @@
 
 void compiler_sampler(void)
 {
+  if(!cl_check_ocl20(false))
+    return;
   OCL_CREATE_KERNEL("compiler_sampler");
 
   OCL_ASSERT(ctx != 0);
