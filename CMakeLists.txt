@@ -212,6 +212,8 @@ IF(ENABLE_GL_SHARING)
   ENDIF(EGL_FOUND)
 ENDIF(ENABLE_GL_SHARING)
 
+OPTION(OCLICD_COMPAT "OCL ICD compatibility mode" ON)
+IF(OCLICD_COMPAT)
 Find_Package(OCLIcd)
 IF(OCLIcd_FOUND)
   MESSAGE(STATUS "Looking for OCL ICD header file - found")
@@ -223,6 +225,7 @@ IF(OCLIcd_FOUND)
 ELSE(OCLIcd_FOUND)
   MESSAGE(STATUS "Looking for OCL ICD header file - not found")
 ENDIF(OCLIcd_FOUND)
+ENDIF(OCLICD_COMPAT)
 
 Find_Package(PythonInterp)
 
