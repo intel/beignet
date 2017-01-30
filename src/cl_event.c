@@ -579,7 +579,7 @@ cl_event_exec(cl_event event, cl_int exec_to_status, cl_bool ignore_depends)
 
     if (ret != CL_SUCCESS) {
       assert(ret < 0);
-      DEBUGP(DL_WARNING, "Exec event %p error, type is %d, error staus is %d",
+      DEBUGP(DL_WARNING, "Exec event %p error, type is %d, error status is %d",
              event, event->event_type, ret);
       ret = cl_event_set_status(event, ret);
       assert(ret == CL_SUCCESS);
