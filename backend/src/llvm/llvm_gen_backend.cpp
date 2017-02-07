@@ -3295,7 +3295,18 @@ namespace gbe
       case Instruction::URem: ctx.REM(getUnsignedType(ctx, I.getType()), dst, src0, src1); break;
       case Instruction::SRem:
       case Instruction::FRem: ctx.REM(type, dst, src0, src1); break;
-      case Instruction::UDiv: ctx.DIV(getUnsignedType(ctx, I.getType()), dst, src0, src1); break;
+      case Instruction::UDiv:
+      {
+        //Only check divisor for DIV
+        ConstantInt *c = dyn_cast<ConstantInt>(I.getOperand(1));
+        if (c != NULL && isPowerOf<2>(c->getZExtValue())) {
+          c = ConstantInt::get(c->getType(), logi2(c->getZExtValue()));
+          ctx.SHR(getUnsignedType(ctx, I.getType()), dst, src0, this->getRegister(c));
+        } else {
+          ctx.DIV(getUnsignedType(ctx, I.getType()), dst, src0, src1);
+        }
+        break;
+      }
       case Instruction::SDiv:
       case Instruction::FDiv: ctx.DIV(type, dst, src0, src1); break;
       case Instruction::And:  ctx.AND(type, dst, src0, src1); break;
