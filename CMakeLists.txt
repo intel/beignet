@@ -220,6 +220,7 @@ IF(OCLIcd_FOUND)
   install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${ICD_FILE_NAME} DESTINATION /etc/OpenCL/vendors)
 ELSE(OCLIcd_FOUND)
   MESSAGE(STATUS "Looking for OCL ICD header file - not found")
+  MESSAGE(FATAL_ERROR "OCL ICD loader miss. If you really want to disable OCL ICD support, please run cmake with option -DOCLICD_COMPAT=0.")
 ENDIF(OCLIcd_FOUND)
 ENDIF(OCLICD_COMPAT)
 
