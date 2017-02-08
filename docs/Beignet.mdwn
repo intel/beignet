@@ -29,7 +29,8 @@ two more packages (the following package name is for Ubuntu):
 - ocl-icd-libopencl1
 
 If you don't want to enable ICD, or your system doesn't have ICD OpenCL support,
-you can still link to the beignet OpenCL library. You can find the beignet/libcl.so
+you must explicitly disable ICD support by running cmake with option `-DOCLICD_COMPAT=0`
+then you can still link to the beignet OpenCL library. You can find the beignet/libcl.so
 in your system's library installation directories.
 
 Note that the compiler depends on LLVM (Low-Level Virtual Machine project), and the
