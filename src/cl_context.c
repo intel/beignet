@@ -373,7 +373,7 @@ cl_context_delete(cl_context ctx)
       ctx->internal_prgs[i] = NULL;
     }
 
-    if (ctx->internal_kernels[i]) {
+    if (ctx->built_in_kernels[i]) {
       cl_kernel_delete(ctx->built_in_kernels[i]);
       ctx->built_in_kernels[i] = NULL;
     }
