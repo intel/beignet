@@ -383,6 +383,7 @@ cl_context_delete(cl_context ctx)
   ctx->built_in_prgs = NULL;
 
   cl_free(ctx->prop_user);
+  cl_free(ctx->devices);
   cl_driver_delete(ctx->drv);
   CL_OBJECT_DESTROY_BASE(ctx);
   cl_free(ctx);
