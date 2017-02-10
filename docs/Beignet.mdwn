@@ -222,10 +222,8 @@ Known Issues
   This loses some precision but gains performance.
 
 * cl\_khr\_gl\_sharing.
-  This extension highly depends on mesa support. It seems that mesa would not provide
-  such type of extensions, we may have to hack with mesa source code to support this
-  extension. This feature used to work with a previous mesa git version. But now, it's
-  simply broken.
+  This extension is partially implemented(the most commonly used part), and we will implement
+  other parts based on requirement.
 
 Project repository
 ------------------
@@ -283,6 +281,7 @@ Documents for OpenCL application developers
 - [[Kernel Optimization Guide|Beignet/optimization-guide]]
 - [[Libva Buffer Sharing|Beignet/howto/libva-buffer-sharing-howto]]
 - [[V4l2 Buffer Sharing|Beignet/howto/v4l2-buffer-sharing-howto]]
+- [[OpenGL Buffer Sharing|Beignet/howto/gl-buffer-sharing-howto]]
 - [[Video Motion Estimation|Beignet/howto/video-motion-estimation-howto]]
 - [[Stand Alone Unit Test|Beignet/howto/stand-alone-utest-howto]]
 - [[Android build|Beignet/android-build-howto]]
