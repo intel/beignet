@@ -334,6 +334,7 @@ cl_program_create_from_binary(cl_context             ctx,
   else if (isGenBinary((unsigned char*)program->binary)) {
     program->opaque = interp_program_new_from_binary(program->ctx->devices[0]->device_id, program->binary, program->binary_sz);
     if (UNLIKELY(program->opaque == NULL)) {
+      DEBUGP(DL_ERROR, "Incompatible binary, please delete the binary and generate again.");
       err = CL_INVALID_PROGRAM;
       goto error;
     }
