@@ -255,11 +255,15 @@ static struct _cl_device_id intel_kbl_gt4_device = {
 };
 
 LOCAL cl_device_id
-cl_get_gt_device(void)
+cl_get_gt_device(cl_device_type device_type)
 {
   cl_device_id ret = NULL;
   const int device_id = cl_driver_get_device_id();
   cl_device_id device = NULL;
+
+  //cl_get_gt_device only return GPU type device.
+  if (((CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_DEFAULT) & device_type) == 0)
+    return NULL;
 
 #define DECL_INFO_STRING(BREAK, STRUCT, FIELD, STRING) \
     STRUCT.FIELD = STRING; \
@@ -877,7 +881,7 @@ cl_get_device_ids(cl_platform_id    platform,
   cl_device_id device;
 
   /* Do we have a usable device? */
-  device = cl_get_gt_device();
+  device = cl_get_gt_device(device_type);
   if (device) {
     cl_self_test_res ret = cl_self_test(device, SELF_TEST_PASS);
     if (ret == SELF_TEST_ATOMIC_FAIL) {
@@ -1603,7 +1607,7 @@ cl_devices_list_check(cl_uint num_devices, const cl_device_id *devices)
     }
 
     // TODO: We now just support Gen Device.
-    if (devices[i] != cl_get_gt_device()) {
+    if (devices[i] != cl_get_gt_device(devices[i]->device_type)) {
       return CL_INVALID_DEVICE;
     }
   }
