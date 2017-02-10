@@ -52,6 +52,8 @@
 extern EGLDisplay  eglDisplay;
 extern EGLContext  eglContext;
 extern EGLSurface  eglSurface;
+extern Display *xDisplay;
+extern Window xWindow;
 #endif
 
 union uint32_cast {
