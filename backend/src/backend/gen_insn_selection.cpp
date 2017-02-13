@@ -2651,7 +2651,6 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       else {
         const ir::BasicBlock *next = bb.getNextBlock();
         this->ENDIF(GenRegister::immd(0), next->getLabelIndex());
-        needEndif = false;
       }
     }
 
