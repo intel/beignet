@@ -31,6 +31,7 @@
 #include "ir/value.hpp"
 #include "ir/unit.hpp"
 #include "ir/printf.hpp"
+#include "src/cl_device_data.h"
 
 #ifdef GBE_COMPILER_AVAILABLE
 #include "llvm/llvm_to_gen.hpp"
@@ -855,6 +856,7 @@ namespace gbe {
                                      size_t *errSize,
                                      uint32_t &oclVersion)
   {
+    uint32_t maxoclVersion = oclVersion;
     std::string pchFileName;
     bool findPCH = false;
 #if defined(__ANDROID__)
@@ -1022,15 +1024,9 @@ EXTEND_QUOTE:
     }
 
     if (useDefaultCLCVersion) {
-#ifdef ENABLE_OPENCL_20
-      clOpt.push_back("-D__OPENCL_C_VERSION__=200");
-      clOpt.push_back("-cl-std=CL2.0");
-      oclVersion = 200;
-#else
       clOpt.push_back("-D__OPENCL_C_VERSION__=120");
       clOpt.push_back("-cl-std=CL1.2");
       oclVersion = 120;
-#endif
     }
     //for clCompilerProgram usage.
     if(temp_header_path){
@@ -1061,7 +1057,12 @@ EXTEND_QUOTE:
       clOpt.push_back("-include-pch");
       clOpt.push_back(pchFileName);
     }
-
+    if (oclVersion > maxoclVersion){
+      if (err && stringSize > 0 && errSize) {
+         *errSize = snprintf(err, stringSize, "Requested OpenCL version %lf is higher than maximum supported version %lf\n", (float)oclVersion/100.0,(float)maxoclVersion/100.0);
+      }
+      return false;
+    }
     return true;
   }
 
@@ -1076,7 +1077,7 @@ EXTEND_QUOTE:
     std::vector<std::string> clOpt;
     std::string dumpLLVMFileName, dumpASMFileName;
     std::string dumpSPIRBinaryName;
-    uint32_t oclVersion = 0;
+    uint32_t oclVersion = MAX_OCLVERSION(deviceID);
     if (!processSourceAndOption(source, options, NULL, clOpt,
                                 dumpLLVMFileName, dumpASMFileName, dumpSPIRBinaryName,
                                 optLevel,
@@ -1139,7 +1140,7 @@ EXTEND_QUOTE:
     std::vector<std::string> clOpt;
     std::string dumpLLVMFileName, dumpASMFileName;
     std::string dumpSPIRBinaryName;
-    uint32_t oclVersion = 0;
+    uint32_t oclVersion = MAX_OCLVERSION(deviceID);
     if (!processSourceAndOption(source, options, temp_header_path, clOpt,
                                 dumpLLVMFileName, dumpASMFileName, dumpSPIRBinaryName,
                                 optLevel, stringSize, err, errSize, oclVersion))

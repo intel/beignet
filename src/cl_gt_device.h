@@ -16,7 +16,15 @@
  *
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
-
+#undef LIBCL_VERSION_STRING
+#undef LIBCL_C_VERSION_STRING
+#ifdef GEN9_DEVICE
+#define LIBCL_VERSION_STRING GEN9_LIBCL_VERSION_STRING
+#define LIBCL_C_VERSION_STRING GEN9_LIBCL_C_VERSION_STRING
+#else
+#define LIBCL_VERSION_STRING NONGEN9_LIBCL_VERSION_STRING
+#define LIBCL_C_VERSION_STRING NONGEN9_LIBCL_C_VERSION_STRING
+#endif
 /* Common fields for both all GT devices (IVB / SNB) */
 .device_type = CL_DEVICE_TYPE_GPU,
 .device_id=0,/* == device_id (set when requested) */
@@ -39,11 +47,7 @@
 .native_vector_width_float = 4,
 .native_vector_width_double = 2,
 .native_vector_width_half = 8,
-#ifdef ENABLE_OPENCL_20
-.address_bits = 64,
-#else
 .address_bits = 32,
-#endif
 .svm_capabilities = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER,
 .preferred_platform_atomic_alignment = 0,
 .preferred_global_atomic_alignment = 0,
