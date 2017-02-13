@@ -323,6 +323,8 @@ namespace gbe
     void optimize(void);
     uint32_t opt_features;
 
+    void if_opt(void);
+
     /* Add insn ID for sel IR */
     void addID(void);
     const GenContext &getCtx();

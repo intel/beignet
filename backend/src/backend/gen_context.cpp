@@ -3632,16 +3632,25 @@ namespace gbe
     kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
   }
 
+  BVAR(OCL_OUTPUT_SEL_IR_AFTER_SELECT, false);
   BVAR(OCL_OUTPUT_SEL_IR, false);
   BVAR(OCL_OPTIMIZE_SEL_IR, true);
+  BVAR(OCL_OPTIMIZE_IF_BLOCK, true);
   bool GenContext::emitCode(void) {
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);
     sel->select();
+    if (OCL_OUTPUT_SEL_IR_AFTER_SELECT) {
+      sel->addID();
+      outputSelectionIR(*this, this->sel, genKernel->getName());
+    }
     if (OCL_OPTIMIZE_SEL_IR)
       sel->optimize();
-    sel->addID();
-    if (OCL_OUTPUT_SEL_IR)
+    if (OCL_OPTIMIZE_IF_BLOCK)
+      sel->if_opt();
+    if (OCL_OUTPUT_SEL_IR) {
+      sel->addID();
       outputSelectionIR(*this, this->sel, genKernel->getName());
+    }
     schedulePreRegAllocation(*this, *this->sel);
     sel->addID();
     if (UNLIKELY(ra->allocate(*this->sel) == false))
