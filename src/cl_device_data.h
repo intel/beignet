@@ -363,5 +363,7 @@
 
 #define IS_GEN9(devid)     (IS_SKYLAKE(devid) || IS_BROXTON(devid) || IS_KABYLAKE(devid))
 
+#define MAX_OCLVERSION(devid) (IS_GEN9(devid) ? 200 : 120)
+
 #endif /* __CL_DEVICE_DATA_H__ */
 

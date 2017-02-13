@@ -27,5 +27,7 @@
 .max_mem_alloc_size = 4 * 1024 * 1024 * 1024ul,
 .global_mem_size = 4 * 1024 * 1024 * 1024ul,
 
+#define GEN9_DEVICE 1
 #include "cl_gt_device.h"
+#undef GEN9_DEVICE
 
