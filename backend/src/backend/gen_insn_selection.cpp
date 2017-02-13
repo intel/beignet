@@ -290,7 +290,7 @@ namespace gbe
   // SelectionBlock
   ///////////////////////////////////////////////////////////////////////////
 
-  SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) : bb(bb), endifLabel( (ir::LabelIndex) 0), removeSimpleIfEndif(false){}
+  SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) : bb(bb), endifLabel( (ir::LabelIndex) 0){}
 
   void SelectionBlock::append(ir::Register reg) { tmp.push_back(reg); }
 
@@ -511,8 +511,6 @@ namespace gbe
     uint32_t buildBasicBlockDAG(const ir::BasicBlock &bb);
     /*! Perform the selection on the basic block */
     void matchBasicBlock(const ir::BasicBlock &bb, uint32_t insnNum);
-    /*! a simple block can use predication instead of if/endif*/
-    bool isSimpleBlock(const ir::BasicBlock &bb, uint32_t insnNum);
     /*! an instruction has a QWORD family src or dst operand. */
     bool hasQWord(const ir::Instruction &insn);
     /*! A root instruction needs to be generated */
@@ -1162,11 +1160,6 @@ namespace gbe
       SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
       mov->src(0) = GenRegister::retype(insn->src(regID), gr.type);
       mov->state = GenInstructionState(simdWidth);
-      if(this->block->removeSimpleIfEndif){
-        mov->state.predicate = GEN_PREDICATE_NORMAL;
-        mov->state.flag = 0;
-        mov->state.subFlag = 1;
-      }
       if (this->isScalarReg(insn->src(regID).reg()))
         mov->state.noMask = 1;
       mov->dst(0) = gr;
@@ -1196,11 +1189,6 @@ namespace gbe
       SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
       mov->dst(0) = GenRegister::retype(insn->dst(regID), gr.type);
       mov->state = GenInstructionState(simdWidth);
-      if(this->block->removeSimpleIfEndif){
-        mov->state.predicate = GEN_PREDICATE_NORMAL;
-        mov->state.flag = 0;
-        mov->state.subFlag = 1;
-      }
       if (simdWidth == 1) {
         mov->state.noMask = 1;
         mov->src(0) = GenRegister::retype(GenRegister::vec1(GEN_GENERAL_REGISTER_FILE, gr.reg()), gr.type);
@@ -2502,62 +2490,6 @@ namespace gbe
     return false;
   } 
 
-  bool Selection::Opaque::isSimpleBlock(const ir::BasicBlock &bb, uint32_t insnNum) {
-
-    // FIXME should include structured innermost if/else/endif
-    if(bb.belongToStructure)
-      return false;
-
-    // FIXME scalar reg should not be excluded and just need some special handling.
-    for (int32_t insnID = insnNum-1; insnID >= 0; --insnID) {
-      SelectionDAG &dag = *insnDAG[insnID];
-      const ir::Instruction& insn = dag.insn;
-      if ( (insn.getDstNum() && this->isScalarReg(insn.getDst(0)) == true) ||
-         insn.isMemberOf<ir::CompareInstruction>() ||
-         insn.isMemberOf<ir::SelectInstruction>() ||
-         insn.getOpcode() == ir::OP_SIMD_ANY ||
-         insn.getOpcode() == ir::OP_SIMD_ALL ||
-         insn.getOpcode() == ir::OP_ELSE)
-        return false;
-
-      // Most of the QWord(long) related instruction introduce some CMP or
-      // more than 10 actual instructions at latter stage.
-      if (hasQWord(insn))
-        return false;
-
-      // Unaligned load may introduce CMP instruction.
-      if ( insn.isMemberOf<ir::LoadInstruction>()) {
-        const ir::LoadInstruction &ld = ir::cast<ir::LoadInstruction>(insn);
-        if (!ld.isAligned())
-          return false;
-      }
-      //If dst is a bool reg, the insn may modify flag, can't use this flag
-      //as predication, so can't remove if/endif. For example ir:
-      //%or.cond1244 = or i1 %cmp.i338, %cmp2.i403
-      //%or.cond1245 = or i1 %or.cond1244, %cmp3.i405
-      //asm:
-      //(+f1.0) or.ne(16)       g20<1>:W        g9<8,8,1>:W     g1<8,8,1>:W
-      //(+f1.1) or.ne.f1.1(16)  g21<1>:W        g20<8,8,1>:W    g30<8,8,1>:W
-      //The second insn is error.
-      if(insn.getDstNum() && getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL)
-          return false;
-    }
-
-    // there would generate a extra CMP instruction for predicated BRA with extern flag,
-    // should retrun false to keep the if/endif.
-    if((insnDAG[insnNum-1]->insn.isMemberOf<ir::BranchInstruction>())){
-      if (insnDAG[insnNum-1]->insn.getOpcode() == ir::OP_BRA) {
-        const ir::BranchInstruction &insn = ir::cast<ir::BranchInstruction>(insnDAG[insnNum-1]->insn);
-        if(insn.isPredicated() && insnDAG[insnNum-1]->child[0] == NULL){
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
-
   uint32_t Selection::Opaque::buildBasicBlockDAG(const ir::BasicBlock &bb)
   {
     using namespace ir;
@@ -2644,8 +2576,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     // Bottom up code generation
     bool needEndif = this->block->hasBranch == false && !this->block->hasBarrier;
     needEndif = needEndif && bb.needEndif;
-    this->block->removeSimpleIfEndif = insnNum < 10 && isSimpleBlock(bb, insnNum);
-    if (needEndif && !this->block->removeSimpleIfEndif) {
+    if (needEndif) {
       if(!bb.needIf) // this basic block is the exit of a structure
         this->ENDIF(GenRegister::immd(0), bb.endifLabel, bb.endifLabel);
       else {
@@ -2667,12 +2598,6 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         // Start a new code fragment
         this->startBackwardGeneration();
 
-        if(this->block->removeSimpleIfEndif){
-          this->push();
-            this->curr.predicate = GEN_PREDICATE_NORMAL;
-            this->curr.flag = 0;
-            this->curr.subFlag = 1;
-        }
         // If there is no branch at the end of this block.
 
         // Try all the patterns from best to worst
@@ -2683,12 +2608,6 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         } while (it != end);
         GBE_ASSERT(it != end);
 
-        if(this->block->removeSimpleIfEndif){
-            this->curr.predicate = GEN_PREDICATE_NONE;
-            this->curr.flag = 0;
-            this->curr.subFlag = 1;
-          this->pop();
-        }
         // If we are in if/endif fix mode, and this block is
         // large enough, we need to insert endif/if pair to eliminate
         // the too long if/endif block.
@@ -6855,19 +6774,17 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
             sel.JMPI(GenRegister::immd(0), jip, label);
           sel.pop();
         }
-        if(!sel.block->removeSimpleIfEndif){
-          sel.push();
-            sel.curr.flag = 0;
-            sel.curr.subFlag = 1;
-            sel.curr.predicate = GEN_PREDICATE_NORMAL;
-            if(!insn.getParent()->needEndif && insn.getParent()->needIf) {
-              ir::LabelIndex label = insn.getParent()->endifLabel;
-              sel.IF(GenRegister::immd(0), label, label);
-            }
-            else
-              sel.IF(GenRegister::immd(0), sel.block->endifLabel, sel.block->endifLabel);
-          sel.pop();
-        }
+        sel.push();
+          sel.curr.flag = 0;
+          sel.curr.subFlag = 1;
+          sel.curr.predicate = GEN_PREDICATE_NORMAL;
+          if(!insn.getParent()->needEndif && insn.getParent()->needIf) {
+            ir::LabelIndex label = insn.getParent()->endifLabel;
+            sel.IF(GenRegister::immd(0), label, label);
+          }
+          else
+            sel.IF(GenRegister::immd(0), sel.block->endifLabel, sel.block->endifLabel);
+        sel.pop();
       }
 
       return true;
@@ -7427,7 +7344,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
           sel.setBlockIP(ip, dst.value());
           sel.curr.predicate = GEN_PREDICATE_NONE;
-          if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif)
+          if (!sel.block->hasBarrier)
             sel.ENDIF(GenRegister::immd(0), nextLabel);
           sel.block->endifOffset = -1;
         sel.pop();
@@ -7439,7 +7356,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         if(insn.getParent()->needEndif)
           sel.setBlockIP(ip, dst.value());
 
-        if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif) {
+        if (!sel.block->hasBarrier) {
           if(insn.getParent()->needEndif && !insn.getParent()->needIf)
             sel.ENDIF(GenRegister::immd(0), insn.getParent()->endifLabel, insn.getParent()->endifLabel);
           else if(insn.getParent()->needEndif)
@@ -7489,7 +7406,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           sel.setBlockIP(ip, dst.value());
           sel.block->endifOffset = -1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
-          if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif)
+          if (!sel.block->hasBarrier)
             sel.ENDIF(GenRegister::immd(0), next);
           sel.curr.execWidth = 1;
           if (simdWidth == 16)
@@ -7507,7 +7424,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         if(insn.getParent()->needEndif)
         sel.setBlockIP(ip, dst.value());
         sel.block->endifOffset = -1;
-        if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif) {
+        if (!sel.block->hasBarrier) {
           if(insn.getParent()->needEndif && !insn.getParent()->needIf)
             sel.ENDIF(GenRegister::immd(0), insn.getParent()->endifLabel, insn.getParent()->endifLabel);
           else if(insn.getParent()->needEndif)

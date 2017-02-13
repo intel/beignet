@@ -268,7 +268,6 @@ namespace gbe
     int endifOffset;
     bool hasBarrier;
     bool hasBranch;
-    bool removeSimpleIfEndif;
   };
 
   enum SEL_IR_OPT_FEATURE {
