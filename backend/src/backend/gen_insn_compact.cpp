@@ -804,6 +804,8 @@ namespace gbe {
     if( control_index == -1) return false;
     if( src0.negation + src1.negation + src2.negation > 1)
       return false;
+    if( src0.absolute + src1.absolute + src2.absolute > 0)
+      return false;
 
     GenCompactInstruction *insn = p->nextCompact(opcode);
     insn->src3Insn.bits1.control_index = control_index;
