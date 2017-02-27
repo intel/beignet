@@ -162,7 +162,10 @@ namespace gbe
     assert(insn.opcode == SEL_OP_MOV);
     const GenRegister& src = insn.src(0);
     const GenRegister& dst = insn.dst(0);
-    if (src.type != dst.type || src.file != dst.file || src.hstride != dst.hstride)
+    if (src.type != dst.type || src.file != dst.file)
+      return;
+
+    if (src.hstride != GEN_HORIZONTAL_STRIDE_0 && src.hstride != dst.hstride )
       return;
 
     if (liveout.find(dst.reg()) != liveout.end())
