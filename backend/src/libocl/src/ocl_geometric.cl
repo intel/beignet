@@ -100,10 +100,10 @@ OVERLOADABLE float fast_length(float x) { return __gen_ocl_fabs(x); }
 OVERLOADABLE float fast_length(float2 x) { return sqrt(dot(x,x)); }
 OVERLOADABLE float fast_length(float3 x) { return sqrt(dot(x,x)); }
 OVERLOADABLE float fast_length(float4 x) { return sqrt(dot(x,x)); }
-OVERLOADABLE float fast_distance(float x, float y) { return length(x-y); }
-OVERLOADABLE float fast_distance(float2 x, float2 y) { return length(x-y); }
-OVERLOADABLE float fast_distance(float3 x, float3 y) { return length(x-y); }
-OVERLOADABLE float fast_distance(float4 x, float4 y) { return length(x-y); }
+OVERLOADABLE float fast_distance(float x, float y) { return fast_length(x-y); }
+OVERLOADABLE float fast_distance(float2 x, float2 y) { return fast_length(x-y); }
+OVERLOADABLE float fast_distance(float3 x, float3 y) { return fast_length(x-y); }
+OVERLOADABLE float fast_distance(float4 x, float4 y) { return fast_length(x-y); }
 OVERLOADABLE float fast_normalize(float x) { return x > 0 ? 1.f : (x < 0 ? -1.f : 0.f); }
 OVERLOADABLE float2 fast_normalize(float2 x) { return x * rsqrt(dot(x, x)); }
 OVERLOADABLE float3 fast_normalize(float3 x) { return x * rsqrt(dot(x, x)); }
