@@ -16,6 +16,7 @@
  *
  */
 #include "ocl_relational.h"
+#include "ocl_float.h"
 
 OVERLOADABLE int isequal(float x, float y) {
   return x == y;
@@ -143,6 +144,70 @@ OVERLOADABLE int signbit(half x) {
   union { ushort u; half h; } u;
   u.h = x;
   return u.u >> 15;
+}
+
+OVERLOADABLE int isequal(double x, double y) {
+  return x == y;
+}
+
+OVERLOADABLE int isnotequal(double x, double y) {
+  return x != y;
+}
+
+OVERLOADABLE int isgreater(double x, double y) {
+  return x > y;
+}
+
+OVERLOADABLE int isgreaterequal(double x, double y) {
+  return x >= y;
+}
+
+OVERLOADABLE int isless(double x, double y) {
+  return x < y;
+}
+
+OVERLOADABLE int islessequal(double x, double y) {
+  return x <= y;
+}
+
+OVERLOADABLE int islessgreater(double x, double y) {
+   return (x < y) || (x > y);
+}
+
+OVERLOADABLE int isfinite(double x) {
+  union { ulong u; double f; } u;
+  u.f = x;
+  return (u.u & DF_ABS_MASK) < DF_POSITIVE_INF;
+}
+
+OVERLOADABLE int isinf(double x) {
+  union { ulong u; double f; } u;
+  u.f = x;
+  return (u.u & DF_ABS_MASK) == DF_POSITIVE_INF;
+}
+
+OVERLOADABLE int isnan(double x) {
+  long lx = as_long(x);
+  return ((lx & DF_EXP_MASK) == DF_POSITIVE_INF) && (lx & DF_MAN_MASK);
+}
+
+OVERLOADABLE int isnormal(double x) {
+  union { ulong u; double f; } u;
+  u.f = x;
+  u.u &= DF_ABS_MASK;
+  return (u.u < DF_POSITIVE_INF) && (u.u >= DF_MIN_NORMAL);
+}
+
+OVERLOADABLE int isordered(double x, double y) {
+  return isequal(x, x) && isequal(y, y);
+}
+OVERLOADABLE int isunordered(double x, double y) {
+  return isnan(x) || isnan(y);
+}
+OVERLOADABLE int signbit(double x) {
+  union { ulong u; double f; } u;
+  u.f = x;
+  return u.u >> 63;
 }
 
 
