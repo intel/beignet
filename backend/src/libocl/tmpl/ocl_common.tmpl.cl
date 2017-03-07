@@ -26,6 +26,9 @@ PURE CONST OVERLOADABLE float __gen_ocl_fmax(float a, float b);
 PURE CONST OVERLOADABLE float __gen_ocl_fmin(float a, float b);
 PURE CONST OVERLOADABLE float __gen_ocl_lrp(float a, float b, float c);
 
+PURE CONST OVERLOADABLE double __gen_ocl_fmax(double a, double b);
+PURE CONST OVERLOADABLE double __gen_ocl_fmin(double a, double b);
+
 OVERLOADABLE float step(float edge, float x) {
   return x < edge ? 0.0 : 1.0;
 }
@@ -118,3 +121,24 @@ OVERLOADABLE half sign(half x) {
   s = (x == (half)0.0) ? s : r;
   return isnan(x) ? 0.0 : s;
 }
+
+OVERLOADABLE double step(double edge, double x)
+{
+    return x < edge ? 0.0 : 1.0;
+}
+
+OVERLOADABLE double max(double a, double b)
+{
+    return __gen_ocl_fmax(a, b);
+}
+
+OVERLOADABLE double min(double a, double b)
+{
+    return __gen_ocl_fmin(a, b);
+}
+
+OVERLOADABLE double mix(double x, double y, double a)
+{
+    return x + (y-x)*a;
+}
+
