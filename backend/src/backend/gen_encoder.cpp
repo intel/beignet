@@ -192,6 +192,10 @@ namespace gbe
     if (isSrcDstDiffSpan(dst, src0) == true) return true;
     if (isSrcDstDiffSpan(dst, src1) == true) return true;
 
+    return p->needToSplitCmpBySrcType(p, src0, src1);
+  }
+
+  bool GenEncoder::needToSplitCmpBySrcType(GenEncoder *p, GenRegister src0, GenRegister src1) {
     if (src0.type == GEN_TYPE_D || src0.type == GEN_TYPE_UD || src0.type == GEN_TYPE_F)
       return true;
     if (src1.type == GEN_TYPE_D || src1.type == GEN_TYPE_UD || src1.type == GEN_TYPE_F)

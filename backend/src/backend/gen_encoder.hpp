@@ -162,6 +162,7 @@ namespace gbe
     void BRD(GenRegister src);
     /*! Compare instructions */
     void CMP(uint32_t conditional, GenRegister src0, GenRegister src1, GenRegister dst = GenRegister::null());
+    virtual bool needToSplitCmpBySrcType(GenEncoder *p, GenRegister src0, GenRegister src1);
     /*! Select with embedded compare (like sel.le ...) */
     void SEL_CMP(uint32_t conditional, GenRegister dst, GenRegister src0, GenRegister src1);
     /*! EOT is used to finish GPGPU threads */
