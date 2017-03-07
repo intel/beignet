@@ -203,6 +203,9 @@ DEF(long); DEF(ulong)
 OVERLOADABLE float bitselect(float a, float b, float c) {
   return as_float(bitselect(as_int(a), as_int(b), as_int(c)));
 }
+OVERLOADABLE double bitselect(double a, double b, double c) {
+  return as_double(bitselect(as_long(a), as_long(b), as_long(c)));
+}
 
 
 // select

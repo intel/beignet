@@ -113,6 +113,7 @@ DEF(long) DEF(ulong)
 #undef DEF
 OVERLOADABLE float bitselect(float a, float b, float c);
 OVERLOADABLE half bitselect(half a, half b, half c);
+OVERLOADABLE double bitselect(double a, double b, double c);
 
 
 #define DEF(TYPE1, TYPE2) \
