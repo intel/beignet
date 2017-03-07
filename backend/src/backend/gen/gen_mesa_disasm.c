@@ -1546,7 +1546,7 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
                    data_port_data_cache_byte_scattered_simd_mode[BYTE_RW_SIMD_MODE(inst)],
                    data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
                    data_port_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
-            else if(UNTYPED_RW_MSG_TYPE(inst) == 0 || UNTYPED_RW_MSG_TYPE(inst) == 8)
+            else if(UNTYPED_RW_MSG_TYPE(inst) == 0 || UNTYPED_RW_MSG_TYPE(inst) == 1 || UNTYPED_RW_MSG_TYPE(inst) == 8)
               format(file, " (bti: %d, data size: %s, %s, %s)",
                    UNTYPED_RW_BTI(inst),
                    data_port_data_cache_block_size[OWORD_RW_BLOCK_SIZE(inst)],
