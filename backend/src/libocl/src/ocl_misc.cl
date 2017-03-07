@@ -92,6 +92,7 @@ DEF(uint)
 DEF(float)
 DEF(long)
 DEF(ulong)
+DEF(double)
 #undef DEF
 #undef DEFMASK
 #undef DEC2
@@ -206,6 +207,7 @@ DEF(uint)
 DEF(float)
 DEF(long)
 DEF(ulong)
+DEF(double)
 #undef DEF
 #undef DEFMASK
 #undef DEC2
