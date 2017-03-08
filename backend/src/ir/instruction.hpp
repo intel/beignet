@@ -646,6 +646,8 @@ namespace ir {
     uint8_t getImageIndex() const;
     uint8_t getVectorSize() const;
     Type getType(void) const;
+    uint8_t getWidth() const;
+    uint8_t getHeight() const;
   };
 
   /*! Media Block Write.  */
@@ -893,7 +895,7 @@ namespace ir {
   /*! printf */
   Instruction PRINTF(Register dst, Tuple srcTuple, Tuple typeTuple, uint8_t srcNum, uint8_t bti, uint16_t num);
   /*! media block read */
-  Instruction MBREAD(uint8_t imageIndex, Tuple dst, uint8_t vec_size, Tuple coord, uint8_t srcNum, Type type);
+  Instruction MBREAD(uint8_t imageIndex, Tuple dst, uint8_t vec_size, Tuple coord, uint8_t srcNum, Type type, uint8_t width, uint8_t height);
   /*! media block write */
   Instruction MBWRITE(uint8_t imageIndex, Tuple srcTuple, uint8_t srcNum, uint8_t vec_size, Type type);
 } /* namespace ir */

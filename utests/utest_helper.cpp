@@ -939,6 +939,26 @@ int cl_check_subgroups_short(void)
   return 1;
 }
 
+int cl_check_media_block_io(void)
+{
+  if (!cl_check_subgroups())
+    return 0;
+  std::string extStr;
+  size_t param_value_size;
+  OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_EXTENSIONS, 0, 0, &param_value_size);
+  std::vector<char> param_value(param_value_size);
+  OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_EXTENSIONS, param_value_size,
+           param_value.empty() ? NULL : &param_value.front(), &param_value_size);
+  if (!param_value.empty())
+    extStr = std::string(&param_value.front(), param_value_size-1);
+
+  if (std::strstr(extStr.c_str(), "cl_intel_media_block_io") == NULL) {
+    printf("No cl_intel_media_block_io, Skip!");
+    return 0;
+  }
+  return 1;
+}
+
 int cl_check_ocl20(bool or_beignet)
 {
   size_t param_value_size;

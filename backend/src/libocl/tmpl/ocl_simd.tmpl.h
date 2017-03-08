@@ -250,3 +250,20 @@ OVERLOADABLE void intel_sub_group_block_write_us(image2d_t image, int2 byte_coor
 OVERLOADABLE void intel_sub_group_block_write_us2(image2d_t image, int2 byte_coord, ushort2 data);
 OVERLOADABLE void intel_sub_group_block_write_us4(image2d_t image, int2 byte_coord, ushort4 data);
 OVERLOADABLE void intel_sub_group_block_write_us8(image2d_t image, int2 byte_coord, ushort8 data);
+
+OVERLOADABLE uchar intel_sub_group_media_block_read_uc(int2 src_byte_offset, int width, int height, read_only image2d_t image);
+OVERLOADABLE uchar2 intel_sub_group_media_block_read_uc2(int2 src_byte_offset, int width, int height, read_only image2d_t image);
+OVERLOADABLE uchar4 intel_sub_group_media_block_read_uc4(int2 src_byte_offset, int width, int height, read_only image2d_t image);
+OVERLOADABLE uchar8 intel_sub_group_media_block_read_uc8(int2 src_byte_offset, int width, int height, read_only image2d_t image);
+OVERLOADABLE uchar16 intel_sub_group_media_block_read_uc16(int2 src_byte_offset, int width, int height, read_only image2d_t image);
+
+OVERLOADABLE ushort intel_sub_group_media_block_read_us(int2 src_byte_offset, int width, int height, read_only image2d_t image);
+OVERLOADABLE ushort2 intel_sub_group_media_block_read_us2(int2 src_byte_offset, int width, int height, read_only image2d_t image);
+OVERLOADABLE ushort4 intel_sub_group_media_block_read_us4(int2 src_byte_offset, int width, int height, read_only image2d_t image);
+OVERLOADABLE ushort8 intel_sub_group_media_block_read_us8(int2 src_byte_offset, int width, int height, read_only image2d_t image);
+OVERLOADABLE ushort16 intel_sub_group_media_block_read_us16(int2 src_byte_offset, int width, int height, read_only image2d_t image);
+
+OVERLOADABLE uint intel_sub_group_media_block_read_ui(int2 src_byte_offset, int width, int height, read_only image2d_t image);
+OVERLOADABLE uint2 intel_sub_group_media_block_read_ui2(int2 src_byte_offset, int width, int height, read_only image2d_t image);
+OVERLOADABLE uint4 intel_sub_group_media_block_read_ui4(int2 src_byte_offset, int width, int height, read_only image2d_t image);
+OVERLOADABLE uint8 intel_sub_group_media_block_read_ui8(int2 src_byte_offset, int width, int height, read_only image2d_t image);

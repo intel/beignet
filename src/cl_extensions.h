@@ -30,6 +30,7 @@
   DECL_EXT(intel_motion_estimation) \
   DECL_EXT(intel_subgroups) \
   DECL_EXT(intel_subgroups_short) \
+  DECL_EXT(intel_media_block_io) \
   DECL_EXT(intel_planar_yuv)
 
 #define DECL_GL_EXTENSIONS \

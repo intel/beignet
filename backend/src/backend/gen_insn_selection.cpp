@@ -7808,6 +7808,27 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     }
   };
 
+  static uint32_t fixBlockSize(uint8_t width, uint8_t height, uint32_t vec_size,
+                               uint32_t typeSize, uint32_t simdWidth,
+                               uint32_t &block_width) {
+    uint32_t blocksize = 0;
+    if (width && height) {
+      if (width * height * typeSize > vec_size * simdWidth * typeSize) {
+        if (width <= simdWidth * vec_size) {
+          height = vec_size * simdWidth / width;
+        } else {
+          height = 1;
+          width = vec_size * simdWidth / height;
+        }
+      }
+    } else {
+      width = simdWidth;
+      height = vec_size;
+    }
+    block_width = typeSize * (width < simdWidth ? width : simdWidth);
+    blocksize = (block_width - 1) % 32 | (height - 1) << 16;
+    return blocksize;
+  }
   /*! Media Block Read pattern */
   DECL_PATTERN(MediaBlockReadInstruction)
   {
@@ -7817,19 +7838,26 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       uint32_t vec_size = insn.getVectorSize();
       uint32_t simdWidth = sel.curr.execWidth;
       const Type type = insn.getType();
-      const uint32_t typeSize = type == TYPE_U32 ? 4 : 2;
+      uint32_t typeSize = 0;
+      if(type == TYPE_U32) {
+        typeSize = 4;
+      }else if(type == TYPE_U16) {
+        typeSize = 2;
+      }else if(type == TYPE_U8) {
+        typeSize = 1;
+      }else
+        NOT_IMPLEMENTED;
       uint32_t response_size = simdWidth * vec_size * typeSize / 32;
       // ushort in simd8 will have half reg thus 0.5 reg size, but response lenght is still 1
       response_size = response_size ? response_size : 1;
-      uint32_t block_width = typeSize * simdWidth;
-      uint32_t blocksize = (block_width - 1) % 32 | (vec_size - 1) << 16;
-
+      uint32_t block_width = 0;
+      uint32_t blocksize = fixBlockSize(insn.getWidth(), insn.getHeight(), vec_size, typeSize, simdWidth, block_width);
 
       vector<GenRegister> valuesVec;
       vector<GenRegister> tmpVec;
       for (uint32_t i = 0; i < vec_size; ++i) {
         valuesVec.push_back(sel.selReg(insn.getDst(i), type));
-        if(simdWidth == 16 && typeSize == 4)
+        if((simdWidth == 16 && typeSize == 4) || typeSize == 1)
           tmpVec.push_back(GenRegister::ud8grf(sel.reg(FAMILY_REG)));
       }
       const GenRegister coordx = GenRegister::toUniform(sel.selReg(insn.getSrc(0), TYPE_U32), GEN_TYPE_UD);
@@ -7855,15 +7883,23 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         sel.MOV(blocksizereg, GenRegister::immud(blocksize));
       sel.pop();
 
-      if (simdWidth * typeSize < 64) {
+      if (block_width < 64) {
         sel.push();
           sel.curr.execWidth = 8;
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.curr.noMask = 1;
           // Now read the data
-          sel.MBREAD(&valuesVec[0], vec_size, header, insn.getImageIndex(), response_size);
+          if(typeSize == 1) {
+            sel.MBREAD(&tmpVec[0], vec_size, header, insn.getImageIndex(), response_size);
+            for (uint32_t i = 0; i < vec_size; i++) {
+              sel.MOV(valuesVec[i], sel.getOffsetReg(GenRegister::retype(tmpVec[0], GEN_TYPE_UB), 0, i*simdWidth));
+              sel.MOV(sel.getOffsetReg(valuesVec[i], 0, 16), sel.getOffsetReg(GenRegister::retype(tmpVec[0], GEN_TYPE_UB), 0, i*simdWidth + 8));
+            }
+          }else
+            sel.MBREAD(&valuesVec[0], vec_size, header, insn.getImageIndex(), response_size);
+
         sel.pop();
-      } else if (simdWidth * typeSize == 64) {
+      } else if (block_width == 64) {
         sel.push();
           sel.curr.execWidth = 8;
           sel.curr.predicate = GEN_PREDICATE_NONE;

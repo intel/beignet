@@ -723,6 +723,11 @@ namespace gbe {
           case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE2:
           case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE4:
           case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE8:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE16:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE2:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE4:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE8:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE16:
             setAppendPoint(call);
             extractFromVector(call);
             break;

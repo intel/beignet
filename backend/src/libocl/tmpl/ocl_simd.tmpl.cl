@@ -262,41 +262,61 @@ OVERLOADABLE void intel_sub_group_block_write_ui8(global uint* p,uint8 data)
   __gen_ocl_sub_group_block_write_ui_mem8(p, data);
 }
 
-PURE CONST uint __gen_ocl_sub_group_block_read_ui_image(image2d_t p, int x, int y);
-PURE CONST uint2 __gen_ocl_sub_group_block_read_ui_image2(image2d_t p, int x, int y);
-PURE CONST uint4 __gen_ocl_sub_group_block_read_ui_image4(image2d_t p, int x, int y);
-PURE CONST uint8 __gen_ocl_sub_group_block_read_ui_image8(image2d_t p, int x, int y);
+PURE CONST uint __gen_ocl_sub_group_block_read_ui_image(image2d_t p, int x, int y, int w, int h);
+PURE CONST uint2 __gen_ocl_sub_group_block_read_ui_image2(image2d_t p, int x, int y, int w, int h);
+PURE CONST uint4 __gen_ocl_sub_group_block_read_ui_image4(image2d_t p, int x, int y, int w, int h);
+PURE CONST uint8 __gen_ocl_sub_group_block_read_ui_image8(image2d_t p, int x, int y, int w, int h);
 OVERLOADABLE uint intel_sub_group_block_read(image2d_t p, int2 cord)
 {
-  return __gen_ocl_sub_group_block_read_ui_image(p, cord.x, cord.y);
+  return __gen_ocl_sub_group_block_read_ui_image(p, cord.x, cord.y, 0, 0);
 }
 OVERLOADABLE uint2 intel_sub_group_block_read2(image2d_t p, int2 cord)
 {
-  return __gen_ocl_sub_group_block_read_ui_image2(p, cord.x, cord.y);
+  return __gen_ocl_sub_group_block_read_ui_image2(p, cord.x, cord.y, 0, 0);
 }
 OVERLOADABLE uint4 intel_sub_group_block_read4(image2d_t p, int2 cord)
 {
-  return __gen_ocl_sub_group_block_read_ui_image4(p, cord.x, cord.y);
+  return __gen_ocl_sub_group_block_read_ui_image4(p, cord.x, cord.y, 0, 0);
 }
 OVERLOADABLE uint8 intel_sub_group_block_read8(image2d_t p, int2 cord)
 {
-  return __gen_ocl_sub_group_block_read_ui_image8(p, cord.x, cord.y);
+  return __gen_ocl_sub_group_block_read_ui_image8(p, cord.x, cord.y, 0, 0);
 }
 OVERLOADABLE uint intel_sub_group_block_read_ui(image2d_t p, int2 cord)
 {
-  return __gen_ocl_sub_group_block_read_ui_image(p, cord.x, cord.y);
+  return __gen_ocl_sub_group_block_read_ui_image(p, cord.x, cord.y, 0, 0);
 }
 OVERLOADABLE uint2 intel_sub_group_block_read_ui2(image2d_t p, int2 cord)
 {
-  return __gen_ocl_sub_group_block_read_ui_image2(p, cord.x, cord.y);
+  return __gen_ocl_sub_group_block_read_ui_image2(p, cord.x, cord.y, 0, 0);
 }
 OVERLOADABLE uint4 intel_sub_group_block_read_ui4(image2d_t p, int2 cord)
 {
-  return __gen_ocl_sub_group_block_read_ui_image4(p, cord.x, cord.y);
+  return __gen_ocl_sub_group_block_read_ui_image4(p, cord.x, cord.y, 0, 0);
 }
 OVERLOADABLE uint8 intel_sub_group_block_read_ui8(image2d_t p, int2 cord)
 {
-  return __gen_ocl_sub_group_block_read_ui_image8(p, cord.x, cord.y);
+  return __gen_ocl_sub_group_block_read_ui_image8(p, cord.x, cord.y, 0, 0);
+}
+
+OVERLOADABLE uint intel_sub_group_media_block_read_ui(int2 src_byte_offset, int width, int height, read_only image2d_t image)
+{
+  return __gen_ocl_sub_group_block_read_ui_image(image, src_byte_offset.x, src_byte_offset.y, width, height);
+}
+
+OVERLOADABLE uint2 intel_sub_group_media_block_read_ui2(int2 src_byte_offset, int width, int height, read_only image2d_t image)
+{
+  return __gen_ocl_sub_group_block_read_ui_image2(image, src_byte_offset.x, src_byte_offset.y, width, height);
+}
+
+OVERLOADABLE uint4 intel_sub_group_media_block_read_ui4(int2 src_byte_offset, int width, int height, read_only image2d_t image)
+{
+  return __gen_ocl_sub_group_block_read_ui_image4(image, src_byte_offset.x, src_byte_offset.y, width, height);
+}
+
+OVERLOADABLE uint8 intel_sub_group_media_block_read_ui8(int2 src_byte_offset, int width, int height, read_only image2d_t image)
+{
+  return __gen_ocl_sub_group_block_read_ui_image8(image, src_byte_offset.x, src_byte_offset.y, width, height);
 }
 
 void __gen_ocl_sub_group_block_write_ui_image(image2d_t p, int x, int y, uint data);
@@ -378,25 +398,51 @@ OVERLOADABLE void intel_sub_group_block_write_us8(global ushort* p,ushort8 data)
   __gen_ocl_sub_group_block_write_us_mem8(p, data);
 }
 
-PURE CONST ushort __gen_ocl_sub_group_block_read_us_image(image2d_t p, int x, int y);
-PURE CONST ushort2 __gen_ocl_sub_group_block_read_us_image2(image2d_t p, int x, int y);
-PURE CONST ushort4 __gen_ocl_sub_group_block_read_us_image4(image2d_t p, int x, int y);
-PURE CONST ushort8 __gen_ocl_sub_group_block_read_us_image8(image2d_t p, int x, int y);
+PURE CONST ushort __gen_ocl_sub_group_block_read_us_image(image2d_t p, int x, int y, int w, int h);
+PURE CONST ushort2 __gen_ocl_sub_group_block_read_us_image2(image2d_t p, int x, int y, int w, int h);
+PURE CONST ushort4 __gen_ocl_sub_group_block_read_us_image4(image2d_t p, int x, int y, int w, int h);
+PURE CONST ushort8 __gen_ocl_sub_group_block_read_us_image8(image2d_t p, int x, int y, int w, int h);
+PURE CONST ushort16 __gen_ocl_sub_group_block_read_us_image16(image2d_t p, int x, int y, int w, int h);
 OVERLOADABLE ushort intel_sub_group_block_read_us(image2d_t p, int2 cord)
 {
-  return __gen_ocl_sub_group_block_read_us_image(p, cord.x, cord.y);
+  return __gen_ocl_sub_group_block_read_us_image(p, cord.x, cord.y, 0, 0);
 }
 OVERLOADABLE ushort2 intel_sub_group_block_read_us2(image2d_t p, int2 cord)
 {
-  return __gen_ocl_sub_group_block_read_us_image2(p, cord.x, cord.y);
+  return __gen_ocl_sub_group_block_read_us_image2(p, cord.x, cord.y, 0, 0);
 }
 OVERLOADABLE ushort4 intel_sub_group_block_read_us4(image2d_t p, int2 cord)
 {
-  return __gen_ocl_sub_group_block_read_us_image4(p, cord.x, cord.y);
+  return __gen_ocl_sub_group_block_read_us_image4(p, cord.x, cord.y, 0, 0);
 }
 OVERLOADABLE ushort8 intel_sub_group_block_read_us8(image2d_t p, int2 cord)
 {
-  return __gen_ocl_sub_group_block_read_us_image8(p, cord.x, cord.y);
+  return __gen_ocl_sub_group_block_read_us_image8(p, cord.x, cord.y, 0, 0);
+}
+
+OVERLOADABLE ushort intel_sub_group_media_block_read_us(int2 src_byte_offset, int width, int height, read_only image2d_t image)
+{
+  return __gen_ocl_sub_group_block_read_us_image(image, src_byte_offset.x, src_byte_offset.y, width, height);
+}
+
+OVERLOADABLE ushort2 intel_sub_group_media_block_read_us2(int2 src_byte_offset, int width, int height, read_only image2d_t image)
+{
+  return __gen_ocl_sub_group_block_read_us_image2(image, src_byte_offset.x, src_byte_offset.y, width, height);
+}
+
+OVERLOADABLE ushort4 intel_sub_group_media_block_read_us4(int2 src_byte_offset, int width, int height, read_only image2d_t image)
+{
+  return __gen_ocl_sub_group_block_read_us_image4(image, src_byte_offset.x, src_byte_offset.y, width, height);
+}
+
+OVERLOADABLE ushort8 intel_sub_group_media_block_read_us8(int2 src_byte_offset, int width, int height, read_only image2d_t image)
+{
+  return __gen_ocl_sub_group_block_read_us_image8(image, src_byte_offset.x, src_byte_offset.y, width, height);
+}
+
+OVERLOADABLE ushort16 intel_sub_group_media_block_read_us16(int2 src_byte_offset, int width, int height, read_only image2d_t image)
+{
+  return __gen_ocl_sub_group_block_read_us_image16(image, src_byte_offset.x, src_byte_offset.y, width, height);
 }
 
 void __gen_ocl_sub_group_block_write_us_image(image2d_t p, int x, int y, ushort data);
@@ -419,6 +465,37 @@ OVERLOADABLE void intel_sub_group_block_write_us8(image2d_t p, int2 cord, ushort
 {
   __gen_ocl_sub_group_block_write_us_image8(p, cord.x, cord.y, data);
 }
+
+PURE CONST uchar __gen_ocl_sub_group_block_read_uc_image(image2d_t p, int x, int y, int w, int h);
+PURE CONST uchar2 __gen_ocl_sub_group_block_read_uc_image2(image2d_t p, int x, int y, int w, int h);
+PURE CONST uchar4 __gen_ocl_sub_group_block_read_uc_image4(image2d_t p, int x, int y, int w, int h);
+PURE CONST uchar8 __gen_ocl_sub_group_block_read_uc_image8(image2d_t p, int x, int y, int w, int h);
+PURE CONST uchar16 __gen_ocl_sub_group_block_read_uc_image16(image2d_t p, int x, int y, int w, int h);
+OVERLOADABLE uchar intel_sub_group_media_block_read_uc(int2 src_byte_offset, int width, int height, read_only image2d_t image)
+{
+  return __gen_ocl_sub_group_block_read_uc_image(image, src_byte_offset.x, src_byte_offset.y, width, height);
+}
+
+OVERLOADABLE uchar2 intel_sub_group_media_block_read_uc2(int2 src_byte_offset, int width, int height, read_only image2d_t image)
+{
+  return __gen_ocl_sub_group_block_read_uc_image2(image, src_byte_offset.x, src_byte_offset.y, width, height);
+}
+
+OVERLOADABLE uchar4 intel_sub_group_media_block_read_uc4(int2 src_byte_offset, int width, int height, read_only image2d_t image)
+{
+  return __gen_ocl_sub_group_block_read_uc_image4(image, src_byte_offset.x, src_byte_offset.y, width, height);
+}
+
+OVERLOADABLE uchar8 intel_sub_group_media_block_read_uc8(int2 src_byte_offset, int width, int height, read_only image2d_t image)
+{
+  return __gen_ocl_sub_group_block_read_uc_image8(image, src_byte_offset.x, src_byte_offset.y, width, height);
+}
+
+OVERLOADABLE uchar16 intel_sub_group_media_block_read_uc16(int2 src_byte_offset, int width, int height, read_only image2d_t image)
+{
+  return __gen_ocl_sub_group_block_read_uc_image16(image, src_byte_offset.x, src_byte_offset.y, width, height);
+}
+
 #define SHUFFLE_DOWN(TYPE) \
 OVERLOADABLE TYPE intel_sub_group_shuffle_down(TYPE x, TYPE y, uint c) { \
   TYPE res0, res1; \

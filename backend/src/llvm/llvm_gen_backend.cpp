@@ -737,6 +737,7 @@ namespace gbe
     // Emit subgroup instructions
     void emitBlockReadWriteMemInst(CallInst &I, CallSite &CS, bool isWrite, uint8_t vec_size, ir::Type = ir::TYPE_U32);
     void emitBlockReadWriteImageInst(CallInst &I, CallSite &CS, bool isWrite, uint8_t vec_size, ir::Type = ir::TYPE_U32);
+    void checkMediaBlockWidthandHeight(CallInst &I, uint8_t width, uint8_t height, uint8_t vec_size, ir::Type type);
 
     uint8_t appendSampler(CallSite::arg_iterator AI);
     uint8_t getImageID(CallInst &I);
@@ -4059,6 +4060,12 @@ namespace gbe
       case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE2:
       case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE4:
       case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE8:
+      case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE16:
+      case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE:
+      case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE2:
+      case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE4:
+      case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE8:
+      case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE16:
       case GEN_OCL_ENQUEUE_SET_NDRANGE_INFO:
       case GEN_OCL_ENQUEUE_GET_NDRANGE_INFO:
         this->newRegister(&I);
@@ -4463,6 +4470,61 @@ namespace gbe
     GBE_ASSERT(AI == AE);
   }
 
+  void GenWriter::checkMediaBlockWidthandHeight(CallInst& I, uint8_t width, uint8_t height, uint8_t vec_size, ir::Type type) {
+    if (width == 0) {
+      has_errors = true;
+      Func->getContext().emitError(&I,"Media Block width value illegal, width is:" + width);
+      ctx.getUnit().setValid(false);
+      return;
+    }
+    if (height == 0) {
+      has_errors = true;
+      Func->getContext().emitError(&I,"Media Block height value illegal, height is:" + height);
+      ctx.getUnit().setValid(false);
+      return;
+    }
+    uint32_t typeSize;
+    if (type == ir::TYPE_U8)
+      typeSize = 1;
+    else if (type == ir::TYPE_U16)
+      typeSize = 2;
+    else
+      typeSize = 4;
+
+    uint32_t widthBytes = width * typeSize;
+
+    uint32_t maxRows;
+    if (widthBytes <= 4)
+      maxRows = 64;
+    else if (widthBytes <= 8)
+      maxRows = 32;
+    else if (widthBytes <= 16)
+      maxRows = 16;
+    else
+      maxRows = 8;
+
+    if (widthBytes % 4 != 0) {
+      has_errors = true;
+      Func->getContext().emitError(&I,"Media Block widthBytes value illegal, widthBytes is:" + widthBytes);
+      ctx.getUnit().setValid(false);
+      return;
+    }
+
+    if ((typeSize == 4 && widthBytes > 64) || (typeSize != 4 && widthBytes > 32)) {
+      has_errors = true;
+      Func->getContext().emitError(&I,"Media Block widthBytes value illegal, widthBytes is:" + widthBytes);
+      ctx.getUnit().setValid(false);
+      return;
+    }
+
+    if (height > maxRows) {
+      has_errors = true;
+      Func->getContext().emitError(&I,"Media Block height value illegal, height is larger than: "  + maxRows);
+      ctx.getUnit().setValid(false);
+      return;
+    }
+  }
+
   void GenWriter::emitBlockReadWriteImageInst(CallInst &I, CallSite &CS, bool isWrite, uint8_t vec_size, ir::Type type) {
     CallSite::arg_iterator AI = CS.arg_begin();
     CallSite::arg_iterator AE = CS.arg_end();
@@ -4489,7 +4551,20 @@ namespace gbe
         dstTupleData.push_back(getRegister(&I, i));
       const ir::Tuple srctuple = ctx.arrayTuple(src, 2);
       const ir::Tuple dsttuple = ctx.arrayTuple(&dstTupleData[0], vec_size);
-      ctx.MBREAD(imageID, dsttuple, vec_size, srctuple, 2, type);
+      Constant *CWidth = dyn_cast<Constant>(*AI++);
+      GBE_ASSERT(CWidth != NULL);
+      const ir::Immediate &width = processConstantImm(CWidth);
+      Constant *CHeight = dyn_cast<Constant>(*AI++);
+      GBE_ASSERT(CHeight != NULL);
+      const ir::Immediate &height = processConstantImm(CHeight);
+      // check width and height legality.
+      if (width.getIntegerValue() != 0 || height.getIntegerValue() != 0) {
+        checkMediaBlockWidthandHeight(I, width.getIntegerValue(), height.getIntegerValue(), vec_size, type);
+        if(!ctx.getUnit().getValid())
+          return;
+      }
+      //map w * h region to simd_size
+      ctx.MBREAD(imageID, dsttuple, vec_size, srctuple, 2, type, width.getIntegerValue(), height.getIntegerValue());
     }
 
     GBE_ASSERT(AI == AE);
@@ -5473,6 +5548,18 @@ namespace gbe
             this->emitBlockReadWriteImageInst(I, CS, false, 4, ir::TYPE_U16); break;
           case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE8:
             this->emitBlockReadWriteImageInst(I, CS, false, 8, ir::TYPE_U16); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE16:
+            this->emitBlockReadWriteImageInst(I, CS, false, 16, ir::TYPE_U16); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE:
+            this->emitBlockReadWriteImageInst(I, CS, false, 1, ir::TYPE_U8); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE2:
+            this->emitBlockReadWriteImageInst(I, CS, false, 2, ir::TYPE_U8); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE4:
+            this->emitBlockReadWriteImageInst(I, CS, false, 4, ir::TYPE_U8); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE8:
+            this->emitBlockReadWriteImageInst(I, CS, false, 8, ir::TYPE_U8); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE16:
+            this->emitBlockReadWriteImageInst(I, CS, false, 16, ir::TYPE_U8); break;
           case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE:
             this->emitBlockReadWriteImageInst(I, CS, true, 1, ir::TYPE_U16); break;
           case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE2:

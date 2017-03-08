@@ -124,6 +124,7 @@
 #define cl_intel_subgroups
 #define cl_intel_subgroups_short
 #define cl_intel_planar_yuv
+#define cl_intel_media_block_io
 
 #pragma OPENCL EXTENSION cl_khr_fp64 : disable
 #pragma OPENCL EXTENSION cl_khr_fp16 : disable
