@@ -179,6 +179,7 @@ set (utests_sources
   compiler_subgroup_image_block_read.cpp
   compiler_subgroup_image_block_write.cpp
   compiler_subgroup_media_block_read.cpp
+  compiler_subgroup_media_block_write.cpp
   compiler_async_stride_copy.cpp
   compiler_insn_selection_min.cpp
   compiler_insn_selection_max.cpp
