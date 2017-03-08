@@ -3992,14 +3992,18 @@ namespace gbe
       case GEN_OCL_SAT_CONV_I32_TO_I16:
       case GEN_OCL_SAT_CONV_U32_TO_I16:
       case GEN_OCL_SAT_CONV_F32_TO_I16:
+      case GEN_OCL_SAT_CONV_F64_TO_I16:
       case GEN_OCL_SAT_CONV_I16_TO_U16:
       case GEN_OCL_SAT_CONV_I32_TO_U16:
       case GEN_OCL_SAT_CONV_U32_TO_U16:
       case GEN_OCL_SAT_CONV_F32_TO_U16:
+      case GEN_OCL_SAT_CONV_F64_TO_U16:
       case GEN_OCL_SAT_CONV_U32_TO_I32:
       case GEN_OCL_SAT_CONV_F32_TO_I32:
+      case GEN_OCL_SAT_CONV_F64_TO_I32:
       case GEN_OCL_SAT_CONV_I32_TO_U32:
       case GEN_OCL_SAT_CONV_F32_TO_U32:
+      case GEN_OCL_SAT_CONV_F64_TO_U32:
       case GEN_OCL_SAT_CONV_F16_TO_I8:
       case GEN_OCL_SAT_CONV_F16_TO_U8:
       case GEN_OCL_SAT_CONV_F16_TO_I16:
@@ -5314,6 +5318,8 @@ namespace gbe
             DEF(ir::TYPE_S16, ir::TYPE_U32);
           case GEN_OCL_SAT_CONV_F32_TO_I16:
             DEF(ir::TYPE_S16, ir::TYPE_FLOAT);
+          case GEN_OCL_SAT_CONV_F64_TO_I16:
+            DEF(ir::TYPE_S16, ir::TYPE_DOUBLE);
           case GEN_OCL_SAT_CONV_I16_TO_U16:
             DEF(ir::TYPE_U16, ir::TYPE_S16);
           case GEN_OCL_SAT_CONV_I32_TO_U16:
@@ -5322,14 +5328,20 @@ namespace gbe
             DEF(ir::TYPE_U16, ir::TYPE_U32);
           case GEN_OCL_SAT_CONV_F32_TO_U16:
             DEF(ir::TYPE_U16, ir::TYPE_FLOAT);
+          case GEN_OCL_SAT_CONV_F64_TO_U16:
+            DEF(ir::TYPE_U16, ir::TYPE_DOUBLE);
           case GEN_OCL_SAT_CONV_U32_TO_I32:
             DEF(ir::TYPE_S32, ir::TYPE_U32);
           case GEN_OCL_SAT_CONV_F32_TO_I32:
             DEF(ir::TYPE_S32, ir::TYPE_FLOAT);
+          case GEN_OCL_SAT_CONV_F64_TO_I32:
+            DEF(ir::TYPE_S32, ir::TYPE_DOUBLE);
           case GEN_OCL_SAT_CONV_I32_TO_U32:
             DEF(ir::TYPE_U32, ir::TYPE_S32);
           case GEN_OCL_SAT_CONV_F32_TO_U32:
             DEF(ir::TYPE_U32, ir::TYPE_FLOAT);
+          case GEN_OCL_SAT_CONV_F64_TO_U32:
+            DEF(ir::TYPE_U32, ir::TYPE_DOUBLE);
           case GEN_OCL_SAT_CONV_F16_TO_I8:
             DEF(ir::TYPE_S8, ir::TYPE_HALF);
           case GEN_OCL_SAT_CONV_F16_TO_U8:

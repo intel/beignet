@@ -138,14 +138,18 @@ DEF(short, ushort);
 DEF(short, int);
 DEF(short, uint);
 DEF(short, float);
+DEF(short, double);
 DEF(ushort, short);
 DEF(ushort, int);
 DEF(ushort, uint);
 DEF(ushort, float);
+DEF(ushort, double);
 DEF(int, uint);
 DEF(int, float);
+DEF(int, double);
 DEF(uint, int);
 DEF(uint, float);
+DEF(uint, double);
 DEF(char, half);
 DEF(uchar, half);
 DEF(short, half);
@@ -195,6 +199,10 @@ fi
 echo '
 DEF(long, float, -0x1.0p63, 0x1.0p63, 0x8000000000000000, 0x7fffffffffffffff);
 DEF(ulong, float, 0, 0x1.0p64, 0, 0xffffffffffffffff);
+DEF(char, double, -0x1.0p7, 0x1.0p7,  0x80, 0x7F);
+DEF(uchar, double, 0, 0x1.0p8, 0, 0xFF);
+DEF(long, double, -0x1.0p63, 0x1.0p63, 0x8000000000000000, 0x7FFFFFFFFFFFFFFF);
+DEF(ulong, double, 0, 0x1.0p64, 0, 0xFFFFFFFFFFFFFFFF);
 #undef DEF
 '
 
@@ -335,7 +343,7 @@ for vector_length in $VECTOR_LENGTHS; do
 
     for ftype in $TYPES; do
 	fbasetype=`IFS=:; set -- dummy $ftype; echo $2`
-	if test $fbasetype = "double"; then continue; fi
+	#if test $fbasetype = "double"; then continue; fi
 
 	for ttype in $TYPES; do
 	    tbasetype=`IFS=:; set -- dummy $ttype; echo $2`
