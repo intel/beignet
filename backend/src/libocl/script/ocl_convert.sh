@@ -27,6 +27,9 @@ if [ $1"a" = "-pa" ]; then
     echo
 else
     echo "#include \"ocl_convert.h\""
+    echo "#include \"ocl_float.h\""
+    echo "#include \"ocl_as.h\""
+    echo "#include \"ocl_integer.h\""
     echo
 fi
 
@@ -546,6 +549,53 @@ OVERLOADABLE float __convert_float_rtn(uint x)
 {
     return __convert_float_rtz(x);
 }
+
+OVERLOADABLE long convert_long_rtn(double x)
+{
+	int iexp;
+	long ret;
+	ulong lval = as_ulong(x);
+	uint sign = (lval & DF_SIGN_MASK) >> DF_SIGN_OFFSET;
+	int exp = ((lval & DF_EXP_MASK) >> DF_EXP_OFFSET) - DF_EXP_BIAS;
+	ulong ma = (lval &DF_MAN_MASK);
+
+	ulong ldata = ma |DF_IMPLICITE_ONE;
+	uint shift = abs(exp -DF_EXP_OFFSET);
+	ulong ldataL = ldata << shift;
+	ulong ldataR = ldata >> shift;
+	ret    = (exp > DF_EXP_OFFSET) ? ldataL:ldataR;
+	ret    = (exp >= 0) ? ret:0;
+	iexp = (exp >= 0) ? exp:0;
+
+	ret = sign ? -ret:ret;
+	shift = convert_uint_sat(DF_EXP_OFFSET - iexp);
+	long mask = (1L << shift) - 1;
+	ret = ((ma & mask) || (exp < 0)) ? ret -sign:ret;
+	ret = (lval & DF_ABS_MASK) ? ret:0;
+
+	return ret;
+}
+
+OVERLOADABLE ulong convert_ulong_rtn(double x)
+{
+	int iexp;
+	long ret;
+	long lval = as_long(x);
+	int exp = ((lval & DF_EXP_MASK) >> DF_EXP_OFFSET) - DF_EXP_BIAS;
+	long ma = (lval &DF_MAN_MASK);
+
+	ulong ldata = ma |DF_IMPLICITE_ONE;
+	int shift = abs(exp -DF_EXP_OFFSET);
+	ulong ldataL = ldata << shift;
+	ulong ldataR = ldata >> shift;
+	ret    = (exp > DF_EXP_OFFSET) ? ldataL:ldataR;
+	ret    = (exp >= 0) ? ret:0;
+	iexp = (exp >= 0) ? exp:0;
+	ret    = (lval & DF_ABS_MASK) ? ret:0;
+
+	return ret;
+}
+
 '
 fi
 
@@ -553,7 +603,7 @@ fi
 for vector_length in $VECTOR_LENGTHS; do
     for ftype in $TYPES; do
 	fbasetype=`IFS=:; set -- dummy $ftype; echo $2`
-	if test $fbasetype = "double"; then continue; fi
+	#if test $fbasetype = "double"; then continue; fi
 
 	for ttype in $TYPES; do
 	    tbasetype=`IFS=:; set -- dummy $ttype; echo $2`
@@ -596,6 +646,8 @@ for vector_length in $VECTOR_LENGTHS; do
 			echo "{ return __gen_ocl_rndd(x); }"
 		    elif [ "$fbasetype" = "int" -o "$fbasetype" = "uint" -o "$fbasetype" = "long" -o "$fbasetype" = "ulong" ] && [ "$tbasetype" = "float" ]; then
 			echo "{ return __convert_${tbasetype}_rtn(x); }"
+		    elif [ "$fbasetype" = "double" ]; then
+			echo ";"
 		    else
 			echo "{ return x; }"
 		    fi
