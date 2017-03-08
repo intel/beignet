@@ -7940,12 +7940,20 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       uint32_t simdWidth = sel.curr.execWidth;
       const uint32_t genType = type == TYPE_U32 ? GEN_TYPE_UD : GEN_TYPE_UW;
       const RegisterFamily family = getFamily(type);
-      const uint32_t typeSize = type == TYPE_U32 ? 4 : 2;
+      uint32_t typeSize = 0;
+      if(type == TYPE_U32) {
+        typeSize = 4;
+      }else if(type == TYPE_U16) {
+        typeSize = 2;
+      }else if(type == TYPE_U8) {
+        typeSize = 1;
+      }else
+        NOT_IMPLEMENTED;
       // ushort in simd8 will have half reg, but data lenght is still 1
       uint32_t data_size = simdWidth * vec_size * typeSize / 32;
       data_size = data_size? data_size : 1;
-      uint32_t block_width = typeSize * simdWidth;
-      uint32_t blocksize = (block_width - 1) % 32 | (vec_size - 1) << 16;
+      uint32_t block_width = 0;
+      uint32_t blocksize = fixBlockSize(insn.getWidth(), insn.getHeight(), vec_size, typeSize, simdWidth, block_width);
 
 
       vector<GenRegister> valuesVec;
@@ -7980,7 +7988,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         sel.MOV(blocksizereg, GenRegister::immud(blocksize));
       sel.pop();
 
-      if (simdWidth * typeSize < 64) {
+      if (block_width < 64) {
         for (uint32_t i = 0; i < vec_size; ++i) {
             sel.MOV(tmpVec[i], valuesVec[i]);
         }
@@ -7989,9 +7997,16 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.curr.noMask = 1;
           // Now write the data
-          sel.MBWRITE(header, &tmpVec[0], vec_size, insn.getImageIndex(), data_size);
+          if(typeSize == 1) {
+            for (uint32_t i = 0; i < vec_size; i++) {
+                sel.MOV(sel.getOffsetReg(GenRegister::retype(tmpVec[0], GEN_TYPE_UB), 0, i*simdWidth), valuesVec[i]);
+                sel.MOV(sel.getOffsetReg(GenRegister::retype(tmpVec[0], GEN_TYPE_UB), 0, i*simdWidth + 8), sel.getOffsetReg(valuesVec[i], 0, 16) );
+            }
+            sel.MBWRITE(header, &tmpVec[0], vec_size, insn.getImageIndex(), data_size);
+          } else
+            sel.MBWRITE(header, &tmpVec[0], vec_size, insn.getImageIndex(), data_size);
         sel.pop();
-      } else if (simdWidth * typeSize == 64) {
+      } else if (block_width == 64) {
         sel.push();
           sel.curr.execWidth = 8;
           sel.curr.predicate = GEN_PREDICATE_NONE;

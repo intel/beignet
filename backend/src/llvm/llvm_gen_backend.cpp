@@ -4121,6 +4121,12 @@ namespace gbe
       case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE2:
       case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE4:
       case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE8:
+      case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE16:
+      case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UC_IMAGE:
+      case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UC_IMAGE2:
+      case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UC_IMAGE4:
+      case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UC_IMAGE8:
+      case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UC_IMAGE16:
         break;
       case GEN_OCL_NOT_FOUND:
       default:
@@ -4537,11 +4543,25 @@ namespace gbe
       vector<ir::Register> srcTupleData;
       srcTupleData.push_back(getRegister(*(AI++)));
       srcTupleData.push_back(getRegister(*(AI++)));
+      Constant *CWidth = dyn_cast<Constant>(*AI++);
+      GBE_ASSERT(CWidth != NULL);
+      const ir::Immediate &width = processConstantImm(CWidth);
+      Constant *CHeight = dyn_cast<Constant>(*AI++);
+      GBE_ASSERT(CHeight != NULL);
+      const ir::Immediate &height = processConstantImm(CHeight);
+      const uint8_t iwidth = width.getIntegerValue();
+      const uint8_t iheight = height.getIntegerValue();
+      // check width and height legality.
+      if (iwidth != 0 || iheight!= 0) {
+        checkMediaBlockWidthandHeight(I, iwidth, iheight, vec_size, type);
+        if(!ctx.getUnit().getValid())
+          return;
+      }
       for(int i = 0;i < vec_size; i++)
         srcTupleData.push_back(getRegister(*(AI), i));
       AI++;
       const ir::Tuple srctuple = ctx.arrayTuple(&srcTupleData[0], 2 + vec_size);
-      ctx.MBWRITE(imageID, srctuple, 2 + vec_size, vec_size, type);
+      ctx.MBWRITE(imageID, srctuple, 2 + vec_size, vec_size, type, iwidth, iheight);
     } else {
       ir::Register src[2];
       src[0] = getRegister(*(AI++));
@@ -5568,6 +5588,18 @@ namespace gbe
             this->emitBlockReadWriteImageInst(I, CS, true, 4, ir::TYPE_U16); break;
           case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE8:
             this->emitBlockReadWriteImageInst(I, CS, true, 8, ir::TYPE_U16); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE16:
+            this->emitBlockReadWriteImageInst(I, CS, true, 16, ir::TYPE_U16); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UC_IMAGE:
+            this->emitBlockReadWriteImageInst(I, CS, true, 1, ir::TYPE_U8); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UC_IMAGE2:
+            this->emitBlockReadWriteImageInst(I, CS, true, 2, ir::TYPE_U8); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UC_IMAGE4:
+            this->emitBlockReadWriteImageInst(I, CS, true, 4, ir::TYPE_U8); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UC_IMAGE8:
+            this->emitBlockReadWriteImageInst(I, CS, true, 8, ir::TYPE_U8); break;
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UC_IMAGE16:
+            this->emitBlockReadWriteImageInst(I, CS, true, 16, ir::TYPE_U8); break;
           case GEN_OCL_GET_PIPE:
           case GEN_OCL_MAKE_RID:
           case GEN_OCL_GET_RID:

@@ -231,6 +231,11 @@ OVERLOADABLE void intel_sub_group_block_write_ui2(image2d_t image, int2 byte_coo
 OVERLOADABLE void intel_sub_group_block_write_ui4(image2d_t image, int2 byte_coord, uint4 data);
 OVERLOADABLE void intel_sub_group_block_write_ui8(image2d_t image, int2 byte_coord, uint8 data);
 
+OVERLOADABLE void intel_sub_group_media_block_write_ui(int2 src_byte_offset, int width, int height, uint texels, image2d_t image);
+OVERLOADABLE void intel_sub_group_media_block_write_ui2(int2 src_byte_offset, int width, int height, uint2 texels, image2d_t image);
+OVERLOADABLE void intel_sub_group_media_block_write_ui4(int2 src_byte_offset, int width, int height, uint4 texels, image2d_t image);
+OVERLOADABLE void intel_sub_group_media_block_write_ui8(int2 src_byte_offset, int width, int height, uint8 texels, image2d_t image);
+
 OVERLOADABLE ushort intel_sub_group_block_read_us(const global ushort* p);
 OVERLOADABLE ushort2 intel_sub_group_block_read_us2(const global ushort* p);
 OVERLOADABLE ushort4 intel_sub_group_block_read_us4(const global ushort* p);
@@ -250,6 +255,18 @@ OVERLOADABLE void intel_sub_group_block_write_us(image2d_t image, int2 byte_coor
 OVERLOADABLE void intel_sub_group_block_write_us2(image2d_t image, int2 byte_coord, ushort2 data);
 OVERLOADABLE void intel_sub_group_block_write_us4(image2d_t image, int2 byte_coord, ushort4 data);
 OVERLOADABLE void intel_sub_group_block_write_us8(image2d_t image, int2 byte_coord, ushort8 data);
+
+OVERLOADABLE void intel_sub_group_media_block_write_uc(int2 src_byte_offset, int width, int height, uchar texels, image2d_t image);
+OVERLOADABLE void intel_sub_group_media_block_write_uc2(int2 src_byte_offset, int width, int height, uchar2 texels, image2d_t image);
+OVERLOADABLE void intel_sub_group_media_block_write_uc4(int2 src_byte_offset, int width, int height, uchar4 texels, image2d_t image);
+OVERLOADABLE void intel_sub_group_media_block_write_uc8(int2 src_byte_offset, int width, int height, uchar8 texels, image2d_t image);
+OVERLOADABLE void intel_sub_group_media_block_write_uc16(int2 src_byte_offset, int width, int height, uchar16 texels, image2d_t image);
+
+OVERLOADABLE void intel_sub_group_media_block_write_us(int2 src_byte_offset, int width, int height, ushort texels, image2d_t image);
+OVERLOADABLE void intel_sub_group_media_block_write_us2(int2 src_byte_offset, int width, int height, ushort2 texels, image2d_t image);
+OVERLOADABLE void intel_sub_group_media_block_write_us4(int2 src_byte_offset, int width, int height, ushort4 texels, image2d_t image);
+OVERLOADABLE void intel_sub_group_media_block_write_us8(int2 src_byte_offset, int width, int height, ushort8 texels, image2d_t image);
+OVERLOADABLE void intel_sub_group_media_block_write_us16(int2 src_byte_offset, int width, int height, ushort16 texels, image2d_t image);
 
 OVERLOADABLE uchar intel_sub_group_media_block_read_uc(int2 src_byte_offset, int width, int height, read_only image2d_t image);
 OVERLOADABLE uchar2 intel_sub_group_media_block_read_uc2(int2 src_byte_offset, int width, int height, read_only image2d_t image);
