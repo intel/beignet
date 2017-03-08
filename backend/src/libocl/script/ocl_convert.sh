@@ -550,6 +550,41 @@ OVERLOADABLE float __convert_float_rtn(uint x)
     return __convert_float_rtz(x);
 }
 
+OVERLOADABLE int convert_int_rtn(double x)
+{
+	int ret, iexp ;
+	long lval = as_long(x);
+	if((lval & DF_ABS_MASK) == 0) return 0;
+
+	uint sign = (lval & DF_SIGN_MASK) >> DF_SIGN_OFFSET;
+	int exp = ((lval & DF_EXP_MASK) >> DF_EXP_OFFSET) - DF_EXP_BIAS;
+	ulong ma = (lval &DF_MAN_MASK);
+
+	long intPart = (ma |DF_IMPLICITE_ONE)>> (DF_EXP_OFFSET -exp);
+	ret = (int)intPart;
+	iexp = (exp < 0) ? 0:exp;
+	ret = (exp < 0) ? 0:ret;
+	ret = sign ? -ret:ret;
+	long mask = (1L << (DF_EXP_OFFSET -iexp)) - 1;
+	ret = ((ma & mask) || (exp < 0)) ? ret -sign:ret;
+
+	return ret;
+}
+
+OVERLOADABLE uint convert_uint_rtn(double x)
+{
+	uint ret, iexp ;
+	long lval = as_long(x);
+	int exp = ((lval & DF_EXP_MASK) >> DF_EXP_OFFSET) - DF_EXP_BIAS;
+	long ma = (lval &DF_MAN_MASK);
+
+	long intPart = (ma |DF_IMPLICITE_ONE)>> (DF_EXP_OFFSET -exp);
+	ret = (int)intPart;
+	ret = (exp < 0) ? 0:ret;
+
+	return ret;
+}
+
 OVERLOADABLE long convert_long_rtn(double x)
 {
 	int iexp;
