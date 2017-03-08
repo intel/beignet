@@ -550,6 +550,26 @@ OVERLOADABLE float __convert_float_rtn(uint x)
     return __convert_float_rtz(x);
 }
 
+OVERLOADABLE char convert_char_rtn(double x)
+{
+	return (char)convert_int_rtn(x);
+}
+
+OVERLOADABLE uchar convert_uchar_rtn(double x)
+{
+	return (uchar)convert_int_rtn(x);
+}
+
+OVERLOADABLE short convert_short_rtn(double x)
+{
+	return (short)convert_int_rtn(x);
+}
+
+OVERLOADABLE ushort convert_ushort_rtn(double x)
+{
+	return (ushort)convert_int_rtn(x);
+}
+
 OVERLOADABLE int convert_int_rtn(double x)
 {
 	int ret, iexp ;
