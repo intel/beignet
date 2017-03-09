@@ -713,6 +713,15 @@ OVERLOADABLE ulong convert_ulong_rte(double x)
 '
 fi
 
+ITYPES="int:4 uint:4 short:2 ushort:2 char:1 uchar:1"
+for ttype in $ITYPES; do
+	tbasetype=`IFS=:; set -- dummy $ttype; echo $2`
+	if [ $1"a" != "-pa" ]; then
+	echo "OVERLOADABLE $tbasetype convert_${tbasetype}_rte(double x)"
+	echo "{ return ($tbasetype)convert_long_rte(x);}"
+	fi
+done
+
 # convert_DSTTYPE_ROUNDING function
 for vector_length in $VECTOR_LENGTHS; do
     for ftype in $TYPES; do
