@@ -108,4 +108,9 @@ INLINE_OVERLOADABLE int __ocl_finitef (float x){
 #define DF_SIGN_OFFSET 63
 #define DF_EXP_BIAS 1023
 
+#define SF_POSITIVE_INF 0x7F800000
+#define SF_NAN 0x7FFFFFFF
+
+#define M_PI 3.1415926535897384626
+
 #endif /* __OCL_FLOAT_H__ */

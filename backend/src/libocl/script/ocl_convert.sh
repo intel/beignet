@@ -651,6 +651,32 @@ OVERLOADABLE ulong convert_ulong_rtn(double x)
 	return ret;
 }
 
+OVERLOADABLE float  convert_float_rtn(double x)
+{
+	int ret, tmp;
+	long lval = as_long(x);
+	int exp = ((lval & DF_EXP_MASK) >> DF_EXP_OFFSET) - DF_EXP_BIAS;
+	int sign = (lval & DF_SIGN_MASK)?1:0;
+
+	ret = sign;
+	ret = (lval & DF_ABS_MASK) ? ret:0;
+	tmp = 0x1000000 >> (23 - (exp + 149));
+	ret = (exp < -126) ? tmp:ret;
+	long ma = (lval &DF_MAN_MASK);
+	tmp = (lval & DF_MAN_MASK) ? SF_NAN:SF_POSITIVE_INF;
+	ret = (exp == 1024) ? tmp:ret;
+	tmp = SF_POSITIVE_INF;
+	ret = (exp > 127) ? tmp:ret;
+	ret = (lval & DF_ABS_MASK) ? ret:0;
+	tmp = ((exp + 127) << 23) |convert_int(ma >> 29);
+	if((ma & 0x1FFFFFFF) && sign) tmp += 1;
+	ret = ((exp >= -126) && (exp <= 127)) ? tmp:ret;
+	ret |= (sign << 31);
+	float ftemp = as_float(ret);
+
+	return ftemp;
+}
+
 '
 fi
 
