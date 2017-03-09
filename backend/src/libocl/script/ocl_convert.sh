@@ -677,6 +677,39 @@ OVERLOADABLE float  convert_float_rtn(double x)
 	return ftemp;
 }
 
+OVERLOADABLE long convert_long_rte(double x)
+{
+	long lval = as_long(x);
+	long ret = convert_ulong_rte(x);
+	ret = (lval & DF_SIGN_MASK) ? -ret:ret;
+
+	return ret;
+}
+
+OVERLOADABLE ulong convert_ulong_rte(double x)
+{
+	ulong ret;
+	long lval = as_long(x);
+	if((lval & DF_ABS_MASK) == 0) return 0;
+
+	int exp = ((lval & DF_EXP_MASK) >> DF_EXP_OFFSET) - DF_EXP_BIAS;
+	long ma = (lval & DF_MAN_MASK);
+	uint shift = abs(exp -DF_EXP_OFFSET);
+	long absVal = (ma |DF_IMPLICITE_ONE);
+	ret = absVal << shift;
+	long tmp = absVal >> shift;
+	int lastBit = tmp & 0x1;
+	long mask = (1L << shift) - 1;
+	long roundBit = (1L << (shift -1));
+	long diff = (mask & absVal) - roundBit;
+	tmp = (diff == 0) ? tmp + lastBit:tmp;
+	tmp = (diff > 0) ? tmp+1:tmp;
+
+	ret = (exp < 52) ? tmp:ret;
+	ret = (exp < -1) ? 0:ret;
+
+	return ret;
+}
 '
 fi
 
@@ -697,6 +730,10 @@ for vector_length in $VECTOR_LENGTHS; do
 		    echo "OVERLOADABLE $tbasetype convert_${tbasetype}_rtp($fbasetype x);"
 		    echo "OVERLOADABLE $tbasetype convert_${tbasetype}_rtn($fbasetype x);"
 		else
+		    if [ "$fbasetype" = "double" ]; then
+		        continue;
+		    fi
+
 		    echo "OVERLOADABLE $tbasetype convert_${tbasetype}_rte($fbasetype x)"
 		    if test $fbasetype = "float" -a $tbasetype != "float"; then
 			echo "{ return __gen_ocl_rnde(x); }"
@@ -727,8 +764,6 @@ for vector_length in $VECTOR_LENGTHS; do
 			echo "{ return __gen_ocl_rndd(x); }"
 		    elif [ "$fbasetype" = "int" -o "$fbasetype" = "uint" -o "$fbasetype" = "long" -o "$fbasetype" = "ulong" ] && [ "$tbasetype" = "float" ]; then
 			echo "{ return __convert_${tbasetype}_rtn(x); }"
-		    elif [ "$fbasetype" = "double" ]; then
-			echo ";"
 		    else
 			echo "{ return x; }"
 		    fi
