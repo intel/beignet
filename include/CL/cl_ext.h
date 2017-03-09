@@ -243,6 +243,13 @@ typedef struct _cl_motion_estimation_desc_intel {
 #define CL_ME_SEARCH_PATH_RADIUS_4_4_INTEL              0x1
 #define CL_ME_SEARCH_PATH_RADIUS_16_12_INTEL            0x5
 
+#define CL_MEM_NO_ACCESS_INTEL                          (1 << 24)
+#define CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL          (1 << 25)
+
+#define CL_NV12_INTEL                                   0x410E
+#define CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL            0x417E
+#define CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL           0x417F
+
 extern CL_API_ENTRY cl_accelerator_intel CL_API_CALL
 clCreateAcceleratorINTEL(
     cl_context                  /* context */,

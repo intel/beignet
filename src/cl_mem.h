@@ -143,6 +143,8 @@ struct _cl_mem_image {
   size_t offset;                  /* offset for dri_bo, used when it's reloc. */
   cl_mem buffer_1d;               /* if the image is created from buffer, it point to the buffer.*/
   uint8_t is_image_from_buffer;       /* IMAGE from Buffer*/
+  cl_mem nv12_image;               /* if the image is created from nv12 Image, it point to the image.*/
+  uint8_t is_image_from_nv12_image;       /* IMAGE from NV12 Image*/
 };
 
 struct _cl_mem_gl_image {

@@ -267,6 +267,7 @@
 #define I965_SURFACEFORMAT_R16G16B16_SNORM                0x19D 
 #define I965_SURFACEFORMAT_R16G16B16_SSCALED              0x19E 
 #define I965_SURFACEFORMAT_R16G16B16_USCALED              0x19F
+#define I965_SURFACEFORMAT_PLANAR_420_8                   0x1A5
 #define I965_SURFACEFORMAT_RAW                            0x1FF
 
 #define I965_MAPFILTER_NEAREST        0x0 

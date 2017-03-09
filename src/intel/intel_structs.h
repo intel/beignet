@@ -310,29 +310,22 @@ typedef struct gen8_surface_state
   } ss5;
 
   struct {
-    union {
       union {
         struct {
           uint32_t aux_surface_mode:3;
           uint32_t aux_surface_pitch:9;
           uint32_t pad3:4;
+          uint32_t aux_sruface_qpitch:15;
+          uint32_t pad2:1;
         };
-        struct {
-          uint32_t uv_plane_y_offset:14;
-          uint32_t pad2:2;
-        };
-      };
 
       struct {
-        uint32_t uv_plane_x_offset:14;
-        uint32_t pad1:1;
-        uint32_t seperate_uv_plane_enable:1;
+        uint32_t uv_plane_y_offset : 14;
+        uint32_t pad1 : 2;
+        uint32_t uv_plane_x_offset : 14;
+        uint32_t pad0 : 2;
       };
-      struct {
-        uint32_t aux_sruface_qpitch:15;
-        uint32_t pad0:1;
       };
-    };
   } ss6;
 
   struct {

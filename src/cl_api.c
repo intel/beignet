@@ -134,7 +134,7 @@ clCreateImage(cl_context context,
     goto error;
   }
   if (image_format->image_channel_order < CL_R ||
-          image_format->image_channel_order > CL_sBGRA) {
+          (image_format->image_channel_order > CL_sBGRA && image_format->image_channel_order != CL_NV12_INTEL)) {
     err = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
     goto error;
   }
@@ -162,6 +162,13 @@ clCreateImage(cl_context context,
     goto error;
   }
   if (image_desc->num_mip_levels || image_desc->num_samples) {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
+
+  if (image_format->image_channel_order == CL_NV12_INTEL &&
+      (image_format->image_channel_data_type != CL_UNORM_INT8 ||
+       image_desc->image_width % 4 || image_desc->image_height % 4)) {
     err = CL_INVALID_IMAGE_DESCRIPTOR;
     goto error;
   }

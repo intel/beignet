@@ -152,6 +152,7 @@ cl_mem_allocate(enum cl_mem_type type,
   mem->cmrt_mem = NULL;
   if (mem->type == CL_MEM_IMAGE_TYPE) {
     cl_mem_image(mem)->is_image_from_buffer = 0;
+    cl_mem_image(mem)->is_image_from_nv12_image = 0;
   }
 
   if (sz != 0) {
@@ -230,7 +231,11 @@ cl_mem_allocate(enum cl_mem_type type,
       }
       // if the image if created from buffer, should use the bo directly to share same bo.
       mem->bo = buffer->bo;
-      cl_mem_image(mem)->is_image_from_buffer = 1;
+      if (IS_IMAGE(buffer) && cl_mem_image(buffer)->fmt.image_channel_order == CL_NV12_INTEL) {
+        cl_mem_image(mem)->is_image_from_nv12_image = 1;
+      } else {
+        cl_mem_image(mem)->is_image_from_buffer = 1;
+      }
       bufCreated = 1;
     }
 
@@ -827,7 +832,7 @@ _cl_mem_new_image(cl_context ctx,
       h = (w + ctx->devices[0]->image2d_max_width - 1) / ctx->devices[0]->image2d_max_width;
       w = w > ctx->devices[0]->image2d_max_width ? ctx->devices[0]->image2d_max_width : w;
       tiling = CL_NO_TILE;
-    } else if(image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL) {
+    } else if(image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL && !IS_IMAGE(buffer)) {
       tiling = CL_NO_TILE;
     } else if (cl_driver_get_ver(ctx->drv) != 6) {
       /* Pick up tiling mode (we do only linear on SNB) */
@@ -873,6 +878,9 @@ _cl_mem_new_image(cl_context ctx,
     assert(0);
 
 #undef DO_IMAGE_ERROR
+  if (fmt->image_channel_order == CL_NV12_INTEL) {
+    h += h/2;
+  }
 
   uint8_t enableUserptr = 0;
   if (enable_true_hostptr && ctx->devices[0]->host_unified_memory && data != NULL && (flags & CL_MEM_USE_HOST_PTR)) {
@@ -894,7 +902,7 @@ _cl_mem_new_image(cl_context ctx,
       aligned_pitch = pitch;
     //no need align the height if 2d image from buffer.
     //the pitch should be same with buffer's pitch as they share same bo.
-    if (image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL) {
+    if (image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL && !IS_IMAGE(buffer)) {
       if(aligned_pitch < pitch) {
         aligned_pitch = pitch;
       }
@@ -911,7 +919,7 @@ _cl_mem_new_image(cl_context ctx,
   }
 
   sz = aligned_pitch * aligned_h * depth;
-  if (image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL)  {
+  if (image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL && !IS_IMAGE(buffer))  {
     //image 2d created from buffer: per spec, the buffer sz maybe larger than the image 2d.
     if (buffer->size >= sz)
       sz = buffer->size;
@@ -979,6 +987,11 @@ _cl_mem_new_image(cl_context ctx,
       cl_mem_copy_image(cl_mem_image(mem), pitch, slice_pitch, data);
   }
 
+  /* copy yuv data if required */
+  if(fmt->image_channel_order == CL_NV12_INTEL && data) {
+      cl_mem_copy_image(cl_mem_image(mem), pitch, slice_pitch, data);
+  }
+
 exit:
   if (errcode_ret)
     *errcode_ret = err;
@@ -987,6 +1000,121 @@ error:
   cl_mem_delete(mem);
   mem = NULL;
   goto exit;
+}
+
+static cl_mem
+_cl_mem_new_image_from_nv12_image(cl_context ctx,
+                              cl_mem_flags flags,
+                              const cl_image_format* image_format,
+                              const cl_image_desc *image_desc,
+                              cl_int *errcode_ret)
+{
+  cl_mem image = NULL;
+  cl_mem imageIn = image_desc->mem_object;
+  cl_int err = CL_SUCCESS;
+  *errcode_ret = err;
+  uint32_t bpp;
+  uint32_t intel_fmt = INTEL_UNSUPPORTED_FORMAT;
+  size_t width = 0;
+  size_t height = 0;
+  size_t depth = 0;
+
+  /* Get the size of each pixel */
+  if (UNLIKELY((err = cl_image_byte_per_pixel(image_format, &bpp)) != CL_SUCCESS))
+    goto error;
+
+  /* Only a sub-set of the formats are supported */
+  intel_fmt = cl_image_get_intel_format(image_format);
+  if (UNLIKELY(intel_fmt == INTEL_UNSUPPORTED_FORMAT)) {
+    err = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+    goto error;
+  }
+
+  if(imageIn == NULL) {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
+
+  if (cl_mem_image(imageIn)->fmt.image_channel_order != CL_NV12_INTEL ||
+      (image_format->image_channel_order != CL_R &&
+       image_format->image_channel_order != CL_RG) ||
+      image_format->image_channel_data_type != CL_UNORM_INT8) {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
+
+  width = cl_mem_image(imageIn)->w;
+  if (image_desc->image_depth == 0) {
+    height = cl_mem_image(imageIn)->h * 2 / 3;
+  } else if (image_desc->image_depth == 1) {
+    width = cl_mem_image(imageIn)->w / 2;
+    height = cl_mem_image(imageIn)->h / 3;
+  } else {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
+
+  //flags check here.
+  if ((flags & CL_MEM_USE_HOST_PTR) || (flags & CL_MEM_ALLOC_HOST_PTR) ||
+      (flags & CL_MEM_COPY_HOST_PTR)) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (!(imageIn->flags & CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL)) {
+    if (((flags & CL_MEM_READ_WRITE) || (flags & CL_MEM_READ_ONLY)) &&
+        (imageIn->flags & CL_MEM_WRITE_ONLY)) {
+      err = CL_INVALID_VALUE;
+      goto error;
+    }
+    if (((flags & CL_MEM_READ_WRITE) || (flags & CL_MEM_WRITE_ONLY)) &&
+        (imageIn->flags | CL_MEM_READ_ONLY)) {
+      err = CL_INVALID_VALUE;
+      goto error;
+    }
+    if (((flags & CL_MEM_READ_WRITE) || (flags & CL_MEM_WRITE_ONLY) ||(flags & CL_MEM_READ_ONLY)) &&
+        (imageIn->flags & CL_MEM_NO_ACCESS_INTEL)) {
+      err = CL_INVALID_VALUE;
+      goto error;
+    }
+    if ((flags & CL_MEM_HOST_READ_ONLY) &&
+        (imageIn->flags & CL_MEM_HOST_WRITE_ONLY)) {
+      err = CL_INVALID_VALUE;
+      goto error;
+    }
+    if ((flags & CL_MEM_HOST_WRITE_ONLY) &&
+        (imageIn->flags & CL_MEM_HOST_READ_ONLY)) {
+      err = CL_INVALID_VALUE;
+      goto error;
+    }
+    if (((flags & CL_MEM_HOST_READ_ONLY) || (flags & CL_MEM_HOST_WRITE_ONLY)) &&
+        (imageIn->flags & CL_MEM_HOST_NO_ACCESS)) {
+      err = CL_INVALID_VALUE;
+      goto error;
+    }
+  }
+
+  image = _cl_mem_new_image(ctx, flags, image_format, image_desc->image_type,
+                            width, height, depth, cl_mem_image(imageIn)->row_pitch,
+                            0, NULL,
+                            imageIn, errcode_ret);
+  if (image == NULL)
+    return NULL;
+
+
+  if (image_desc->image_depth == 1) {
+    cl_mem_image(image)->offset = cl_mem_image(imageIn)->row_pitch * height * 2;
+  }
+  cl_mem_image(image)->nv12_image = imageIn;
+  cl_mem_add_ref(imageIn);
+  return image;
+
+error:
+  if (image)
+    cl_mem_delete(image);
+  image = NULL;
+  *errcode_ret = err;
+  return image;
 }
 
 static cl_mem
@@ -1034,7 +1162,7 @@ _cl_mem_new_image_from_buffer(cl_context ctx,
     goto error;
   }
   if ((buffer->flags & CL_MEM_READ_ONLY) &&
-      (flags & (CL_MEM_READ_WRITE|CL_MEM_WRITE_ONLY))) {
+      (flags & (CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY))) {
     err = CL_INVALID_VALUE;
     goto error;
   }
@@ -1169,9 +1297,14 @@ cl_mem_new_image(cl_context context,
                              image_desc->image_row_pitch, image_desc->image_slice_pitch,
                              host_ptr, NULL, errcode_ret);
   case CL_MEM_OBJECT_IMAGE2D:
-    if(image_desc->buffer)
-      return _cl_mem_new_image_from_buffer(context, flags, image_format,
-                             image_desc, errcode_ret);
+    if (image_desc->buffer) {
+      if (IS_IMAGE(image_desc->buffer)) {
+        return _cl_mem_new_image_from_nv12_image(context, flags, image_format,
+                                             image_desc, errcode_ret);
+      } else
+        return _cl_mem_new_image_from_buffer(context, flags, image_format,
+                                             image_desc, errcode_ret);
+    }
     else
       return _cl_mem_new_image(context, flags, image_format, image_desc->image_type,
                              image_desc->image_width, image_desc->image_height, image_desc->image_depth,
@@ -1244,6 +1377,15 @@ cl_mem_delete(cl_mem mem)
         if(cl_mem_image(mem)->image_type == CL_MEM_OBJECT_IMAGE2D && cl_mem_image(mem)->is_image_from_buffer == 1)
         {
           cl_mem_image(mem)->buffer_1d = NULL;
+          mem->bo = NULL;
+        }
+    }
+    if (cl_mem_image(mem)->nv12_image) {
+        assert(cl_mem_image(mem)->image_type == CL_MEM_OBJECT_IMAGE2D);
+        cl_mem_delete(cl_mem_image(mem)->nv12_image);
+        if(cl_mem_image(mem)->image_type == CL_MEM_OBJECT_IMAGE2D && cl_mem_image(mem)->is_image_from_nv12_image == 1)
+        {
+          cl_mem_image(mem)->nv12_image = NULL;
           mem->bo = NULL;
         }
     }

@@ -1258,6 +1258,14 @@ intel_gpgpu_bind_image_gen7(intel_gpgpu_t *gpgpu,
     ss->ss0.surface_array = 1;
     ss->ss0.surface_array_spacing = 1;
   }
+
+  if (obj_bo_offset && tiling != GPGPU_NO_TILE) {
+    uint32_t unaligned = obj_bo_offset;
+    obj_bo_offset = (obj_bo_offset / 0x1000) * 0x1000;
+    uint32_t h_ = (unaligned - obj_bo_offset )/ pitch;
+    ss->ss5.y_offset = h_ / 2;
+  }
+
   ss->ss0.surface_format = format;
   ss->ss1.base_addr = obj_bo->offset + obj_bo_offset;
   ss->ss2.width = w - 1;
@@ -1354,6 +1362,14 @@ intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
     ss->ss0.surface_array = 1;
     ss->ss0.surface_array_spacing = 1;
   }
+
+  if (obj_bo_offset && tiling != GPGPU_NO_TILE) {
+    uint32_t unaligned = obj_bo_offset;
+    obj_bo_offset = (obj_bo_offset / 0x1000) * 0x1000;
+    uint32_t h_ = (unaligned - obj_bo_offset )/ pitch;
+    ss->ss5.y_offset = h_ / 2;
+  }
+
   ss->ss0.surface_format = format;
   ss->ss1.base_addr = obj_bo->offset + obj_bo_offset;
   ss->ss2.width = w - 1;
@@ -1419,6 +1435,13 @@ intel_gpgpu_bind_image_gen8(intel_gpgpu_t *gpgpu,
   ss->ss2.height = h - 1;
   ss->ss3.depth = depth - 1;
 
+  if(obj_bo_offset && tiling != GPGPU_NO_TILE) {
+    uint32_t unaligned = obj_bo_offset;
+    obj_bo_offset = (obj_bo_offset / 0x1000) * 0x1000;
+    uint32_t h_ = (unaligned - obj_bo_offset) / pitch;
+    ss->ss5.y_offset = h_ / 4;
+  }
+
   ss->ss8.surface_base_addr_lo = (obj_bo->offset64 + obj_bo_offset) & 0xffffffff;
   ss->ss9.surface_base_addr_hi = ((obj_bo->offset64 + obj_bo_offset) >> 32) & 0xffffffff;
 
@@ -1427,6 +1450,10 @@ intel_gpgpu_bind_image_gen8(intel_gpgpu_t *gpgpu,
   ss->ss3.surface_pitch = pitch - 1;
 
   ss->ss1.mem_obj_ctrl_state = cl_gpgpu_get_cache_ctrl();
+  //NV12 surface. the height is 3/2 * h, so need set proper offset here.
+  if (format == I965_SURFACEFORMAT_PLANAR_420_8)
+    ss->ss6.uv_plane_y_offset = h * 2 / 3;
+
   ss->ss7.shader_channel_select_red = I965_SURCHAN_SELECT_RED;
   ss->ss7.shader_channel_select_green = I965_SURCHAN_SELECT_GREEN;
   ss->ss7.shader_channel_select_blue = I965_SURCHAN_SELECT_BLUE;
@@ -1495,12 +1522,23 @@ intel_gpgpu_bind_image_gen9(intel_gpgpu_t *gpgpu,
   ss->ss2.height = h - 1;
   ss->ss3.depth = depth - 1;
 
+  if (obj_bo_offset && tiling != GPGPU_NO_TILE) {
+    uint32_t unaligned = obj_bo_offset;
+    obj_bo_offset = (obj_bo_offset / 0x1000) * 0x1000;
+    uint32_t h_ = (unaligned - obj_bo_offset )/ pitch;
+    ss->ss5.y_offset = h_ / 4;
+  }
+
   ss->ss8.surface_base_addr_lo = (obj_bo->offset64 + obj_bo_offset) & 0xffffffff;
   ss->ss9.surface_base_addr_hi = ((obj_bo->offset64 + obj_bo_offset) >> 32) & 0xffffffff;
 
   ss->ss4.render_target_view_ext = depth - 1;
   ss->ss4.min_array_elt = 0;
   ss->ss3.surface_pitch = pitch - 1;
+
+  //NV12 surface. the height is 3/2 * h, so need set proper offset here.
+  if (format == I965_SURFACEFORMAT_PLANAR_420_8)
+    ss->ss6.uv_plane_y_offset = h * 2 / 3;
 
   ss->ss1.mem_obj_ctrl_state = cl_gpgpu_get_cache_ctrl();
   ss->ss7.shader_channel_select_red = I965_SURCHAN_SELECT_RED;

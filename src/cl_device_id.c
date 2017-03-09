@@ -1075,10 +1075,12 @@ cl_get_device_info(cl_device_id     device,
       src_size = sizeof(device->image_max_array_size);
       break;
     case CL_DEVICE_IMAGE2D_MAX_WIDTH:
+    case CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL:
       src_ptr = &device->image2d_max_width;
       src_size = sizeof(device->image2d_max_width);
       break;
     case CL_DEVICE_IMAGE2D_MAX_HEIGHT:
+    case CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL:
       src_ptr = &device->image2d_max_height;
       src_size = sizeof(device->image2d_max_height);
       break;
