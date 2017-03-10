@@ -710,6 +710,51 @@ OVERLOADABLE ulong convert_ulong_rte(double x)
 
 	return ret;
 }
+
+OVERLOADABLE ulong convert_ulong_rtp(double x)
+{
+	int iexp ;
+	ulong ret = 1;
+	long lval = as_long(x);
+
+	int exp = ((lval & DF_EXP_MASK) >> DF_EXP_OFFSET) - DF_EXP_BIAS;
+	long ma = (lval & DF_MAN_MASK);
+	int shift = abs(exp - 52);
+	ret = (ma |DF_IMPLICITE_ONE)<< shift;
+	ulong tmp = (ma |DF_IMPLICITE_ONE)>> shift;
+	long mask = (1L << shift) - 1;
+	tmp = (mask & ma) ? tmp+1:tmp;
+
+	ret = (exp > 52) ? ret:tmp;
+	ret = (exp < 0) ? 1:ret;
+	ret = (lval & DF_SIGN_MASK) ? 0:ret;
+	ret = (lval & DF_ABS_MASK) ? ret:0;
+
+	return ret;
+}
+
+OVERLOADABLE long convert_long_rtp(double x)
+{
+	int iexp ;
+	ulong ret;
+	long lval = as_long(x);
+
+	int exp = ((lval & DF_EXP_MASK) >> DF_EXP_OFFSET) - DF_EXP_BIAS;
+	long ma = (lval & DF_MAN_MASK);
+	int shift = abs(exp - 52);
+	ret = (ma |DF_IMPLICITE_ONE)<< shift;
+	ulong tmp = (ma |DF_IMPLICITE_ONE)>> shift;
+	long mask = (1L << shift) - 1;
+	int sign = ((lval & DF_SIGN_MASK) >> DF_SIGN_OFFSET);
+	tmp = ((mask & ma) && !sign) ? tmp+1:tmp;
+
+	ret = (exp > 52) ? ret:tmp;
+	ret = (exp < 0) ? 1 -sign:ret;
+	ret = (lval & DF_ABS_MASK) ? ret:0;
+	ret = sign ? -ret:ret;
+
+	return ret;
+}
 '
 fi
 
