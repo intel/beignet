@@ -162,8 +162,12 @@ Supported Targets
 OpenCL 2.0
 ----------
 From release v1.3.0, beignet supports OpenCL 2.0 on Skylake and later hardware.
-This requires LLVM/Clang 3.9 or later and libdrm 2.4.66 or later; because of this, it is not available in jessie-backports.
-As required by the OpenCL specification, kernels are compiled as OpenCL C 1.2 by default; to use 2.0 they must explicitly request it with the -cl-std=CL2.0 build option.  As OpenCL 2.0 is likely to be slower than 1.2, we recommend that this is used only where needed.  (This is because 2.0 uses more registers and has lots of int64 operations, and some of the 2.0 features (pipes and especially device queues) are implemented in software so do not provide any performance gain.)  Beignet will continue to improve OpenCL 2.0 performance.
+This requires LLVM/Clang 3.9 or later, libdrm 2.4.66 or later and x86_64 linux.
+As required by the OpenCL specification, kernels are compiled as OpenCL C 1.2 by default; to use 2.0 they
+must explicitly request it with the -cl-std=CL2.0 build option.  As OpenCL 2.0 is likely to be slower than
+1.2, we recommend that this is used only where needed.  (This is because 2.0 uses more registers and has
+lots of int64 operations, and some of the 2.0 features (pipes and especially device queues) are implemented
+in software so do not provide any performance gain.)  Beignet will continue to improve OpenCL 2.0 performance.
 
 Known Issues
 ------------
