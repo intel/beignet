@@ -892,17 +892,65 @@ for vector_length in $VECTOR_LENGTHS; do
     done
 done
 
+if [ $1"a" = "-pa" ]; then
+        echo "#define DEF(DSTTYPE, SRCTYPE, SRC_MIN, SRC_MAX, DST_MIN, DST_MAX) \
+            OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat_rte(SRCTYPE x); \
+            OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat_rtz(SRCTYPE x); \
+            OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat_rtn(SRCTYPE x); \
+            OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat_rtp(SRCTYPE x);"
+else
+        echo '
+            #define DEF(DSTTYPE, SRCTYPE, SRC_MIN, SRC_MAX, DST_MIN, DST_MAX) \
+            OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat_rte(SRCTYPE x) { \
+              DSTTYPE y = convert_##DSTTYPE##_rte(x); \
+              y = (x >= SRC_MAX) ? DST_MAX : y; \
+              y = (x <= SRC_MIN) ? DST_MIN : y; \
+              return y; \
+            } \
+            OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat_rtz(SRCTYPE x) { \
+              DSTTYPE y = convert_##DSTTYPE##_rtz(x); \
+              y = (x >= SRC_MAX) ? DST_MAX : y; \
+              y = (x <= SRC_MIN) ? DST_MIN : y; \
+              return y; \
+            } \
+            OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat_rtn(SRCTYPE x) { \
+              DSTTYPE y = convert_##DSTTYPE##_rtn(x); \
+              y = (x >= SRC_MAX) ? DST_MAX : y; \
+              y = (x <= SRC_MIN) ? DST_MIN : y; \
+              return y; \
+            } \
+            OVERLOADABLE DSTTYPE convert_ ## DSTTYPE ## _sat_rtp(SRCTYPE x) { \
+              DSTTYPE y = convert_##DSTTYPE##_rtp(x); \
+              y = (x >= SRC_MAX) ? DST_MAX : y; \
+              y = (x <= SRC_MIN) ? DST_MIN : y; \
+              return y; \
+            }'
+fi
+
+echo '
+    DEF(char, double, -0x1.0p7, 0x1.0p7-1,  0x80, 0x7F);
+    DEF(uchar, double, 0, 0x1.0p8-1, 0, 0xFF);
+    DEF(short, double, -0x1.0p15, 0x1.0p15-1, 0x8000, 0x7FFF);
+    DEF(ushort, double, 0, 0x1.0p16-1, 0, 0xFFFF);
+    DEF(int, double, -0x1.0p31, 0x1.0p31-1, 0x80000000, 0x7FFFFFFF);
+    DEF(uint, double, 0, 0x1.0p32-1, 0, 0xFFFFFFFF);
+    DEF(long, double, -0x1.0p63, 0x1.0p63, 0x8000000000000000, 0x7FFFFFFFFFFFFFFF);
+    DEF(ulong, double, 0, 0x1.0p64, 0, 0xFFFFFFFFFFFFFFFF);
+    #undef DEF
+    '
+
 # convert_DSTTYPE_sat_ROUNDING function
 for vector_length in $VECTOR_LENGTHS; do
     for ftype in $TYPES; do
 	fbasetype=`IFS=:; set -- dummy $ftype; echo $2`
-	if test $fbasetype = "double"; then continue; fi
+	#if test $fbasetype = "double"; then continue; fi
 
 	for ttype in $TYPES; do
 	    tbasetype=`IFS=:; set -- dummy $ttype; echo $2`
 	    if test $tbasetype = "double" -o $tbasetype = "float" -o $tbasetype = "half" ; then continue; fi
 
 	    if test $vector_length -eq 1; then
+	        if test $fbasetype = "double"; then continue; fi
 		if [ $1"a" = "-pa" ]; then
 		    echo "OVERLOADABLE $tbasetype convert_${tbasetype}_sat_rte($fbasetype x);"
 		    echo "OVERLOADABLE $tbasetype convert_${tbasetype}_sat_rtz($fbasetype x);"
