@@ -1,16 +1,16 @@
 GL Buffer Sharing HowTo
 =========================
 
-Beignet now support cl_khr_gl_sharing partially(the most commonly used part), which is an offcial
+Beignet now supports cl_khr_gl_sharing partially (the most commonly used part), which is an official
 extension of Khronos OpenCL. With this extension, Beignet can create memory object from OpenGL/OpenGL
-ES buffer, texture or renderbuffer object with zero-copy. Currently, we just support create memory
-object from GL buffer object or 2d texture(the most common target type). We will support creating
+ES buffer, texture or renderbuffer object with zero-copy. Currently, we just support creating memory
+object from GL buffer object or 2d texture (the most common target type). We will support creating
 from other GL target type if necessary.
 
 Prerequisite
 ------------
 
-Mesa GL library and Mesa EGL libray are required. Both version should be greater or equal than
+Mesa GL library and Mesa EGL library are required. Both version should be greater or equal than
 13.0.0.
 
 Steps
@@ -18,7 +18,7 @@ Steps
 
 A typical procedure of using cl_khr_gl_sharing is as below:
 
-- Basic egl routine(eglGetDisplay, eglInitialize, eglCreateContext...).
+- Basic egl routine (eglGetDisplay, eglInitialize, eglCreateContext...).
 
 - Create GL 2d texture in normal OpenGL way.
 
@@ -44,7 +44,7 @@ A typical procedure of using cl_khr_gl_sharing is as below:
 
 - Access this cl image object as an usual cl image object.
 
-- Relase cl image object by calling clEnqueueReleaseGLObjects.
+- Release cl image object by calling clEnqueueReleaseGLObjects.
 
 - Ensure any pending OpenCL operations which access this cl image object have completed by clFinish.
 
@@ -54,7 +54,7 @@ Sample code
 -----------
 
 We have developed an example showing how to utilize cl_khr_gl_sharing in examples/gl_buffer_sharing
-directory. A cl image object is created from a gl 2d texutre and processed by OpenCL kernel, then
+directory. A cl image object is created from a gl 2d texture and processed by OpenCL kernel, then
 is shown on screen.
 
 Steps to build and run this example:
