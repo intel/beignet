@@ -283,7 +283,7 @@ Documents for OpenCL application developers
 - [[OpenGL Buffer Sharing|Beignet/howto/gl-buffer-sharing-howto]]
 - [[Video Motion Estimation|Beignet/howto/video-motion-estimation-howto]]
 - [[Stand Alone Unit Test|Beignet/howto/stand-alone-utest-howto]]
-- [[Android build|Beignet/android-build-howto]]
+- [[Android build|Beignet/howto/android-build-howto]]
 
 The wiki URL is as below:
 [http://www.freedesktop.org/wiki/Software/Beignet/](http://www.freedesktop.org/wiki/Software/Beignet/)
