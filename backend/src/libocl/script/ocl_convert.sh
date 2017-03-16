@@ -1033,6 +1033,78 @@ for vector_length in $VECTOR_LENGTHS; do
     done
 done
 
+# convert_double_roundingmode( int32, int16 ,int8)
+ITYPES=" int:4 uint:4 short:2 ushort:2 char:1 uchar:1"
+for vector_length in $VECTOR_LENGTHS; do
+    for ftype in $ITYPES; do
+	fbasetype=`IFS=:; set -- dummy $ftype; echo $2`
+
+	    if test $vector_length -eq 1; then
+		if [ $1"a" = "-pa" ]; then
+		    echo "OVERLOADABLE double convert_double_rte($fbasetype x);"
+		    echo "OVERLOADABLE double convert_double_rtz($fbasetype x);"
+		    echo "OVERLOADABLE double convert_double_rtp($fbasetype x);"
+		    echo "OVERLOADABLE double convert_double_rtn($fbasetype x);"
+		else
+		    echo "OVERLOADABLE double convert_double_rte($fbasetype x)"
+			echo "{ return convert_double(x); }"
+
+		    echo "OVERLOADABLE double convert_double_rtz($fbasetype x)"
+			echo "{ return convert_double(x); }"
+
+		    echo "OVERLOADABLE double convert_double_rtp($fbasetype x)"
+			echo "{ return convert_double(x); }"
+
+		    echo "OVERLOADABLE double convert_double_rtn($fbasetype x)"
+			echo "{ return convert_double(x); }"
+		fi
+		continue
+	    fi
+
+	    for rounding in $ROUNDING_MODES; do
+		fvectortype=$fbasetype$vector_length
+		tvectortype=double$vector_length
+		conv="convert_double_${rounding}"
+
+		construct="$conv(v.s0)"
+		if test $vector_length -gt 1; then
+		    construct="$construct, $conv(v.s1)"
+		fi
+		if test $vector_length -gt 2; then
+		    construct="$construct, $conv(v.s2)"
+		fi
+		if test $vector_length -gt 3; then
+		    construct="$construct, $conv(v.s3)"
+		fi
+		if test $vector_length -gt 4; then
+		    construct="$construct, $conv(v.s4)"
+		    construct="$construct, $conv(v.s5)"
+		    construct="$construct, $conv(v.s6)"
+		    construct="$construct, $conv(v.s7)"
+		fi
+		if test $vector_length -gt 8; then
+		    construct="$construct, $conv(v.s8)"
+		    construct="$construct, $conv(v.s9)"
+		    construct="$construct, $conv(v.sA)"
+		    construct="$construct, $conv(v.sB)"
+		    construct="$construct, $conv(v.sC)"
+		    construct="$construct, $conv(v.sD)"
+		    construct="$construct, $conv(v.sE)"
+		    construct="$construct, $conv(v.sF)"
+		fi
+
+		if [ $1"a" = "-pa" ]; then
+		    echo "OVERLOADABLE $tvectortype convert_${tvectortype}_${rounding}($fvectortype v);"
+		else
+		    echo "OVERLOADABLE $tvectortype convert_${tvectortype}_${rounding}($fvectortype v) {"
+		    echo "  return ($tvectortype)($construct);"
+		    echo "}"
+		    echo
+		fi
+	done
+    done
+done
+
 if [ $1"a" = "-pa" ]; then
     echo "#endif /* __OCL_CONVERT_H__ */"
 fi
