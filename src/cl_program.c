@@ -675,7 +675,8 @@ cl_program_build(cl_program p, const char *options)
     memcpy(p->bin + copyed, interp_kernel_get_code(opaque), sz);
     copyed += sz;
   }
-  if ((err = get_program_global_data(p)) != CL_SUCCESS)
+  uint32_t ocl_version = interp_kernel_get_ocl_version(interp_program_get_kernel(p->opaque, 0));
+  if (ocl_version >= 200 && (err = get_program_global_data(p)) != CL_SUCCESS)
     goto error;
 
   p->is_built = 1;
@@ -784,7 +785,8 @@ cl_program_link(cl_context            context,
     copyed += sz;
   }
 
-  if ((err = get_program_global_data(p)) != CL_SUCCESS)
+  uint32_t ocl_version = interp_kernel_get_ocl_version(interp_program_get_kernel(p->opaque, 0));
+  if (ocl_version >= 200 && (err = get_program_global_data(p)) != CL_SUCCESS)
     goto error;
 
 done:
