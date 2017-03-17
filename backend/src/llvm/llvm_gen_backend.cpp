@@ -3384,11 +3384,12 @@ namespace gbe
     const ir::Register src0 = this->getRegister(I.getOperand(0));
     const ir::Register src1 = this->getRegister(I.getOperand(1));
     const ir::Register tmp = ctx.reg(getFamily(ctx, I.getType()));
+    const ir::Register tmp1 = ctx.reg(getFamily(ctx, I.getType()));
     Value *cv = ConstantInt::get(I.getType(), 1);
 
     switch (I.getPredicate()) {
       case ICmpInst::FCMP_OEQ: ctx.EQ(type, dst, src0, src1); break;
-      case ICmpInst::FCMP_ONE: ctx.NE(type, dst, src0, src1); break;
+      case ICmpInst::FCMP_UNE: ctx.NE(type, dst, src0, src1); break;
       case ICmpInst::FCMP_OLE: ctx.LE(type, dst, src0, src1); break;
       case ICmpInst::FCMP_OGE: ctx.GE(type, dst, src0, src1); break;
       case ICmpInst::FCMP_OLT: ctx.LT(type, dst, src0, src1); break;
@@ -3434,9 +3435,10 @@ namespace gbe
         ctx.GT(type, tmp, src0, src1);
         ctx.XOR(insnType, dst, tmp, getRegister(cv));
         break;
-      case ICmpInst::FCMP_UNE:
-        ctx.EQ(type, tmp, src0, src1);
-        ctx.XOR(insnType, dst, tmp, getRegister(cv));
+      case ICmpInst::FCMP_ONE:
+        ctx.LT(type, tmp, src0, src1);
+        ctx.GT(type, tmp1, src0, src1);
+        ctx.OR(insnType, dst, tmp, tmp1);
         break;
       case ICmpInst::FCMP_TRUE:
         ctx.MOV(insnType, dst, getRegister(cv));
