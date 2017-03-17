@@ -96,7 +96,7 @@ namespace gbe {
 
     Scalarize() : FunctionPass(ID)
     {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
       initializeDominatorTreeWrapperPassPass(*PassRegistry::getPassRegistry());
 #else
       initializeDominatorTreePass(*PassRegistry::getPassRegistry());

@@ -35,7 +35,7 @@ namespace gbe {
     GenLoadStoreOptimization() : BasicBlockPass(ID) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
-#if LLVM_VERSION_MAJOR == 3 &&  LLVM_VERSION_MINOR >= 8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
       AU.addRequired<ScalarEvolutionWrapperPass>();
       AU.addPreserved<ScalarEvolutionWrapperPass>();
 #else
@@ -46,12 +46,12 @@ namespace gbe {
     }
 
     virtual bool runOnBasicBlock(BasicBlock &BB) {
-#if LLVM_VERSION_MAJOR == 3 &&  LLVM_VERSION_MINOR >= 8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
       SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
 #else
       SE = &getAnalysis<ScalarEvolution>();
 #endif
-      #if LLVM_VERSION_MINOR >= 7
+      #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
         TD = &BB.getModule()->getDataLayout();
       #elif LLVM_VERSION_MINOR >= 5
         DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();

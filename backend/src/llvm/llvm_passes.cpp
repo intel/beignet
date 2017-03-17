@@ -42,7 +42,7 @@ namespace gbe
 {
   bool isKernelFunction(const llvm::Function &F) {
     bool bKernel = false;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
     bKernel = F.getMetadata("kernel_arg_name") != NULL;
 #else
     const Module *module = F.getParent();
@@ -53,7 +53,7 @@ namespace gbe
       uint32_t ops = md.getNumOperands();
       for(uint32_t x = 0; x < ops; x++) {
         MDNode* node = md.getOperand(x);
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
         Value * op = node->getOperand(0);
 #else
         Value * op = cast<ValueAsMetadata>(node->getOperand(0))->getValue();
@@ -74,7 +74,7 @@ namespace gbe
     if(ops > 0) {
       uint32_t major = 0, minor = 0;
       MDNode* node = version->getOperand(0);
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
       major = mdconst::extract<ConstantInt>(node->getOperand(0))->getZExtValue();
       minor = mdconst::extract<ConstantInt>(node->getOperand(1))->getZExtValue();
 #else

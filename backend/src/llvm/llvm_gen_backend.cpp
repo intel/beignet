@@ -95,9 +95,9 @@
 #define LLVM_VERSION_MINOR 0
 #endif /* !defined(LLVM_VERSION_MINOR) */
 
-#if (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR < 3)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 33
 #error "Only LLVM 3.3 and newer are supported"
-#endif /* (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR > 4) */
+#endif
 
 using namespace llvm;
 
@@ -565,7 +565,7 @@ namespace gbe
         has_errors(false),
         legacyMode(true)
     {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
       initializeLoopInfoWrapperPassPass(*PassRegistry::getPassRegistry());
 #else
       initializeLoopInfoPass(*PassRegistry::getPassRegistry());
@@ -576,7 +576,7 @@ namespace gbe
     virtual const char *getPassName() const { return "Gen Back-End"; }
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
       AU.addRequired<LoopInfoWrapperPass>();
 #else
       AU.addRequired<LoopInfo>();
@@ -611,7 +611,7 @@ namespace gbe
       if (legacyMode)
         analyzePointerOrigin(F);
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
       LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
 #else
       LI = &getAnalysis<LoopInfo>();
@@ -834,7 +834,7 @@ namespace gbe
       for (Value::use_iterator iter = work->use_begin(); iter != work->use_end(); ++iter) {
       // After LLVM 3.5, use_iterator points to 'Use' instead of 'User',
       // which is more straightforward.
-  #if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 5)
+  #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 35
         User *theUser = *iter;
   #else
         User *theUser = iter->getUser();
@@ -1088,7 +1088,7 @@ namespace gbe
             if (predBB->getTerminator())
               Builder2.SetInsertPoint(predBB->getTerminator());
 
-#if (LLVM_VERSION_MAJOR== 3 && LLVM_VERSION_MINOR < 6)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 36
   // llvm 3.5 and older version don't have CreateBitOrPointerCast() define
             Type *srcTy = base->getType();
             Type *dstTy = ptr->getType();
@@ -1247,7 +1247,7 @@ namespace gbe
      uint32_t ops = clKernels->getNumOperands();
       for(uint32_t x = 0; x < ops; x++) {
         MDNode* node = clKernels->getOperand(x);
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
         Value * op = node->getOperand(0);
 #else
         auto *V = cast<ValueAsMetadata>(node->getOperand(0));
@@ -1271,7 +1271,7 @@ namespace gbe
     MDNode *typeNameNode = NULL;
     MDNode *typeBaseNameNode = NULL;
     MDNode *typeQualNode = NULL;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
     typeNameNode = F.getMetadata("kernel_arg_type");
     typeBaseNameNode = F.getMetadata("kernel_arg_base_type");
     typeQualNode = F.getMetadata("kernel_arg_type_qual");
@@ -1297,7 +1297,7 @@ namespace gbe
     ir::FunctionArgument::InfoFromLLVM llvmInfo;
     for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I, argID++) {
       unsigned opID = argID;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 39
       opID += 1;
 #endif
 
@@ -1339,7 +1339,7 @@ namespace gbe
       for (Value::use_iterator iter = work->use_begin(); iter != work->use_end(); ++iter) {
       // After LLVM 3.5, use_iterator points to 'Use' instead of 'User',
       // which is more straightforward.
-  #if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 5)
+  #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 35
         User *theUser = *iter;
   #else
         User *theUser = iter->getUser();
@@ -2119,7 +2119,7 @@ namespace gbe
 
     std::string functionAttributes;
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
     /* LLVM 3.9 change kernel arg info as function metadata */
     addrSpaceNode = F.getMetadata("kernel_arg_addr_space");
     accessQualNode = F.getMetadata("kernel_arg_access_qual");
@@ -2221,7 +2221,7 @@ namespace gbe
 
       if (attrName->getString() == "reqd_work_group_size") {
         GBE_ASSERT(attrNode->getNumOperands() == 4);
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
         ConstantInt *x = dyn_cast<ConstantInt>(attrNode->getOperand(1));
         ConstantInt *y = dyn_cast<ConstantInt>(attrNode->getOperand(2));
         ConstantInt *z = dyn_cast<ConstantInt>(attrNode->getOperand(3));
@@ -2263,13 +2263,13 @@ namespace gbe
       } else if (attrName->getString() == "vec_type_hint") {
         GBE_ASSERT(attrNode->getNumOperands() == 3);
         functionAttributes += attrName->getString();
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
         Value* V = attrNode->getOperand(1);
 #else
         auto *Op1 = cast<ValueAsMetadata>(attrNode->getOperand(1));
         Value *V = Op1 ? Op1->getValue() : NULL;
 #endif
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
         ConstantInt *sign = dyn_cast<ConstantInt>(attrNode->getOperand(2));
 #else
         ConstantInt *sign = mdconst::extract<ConstantInt>(attrNode->getOperand(2));
@@ -2298,7 +2298,7 @@ namespace gbe
         functionAttributes += " ";
       } else if (attrName->getString() == "work_group_size_hint") {
         GBE_ASSERT(attrNode->getNumOperands() == 4);
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
         ConstantInt *x = dyn_cast<ConstantInt>(attrNode->getOperand(1));
         ConstantInt *y = dyn_cast<ConstantInt>(attrNode->getOperand(2));
         ConstantInt *z = dyn_cast<ConstantInt>(attrNode->getOperand(3));
@@ -2340,13 +2340,13 @@ namespace gbe
       // Insert a new register for each function argument
       for (; I != E; ++I, ++argID) {
         uint32_t opID = argID;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 39
         opID += 1;
 #endif
         const std::string &argName = I->getName().str();
         Type *type = I->getType();
         if(addrSpaceNode) {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
           llvmInfo.addrSpace = (cast<ConstantInt>(addrSpaceNode->getOperand(opID)))->getZExtValue();
 #else
           llvmInfo.addrSpace = (mdconst::extract<ConstantInt>(addrSpaceNode->getOperand(opID)))->getZExtValue();
@@ -2913,7 +2913,7 @@ namespace gbe
     const Instruction *insn = NULL;
     for(Value::const_use_iterator iter = v->use_begin(); iter != v->use_end(); ++iter) {
     // After LLVM 3.5, use_iterator points to 'Use' instead of 'User', which is more straightforward.
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 5)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 35
       const User *theUser = *iter;
 #else
       const User *theUser = iter->getUser();

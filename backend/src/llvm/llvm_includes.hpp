@@ -91,7 +91,7 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/CFG.h"
@@ -111,7 +111,7 @@
 #include "llvm/Target/Mangler.h"
 #endif
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/LegacyPassManager.h"
 #else
@@ -122,12 +122,12 @@
 
 #include <clang/CodeGen/CodeGenAction.h>
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
 #include "llvm/Analysis/BasicAliasAnalysis.h"
 #include "llvm/Analysis/TypeBasedAliasAnalysis.h"
 #endif
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
 #include "llvm/Transforms/IPO/FunctionAttrs.h"
 #include "llvm/Transforms/Scalar/GVN.h"
 #endif

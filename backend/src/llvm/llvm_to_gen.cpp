@@ -46,14 +46,14 @@ namespace gbe
   BVAR(OCL_OUTPUT_CFG_GEN_IR, false);
   using namespace llvm;
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
   llvm::LLVMContext& GBEGetLLVMContext() {
     static llvm::LLVMContext GBEContext;
     return GBEContext;
   }
 #endif
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
   #define TARGETLIBRARY  TargetLibraryInfoImpl
 #else
   #define TARGETLIBRARY  TargetLibraryInfo
@@ -61,32 +61,32 @@ namespace gbe
 
   void runFuntionPass(Module &mod, TARGETLIBRARY *libraryInfo, const DataLayout &DL)
   {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
     legacy::FunctionPassManager FPM(&mod);
 #else
     FunctionPassManager FPM(&mod);
 #endif
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
-#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
     FPM.add(new DataLayoutPass());
-#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR == 5
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR == 35
     FPM.add(new DataLayoutPass(DL));
 #else
     FPM.add(new DataLayout(DL));
 #endif
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
     FPM.add(createVerifierPass(true));
 #else
     FPM.add(createVerifierPass());
 #endif
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
     FPM.add(new TargetLibraryInfoWrapperPass(*libraryInfo));
 #else
     FPM.add(new TargetLibraryInfo(*libraryInfo));
 #endif
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
     FPM.add(createTypeBasedAAWrapperPass());
     FPM.add(createBasicAAWrapperPass());
 #else
@@ -108,27 +108,27 @@ namespace gbe
 
   void runModulePass(Module &mod, TARGETLIBRARY *libraryInfo, const DataLayout &DL, int optLevel, bool strictMath)
   {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
     legacy::PassManager MPM;
 #else
     PassManager MPM;
 #endif
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
-#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
     MPM.add(new DataLayoutPass());
-#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR == 5
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR == 35
     MPM.add(new DataLayoutPass(DL));
 #else
     MPM.add(new DataLayout(DL));
 #endif
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
     MPM.add(new TargetLibraryInfoWrapperPass(*libraryInfo));
 #else
     MPM.add(new TargetLibraryInfo(*libraryInfo));
 #endif
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
     MPM.add(createTypeBasedAAWrapperPass());
     MPM.add(createBasicAAWrapperPass());
 #else
@@ -149,9 +149,9 @@ namespace gbe
     MPM.add(createInstructionCombiningPass());// Clean up after IPCP & DAE
     MPM.add(createCFGSimplificationPass());   // Clean up after IPCP & DAE
     MPM.add(createPruneEHPass());             // Remove dead EH info
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
     MPM.add(createPostOrderFunctionAttrsLegacyPass());
-#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
     MPM.add(createPostOrderFunctionAttrsPass());       // Set readonly/readnone attrs
 #else
     MPM.add(createFunctionAttrsPass());       // Set readonly/readnone attrs
@@ -159,7 +159,7 @@ namespace gbe
 
     //MPM.add(createScalarReplAggregatesPass(64, true, -1, -1, 64))
     if(optLevel > 0)
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
       MPM.add(createSROAPass());
 #else
       MPM.add(createSROAPass(/*RequiresDomTree*/ false));
@@ -182,14 +182,14 @@ namespace gbe
     MPM.add(createLoopDeletionPass());          // Delete dead loops
     MPM.add(createLoopUnrollPass(640)); //1024, 32, 1024, 512)); //Unroll loops
     if(optLevel > 0) {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
       MPM.add(createSROAPass());
 #else
       MPM.add(createSROAPass(/*RequiresDomTree*/ false));
 #endif
       MPM.add(createGVNPass());                 // Remove redundancies
     }
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
     // FIXME Workaround: we find that CustomLoopUnroll may increase register pressure greatly,
     // and it may even make som cl kernel cannot compile because of limited scratch memory for spill.
     // As we observe this under strict math. So we disable CustomLoopUnroll if strict math is enabled.
@@ -199,7 +199,7 @@ namespace gbe
 #endif
       MPM.add(createLoopUnrollPass()); //1024, 32, 1024, 512)); //Unroll loops
       if(optLevel > 0) {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
         MPM.add(createSROAPass());
 #else
         MPM.add(createSROAPass(/*RequiresDomTree*/ false));
@@ -230,7 +230,7 @@ namespace gbe
   }
 
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
 #define OUTPUT_BITCODE(STAGE, MOD)  do {         \
   legacy::PassManager passes__;           \
    if (OCL_OUTPUT_LLVM_##STAGE) {                \
@@ -238,7 +238,7 @@ namespace gbe
      passes__.run(MOD);                          \
    }                                             \
  }while(0)
-#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
 #define OUTPUT_BITCODE(STAGE, MOD)  do {         \
    PassManager passes__;           \
    if (OCL_OUTPUT_LLVM_##STAGE) {                \
@@ -303,12 +303,12 @@ namespace gbe
     if (module) {
       cl_mod = reinterpret_cast<Module*>(const_cast<void*>(module));
     } else if (fileName){
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
       llvm::LLVMContext& c = GBEGetLLVMContext();
 #else
       llvm::LLVMContext& c = llvm::getGlobalContext();
 #endif
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
       cl_mod = parseIRFile(fileName, Err, c).release();
 #else
       cl_mod = ParseIRFile(fileName, Err, c);
@@ -318,7 +318,7 @@ namespace gbe
     if (!cl_mod) return false;
 
     OUTPUT_BITCODE(BEFORE_LINK, (*cl_mod));
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
     legacy::PassManager passes__;
 #else
     PassManager passes__;
@@ -346,7 +346,7 @@ namespace gbe
     gbeDiagnosticContext dc;
     mod.getContext().setDiagnosticHandler(&gbeDiagnosticHandler,&dc);
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
     mod.setDataLayout(DL);
 #endif
     Triple TargetTriple(mod.getTargetTriple());
@@ -357,15 +357,15 @@ namespace gbe
 
     runFuntionPass(mod, libraryInfo, DL);
     runModulePass(mod, libraryInfo, DL, optLevel, strictMath);
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
     legacy::PassManager passes;
 #else
     PassManager passes;
 #endif
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
-#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
     passes.add(new DataLayoutPass());
-#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR == 5
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR == 35
     passes.add(new DataLayoutPass(DL));
 #else
     passes.add(new DataLayout(DL));
@@ -374,7 +374,7 @@ namespace gbe
     passes.add(createIntrinsicLoweringPass());
     passes.add(createStripAttributesPass());     // Strip unsupported attributes and calling conventions.
     passes.add(createFunctionInliningPass(20000));
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
     passes.add(createSROAPass());
 #else
     passes.add(createScalarReplAggregatesPass(64, true, -1, -1, 64));
