@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include "ir/profiling.hpp"
 #include "src/cl_device_data.h"
+#include <inttypes.h>
 
 namespace gbe
 {

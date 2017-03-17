@@ -381,7 +381,7 @@ error:
     }
 
     GBE_ASSERT(unit.printfs.find(call) == unit.printfs.end());
-    unit.printfs.insert(std::pair<llvm::CallInst*, PrintfSet::PrintfFmt*>(call, printf_fmt));
+    unit.printfs.insert(std::pair<void *, PrintfSet::PrintfFmt*>((void *)call, printf_fmt));
     return true;
   }
 
