@@ -62,7 +62,7 @@ namespace gbe {
       for (Value::use_iterator iter = v->use_begin(); iter != v->use_end(); ++iter) {
         // After LLVM 3.5, use_iterator points to 'Use' instead of 'User',
         // which is more straightforward.
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 5)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 35
         User *theUser = *iter;
 #else
         User *theUser = iter->getUser();
@@ -84,7 +84,7 @@ namespace gbe {
 
   Function* setFunctionAsKernel(Module *mod, Function *Fn)
   {
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR >= 9)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
     LLVMContext &Context = mod->getContext();
     Type *intTy = IntegerType::get(mod->getContext(), 32);
     SmallVector<llvm::Metadata *, 5> kernelMDArgs;
@@ -210,7 +210,7 @@ namespace gbe {
           }
 
           for (Value::use_iterator iter = bt->use_begin(); iter != bt->use_end(); ++iter) {
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 5)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 35
             User *theUser = *iter;
 #else
             User *theUser = iter->getUser();
@@ -298,7 +298,7 @@ namespace gbe {
             if(AllocaInst *ai = dyn_cast<AllocaInst>(ld->getPointerOperand())) {
               Value *v = NULL;
               for (Value::use_iterator iter = ai->use_begin(); iter != ai->use_end(); ++iter) {
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 5)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 35
                 User *theUser = *iter;
 #else
                 User *theUser = iter->getUser();
@@ -347,7 +347,7 @@ namespace gbe {
             if(ld) {
               Value *block = ld->getPointerOperand();
               for (Value::use_iterator iter = block->use_begin(); iter != block->use_end(); ++iter) {
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 5)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 35
                 User *theUser = *iter;
 #else
                 User *theUser = iter->getUser();

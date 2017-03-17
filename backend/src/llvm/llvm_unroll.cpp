@@ -16,7 +16,7 @@
  */
 
 #include "llvm/Config/llvm-config.h"
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
 #include <set>
 
 #include "llvm_includes.hpp"
@@ -36,7 +36,7 @@ namespace gbe {
        LoopPass(ID) {}
 
       void getAnalysisUsage(AnalysisUsage &AU) const {
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR >= 7)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
         AU.addRequired<LoopInfoWrapperPass>();
         AU.addPreserved<LoopInfoWrapperPass>();
 #else
@@ -47,7 +47,7 @@ namespace gbe {
         AU.addPreservedID(LoopSimplifyID);
         AU.addRequiredID(LCSSAID);
         AU.addPreservedID(LCSSAID);
-#if LLVM_VERSION_MAJOR == 3 &&  LLVM_VERSION_MINOR >= 8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
         AU.addRequired<ScalarEvolutionWrapperPass>();
         AU.addPreserved<ScalarEvolutionWrapperPass>();
 #else
@@ -91,7 +91,7 @@ namespace gbe {
           assert(MD->getNumOperands() == 2 &&
                  "Unroll count hint metadata should have two operands.");
           unsigned Count;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
           Count = mdconst::extract<ConstantInt>(MD->getOperand(1))->getZExtValue();
 #else
           Count = cast<ConstantInt>(MD->getOperand(1))->getZExtValue();
@@ -105,7 +105,7 @@ namespace gbe {
       void setUnrollID(Loop *L, bool enable) {
         assert(enable);
         LLVMContext &Context = L->getHeader()->getContext();
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
         SmallVector<Metadata *, 2> forceUnroll;
         forceUnroll.push_back(MDString::get(Context, "llvm.loop.unroll.enable"));
         MDNode *forceUnrollNode = MDNode::get(Context, forceUnroll);
@@ -169,7 +169,7 @@ namespace gbe {
       // be unrolled.
       bool handleParentLoops(Loop *L, LPPassManager &LPM) {
         Loop *currL = L;
-#if LLVM_VERSION_MAJOR == 3 &&  LLVM_VERSION_MINOR >= 8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
         ScalarEvolution *SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
         LoopInfo &loopInfo = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
 #else
@@ -205,7 +205,7 @@ namespace gbe {
           if (parentTripCount != 0 && currTripCount * parentTripCount > 32) {
             //Don't change the unrollID if doesn't force unroll.
             //setUnrollID(parentL, false);
-#if LLVM_VERSION_MAJOR == 3 &&  LLVM_VERSION_MINOR >= 8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
             loopInfo.markAsRemoved(parentL);
 #else
             LPM.deleteLoopFromQueue(parentL);

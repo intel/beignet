@@ -34,7 +34,7 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/IRBuilder.h"
 
-#if LLVM_VERSION_MINOR >= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/CFG.h"
 #else

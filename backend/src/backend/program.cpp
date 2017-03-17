@@ -115,7 +115,7 @@ namespace gbe {
     llvm::Module * cloned_module = NULL;
     bool ret = false;
     if(module){
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
       cloned_module = llvm::CloneModule((llvm::Module*)module).release();
 #else
       cloned_module = llvm::CloneModule((llvm::Module*)module);
@@ -124,7 +124,7 @@ namespace gbe {
     bool strictMath = true;
     if (fast_relaxed_math || !OCL_STRICT_CONFORMANCE)
       strictMath = false;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
     llvm::Module * linked_module = module ? llvm::CloneModule((llvm::Module*)module).release() : NULL;
     // Src now will be removed automatically. So clone it.
     if (llvmToGen(*unit, fileName, linked_module, optLevel, strictMath, OCL_PROFILING_LOG, error) == false) {
@@ -651,7 +651,7 @@ namespace gbe {
     // The ParseCommandLineOptions used for mllvm args can not be used with multithread
     // and GVN now have a 100 inst limit on block scan. Now only pass a bigger limit
     // for each context only once, this can also fix multithread bug.
-#if LLVM_VERSION_MINOR >= 8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
     static bool ifsetllvm = false;
     if(!ifsetllvm) {
       args.push_back("-mllvm");
@@ -702,7 +702,7 @@ namespace gbe {
                                               Diags);
     llvm::StringRef srcString(source);
     (*CI).getPreprocessorOpts().addRemappedFile("stringInput.cl",
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
                 llvm::MemoryBuffer::getMemBuffer(srcString)
 #else
                 llvm::MemoryBuffer::getMemBuffer(srcString).release()
@@ -755,7 +755,7 @@ namespace gbe {
     if (!retVal)
       return false;
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
     llvm::Module *module = Act->takeModule();
 #else
     llvm::Module *module = Act->takeModule().release();
@@ -764,7 +764,7 @@ namespace gbe {
     *out_module = module;
 
 // Dump the LLVM if requested.
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 6)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 36
     if (!dumpLLVMFileName.empty()) {
       std::string err;
       llvm::raw_fd_ostream ostream (dumpLLVMFileName.c_str(),
@@ -1123,7 +1123,7 @@ EXTEND_QUOTE:
     //FIXME: if use new allocated context to link two modules there would be context mismatch
     //for some functions, so we use global context now, need switch to new context later.
     llvm::Module * out_module;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
     llvm::LLVMContext* llvm_ctx = &GBEGetLLVMContext();
 #else
     llvm::LLVMContext* llvm_ctx = &llvm::getGlobalContext();
@@ -1599,7 +1599,7 @@ namespace gbe
     }
 
     ~CallBackInitializer() {
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR > 3)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 34
       llvm::llvm_shutdown();
 #endif
     }

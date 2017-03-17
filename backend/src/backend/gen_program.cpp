@@ -329,13 +329,13 @@ namespace gbe {
     //the first byte stands for binary_type.
     binary_content.assign(binary+1, size-1);
     llvm::StringRef llvm_bin_str(binary_content);
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
     llvm::LLVMContext& c = GBEGetLLVMContext();
 #else
     llvm::LLVMContext& c = llvm::getGlobalContext();
 #endif
     llvm::SMDiagnostic Err;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
     std::unique_ptr<llvm::MemoryBuffer> memory_buffer = llvm::MemoryBuffer::getMemBuffer(llvm_bin_str, "llvm_bin_str");
     acquireLLVMContextLock();
     llvm::Module* module = llvm::parseIR(memory_buffer->getMemBufferRef(), Err, c).release();
@@ -482,14 +482,14 @@ namespace gbe {
     using namespace gbe;
     char* errMsg;
     if(((GenProgram*)dst_program)->module == NULL){
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
       ((GenProgram*)dst_program)->module = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module).release();
 #else
       ((GenProgram*)dst_program)->module = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module);
 #endif
       errSize = 0;
     }else{
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
       // Src now will be removed automatically. So clone it.
       llvm::Module* src = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module).release();
 #else
@@ -497,9 +497,9 @@ namespace gbe {
 #endif
       llvm::Module* dst = (llvm::Module*)((GenProgram*)dst_program)->module;
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
       if (LLVMLinkModules2(wrap(dst), wrap(src))) {
-#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
       if (LLVMLinkModules(wrap(dst), wrap(src), LLVMLinkerPreserveSource_Removed, &errMsg)) {
 #else
       if (LLVMLinkModules(wrap(dst), wrap(src), LLVMLinkerPreserveSource, &errMsg)) {

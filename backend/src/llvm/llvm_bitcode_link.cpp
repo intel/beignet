@@ -60,7 +60,7 @@ namespace gbe
       return NULL;
     }
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
     oclLib = getLazyIRFileModule(FilePath, Err, ctx);
 #else
     oclLib = getLazyIRFileModule(FilePath, Err, ctx).release();
@@ -117,7 +117,7 @@ namespace gbe
 
         std::string ErrInfo;// = "Not Materializable";
         if (!fromSrc && newMF->isMaterializable()) {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
           if (newMF->Materialize(&ErrInfo)) {
             printf("Can not materialize the function: %s, because %s\n", fnName.c_str(), ErrInfo.c_str());
             return false;
@@ -250,7 +250,7 @@ namespace gbe
       }
       std::string ErrInfo;// = "Not Materializable";
       if (newMF->isMaterializable()) {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
         if (newMF->Materialize(&ErrInfo)) {
           printf("Can not materialize the function: %s, because %s\n", fnName.c_str(), ErrInfo.c_str());
           delete clonedLib;
@@ -287,7 +287,7 @@ namespace gbe
    * pass to extract the functions and values in Gvs from the library module.
    * After extract what we need and remove what we do not need, we use 
    * materializeAll to mark the module as materialized. */
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
     /* Get all GlobalValue from module. */
     Module::GlobalListType &GVlist = clonedLib->getGlobalList();
     for(Module::global_iterator GVitr = GVlist.begin();GVitr != GVlist.end();++GVitr) {
@@ -310,7 +310,7 @@ namespace gbe
     /* We use beignet's bitcode as dst because it will have a lot of
        lazy functions which will not be loaded. */
     char* errorMsg;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
     if(LLVMLinkModules2(wrap(clonedLib), wrap(mod))) {
 #else
     if(LLVMLinkModules(wrap(clonedLib), wrap(mod), LLVMLinkerDestroySource, &errorMsg)) {
@@ -319,13 +319,13 @@ namespace gbe
       printf("Fatal Error: link the bitcode error:\n%s\n", errorMsg);
       return NULL;
     }
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
     llvm::legacy::PassManager passes;
 #else
     llvm::PassManager passes;
 #endif
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
     auto PreserveKernel = [=](const GlobalValue &GV) {
       for(size_t i = 0;i < kernels.size(); ++i)
         if(strcmp(GV.getName().data(), kernels[i]))
