@@ -52,33 +52,16 @@
 #include <mutex>
 
 #ifdef GBE_COMPILER_AVAILABLE
-/* Not defined for LLVM 3.0 */
-#if !defined(LLVM_VERSION_MAJOR)
-#define LLVM_VERSION_MAJOR 3
-#endif /* !defined(LLVM_VERSION_MAJOR) */
-
-/* Not defined for LLVM 3.0 */
-#if !defined(LLVM_VERSION_MINOR)
-#define LLVM_VERSION_MINOR 0
-#endif /* !defined(LLVM_VERSION_MINOR) */
 
 #include <clang/CodeGen/CodeGenAction.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/CompilerInvocation.h>
-#if LLVM_VERSION_MINOR <= 1
-#include <clang/Frontend/DiagnosticOptions.h>
-#else
 #include <clang/Basic/DiagnosticOptions.h>
-#endif  /* LLVM_VERSION_MINOR <= 1 */
 #include <clang/Frontend/TextDiagnosticPrinter.h>
 #include <clang/Basic/TargetInfo.h>
 #include <clang/Basic/TargetOptions.h>
 #include <llvm/ADT/IntrusiveRefCntPtr.h>
-#if LLVM_VERSION_MINOR <= 2
-#include <llvm/Module.h>
-#else
 #include <llvm/IR/Module.h>
-#endif  /* LLVM_VERSION_MINOR <= 2 */
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <llvm/Support/raw_ostream.h>
 #endif
@@ -686,10 +669,6 @@ namespace gbe {
     args.push_back("-disable-llvm-optzns");
     if(bFastMath)
       args.push_back("-D __FAST_RELAXED_MATH__=1");
-#if LLVM_VERSION_MINOR <= 2
-    args.push_back("-triple");
-    args.push_back("nvptx");
-#else
     args.push_back("-x");
     args.push_back("cl");
     args.push_back("-triple");
@@ -698,7 +677,6 @@ namespace gbe {
       args.push_back("-fblocks");
     } else
       args.push_back("spir");
-#endif /* LLVM_VERSION_MINOR <= 2 */
     args.push_back("stringInput.cl");
     args.push_back("-ffp-contract=on");
     if(OCL_DEBUGINFO) args.push_back("-g");
@@ -791,11 +769,7 @@ namespace gbe {
       std::string err;
       llvm::raw_fd_ostream ostream (dumpLLVMFileName.c_str(),
                                     err,
-      #if LLVM_VERSION_MINOR == 3
-                                    0
-      #else
                                     llvm::sys::fs::F_None
-      #endif
                                     );
 
       if (err.empty()) {
@@ -807,11 +781,7 @@ namespace gbe {
       std::string err;
       llvm::raw_fd_ostream ostream (dumpSPIRBinaryName.c_str(),
                                     err,
-      #if LLVM_VERSION_MINOR == 3
-                                    0
-      #else
                                     llvm::sys::fs::F_None
-      #endif
                                     );
       if (err.empty())
         llvm::WriteBitcodeToFile(*out_module, ostream);

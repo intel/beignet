@@ -746,9 +746,6 @@ namespace gbe
     void visitVAArgInst(VAArgInst &I) {NOT_SUPPORTED;}
     void visitSwitchInst(SwitchInst &I) {NOT_SUPPORTED;}
     void visitInvokeInst(InvokeInst &I) {NOT_SUPPORTED;}
-#if LLVM_VERSION_MINOR == 0
-    void visitUnwindInst(UnwindInst &I) {NOT_SUPPORTED;}
-#endif /* __LLVM_30__ */
     void visitResumeInst(ResumeInst &I) {NOT_SUPPORTED;}
     void visitInlineAsm(CallInst &I) {NOT_SUPPORTED;}
     void visitIndirectBrInst(IndirectBrInst &I) {NOT_SUPPORTED;}
@@ -1750,7 +1747,6 @@ namespace gbe
   {
     GBE_ASSERT(dyn_cast<ConstantExpr>(CPV) == NULL);
 
-#if LLVM_VERSION_MINOR > 0
     ConstantDataSequential *seq = dyn_cast<ConstantDataSequential>(CPV);
 
     if (seq) {
@@ -1773,7 +1769,6 @@ namespace gbe
         GBE_ASSERTM(0, "Const data array never be half float\n");
       }
     } else
-#endif /* LLVM_VERSION_MINOR > 0 */
 
     if (dyn_cast<ConstantAggregateZero>(CPV)) {
       Type* Ty = CPV->getType();
@@ -2344,9 +2339,6 @@ namespace gbe
       Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
 
       // Insert a new register for each function argument
-#if LLVM_VERSION_MINOR <= 1
-      const AttrListPtr &PAL = F.getAttributes();
-#endif /* LLVM_VERSION_MINOR <= 1 */
       for (; I != E; ++I, ++argID) {
         uint32_t opID = argID;
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9
@@ -2436,11 +2428,7 @@ namespace gbe
             continue;
           Type *pointed = pointerType->getElementType();
           // By value structure
-#if LLVM_VERSION_MINOR <= 1
-          if (PAL.paramHasAttr(argID+1, Attribute::ByVal)) {
-#else
           if (I->hasByValAttr()) {
-#endif /* LLVM_VERSION_MINOR <= 1 */
             const size_t structSize = getTypeByteSize(unit, pointed);
             ctx.input(argName, ir::FunctionArgument::STRUCTURE, reg, llvmInfo, structSize, getAlignmentByte(unit, type), 0);
           }
@@ -3164,15 +3152,9 @@ namespace gbe
   void GenWriter::emitFunction(Function &F)
   {
     switch (F.getCallingConv()) {
-#if LLVM_VERSION_MINOR <= 2
-      case CallingConv::PTX_Device: // we do not emit device function
-        return;
-      case CallingConv::PTX_Kernel:
-#else
       case CallingConv::C:
       case CallingConv::Fast:
       case CallingConv::SPIR_KERNEL:
-#endif
         break;
       default:
         GBE_ASSERTM(false, "Unsupported calling convention");
@@ -3789,14 +3771,12 @@ namespace gbe
           break;
           case Intrinsic::stackrestore:
           break;
-#if LLVM_VERSION_MINOR >= 2
           case Intrinsic::lifetime_start:
           case Intrinsic::lifetime_end:
           break;
           case Intrinsic::fmuladd:
             this->newRegister(&I);
           break;
-#endif /* LLVM_VERSION_MINOR >= 2 */
           case Intrinsic::debugtrap:
           case Intrinsic::trap:
           case Intrinsic::dbg_value:
@@ -4644,11 +4624,9 @@ namespace gbe
             ctx.MOV(ir::getType(family), dst, src);
           }
           break;
-#if LLVM_VERSION_MINOR >= 2
           case Intrinsic::lifetime_start:
           case Intrinsic::lifetime_end:
           break;
-#endif /* LLVM_VERSION_MINOR >= 2 */
           case Intrinsic::debugtrap:
           case Intrinsic::trap:
           case Intrinsic::dbg_value:
