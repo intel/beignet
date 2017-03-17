@@ -1054,10 +1054,10 @@ for vector_length in $VECTOR_LENGTHS; do
     done
 done
 
-# convert_double_roundingmode( int32, int16 ,int8)
-ITYPES=" double:8 int:4 uint:4 short:2 ushort:2 char:1 uchar:1"
+# convert_double_roundingmode( double, float ,int32, int16 ,int8)
+TTYPES=" double:8 float:4 int:4 uint:4 short:2 ushort:2 char:1 uchar:1"
 for vector_length in $VECTOR_LENGTHS; do
-    for ftype in $ITYPES; do
+    for ftype in $TTYPES; do
 	fbasetype=`IFS=:; set -- dummy $ftype; echo $2`
 
 	    if test $vector_length -eq 1; then
