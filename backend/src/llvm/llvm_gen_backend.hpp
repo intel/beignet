@@ -82,9 +82,9 @@ namespace gbe
       auto it = map.find(symbol);
 
       if (it == map.end()) {
-        int status;
+        int status = 0; /* set for libcxxrt */
         char *realName = abi::__cxa_demangle(symbol.c_str(), NULL, NULL, &status);
-        if (status == 0) {
+        if (realName) {
           std::string realFnName(realName), stripName;
           stripName = realFnName.substr(0, realFnName.find("("));
           it = map.find(stripName);
