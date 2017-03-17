@@ -764,7 +764,7 @@ namespace gbe
     void emitUnalignedDQLoadStore(ir::Register ptr, Value *llvmValues, ir::AddressSpace addrSpace, ir::Register bti, bool isLoad, bool dwAligned, bool fixedBTI);
     void visitInstruction(Instruction &I) {NOT_SUPPORTED;}
     ir::PrintfSet::PrintfFmt* getPrintfInfo(CallInst* inst) {
-      if (unit.printfs.find(inst) == unit.printfs.end())
+      if (unit.printfs.find((void *)inst) == unit.printfs.end())
         return NULL;
       return unit.printfs[inst];
     }

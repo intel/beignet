@@ -32,8 +32,6 @@
 #include "sys/map.hpp"
 #include <string.h>
 
-#include "llvm/IR/Instructions.h"
-
 namespace gbe {
 namespace ir {
 
@@ -46,7 +44,7 @@ namespace ir {
   public:
     typedef map<std::string, Function*> FunctionSet;
     /*! Moved from printf pass */
-    map<llvm::CallInst*, PrintfSet::PrintfFmt*> printfs;
+    map<void *, PrintfSet::PrintfFmt*> printfs;
     vector<std::string> blockFuncs;
     /*! Create an empty unit */
     Unit(PointerSize pointerSize = POINTER_32_BITS);
