@@ -758,6 +758,7 @@ OVERLOADABLE long convert_long_rtp(double x)
 '
 fi
 
+# convert_u|char|short|int_rte(double x)
 ITYPES="int:4 uint:4 short:2 ushort:2 char:1 uchar:1"
 for ttype in $ITYPES; do
 	tbasetype=`IFS=:; set -- dummy $ttype; echo $2`
@@ -767,6 +768,7 @@ for ttype in $ITYPES; do
 	fi
 done
 
+# convert_u|char|short|int_rte(double x)
 IUTYPES="ulong:8 uint:4 ushort:2 uchar:1"
 for ttype in $IUTYPES; do
 	tbasetype=`IFS=:; set -- dummy $ttype; echo $2`
@@ -785,6 +787,25 @@ for ttype in $ITYPES; do
 	echo "{ double lx = (x < 0) ? -x:x;"
 	echo " $tbasetype tmp = convert_u${tbasetype}_rtn(lx);"
 	echo "return (x < 0) ? -tmp:tmp;}"
+	fi
+done
+
+# convert_u|char|short|int_rtp(double x)
+IUTYPES="uint:4 ushort:2 uchar:1"
+for ttype in $IUTYPES; do
+	tbasetype=`IFS=:; set -- dummy $ttype; echo $2`
+	if [ $1"a" != "-pa" ]; then
+	echo "OVERLOADABLE $tbasetype convert_${tbasetype}_rtp(double x)"
+	echo "{ return ($tbasetype)convert_ulong_rtp(x);}"
+	fi
+done
+
+ITYPES="int:4 short:2 char:1"
+for ttype in $ITYPES; do
+	tbasetype=`IFS=:; set -- dummy $ttype; echo $2`
+	if [ $1"a" != "-pa" ]; then
+	echo "OVERLOADABLE $tbasetype convert_${tbasetype}_rtp(double x)"
+	echo " { return ($tbasetype)convert_long_rtp(x);}"
 	fi
 done
 
