@@ -24,15 +24,9 @@
 
 #ifdef GBE_COMPILER_AVAILABLE
 #include "llvm/Config/llvm-config.h"
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
-#include "llvm/DataLayout.h"
-#else
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/DataLayout.h"
-#endif  /* LLVM_VERSION_MINOR <= 2 */
 #include "llvm-c/Linker.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Bitcode/ReaderWriter.h"
