@@ -1503,15 +1503,15 @@ namespace gbe
       Value *pointer = expr->getOperand(0);
       if (expr->getOpcode() == Instruction::GetElementPtr) {
         uint32_t constantOffset = 0;
-        CompositeType* CompTy = cast<CompositeType>(pointer->getType());
+        Type* EltTy = pointer->getType();
         for(uint32_t op=1; op<expr->getNumOperands(); ++op) {
             int32_t TypeIndex;
             ConstantInt* ConstOP = dyn_cast<ConstantInt>(expr->getOperand(op));
             GBE_ASSERTM(ConstOP != NULL, "must be constant index");
             TypeIndex = ConstOP->getZExtValue();
             GBE_ASSERT(TypeIndex >= 0);
-            constantOffset += getGEPConstOffset(unit, CompTy, TypeIndex);
-            CompTy = dyn_cast<CompositeType>(CompTy->getTypeAtIndex(TypeIndex));
+            constantOffset += getGEPConstOffset(unit, pointer->getType(), TypeIndex);
+            EltTy = getEltType(EltTy, TypeIndex);
         }
 
         ir::Constant cc = unit.getConstantSet().getConstant(pointer->getName());

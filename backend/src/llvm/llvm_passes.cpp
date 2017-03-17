@@ -180,12 +180,23 @@ namespace gbe
     return size_bit/8;
   }
 
-  int32_t getGEPConstOffset(const ir::Unit &unit, CompositeType *CompTy, int32_t TypeIndex) {
+  Type* getEltType(Type* eltTy, uint32_t index) {
+    Type *elementType = NULL;
+    if (PointerType* ptrType = dyn_cast<PointerType>(eltTy))
+      elementType = ptrType->getElementType();
+    else if(SequentialType * seqType = dyn_cast<SequentialType>(eltTy))
+      elementType = seqType->getElementType();
+    else if(CompositeType * compTy= dyn_cast<CompositeType>(eltTy))
+      elementType = compTy->getTypeAtIndex(index);
+    GBE_ASSERT(elementType);
+    return elementType;
+  }
+
+  int32_t getGEPConstOffset(const ir::Unit &unit, Type *eltTy, int32_t TypeIndex) {
     int32_t offset = 0;
-    SequentialType * seqType = dyn_cast<SequentialType>(CompTy);
-    if (seqType != NULL) {
+    if (!eltTy->isStructTy()) {
       if (TypeIndex != 0) {
-        Type *elementType = seqType->getElementType();
+        Type *elementType = getEltType(eltTy);
         uint32_t elementSize = getTypeByteSize(unit, elementType);
         uint32_t align = getAlignmentByte(unit, elementType);
         elementSize += getPadding(elementSize, align);
@@ -193,17 +204,16 @@ namespace gbe
       }
     } else {
       int32_t step = TypeIndex > 0 ? 1 : -1;
-      GBE_ASSERT(CompTy->isStructTy());
       for(int32_t ty_i=0; ty_i != TypeIndex; ty_i += step)
       {
-        Type* elementType = CompTy->getTypeAtIndex(ty_i);
+        Type* elementType = getEltType(eltTy, ty_i);
         uint32_t align = getAlignmentByte(unit, elementType);
         offset += getPadding(offset, align * step);
         offset += getTypeByteSize(unit, elementType) * step;
       }
 
       //add getPaddingding for accessed type
-      const uint32_t align = getAlignmentByte(unit, CompTy->getTypeAtIndex(TypeIndex));
+      const uint32_t align = getAlignmentByte(unit, getEltType(eltTy ,TypeIndex));
       offset += getPadding(offset, align * step);
     }
     return offset;
@@ -247,8 +257,8 @@ namespace gbe
   {
     const uint32_t ptrSize = unit.getPointerSize();
     Value* parentPointer = GEPInst->getOperand(0);
-    CompositeType* CompTy = parentPointer ? cast<CompositeType>(parentPointer->getType()) : NULL;
-    if(!CompTy)
+    Type* eltTy = parentPointer ? parentPointer->getType() : NULL;
+    if(!eltTy)
       return false;
 
     Value* currentAddrInst = 
@@ -262,14 +272,15 @@ namespace gbe
       ConstantInt* ConstOP = dyn_cast<ConstantInt>(GEPInst->getOperand(op));
       if (ConstOP != NULL) {
         TypeIndex = ConstOP->getZExtValue();
-        constantOffset += getGEPConstOffset(unit, CompTy, TypeIndex);
+        constantOffset += getGEPConstOffset(unit, eltTy, TypeIndex);
       }
       else {
         // we only have array/vectors here, 
         // therefore all elements have the same size
         TypeIndex = 0;
 
-        Type* elementType = CompTy->getTypeAtIndex(TypeIndex);
+        Type* elementType = getEltType(eltTy);
+
         uint32_t size = getTypeByteSize(unit, elementType);
 
         //add padding
@@ -326,7 +337,7 @@ namespace gbe
       }
 
       //step down in type hirachy
-      CompTy = dyn_cast<CompositeType>(CompTy->getTypeAtIndex(TypeIndex));
+      eltTy = getEltType(eltTy, TypeIndex);
     }
 
     //insert addition of new offset before GEPInst when it is not zero

@@ -118,7 +118,10 @@ namespace gbe
   uint32_t getTypeByteSize(const ir::Unit &unit, llvm::Type* Ty);
 
   /*! Get GEP constant offset for the specified operand.*/
-  int32_t getGEPConstOffset(const ir::Unit &unit, llvm::CompositeType *CompTy, int32_t TypeIndex);
+  int32_t getGEPConstOffset(const ir::Unit &unit, llvm::Type *eltTy, int32_t TypeIndex);
+
+  /*! Get element type for a type.*/
+  llvm::Type* getEltType(llvm::Type *eltTy, uint32_t index = 0);
 
   /*! whether this is a kernel function */
   bool isKernelFunction(const llvm::Function &f);
