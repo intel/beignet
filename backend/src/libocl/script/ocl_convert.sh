@@ -753,6 +753,49 @@ OVERLOADABLE float  convert_float_rtp(double x)
 	return ftemp;
 }
 
+OVERLOADABLE float  convert_float_rte(double x)
+{
+	int ret, tmp;
+	long lval = as_long(x);
+	int exp = ((lval & DF_EXP_MASK) >> DF_EXP_OFFSET) - DF_EXP_BIAS;
+	int sign = (lval & DF_SIGN_MASK)?1:0;
+	long ma = (lval &DF_MAN_MASK);
+
+	int fval = ((exp + 127) << 23) |convert_int(ma >> 29);
+	int lastBit = (ma & 0x20000000);
+	int roundBits32 = (ma & 0x1FFFFFFF);
+	if(roundBits32 > 0x10000000) fval += 1;
+	else if((roundBits32 == 0x10000000) && lastBit) fval += 1;
+	ret = fval;
+
+	ma |= DF_IMPLICITE_ONE;
+	int rshift = -exp -97;
+	tmp = ma >> rshift;
+	long shift = (1UL << rshift) -1UL;
+	long roundBits = (ma & shift);
+	lastBit = tmp & 0x1;
+	if(roundBits > (1L << (rshift - 1))) tmp += 1;
+	if(roundBits == (1L << (rshift - 1)) && lastBit) tmp += 1;
+	ret = (exp < -126) ? tmp:ret;
+	ret = (exp < -149) ? 0:ret;
+
+	tmp = 0x7F800000;
+	if(!sign) tmp = 0x7F800000;
+	ret = (exp > 127) ? tmp:ret;
+
+	tmp = (lval & DF_MAN_MASK) ? 0x7FFFFFFF:0x7F800000;
+	ret = (exp == 1024) ? tmp:ret;
+
+	tmp = 0x7F800000;
+	ret = ((exp == 1023) && (ma == DF_MAN_MASK)) ? tmp:ret;
+
+	ret = ((lval & DF_ABS_MASK) == 0) ? 0:ret;
+
+	ret |= (sign << 31);
+	float ftemp = as_float(ret);
+	return ftemp;
+}
+
 OVERLOADABLE long convert_long_rte(double x)
 {
 	long lval = as_long(x);
