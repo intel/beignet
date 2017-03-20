@@ -80,9 +80,13 @@ namespace gbe
               optimized = true;
             } else {
               if (if_find) {
-                insn.state.predicate = GEN_PREDICATE_NORMAL;
-                insn.state.flag = 0;
-                insn.state.subFlag = 1;
+                if (insn.state.noMask == 1)
+                  insn.state.predicate = GEN_PREDICATE_NONE;
+                else {
+                  insn.state.predicate = GEN_PREDICATE_NORMAL;
+                  insn.state.flag = 0;
+                  insn.state.subFlag = 1;
+                }
               }
               ++iter;
             }
