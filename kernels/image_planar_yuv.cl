@@ -1,5 +1,5 @@
 __kernel void
-image_planar_total(__read_write image2d_t srcNV, __read_write image2d_t dstNV)
+image_planar_total(__read_only image2d_t srcNV, __write_only image2d_t dstNV)
 {
   const sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE | CLK_FILTER_NEAREST;
   int2 loc = (int2)(get_global_id(0), get_global_id(1));
