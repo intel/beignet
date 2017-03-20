@@ -1114,8 +1114,10 @@ EXTEND_QUOTE:
                                     stringSize, err, errSize, optLevel, options);
       if (err != NULL)
         *errSize += clangErrSize;
-      if (OCL_OUTPUT_BUILD_LOG && err)
-        llvm::errs() << options << "\n" << err;
+      if (OCL_OUTPUT_BUILD_LOG && options)
+        llvm::errs() << "options:" << options << "\n";
+      if (OCL_OUTPUT_BUILD_LOG && err && *errSize)
+        llvm::errs() << err << "\n";
     } else
       p = NULL;
 
@@ -1168,8 +1170,10 @@ EXTEND_QUOTE:
 
       p = gbe_program_new_gen_program(deviceID, out_module, NULL, NULL);
 
-      if (OCL_OUTPUT_BUILD_LOG && err)
-        llvm::errs() << options << "\n" << err;
+      if (OCL_OUTPUT_BUILD_LOG && options)
+        llvm::errs() << "options:" << options << "\n";
+      if (OCL_OUTPUT_BUILD_LOG && err && *errSize)
+        llvm::errs() << err << "\n";
     } else
       p = NULL;
     releaseLLVMContextLock();
