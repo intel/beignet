@@ -1304,7 +1304,25 @@ OVERLOADABLE double convert_double_rtn(ulong x)
 
 OVERLOADABLE double convert_double_rte(ulong x)
 {
-	return 0;
+	long exp;
+	long ret, ma, tmp;
+	int msbOne = 64 -clz(x);
+
+	exp = msbOne + DF_EXP_BIAS - 1;
+	ret = (exp << 52);
+	int shift = abs(53 - msbOne);
+	tmp = ret | ((x << shift) &DF_MAN_MASK);
+
+	ma = (x & ((0x1L << shift) - 1));
+	int lastBit = (x >> shift) & 0x1;
+	ret |= (x >> shift) &DF_MAN_MASK;
+	ret = (ma > (0x1L << (msbOne -54))) ? ret+1:ret;
+	ret = (ma == (0x1L << (msbOne -54)) && lastBit) ? ret+1:ret;
+
+	ret = (msbOne < 54) ? tmp:ret;
+	ret = (!msbOne) ? 0:ret;
+
+	return as_double(ret);
 }
 '
 fi
