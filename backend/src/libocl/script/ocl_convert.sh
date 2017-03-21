@@ -1270,7 +1270,19 @@ OVERLOADABLE double convert_double_rtp(ulong x)
 
 OVERLOADABLE double convert_double_rtz(ulong x)
 {
-	return 0;
+	long exp;
+	long ret, ma, tmp;
+	int msbOne = 64 -clz(x);
+	exp = msbOne + DF_EXP_BIAS - 1;
+	ret = (exp << 52);
+
+	int shift = abs(53 - msbOne);
+	tmp = ret | ((x << shift) &DF_MAN_MASK);
+	ret |= (x >> shift) &DF_MAN_MASK;
+	ret = (msbOne < 54) ? tmp:ret;
+	ret = (!msbOne) ? 0:ret;
+
+	return as_double(ret);
 }
 
 OVERLOADABLE double convert_double_rtn(ulong x)
