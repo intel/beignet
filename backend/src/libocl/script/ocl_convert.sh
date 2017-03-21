@@ -1395,10 +1395,35 @@ OVERLOADABLE double convert_double_rtz(long x)
 	ret |= (x & DF_SIGN_MASK);
 	return as_double(ret);
 }
+
+OVERLOADABLE double convert_double_rte(long x)
+{
+	long exp;
+	long ret, ma, tmp;
+
+	long absX = abs(x);
+	int msbOne = 64 -clz(absX);
+	exp = msbOne + DF_EXP_BIAS - 1;
+	ret = (exp << 52);
+	int shift = abs(53 - msbOne);
+	tmp = ret | ((absX << shift) &DF_MAN_MASK);
+
+	ma = (absX& ((0x1L << shift) - 1));
+	int lastBit = (absX >> shift) & 0x1;
+	ret |= (absX>> shift) &DF_MAN_MASK;
+	ret = (ma > (0x1L << (msbOne -54))) ? ret+1:ret;
+	ret = (ma == (0x1L << (msbOne -54)) && lastBit) ? ret+1:ret;
+
+	ret = (msbOne < 54) ? tmp:ret;
+	ret = (!msbOne) ? 0:ret;
+
+	ret |= (x & DF_SIGN_MASK);
+	return as_double(ret);
+}
 '
 fi
 
-TTYPES=" ulong:8"
+TTYPES=" ulong:8 long:8"
 for vector_length in $VECTOR_LENGTHS; do
     for ftype in $TTYPES; do
 	fbasetype=`IFS=:; set -- dummy $ftype; echo $2`
