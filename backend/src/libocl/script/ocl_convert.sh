@@ -1372,6 +1372,29 @@ OVERLOADABLE double convert_double_rtn(long x)
 	ret |= (x & DF_SIGN_MASK);
 	return as_double(ret);
 }
+
+OVERLOADABLE double convert_double_rtz(long x)
+{
+	long exp;
+	long ret, ma, tmp;
+	int sign = (x & DF_SIGN_MASK) ? 1:0;
+
+	long absX = abs(x);
+	int msbOne = 64 -clz(absX);
+	exp = msbOne + DF_EXP_BIAS - 1;
+	ret = (exp << 52);
+	int shift = abs(53 - msbOne);
+	tmp = ret | ((absX << shift) &DF_MAN_MASK);
+
+	ma = (absX & ((0x1 << shift) - 1));
+	ret |= (absX >> shift) &DF_MAN_MASK;
+
+	ret = (msbOne < 54) ? tmp:ret;
+	ret = (msbOne == 0) ? 0:ret;
+
+	ret |= (x & DF_SIGN_MASK);
+	return as_double(ret);
+}
 '
 fi
 
