@@ -50,12 +50,13 @@ namespace gbe
   struct GenRegInterval {
     INLINE GenRegInterval(ir::Register reg) :
       reg(reg), minID(INT_MAX), maxID(-INT_MAX), accessCount(0),
-      conflictReg(0), b3OpAlign(0) {}
+      blockID(-1), conflictReg(0), b3OpAlign(0), usedHole(false), isHole(false){}
     ir::Register reg;     //!< (virtual) register of the interval
     int32_t minID, maxID; //!< Starting and ending points
     int32_t accessCount;
+    int32_t blockID; //!< blockID for in-block regs that can reuse hole
     ir::Register conflictReg; // < has banck conflict with this register
-    bool b3OpAlign;
+    bool b3OpAlign, usedHole, isHole;
   };
 
   struct SpillInterval {
@@ -127,7 +128,7 @@ namespace gbe
     /*! Allocate the vectors detected in the instruction selection pass */
     void allocateVector(Selection &selection);
     /*! Allocate the given interval. Return true if success */
-    bool createGenReg(const Selection &selection, const GenRegInterval &interval);
+    bool createGenReg(const Selection &selection, GenRegInterval &interval);
     /*! Indicate if the registers are already allocated in vectors */
     bool isAllocated(const SelectionVector *vector) const;
     /*! Reallocate registers if needed to make the registers in the vector
@@ -167,6 +168,8 @@ namespace gbe
     uint32_t reservedReg;
     /*! Current vector to expire */
     uint32_t expiringID;
+    /*! Hole regs that can be reused */
+    map<uint32_t, vector<HoleRegTag>> HoleRegPool;
     INLINE void insertNewReg(const Selection &selection, ir::Register reg, uint32_t grfOffset, bool isVector = false);
     INLINE bool expireReg(ir::Register reg);
     INLINE bool spillAtInterval(GenRegInterval interval, int size, uint32_t alignment);
@@ -281,14 +284,66 @@ namespace gbe
     }
   }
 
-  bool GenRegAllocator::Opaque::createGenReg(const Selection &selection, const GenRegInterval &interval) {
+  INLINE float IDFitness(int a, int b) {
+    if (a >= b) return 1.0f/(a - b + 1);
+    else return 2.0f;
+  }
+
+  INLINE float getHoleRegFitness(const GenRegInterval &interval, HoleRegTag &holeRegTag) {
+    int regstID = interval.minID;
+    int regendID = interval.maxID;
+    int holeregstID = holeRegTag.startID;
+    int holeregendID = holeRegTag.endID;
+    return IDFitness(regstID, holeregstID) + IDFitness(holeregendID, regendID);
+  }
+
+  BVAR(OCL_REUSE_HOLE_REG, 1);
+  bool GenRegAllocator::Opaque::createGenReg(const Selection &selection, GenRegInterval &interval) {
     using namespace ir;
     const ir::Register reg = interval.reg;
-    if (RA.contains(reg) == true)
-      return true; // already allocated
     uint32_t regSize;
     ir::RegisterFamily family;
     getRegAttrib(reg, regSize, &family);
+    // Check if the reg is live only in one block, thus can use the hole
+    int blockID = interval.blockID;
+    if (blockID >= 0 && OCL_REUSE_HOLE_REG) {
+      uint32_t useID = interval.maxID;
+      auto holepool = this->HoleRegPool.find(blockID);
+      // Use block ID as index to get candidate hole reg to reuse
+      if (holepool != this->HoleRegPool.end()) {
+        auto &holepoolvec = holepool->second;
+        HoleRegTag* holeregbest = NULL;
+        float lastfitness = 0;
+        for (auto itr = holepoolvec.begin() ; itr != holepoolvec.end(); ++itr) {
+          if (regSize != itr->regSize)
+            continue;
+          float fitness = getHoleRegFitness(interval, *itr);
+          // reg out of range of holepool reg
+          if (fitness > 2.0f) continue;
+          if (fitness > lastfitness) {
+            lastfitness = fitness;
+            holeregbest = &*itr;
+          }
+          // reg has one prefect fit use this
+          if (fitness > 1 ) break;
+        }
+        // Reuse the hole and update the holeregpool
+        if (holeregbest) {
+          auto holereg = holeregbest->reg;
+          holeregbest->startID = useID + 1;
+          int32_t grfOffset = -1;
+          if (RA.contains(holereg)) {
+            //uint32_t grfOffset = RA.find(holereg)->second;
+            grfOffset = RA.find(holereg)->second;
+            RA.insert(std::make_pair(reg, grfOffset));
+            interval.usedHole= true;
+            intervals[holereg].usedHole = true;
+          }
+        }
+      }
+    }
+    if (RA.contains(reg) == true)
+      return true; // already allocated
     uint32_t grfOffset = allocateReg(interval, regSize, regSize);
     if (grfOffset == 0) {
       return false;
@@ -738,7 +793,7 @@ namespace gbe
     ctx.errCode = REGISTER_ALLOCATION_FAIL;
     const uint32_t regNum = ctx.sel->getRegNum();
     for (uint32_t startID = 0; startID < regNum; ++startID) {
-      const GenRegInterval &interval = *this->starting[startID];
+      GenRegInterval &interval = *this->starting[startID];
       const ir::Register reg = interval.reg;
 
       if (interval.maxID == -INT_MAX)
@@ -856,6 +911,8 @@ namespace gbe
 
   INLINE bool GenRegAllocator::Opaque::expireReg(ir::Register reg)
   {
+    if (this->intervals[reg].usedHole && !this->intervals[reg].isHole)
+      return true;
     auto it = RA.find(reg);
     if (flagBooleans.contains(reg))
       return false;
@@ -1076,11 +1133,16 @@ namespace gbe
             break;
           }
         } else {
-          spillSet.insert(reg);
-          uint32_t s;
-          getRegAttrib(reg, s);
-          spillCostTotal += contiguousIter->cost;
-          remainSize -= s;
+          // If one hole reg is used by some reg, we should not spill it
+          if (!(intervals[reg].isHole && intervals[reg].usedHole)) {
+            spillSet.insert(reg);
+            uint32_t s;
+            getRegAttrib(reg, s);
+            spillCostTotal += contiguousIter->cost;
+            remainSize -= s;
+          }
+          else
+            break;
         }
         if (remainSize <= 0)
           break;
@@ -1234,10 +1296,12 @@ namespace gbe
     }
 
     // Compute the intervals
-    int32_t insnID = 0;
+    int insnID = 0;
+    int blockID = 0;
     for (auto &block : *selection.blockList) {
+      map<int32_t, BlockRegInterval> blockIntervals;
       int32_t lastID = insnID;
-      int32_t firstID = insnID;
+      int32_t firstID = insnID ? insnID + 2 : insnID;
       // Update the intervals of each used register. Note that we do not
       // register allocate R0, so we skip all sub-registers in r0
       RegIntervalMap *boolsMap = new RegIntervalMap;
@@ -1276,6 +1340,10 @@ namespace gbe
             insnsrcID -= 1;
           this->intervals[reg].minID = std::min(this->intervals[reg].minID, insnsrcID);
           this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, insnsrcID);
+          BlockRegInterval &blockRegInterval = blockIntervals[reg];
+          blockRegInterval.useID = insnsrcID;
+          if (this->intervals[reg].blockID > 0 && this->intervals[reg].blockID != blockID)
+            this->intervals[reg].blockID = -1;
         }
         for (uint32_t dstID = 0; dstID < dstNum; ++dstID) {
           const GenRegister &selReg = insn.dst(dstID);
@@ -1291,6 +1359,26 @@ namespace gbe
           }
           this->intervals[reg].minID = std::min(this->intervals[reg].minID, insnID);
           this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, insnID);
+          if ( this->intervals[reg].blockID == -1)
+            this->intervals[reg].blockID = blockID;
+          // Only find hole reg that not in ocl registers
+          if ( !selReg.subphysical && blockIntervals.find(reg) != blockIntervals.end() && reg >= ir::ocl::regNum ) {
+            BlockRegInterval &blockRegInterval = blockIntervals[reg];
+            int useID = blockRegInterval.useID;
+            // Check if the reg will leave a hole and add it to HoleRegPool
+            if (useID >= 0 && useID < insnID - 1 && reg >= ir::ocl::regNum) {
+              uint32_t regSize;
+              ir::RegisterFamily family;
+              getRegAttrib(reg, regSize, &family);
+              HoleRegTag holeregtag;
+              holeregtag.reg = reg;
+              holeregtag.startID = useID + 1;
+              holeregtag.endID = insnID - 1;
+              holeregtag.regSize = regSize;
+              this->HoleRegPool[blockID].push_back(holeregtag);
+              this->intervals[reg].isHole = true;
+            }
+          }
         }
 
         // OK, a flag is used as a predicate or a conditional modifier
@@ -1336,18 +1424,23 @@ namespace gbe
       // All registers alive at the begining of the block must update their intervals.
       const ir::BasicBlock *bb = block.bb;
       bbLastInsnIDMap.insert(std::make_pair(bb, lastID));
-      for (auto reg : ctx.getLiveIn(bb))
+      for (auto reg : ctx.getLiveIn(bb)) {
         this->intervals[reg].minID = std::min(this->intervals[reg].minID, firstID);
-
+        this->intervals[reg].blockID = -1;
+      }
       // All registers alive at the end of the block must have their intervals
       // updated as well
-      for (auto reg : ctx.getLiveOut(bb))
+      for (auto reg : ctx.getLiveOut(bb)) {
         this->intervals[reg].maxID = std::max(this->intervals[reg].maxID, lastID);
+        this->intervals[reg].blockID = -1;
+      }
 
       if (boolsMap->size() > 0)
         boolIntervalsMap.insert(std::make_pair(&block, boolsMap));
       else
         delete boolsMap;
+
+      blockID++;
     }
 
     for (auto &it : this->intervals) {
