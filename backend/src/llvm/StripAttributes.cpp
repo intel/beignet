@@ -79,10 +79,13 @@ namespace {
   class StripAttributes : public FunctionPass {
   public:
     static char ID; // Pass identification, replacement for typeid
-    StripAttributes() : FunctionPass(ID) {
+    StripAttributes(bool lastTime) : FunctionPass(ID),
+                                     lastTime(lastTime) {
     }
 
     virtual bool runOnFunction(Function &Func);
+  private:
+    bool lastTime; //last time all StripAttributes
   };
 }
 
@@ -93,7 +96,11 @@ bool StripAttributes::runOnFunction(Function &Func) {
   Func.setLinkage(GlobalValue::ExternalLinkage);
   if (!gbe::isKernelFunction(Func)) {
     Func.addFnAttr(Attribute::AlwaysInline);
-    Func.setLinkage(GlobalValue::LinkOnceAnyLinkage);
+    if (lastTime ||
+        (Func.getName().find("__gen_mem") == std::string::npos))
+      // Memcpy and memset functions could be deleted at last inline.
+      // Delete memcpy and memset functions for output llvm ir friendly.
+      Func.setLinkage(GlobalValue::LinkOnceAnyLinkage);
   }
 
   for (Function::iterator BB = Func.begin(), E = Func.end();
@@ -109,6 +116,6 @@ bool StripAttributes::runOnFunction(Function &Func) {
   return true;
 }
 
-FunctionPass *llvm::createStripAttributesPass() {
-  return new StripAttributes();
+FunctionPass *llvm::createStripAttributesPass(bool lastTime) {
+  return new StripAttributes(lastTime);
 }
