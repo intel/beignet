@@ -995,6 +995,14 @@ namespace gbe
                                     uint32_t registerPool) {
     GBE_ASSERT(registerPool != 0);
 
+    struct SpillReg {
+      uint32_t type:4;       //!< Gen type
+      uint32_t vstride:4;    //!< Vertical stride
+      uint32_t width:3;        //!< Width
+      uint32_t hstride:2;      //!< Horizontal stride
+    };
+    map <uint32_t, struct SpillReg> SpillRegs;
+
     for (auto &block : blockList)
       for (auto &insn : block.insnList) {
         // spill / unspill insn should be skipped when do spilling
@@ -1059,10 +1067,22 @@ namespace gbe
                                             1 + (ctx.reservedSpillRegs * 8) / ctx.getSimdWidth(), 0);
             unspill->state = GenInstructionState(simdWidth);
             unspill->state.noMask = 1;
-            unspill->dst(0) = GenRegister(GEN_GENERAL_REGISTER_FILE,
-                                          registerPool + regSlot.poolOffset, 0,
-                                          selReg.type, selReg.vstride,
-                                          selReg.width, selReg.hstride);
+            auto it = SpillRegs.find(selReg.value.reg);
+            GenRegister dst0;
+            if( it != SpillRegs.end()) {
+              dst0 = GenRegister(GEN_GENERAL_REGISTER_FILE,
+                                 registerPool + regSlot.poolOffset, 0,
+                                 it->second.type, it->second.vstride,
+                                 it->second.width, it->second.hstride);
+            } else {
+              dst0 = GenRegister(GEN_GENERAL_REGISTER_FILE,
+                                 registerPool + regSlot.poolOffset, 0,
+                                 selReg.type, selReg.vstride,
+                                 selReg.width, selReg.hstride);
+            }
+
+            dst0.value.reg = selReg.value.reg;
+            unspill->dst(0) = dst0;
             for(uint32_t i = 1; i < 1 + (ctx.reservedSpillRegs * 8) / ctx.getSimdWidth(); i++)
               unspill->dst(i) = ctx.getSimdWidth() == 8 ?
                                 GenRegister::vec8(GEN_GENERAL_REGISTER_FILE, registerPool + (i - 1), 0 ) :
@@ -1074,7 +1094,7 @@ namespace gbe
 
           GenRegister src = insn.src(regSlot.srcID);
           // change nr/subnr, keep other register settings
-          src.nr = registerPool + regSlot.poolOffset; src.subnr = 0; src.physical = 1;
+          src.nr = registerPool + regSlot.poolOffset + src.nr; src.physical = 1;
           insn.src(regSlot.srcID) = src;
         };
 
@@ -1121,6 +1141,14 @@ namespace gbe
             spill->state  = insn.state;//GenInstructionState(simdWidth);
             spill->state.accWrEnable = 0;
             spill->state.saturate = 0;
+            // Store the spilled regiter type.
+            struct SpillReg tmp;
+            tmp.type = selReg.type;
+            tmp.vstride = selReg.vstride;
+            tmp.hstride = selReg.hstride;
+            tmp.width= selReg.width;
+            SpillRegs[selReg.value.reg] = tmp;
+
             if (insn.opcode == SEL_OP_SEL)
               spill->state.predicate = GEN_PREDICATE_NONE;
             spill->src(0) = GenRegister(GEN_GENERAL_REGISTER_FILE,
