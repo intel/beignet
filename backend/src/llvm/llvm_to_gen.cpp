@@ -139,7 +139,7 @@ namespace gbe
     MPM.add(createBarrierNodupPass(false));   // remove noduplicate fnAttr before inlining.
     MPM.add(createFunctionInliningPass(20000));
     MPM.add(createBarrierNodupPass(true));    // restore noduplicate fnAttr after inlining.
-    MPM.add(createStripAttributesPass());     // Strip unsupported attributes and calling conventions.
+    MPM.add(createStripAttributesPass(false));     // Strip unsupported attributes and calling conventions.
     MPM.add(createSamplerFixPass());
     MPM.add(createGlobalOptimizerPass());     // Optimize out global vars
 
@@ -372,7 +372,7 @@ namespace gbe
 #endif
     // Print the code before further optimizations
     passes.add(createIntrinsicLoweringPass());
-    passes.add(createStripAttributesPass());     // Strip unsupported attributes and calling conventions.
+    passes.add(createStripAttributesPass(true));     // Strip unsupported attributes and calling conventions.
     passes.add(createFunctionInliningPass(20000));
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
     passes.add(createSROAPass());
