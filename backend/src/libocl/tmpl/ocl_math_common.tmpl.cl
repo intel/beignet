@@ -432,6 +432,178 @@ OVERLOADABLE double atanh(double x)
 		return 0.0;
 }
 
+OVERLOADABLE double exp(double x)
+{
+	double one	= 1.0,
+	halF[2]	= {0.5,-0.5,},
+	huge	= 1.0e+300,
+	twom1000= 9.33263618503218878990e-302,	 /* 2**-1000=0x01700000,0*/
+	o_threshold=  7.09782712893383973096e+02,  /* 0x40862E42, 0xFEFA39EF */
+	u_threshold= -7.45133219101941108420e+02,  /* 0xc0874910, 0xD52D3051 */
+	ln2HI[2]   ={ 6.93147180369123816490e-01,  /* 0x3fe62e42, 0xfee00000 */
+			 -6.93147180369123816490e-01,},/* 0xbfe62e42, 0xfee00000 */
+	ln2LO[2]   ={ 1.90821492927058770002e-10,  /* 0x3dea39ef, 0x35793c76 */
+			 -1.90821492927058770002e-10,},/* 0xbdea39ef, 0x35793c76 */
+	invln2 =  1.44269504088896338700e+00, /* 0x3ff71547, 0x652b82fe */
+	P1   =  1.66666666666666019037e-01, /* 0x3FC55555, 0x5555553E */
+	P2   = -2.77777777770155933842e-03, /* 0xBF66C16C, 0x16BEBD93 */
+	P3   =  6.61375632143793436117e-05, /* 0x3F11566A, 0xAF25DE2C */
+	P4   = -1.65339022054652515390e-06, /* 0xBEBBBD41, 0xC5D26BF1 */
+	P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
+
+	double y,hi,lo,c,t;
+	int k,xsb;
+	unsigned hx;
+
+	hx	= __HI(x);	/* high word of x */
+	xsb = (hx>>31)&1;		/* sign bit of x */
+	hx &= 0x7fffffff;		/* high word of |x| */
+
+	/* filter out non-finite argument */
+	if(hx >= 0x40862E42) {			/* if |x|>=709.78... */
+			if(hx>=0x7ff00000) {
+		if(((hx&0xfffff)|__LO(x))!=0)
+			 return x+x;		/* NaN */
+		else return (xsb==0)? x:0.0;	/* exp(+-inf)={inf,0} */
+		}
+		if(x > o_threshold) return huge*huge; /* overflow */
+		if(x < u_threshold) return twom1000*twom1000; /* underflow */
+	}
+
+	/* argument reduction */
+	if(hx > 0x3fd62e42) {		/* if  |x| > 0.5 ln2 */
+		if(hx < 0x3FF0A2B2) {	/* and |x| < 1.5 ln2 */
+		hi = x-ln2HI[xsb]; lo=ln2LO[xsb]; k = 1-xsb-xsb;
+		} else {
+		k  = (int)(invln2*x+halF[xsb]);
+		t  = k;
+		hi = x - t*ln2HI[0];	/* t*ln2HI is exact here */
+		lo = t*ln2LO[0];
+		}
+		x  = hi - lo;
+	}
+	else if(hx < 0x3e300000)  { /* when |x|<2**-28 */
+		if(huge+x>one) return one+x;/* trigger inexact */
+	}
+	else k = 0;
+
+	/* x is now in primary range */
+	t  = x*x;
+	c  = x - t*(P1+t*(P2+t*(P3+t*(P4+t*P5))));
+	if(k==0)	return one-((x*c)/(c-2.0)-x);
+	else		y = one-((lo-(x*c)/(2.0-c))-hi);
+	if(k >= -1021) {
+		__setHigh(&y, __HI(y) + (k<<20)); /* add k to y's exponent */
+		return y;
+	} else {
+		__setHigh(&y, __HI(y) + ((k+1000)<<20));/* add k to y's exponent */
+		return y*twom1000;
+	}
+
+}
+
+OVERLOADABLE double expm1(double x)
+{
+	double one	= 1.0,
+	huge		= 1.0e+300,
+	tiny		= 1.0e-300,
+	o_threshold = 7.09782712893383973096e+02,/* 0x40862E42, 0xFEFA39EF */
+	ln2_hi		= 6.93147180369123816490e-01,/* 0x3fe62e42, 0xfee00000 */
+	ln2_lo		= 1.90821492927058770002e-10,/* 0x3dea39ef, 0x35793c76 */
+	invln2		= 1.44269504088896338700e+00,/* 0x3ff71547, 0x652b82fe */
+		/* scaled coefficients related to expm1 */
+	Q1	=  -3.33333333333331316428e-02, /* BFA11111 111110F4 */
+	Q2	=	1.58730158725481460165e-03, /* 3F5A01A0 19FE5585 */
+	Q3	=  -7.93650757867487942473e-05, /* BF14CE19 9EAADBB7 */
+	Q4	=	4.00821782732936239552e-06, /* 3ED0CFCA 86E65239 */
+	Q5	=  -2.01099218183624371326e-07; /* BE8AFDB7 6E09C32D */
+
+	double y,hi,lo,c,t,e,hxs,hfx,r1;
+	int k,xsb;
+	unsigned hx;
+
+	hx	= __HI(x);	/* high word of x */
+	xsb = hx&0x80000000;		/* sign bit of x */
+	if(xsb==0) y=x; else y= -x; /* y = |x| */
+	hx &= 0x7fffffff;		/* high word of |x| */
+
+	/* filter out huge and non-finite argument */
+	if(hx >= 0x4043687A) {			/* if |x|>=56*ln2 */
+		if(hx >= 0x40862E42) {		/* if |x|>=709.78... */
+				if(hx>=0x7ff00000) {
+			if(((hx&0xfffff)|__LO(x))!=0)
+				 return x+x;	 /* NaN */
+			else return (xsb==0)? x:-1.0;/* exp(+-inf)={inf,-1} */
+			}
+			if(x > o_threshold) return huge*huge; /* overflow */
+		}
+		if(xsb!=0) { /* x < -56*ln2, return -1.0 with inexact */
+		if(x+tiny<0.0)		/* raise inexact */
+		return tiny-one;	/* return -1 */
+		}
+	}
+
+	/* argument reduction */
+	if(hx > 0x3fd62e42) {		/* if  |x| > 0.5 ln2 */
+		if(hx < 0x3FF0A2B2) {	/* and |x| < 1.5 ln2 */
+		if(xsb==0)
+			{hi = x - ln2_hi; lo =	ln2_lo;  k =  1;}
+		else
+			{hi = x + ln2_hi; lo = -ln2_lo;  k = -1;}
+		} else {
+		k  = invln2*x+((xsb==0)?0.5:-0.5);
+		t  = k;
+		hi = x - t*ln2_hi;	/* t*ln2_hi is exact here */
+		lo = t*ln2_lo;
+		}
+		x  = hi - lo;
+		c  = (hi-x)-lo;
+	}
+	else if(hx < 0x3c900000) {		/* when |x|<2**-54, return x */
+		t = huge+x; /* return x with inexact flags when x!=0 */
+		return x - (t-(huge+x));
+	}
+	else k = 0;
+
+	/* x is now in primary range */
+	hfx = 0.5*x;
+	hxs = x*hfx;
+	r1 = one+hxs*(Q1+hxs*(Q2+hxs*(Q3+hxs*(Q4+hxs*Q5))));
+	t  = 3.0-r1*hfx;
+	e  = hxs*((r1-t)/(6.0 - x*t));
+	if(k==0) return x - (x*e-hxs);		/* c is 0 */
+	else {
+		e  = (x*(e-c)-c);
+		e -= hxs;
+		if(k== -1) return 0.5*(x-e)-0.5;
+		if(k==1)
+	{
+			if(x < -0.25)
+			return -2.0*(e-(x+0.5));
+			else
+			return	one+2.0*(x-e);
+		}
+
+		if (k <= -2 || k>56) {	 /* suffice to return exp(x)-1 */
+			y = one-(e-x);
+			__setHigh(&y, __HI(y) + (k<<20));;	/* add k to y's exponent */
+			return y-one;
+		}
+		t = one;
+		if(k<20) {
+			__setHigh(&t, 0x3ff00000 - (0x200000>>k));	/* t=1-2^-k */
+			y = t-(e-x);
+			__setHigh(&y, __HI(y) + (k<<20));	/* add k to y's exponent */
+	   } else {
+			__setHigh(&t, ((0x3ff-k)<<20)); /* 2^-k */
+			y = x-(e+t);
+			y += one;
+			__setHigh(&y, __HI(y) + (k<<20));	/* add k to y's exponent */
+		}
+	}
+	return y;
+}
+
 OVERLOADABLE double ceil(double x)
 {
     double ret;
@@ -869,6 +1041,52 @@ OVERLOADABLE double cos(double x)
 				return  __kernel_sin(y[0],y[1],1);
 		}
 	}
+}
+
+OVERLOADABLE double cosh(double x)
+{
+	double one = 1.0, dHalf=0.5, huge = 1.0e300;
+
+	double t,w;
+	int ix;
+	unsigned lx;
+
+	/* High word of |x|. */
+	ix = __HI(x);
+	ix &= 0x7fffffff;
+
+	/* x is INF or NaN */
+	if(ix>=0x7ff00000) return x*x;
+
+	/* |x| in [0,0.5*ln2], return 1+expm1(|x|)^2/(2*exp(|x|)) */
+	if(ix<0x3fd62e43) {
+		t = expm1(fabs(x));
+		w = one+t;
+		if (ix<0x3c800000) return w;	/* cosh(tiny) = 1 */
+		return one+(t*t)/(w+w);
+	}
+
+	/* |x| in [0.5*ln2,22], return (exp(|x|)+1/exp(|x|)/2; */
+	if (ix < 0x40360000) {
+		t = exp(fabs(x));
+		return dHalf*t+dHalf/t;
+	}
+
+	/* |x| in [22, log(maxdouble)] return half*exp(|x|) */
+	if (ix < 0x40862E42)  return dHalf*exp(fabs(x));
+
+	/* |x| in [log(maxdouble), overflowthresold] */
+	lx = *( (((*(unsigned*)&one)>>29)) + (unsigned*)&x);
+	if (ix<0x408633CE ||
+		  ((ix==0x408633ce)&&(lx<=(unsigned)0x8fb9f87d))) {
+		w = exp(dHalf*fabs(x));
+		t = dHalf*w;
+		return t*w;
+	}
+
+	/* |x| > overflowthresold, cosh(x) overflow */
+	return huge*huge;
+
 }
 
 OVERLOADABLE double fabs(double x)
