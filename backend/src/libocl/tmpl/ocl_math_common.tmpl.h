@@ -30,6 +30,7 @@ OVERLOADABLE double atan(double x);
 OVERLOADABLE double atan2(double x, double y);
 OVERLOADABLE double atanpi(double x);
 OVERLOADABLE double atan2pi(double x, double y);
+OVERLOADABLE double atanh(double x);
 OVERLOADABLE double ceil(double x);
 OVERLOADABLE double copysign(double x, double y);
 OVERLOADABLE double fabs(double x);
