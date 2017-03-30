@@ -115,6 +115,11 @@ OVERLOADABLE double acos(double x)
     }
 }
 
+OVERLOADABLE double acospi(double x)
+{
+	return acos(x)/M_PI;
+}
+
 OVERLOADABLE double ceil(double x)
 {
     double ret;
