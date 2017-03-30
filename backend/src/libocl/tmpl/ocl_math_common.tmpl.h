@@ -57,6 +57,7 @@ OVERLOADABLE double rint(double x);
 OVERLOADABLE double round(double x);
 OVERLOADABLE double sin(double x);
 OVERLOADABLE double sinh(double x);
+OVERLOADABLE double sinpi(double x);
 OVERLOADABLE double sqrt(double x);
 OVERLOADABLE double tan(double x);
 OVERLOADABLE double tanh(double x);
