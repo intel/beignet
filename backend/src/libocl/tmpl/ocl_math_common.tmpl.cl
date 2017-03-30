@@ -205,6 +205,10 @@ OVERLOADABLE double asin(double x)
     if(hx>0) return t; else return -t;
 }
 
+OVERLOADABLE double asinpi(double x)
+{
+	return asin(x)/M_PI;
+}
 
 OVERLOADABLE double ceil(double x)
 {

@@ -24,6 +24,7 @@ OVERLOADABLE double acos(double x);
 OVERLOADABLE double acospi(double x);
 OVERLOADABLE double acosh(double x);
 OVERLOADABLE double asin(double x);
+OVERLOADABLE double asinpi(double x);
 OVERLOADABLE double ceil(double x);
 OVERLOADABLE double copysign(double x, double y);
 OVERLOADABLE double fabs(double x);
