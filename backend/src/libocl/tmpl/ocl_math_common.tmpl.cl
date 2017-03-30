@@ -396,6 +396,16 @@ OVERLOADABLE double atan2(double x, double y)
 	}
 }
 
+OVERLOADABLE double atanpi(double x)
+{
+	return atan(x)/M_PI;
+}
+
+OVERLOADABLE double atan2pi(double x, double y)
+{
+	return atan2(x, y)/M_PI;
+}
+
 OVERLOADABLE double ceil(double x)
 {
     double ret;
