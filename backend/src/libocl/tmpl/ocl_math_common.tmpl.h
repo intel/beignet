@@ -55,6 +55,7 @@ OVERLOADABLE double nextafter(double x, double y);
 OVERLOADABLE double rint(double x);
 OVERLOADABLE double round(double x);
 OVERLOADABLE double sin(double x);
+OVERLOADABLE double sinh(double x);
 OVERLOADABLE double sqrt(double x);
 OVERLOADABLE double trunc(double x);
 
