@@ -311,6 +311,91 @@ OVERLOADABLE double atan(double x)
 	}
 }
 
+OVERLOADABLE double atan2(double x, double y)
+{
+	double tiny  = 1.0e-300,
+	zero  = 0.0,
+	pi_o_4  = 7.8539816339744827900E-01, /* 0x3FE921FB, 0x54442D18 */
+	pi_o_2  = 1.5707963267948965580E+00, /* 0x3FF921FB, 0x54442D18 */
+	pi	  = 3.1415926535897931160E+00, /* 0x400921FB, 0x54442D18 */
+	pi_lo   = 1.2246467991473531772E-16; /* 0x3CA1A626, 0x33145C07 */
+
+	double z;
+	int k,m,hx,hy,ix,iy;
+	unsigned lx,ly;
+
+	hx = __HI(x); ix = hx&0x7fffffff;
+	lx = __LO(x);
+	hy = __HI(y); iy = hy&0x7fffffff;
+	ly = __LO(y);
+	if(((ix|((lx|-lx)>>31))>0x7ff00000)||
+	   ((iy|((ly|-ly)>>31))>0x7ff00000))	/* x or y is NaN */
+	   return x+y;
+
+	if((hx-0x3ff00000|lx)==0)
+		{
+			if(iy>=0x44100000) {	/* if |x| >= 2^66 */
+			if(iy>0x7ff00000 ||(iy==0x7ff00000 && (__LO(y)!=0)))
+			return y+y;		/* NaN */
+			if(hy >0)
+					return  pi_o_2;
+			else
+					return pi;
+			}
+				return atan(y);   /* x=1.0 */
+		}
+	m = ((hy>>31)&1)|((hx>>30)&2);  /* 2*sign(x)+sign(y) */
+
+	/* when y = 0 */
+	if((iy|ly)==0) {
+		switch(m) {
+		case 0:
+		case 1: return y;   /* atan(+-0,+anything)=+-0 */
+		case 2: return  pi+tiny;/* atan(+0,-anything) = pi */
+		case 3: return -pi-tiny;/* atan(-0,-anything) =-pi */
+		}
+	}
+	/* when x = 0 */
+	if((ix|lx)==0) return (hx<0)?  -pi-tiny: pi+tiny;
+
+	/* when x is INF */
+	if(ix==0x7ff00000) {
+		if(iy==0x7ff00000) {
+		switch(m) {
+			case 0: return  pi_o_4+tiny;/* atan(+INF,+INF) */
+			case 1: return 3.0*pi_o_4-tiny;/* atan(-INF,+INF) */
+			case 2: return  3.0*pi_o_4+tiny;/*atan(+INF,-INF)*/
+			case 3: return -3.0*pi_o_4-tiny;/*atan(-INF,-INF)*/
+		}
+		}
+			else {
+		switch(m) {
+			case 0: return  zero  ; /* atan(+...,+INF) */
+			case 1: return pi_o_2; /* atan(-...,+INF) */
+			case 2: return  pi_o_2+tiny  ;  /* atan(+...,-INF) */
+			case 3: return -pi_o_2-tiny  ;  /* atan(-...,-INF) */
+		}
+		}
+	}
+	/* when y is INF */
+	if(iy==0x7ff00000) return (hx<0)? -pi-tiny: pi+tiny;
+
+	/* compute y/x */
+	k = (iy-ix)>>20;
+	if(k > 60) z=pi_o_2+0.5*pi_lo;  /* |y/x| >  2**60 */
+	else if(hx<0&&k<-60) z=0.0;	 /* |y|/x < -2**60 */
+	else z=atan(fabs(y/x));	 /* safe to do y/x */
+	switch (m) {
+		case 0: return	   z  ;   /* atan(+,+) */
+		case 2: __setHigh(&z, __HI(z) ^ 0x80000000);
+			return	   pi_o_2 - z  ;   /* atan(-,+) */
+		case 1: return  pi_o_2 + (z-pi_lo);/* atan(+,-) */
+		default: /* case 3 */
+			__setHigh(&z, __HI(z) ^ 0x80000000);
+				return  (z-pi_lo)-pi_o_2;/* atan(-,-) */
+	}
+}
+
 OVERLOADABLE double ceil(double x)
 {
     double ret;
