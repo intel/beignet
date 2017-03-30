@@ -33,6 +33,7 @@ OVERLOADABLE double atan2pi(double x, double y);
 OVERLOADABLE double atanh(double x);
 OVERLOADABLE double ceil(double x);
 OVERLOADABLE double copysign(double x, double y);
+OVERLOADABLE double cos(double x);
 OVERLOADABLE double fabs(double x);
 OVERLOADABLE double fdim(double x, double y);
 OVERLOADABLE double floor(double x);
