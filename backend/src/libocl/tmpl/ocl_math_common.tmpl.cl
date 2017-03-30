@@ -1089,6 +1089,11 @@ OVERLOADABLE double cosh(double x)
 
 }
 
+OVERLOADABLE double cospi(double x)
+{
+	return cos(x*M_PI);
+}
+
 OVERLOADABLE double fabs(double x)
 {
     long  qw = as_ulong(x);
