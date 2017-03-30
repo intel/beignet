@@ -2087,6 +2087,11 @@ OVERLOADABLE double tanh(double x)
 	return (jx>=0)? z: -z;
 }
 
+OVERLOADABLE double tanpi(double x)
+{
+	return tan(x*M_PI);
+}
+
 OVERLOADABLE double trunc(double x)
 {
 	double ret = floor(fabs(x));

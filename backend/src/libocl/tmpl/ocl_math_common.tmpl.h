@@ -61,6 +61,7 @@ OVERLOADABLE double sinpi(double x);
 OVERLOADABLE double sqrt(double x);
 OVERLOADABLE double tan(double x);
 OVERLOADABLE double tanh(double x);
+OVERLOADABLE double tanpi(double x);
 OVERLOADABLE double trunc(double x);
 
 
