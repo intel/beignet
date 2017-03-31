@@ -2366,6 +2366,35 @@ OVERLOADABLE double pown(double x, int n)
 	return __ocl_internal_pow(x, n);
 }
 
+OVERLOADABLE double powr(double x, double y)
+{
+	int hx,hy,ix,iy;
+	unsigned lx,ly;
+
+	hx = __HI(x); lx = __LO(x);
+	hy = __HI(y); ly = __LO(y);
+	ix = hx&0x7fffffff;  iy = hy&0x7fffffff;
+
+	/* y==zero: x**0 = 1 */
+	if((iy|ly)==0) return 1.0;
+
+	if(x < 0)return as_double(DF_ABS_MASK);
+
+	/* +-NaN return x+y */
+	if(ix > 0x7ff00000 || ((ix==0x7ff00000)&&(lx!=0)))
+		return x+y;
+
+	if(iy > 0x7ff00000 || ((iy==0x7ff00000)&&(ly!=0)))
+	{
+		return x + y;
+	}
+
+	if(((ix==0x7ff00000)&&(lx==0)) && ((iy==0x7ff00000)&&(ly==0)))
+			return as_double(DF_ABS_MASK);
+
+	return __ocl_internal_pow(x, y);
+}
+
 OVERLOADABLE double remainder(double x, double p)
 {
 	int hx,hp;

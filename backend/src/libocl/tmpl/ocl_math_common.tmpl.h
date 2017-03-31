@@ -59,6 +59,7 @@ OVERLOADABLE double nan(ulong code);
 OVERLOADABLE double nextafter(double x, double y);
 OVERLOADABLE double pow(double x, double y);
 OVERLOADABLE double pown(double x, int n);
+OVERLOADABLE double powr(double x, double y);
 OVERLOADABLE double remainder(double x, double p);
 OVERLOADABLE double rint(double x);
 OVERLOADABLE double round(double x);
