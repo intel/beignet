@@ -2672,6 +2672,11 @@ OVERLOADABLE double rootn(double x, int n)
 
 }
 
+OVERLOADABLE double rsqrt(double x)
+{
+    return 1.0/sqrt(x);
+}
+
 OVERLOADABLE double sin(double x)
 {
 	double y[2],z=0.0;
