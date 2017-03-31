@@ -243,4 +243,8 @@ OVERLOADABLE double frexp(double x, private int *exp);
 OVERLOADABLE double lgamma_r(double x, global int *signgamp);
 OVERLOADABLE double lgamma_r(double x, local int *signgamp);
 OVERLOADABLE double lgamma_r(double x, private int *signgamp);
+OVERLOADABLE double remquo(double x, double y, global int *quo);
+OVERLOADABLE double remquo(double x, double y, local int *quo);
+OVERLOADABLE double remquo(double x, double y, private int *quo);
+
 

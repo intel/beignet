@@ -214,4 +214,5 @@ OVERLOADABLE float half_tan(float x);
 OVERLOADABLE double fract(double x, double *p);
 OVERLOADABLE double frexp(double x, int *exp);
 OVERLOADABLE double lgamma_r(double x, int *signgamp);
+OVERLOADABLE double remquo(double x, double y, int *quo);
 
