@@ -4611,4 +4611,22 @@ OVERLOADABLE double remquo(double x, double p, private int *quo)
 
 }
 
+OVERLOADABLE double sincos(double x, global double *cosval)
+{
+	*cosval = cos(x);
+	return sin(x);
+}
+
+OVERLOADABLE double sincos(double x, local double *cosval)
+{
+	*cosval = cos(x);
+	return sin(x);
+}
+
+OVERLOADABLE double sincos(double x, private double *cosval)
+{
+	*cosval = cos(x);
+	return sin(x);
+}
+
 

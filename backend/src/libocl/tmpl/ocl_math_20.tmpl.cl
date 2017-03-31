@@ -4069,4 +4069,10 @@ OVERLOADABLE double remquo(double x, double p, int *quo)
 
 }
 
+OVERLOADABLE double sincos(double x, double *cosval)
+{
+	*cosval = cos(x);
+	return sin(x);
+}
+
 

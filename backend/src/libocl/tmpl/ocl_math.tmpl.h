@@ -246,5 +246,8 @@ OVERLOADABLE double lgamma_r(double x, private int *signgamp);
 OVERLOADABLE double remquo(double x, double y, global int *quo);
 OVERLOADABLE double remquo(double x, double y, local int *quo);
 OVERLOADABLE double remquo(double x, double y, private int *quo);
+OVERLOADABLE double sincos(double x, global double *cosval);
+OVERLOADABLE double sincos(double x, local double *cosval);
+OVERLOADABLE double sincos(double x, private double *cosval);
 
 
