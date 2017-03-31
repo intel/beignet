@@ -1403,6 +1403,15 @@ OVERLOADABLE double fdim(double x, double y)
 	return x > y ? (x - y) : +0.f;
 }
 
+OVERLOADABLE double ldexp(double x, int n)
+{
+	ulong ux = as_ulong(x);
+
+	if(((ux&DF_ABS_MASK) >= DF_POSITIVE_INF) ||x==0.0) return x;
+		x = __scalbn(x,n);
+		return x;
+}
+
 OVERLOADABLE double floor(double x)
 {
     ulong lval = as_ulong(x);

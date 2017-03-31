@@ -47,6 +47,7 @@ OVERLOADABLE double floor(double x);
 OVERLOADABLE double fmax(double a, double b);
 OVERLOADABLE double fmin(double a, double b);
 OVERLOADABLE double fmod (double x, double y);
+OVERLOADABLE double ldexp(double x, int n);
 OVERLOADABLE double log(double x);
 OVERLOADABLE double log2(double x);
 OVERLOADABLE double log10(double x);
