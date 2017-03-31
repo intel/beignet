@@ -142,3 +142,33 @@ OVERLOADABLE double mix(double x, double y, double a)
     return x + (y-x)*a;
 }
 
+OVERLOADABLE double clamp(double v, double l, double u)
+{
+	return max(min(v, u), l);
+}
+
+OVERLOADABLE double degrees(double radians)
+{
+	return radians*180.0/M_PI;
+}
+
+OVERLOADABLE double radians(double degrees)
+{
+	return degrees*M_PI/180.0;
+}
+
+OVERLOADABLE double smoothstep(double e0, double e1, double x)
+{
+	x = clamp((x - e0) / (e1 - e0), 0.0, 1.0);
+	return x * x * (3 - 2 * x);
+}
+
+OVERLOADABLE double sign(double x)
+{
+	ulong k = as_ulong(x);
+	double r = (k&DF_SIGN_MASK) ? -1.0 : 1.0;
+	double s = 0.0 * r;
+	s = (x == 0.0) ? s : r;
+	return isnan(x) ? 0.0 : s;
+}
+
