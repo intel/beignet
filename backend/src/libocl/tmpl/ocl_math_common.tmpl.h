@@ -50,6 +50,8 @@ OVERLOADABLE double fmax(double a, double b);
 OVERLOADABLE double fmin(double a, double b);
 OVERLOADABLE double fmod (double x, double y);
 OVERLOADABLE double fma(double x, double y, double z);
+OVERLOADABLE double maxmag(double x, double y);
+OVERLOADABLE double minmag(double x, double y);
 OVERLOADABLE double hypot(double x, double y);
 OVERLOADABLE double ldexp(double x, int n);
 OVERLOADABLE double log(double x);
