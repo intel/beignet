@@ -240,4 +240,7 @@ OVERLOADABLE double fract(double x, private double *p);
 OVERLOADABLE double frexp(double x, global int *exp);
 OVERLOADABLE double frexp(double x, local int *exp);
 OVERLOADABLE double frexp(double x, private int *exp);
+OVERLOADABLE double lgamma_r(double x, global int *signgamp);
+OVERLOADABLE double lgamma_r(double x, local int *signgamp);
+OVERLOADABLE double lgamma_r(double x, private int *signgamp);
 
