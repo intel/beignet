@@ -1444,6 +1444,11 @@ OVERLOADABLE double floor(double x)
     }
 }
 
+OVERLOADABLE double fma(double x, double y, double z)
+{
+	return mad(x, y, z);
+}
+
 OVERLOADABLE double hypot(double x, double y)
 {
 	double a=x,b=y,t1,t2,y1,y2,w;
