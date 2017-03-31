@@ -64,6 +64,7 @@ OVERLOADABLE double powr(double x, double y);
 OVERLOADABLE double remainder(double x, double p);
 OVERLOADABLE double rint(double x);
 OVERLOADABLE double round(double x);
+OVERLOADABLE double rootn(double x, int n);
 OVERLOADABLE double sin(double x);
 OVERLOADABLE double sinh(double x);
 OVERLOADABLE double sinpi(double x);

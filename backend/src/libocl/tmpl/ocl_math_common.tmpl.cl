@@ -2521,6 +2521,47 @@ OVERLOADABLE double round(double x)
 	return dp;
 }
 
+OVERLOADABLE double rootn(double x, int n)
+{
+	double ax,re;
+	int sign = 0;
+
+	if( n == 0 )return as_double(DF_POSITIVE_INF+1);
+
+	//rootn ( x, n )  returns a NaN for x < 0 and n is even.
+	if( x < 0 && 0 == (n&1) )
+	  return as_double(DF_POSITIVE_INF+1);
+	if( x == 0.0 ){
+	  switch( n & 0x80000001 ){
+		//rootn ( +-0,  n ) is +0 for even n > 0.
+		case 0:
+		  return 0.0f;
+		//rootn ( +-0,  n ) is +-0 for odd n > 0.
+		case 1:
+		  return x;
+		//rootn ( +-0,  n ) is +inf for even n < 0.
+		case 0x80000000:
+		  return as_double(DF_POSITIVE_INF);
+
+		//rootn ( +-0,  n ) is +-inf for odd n < 0.
+		case 0x80000001:
+		  return copysign(as_double(DF_POSITIVE_INF), x);
+	  }
+	}
+
+	ulong ux = as_ulong(x);
+	if((ux&DF_ABS_MASK) == DF_POSITIVE_INF) return x;
+	ax = fabs(x);
+	if(x <0.0f && (n&1))
+	  sign = 1;
+
+	  re = pow(ax,1.0/n);
+	if(sign)
+	  re = -re;
+	return re;
+
+}
+
 OVERLOADABLE double sin(double x)
 {
 	double y[2],z=0.0;
