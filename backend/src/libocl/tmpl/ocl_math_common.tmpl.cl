@@ -2348,6 +2348,24 @@ OVERLOADABLE double pow(double x, double y)
 	return __ocl_internal_pow(x, y);
 }
 
+OVERLOADABLE double pown(double x, int n)
+{
+	int hx,hy,ix,iy;
+	unsigned lx,ly;
+
+	hx = __HI(x); lx = __LO(x);
+	ix = hx&0x7fffffff;
+
+	/* y==zero: x**0 = 1 */
+	if(n ==0) return 1.0;
+
+	/* +-NaN return x+y */
+	if(ix > 0x7ff00000 || ((ix==0x7ff00000)&&(lx!=0)))
+		return x+n;
+
+	return __ocl_internal_pow(x, n);
+}
+
 OVERLOADABLE double remainder(double x, double p)
 {
 	int hx,hp;
