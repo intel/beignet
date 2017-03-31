@@ -53,6 +53,7 @@ OVERLOADABLE double log10(double x);
 OVERLOADABLE double log1p(double x);
 OVERLOADABLE double logb(double x);
 OVERLOADABLE int ilogb(double x);
+OVERLOADABLE double lgamma(double x);
 OVERLOADABLE double mad(double a, double b, double c);
 OVERLOADABLE double nan(ulong code);
 OVERLOADABLE double nextafter(double x, double y);
