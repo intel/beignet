@@ -33,6 +33,8 @@ OVERLOADABLE double atan2pi(double x, double y);
 OVERLOADABLE double atanh(double x);
 OVERLOADABLE double exp(double x);
 OVERLOADABLE double expm1(double x);
+OVERLOADABLE double exp2(double x);
+OVERLOADABLE double exp10(double x);
 OVERLOADABLE double erf(double x);
 OVERLOADABLE double erfc(double x);
 OVERLOADABLE double cbrt(double x);

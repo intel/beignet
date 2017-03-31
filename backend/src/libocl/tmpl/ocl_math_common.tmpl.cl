@@ -604,6 +604,16 @@ OVERLOADABLE double expm1(double x)
 	return y;
 }
 
+OVERLOADABLE double exp2(double x)
+{
+	return pow(2, x);
+}
+
+OVERLOADABLE double exp10(double x)
+{
+	return pow(10, x);
+}
+
 OVERLOADABLE double erf(double x)
 {
 	double erx =  8.45062911510467529297e-01, /* 0x3FEB0AC1, 0x60000000 */
