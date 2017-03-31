@@ -71,6 +71,7 @@ OVERLOADABLE int isnormal(double x);
 
 OVERLOADABLE int isordered(double x, double y);
 OVERLOADABLE int isunordered(double x, double y);
+OVERLOADABLE int signbit(double x);
 
 // any
 #define DEC1(type) OVERLOADABLE int any(type a);
