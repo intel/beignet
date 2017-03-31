@@ -34,6 +34,7 @@ OVERLOADABLE double atanh(double x);
 OVERLOADABLE double exp(double x);
 OVERLOADABLE double expm1(double x);
 OVERLOADABLE double erf(double x);
+OVERLOADABLE double erfc(double x);
 OVERLOADABLE double cbrt(double x);
 OVERLOADABLE double ceil(double x);
 OVERLOADABLE double copysign(double x, double y);
