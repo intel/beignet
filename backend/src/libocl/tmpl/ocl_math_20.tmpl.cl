@@ -4020,6 +4020,13 @@ OVERLOADABLE double lgamma_r(double x, int *signgamp)
 	return r;
 }
 
+OVERLOADABLE double modf(double x, double *i)
+{
+	double retVal = floor(x);
+	*i = retVal;
+	return x - retVal;
+}
+
 OVERLOADABLE double remquo(double x, double p, int *quo)
 {
 	int hx,hp;

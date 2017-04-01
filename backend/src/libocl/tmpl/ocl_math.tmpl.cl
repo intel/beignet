@@ -4465,6 +4465,27 @@ OVERLOADABLE double lgamma_r(double x, private int *signgamp)
 	return r;
 }
 
+OVERLOADABLE double modf(double x, global double *i)
+{
+	double retVal = floor(x);
+	*i = retVal;
+	return x - retVal;
+}
+
+OVERLOADABLE double modf(double x, local double *i)
+{
+	double retVal = floor(x);
+	*i = retVal;
+	return x - retVal;
+}
+
+OVERLOADABLE double modf(double x, private double *i)
+{
+	double retVal = floor(x);
+	*i = retVal;
+	return x - retVal;
+}
+
 OVERLOADABLE double remquo(double x, double p, global int *quo)
 {
 	int hx,hp;
