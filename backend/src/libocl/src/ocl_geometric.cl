@@ -24,6 +24,8 @@
 #include "ocl_math.h"
 #endif
 #include "ocl_float.h"
+#include "ocl_printf.h"
+#include "ocl_workitem.h"
 
 CONST float __gen_ocl_fabs(float x) __asm("llvm.fabs" ".f32");
 
@@ -115,3 +117,106 @@ OVERLOADABLE float3 cross(float3 v0, float3 v1) {
 OVERLOADABLE float4 cross(float4 v0, float4 v1) {
    return (float4)(v0.yzx*v1.zxy-v0.zxy*v1.yzx, 0.f);
 }
+
+OVERLOADABLE double dot(double p0, double p1)
+{
+	return p0*p1;
+}
+
+OVERLOADABLE double dot(double2 p0, double2 p1)
+{
+	return p0.x*p1.x + p0.y*p1.y;
+}
+
+OVERLOADABLE double dot(double3 p0, double3 p1)
+{
+	return p0.x*p1.x + p0.y*p1.y + p0.z*p1.z;
+}
+
+OVERLOADABLE double dot(double4 p0, double4 p1)
+{
+	return p0.x * p1.x + p0.y * p1.y + p0.z * p1.z + p0.w * p1.w;
+}
+
+#define BODY \
+  m = m==0.0 ? 1.0 : m; \
+  m = isinf(m) ? 1.0 : m; \
+  x = x/m; \
+  return m * sqrt(dot(x,x));
+OVERLOADABLE double length(double x)
+{
+	return fabs(x);
+}
+
+OVERLOADABLE double length(double2 x)
+{
+	double m = max(fabs(x.s0), fabs(x.s1));
+	BODY;
+}
+
+OVERLOADABLE double length(double3 x)
+{
+	double m = max(fabs(x.s0), max(fabs(x.s1), fabs(x.s2)));
+	BODY;
+}
+
+OVERLOADABLE double length(double4 x)
+{
+	double m = max(fabs(x.s0), max(fabs(x.s1), max(fabs(x.s2), fabs(x.s3))));
+	BODY;
+}
+#undef BODY
+
+OVERLOADABLE double distance(double x, double y)
+{
+	return length(x-y);
+}
+
+OVERLOADABLE double distance(double2 x, double2 y)
+{
+	return length(x-y);
+}
+
+OVERLOADABLE double distance(double3 x, double3 y)
+{
+	return length(x-y);
+}
+
+OVERLOADABLE double distance(double4 x, double4 y)
+{
+	return length(x-y);
+}
+
+OVERLOADABLE double normalize(double x)
+{
+	return 1.0;
+}
+
+OVERLOADABLE double2 normalize(double2 x)
+{
+	double x2 = dot(x, x);
+	return x * rsqrt(x2);
+}
+
+OVERLOADABLE double3 normalize(double3 x)
+{
+	double x2 = dot(x, x);
+	return x * rsqrt(x2);
+}
+
+OVERLOADABLE double4 normalize(double4 x)
+{
+	double x2 = dot(x, x);
+	return x * rsqrt(x2);
+}
+
+OVERLOADABLE double3 cross(double3 v0, double3 v1)
+{
+	return v0.yzx*v1.zxy-v0.zxy*v1.yzx;
+}
+
+OVERLOADABLE double4 cross(double4 v0, double4 v1)
+{
+	return (double4)(v0.yzx*v1.zxy-v0.zxy*v1.yzx, 0.0);
+}
+
