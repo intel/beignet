@@ -3799,3 +3799,60 @@ OVERLOADABLE half rootn(half x, int n) {
   float _x = (float)x;
   return (half)rootn(_x, n);
 }
+
+
+//-----------------double -----------------------
+INLINE int  __HI(double x){
+    long x64 = as_long(x);
+    int high = (int)((x64 >> 32) & 0xFFFFFFFF);
+    return high;
+};
+
+INLINE int  __LO(double x){
+    long x64 = as_long(x);
+    int low = (int)(x64  & 0xFFFFFFFFUL);
+    return low;
+};
+
+INLINE void  __setHigh(double *x, int val){
+    long x64 = as_long(*x);
+    long high = x64  & 0x00000000FFFFFFFF;
+    high |= ((long)val << 32);
+    *x = as_double(high);
+};
+
+INLINE void  __setLow(double *x, unsigned int val){
+    long x64 = as_long(*x);
+    long low = x64  & 0xFFFFFFFF00000000;
+    low |= (long)val;
+    *x = as_double(low);
+};
+
+OVERLOADABLE double fract(double x, double *p)
+{
+    double ret = floor(x);
+    *p =  ret;
+    return x -ret;
+}
+
+OVERLOADABLE double frexp(double x, int *exp)
+{
+    double two54 =  1.80143985094819840000e+16; /* 0x43500000, 0x00000000 */
+    int  hx, ix, lx;
+    hx = __HI(x);
+    ix = 0x7fffffff&hx;
+    lx = __LO(x);
+    *exp = 0;
+    if(ix>=0x7ff00000||((ix|lx)==0)) return x;  /* 0,inf,nan */
+    if (ix<0x00100000) {        /* subnormal */
+        x *= two54;
+        hx = __HI(x);
+        ix = hx&0x7fffffff;
+        *exp = -54;
+    }
+    *exp += (ix>>20)-1022;
+    hx = (hx&0x800fffff)|0x3fe00000;
+    __setHigh(&x, hx);
+    return x;
+}
+

@@ -106,7 +106,7 @@ MACRO(GENERATE_SOURCE_PY _source _mod)
 	)
 ENDMACRO(GENERATE_SOURCE_PY)
 
-SET (OCL_PY_GENERATED_MODULES ocl_common ocl_relational ocl_integer ocl_simd)
+SET (OCL_PY_GENERATED_MODULES ocl_common ocl_math_common ocl_relational ocl_integer ocl_simd)
 FOREACH(M ${OCL_PY_GENERATED_MODULES})
     GENERATE_HEADER_PY(${M})
     GENERATE_SOURCE_PY(OCL_SOURCE_FILES ${M})

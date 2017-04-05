@@ -19,6 +19,7 @@
 #define __OCL_MATH_H__
 
 #include "ocl_types.h"
+#include "ocl_math_common.h"
 
 OVERLOADABLE float cospi(float x);
 OVERLOADABLE float cosh(float x);
@@ -231,3 +232,12 @@ OVERLOADABLE float half_rsqrt(float x);
 OVERLOADABLE float half_sin(float x);
 OVERLOADABLE float half_sqrt(float x);
 OVERLOADABLE float half_tan(float x);
+
+//------- double -----------
+OVERLOADABLE double fract(double x, global double *p);
+OVERLOADABLE double fract(double x, local double *p);
+OVERLOADABLE double fract(double x, private double *p);
+OVERLOADABLE double frexp(double x, global int *exp);
+OVERLOADABLE double frexp(double x, local int *exp);
+OVERLOADABLE double frexp(double x, private int *exp);
+
