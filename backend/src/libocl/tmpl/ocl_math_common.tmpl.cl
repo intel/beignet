@@ -1450,32 +1450,18 @@ OVERLOADABLE double fdim(double x, double y)
 
 OVERLOADABLE double maxmag(double x, double y)
 {
-	ulong ua = as_ulong(x);
-	ulong ub =as_ulong(y);
+	if(fabs(x) > fabs(y)) return x;
+	if(fabs(y) > fabs(x)) return y;
 
-	if((ua & DF_ABS_MASK) > DF_MAX_NORMAL) return y;
-	if((ub & DF_ABS_MASK) > DF_MAX_NORMAL) return x;
-	if(ua == DF_POSITIVE_INF) return x;
-	if(ub == DF_POSITIVE_INF) return y;
-
-	double retVal = (fabs(x) > fabs(y)) ? x:y;
-
-	return retVal;
+	return fmax(x, y);
 }
 
 OVERLOADABLE double minmag(double x, double y)
 {
-	ulong ua = as_ulong(x);
-	ulong ub =as_ulong(y);
+	if(fabs(x) < fabs(y)) return x;
+	if(fabs(y) < fabs(x)) return y;
 
-	if((ua & DF_ABS_MASK) > DF_MAX_NORMAL) return y;
-	if((ub & DF_ABS_MASK) > DF_MAX_NORMAL) return x;
-	if(ua == DF_NEGTIVE_INF) return x;
-	if(ub == DF_NEGTIVE_INF) return y;
-
-	double retVal = (fabs(x) < fabs(y)) ? x:y;
-
-	return retVal;
+	return fmin(x, y);
 }
 
 OVERLOADABLE double ldexp(double x, int n)
