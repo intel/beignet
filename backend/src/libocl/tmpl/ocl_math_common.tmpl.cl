@@ -1394,7 +1394,50 @@ OVERLOADABLE double cosh(double x)
 
 OVERLOADABLE double cospi(double x)
 {
-	return cos(x*M_PI);
+	double y,z, signValue = 1.0;
+	int ix;
+
+	ix = 0x7fffffff&__HI(x);
+
+	if(ix<0x3fd00000) return __kernel_cos(M_PI*x,0);
+	y = fabs(x);
+
+	if(ix >=0x7ff00000)return as_double(DF_POSITIVE_INF + 1);
+
+	z = floor(y);
+
+	if(z > 0)
+	{
+		ulong uz = as_ulong(z);
+		ulong expValue = ((uz & DF_EXP_MASK) >> DF_EXP_OFFSET) - DF_EXP_BIAS;
+		ulong manValue = ((uz & DF_MAN_MASK) | DF_IMPLICITE_ONE);
+		
+		if(expValue > 52) return 1.0;
+		manValue = (manValue >> (52 - expValue));
+		
+		if(manValue & 1)
+			signValue = -1.0;
+	}
+
+	if(z!=y)
+	{				/* inexact anyway */
+		y = y -z;
+
+		if(y > 0.5)
+		{
+			y = y - 0.5;
+			signValue *= -1.0;
+			return signValue * sin(y*M_PI);
+		}
+	}
+	else
+	{
+		return signValue;
+	}
+
+	//the precison of sin is better than cos
+	y = signValue * sin((0.5 - y)*M_PI);
+	return y;
 }
 
 OVERLOADABLE double fabs(double x)
@@ -2747,51 +2790,48 @@ OVERLOADABLE double sinh(double x)
 
 OVERLOADABLE double sinpi(double x)
 {
-	double zero=  0.00000000000000000000e+00,
-		 two52=  4.50359962737049600000e+15, /* 0x43300000, 0x00000000 */
-	halfD=  5.00000000000000000000e-01, /* 0x3FE00000, 0x00000000 */
-	one =  1.00000000000000000000e+00, /* 0x3FF00000, 0x00000000 */
-	pi  =  3.141592653589793238462e+00; /* 0x400921FB, 0x54442D18 */
-
-	double y,z;
-	int n,ix;
+	double y,z, signVaule = 1.0;
+	int ix;
 
 	ix = 0x7fffffff&__HI(x);
 
-	if(ix<0x3fd00000) return __kernel_sin(pi*x,zero,0);
-	y = -x;		/* x is assume negative */
+	if(ix<0x3fd00000) return __kernel_sin(M_PI*x,0, 0);
+	y = fabs(x);
 
-	if(ix >=0x7ff00000)return NAN;
-	/*
-	 * argument reduction, make sure inexact flag not raised if input
-	 * is an integer
-	 */
+	if(ix >=0x7ff00000)return as_double(DF_POSITIVE_INF + 1);
+
 	z = floor(y);
-	if(z!=y) {				/* inexact anyway */
-		y  *= 0.5;
-		y   = 2.0*(y - floor(y));		/* y = |x| mod 2.0 */
-		n   = (int) (y*4.0);
-	} else {
-			if(ix>=0x43400000) {
-				y = zero; n = 0;				 /* y must be even */
-			} else {
-				if(ix<0x43300000) z = y+two52;	/* exact */
-				n   = __LO(z)&1;		/* lower word of z */
-				y  = n;
-				n<<= 2;
-			}
+
+	if(z!=y)
+	{				/* inexact anyway */
+		y = y -z;
+
+		if(y > 0.5)
+		{
+			y = y - 0.5;
+			y = 0.5 - y;
 		}
-	switch (n) {
-		case 0:   y =  __kernel_sin(pi*y,zero,0); break;
-		case 1:
-		case 2:   y =  __kernel_cos(pi*(0.5-y),zero); break;
-		case 3:
-		case 4:   y =  __kernel_sin(pi*(one-y),zero,0); break;
-		case 5:
-		case 6:   y = -__kernel_cos(pi*(y-1.5),zero); break;
-		default:  y =  __kernel_sin(pi*(y-2.0),zero,0); break;
+
+		if(z > 0)
+		{
+			ulong uz = as_ulong(z);
+			int expValue = ((uz & DF_EXP_MASK) >> DF_EXP_OFFSET) - DF_EXP_BIAS;
+			ulong manValue = ((uz & DF_MAN_MASK) | DF_IMPLICITE_ONE);
+			
+			if(expValue > 52) return 1.0;
+			manValue = (manValue >> (52 - expValue));
+			
+			if(manValue & 1)
+				signVaule =  -1.0;
 		}
-	return -y;
+	}
+	else
+	{
+		return copysign(0.0, x);
+	}
+
+	y = sin(y*M_PI);
+	return signVaule*copysign(y, x);
 }
 
 OVERLOADABLE double sqrt(double x)
@@ -3057,7 +3097,64 @@ OVERLOADABLE double tanh(double x)
 
 OVERLOADABLE double tanpi(double x)
 {
-	return tan(x*M_PI);
+	double y,z, signValue, infsign;
+	ulong lx;
+
+	lx = as_ulong(x);
+	y = fabs(x);
+	signValue = (lx&DF_SIGN_MASK) ? -1.0:1.0;
+	infsign = signValue;
+	if((lx&DF_ABS_MASK) >=DF_POSITIVE_INF)return as_double(DF_POSITIVE_INF + 1);
+
+	z = floor(y);
+	if(z > 0)
+	{
+		ulong uz = as_ulong(z);
+		ulong expValue = ((uz & DF_EXP_MASK) >> DF_EXP_OFFSET) - DF_EXP_BIAS;
+		ulong manValue = ((uz & DF_MAN_MASK) | DF_IMPLICITE_ONE);
+		
+		if(expValue > 52) copysign(0.0, x);
+		manValue = (manValue >> (52 - expValue));
+		
+		if(manValue & 1)
+			infsign = signValue * -1.0;
+	}
+
+	if(z!=y)
+	{
+		y = y -z;
+
+		if(y > 0.5)
+		{
+			y = y -0.5;
+			if(y < 0.25)
+				return -1.0*signValue /tan(y*M_PI);
+
+			y = 0.5 - y;
+			return -1.0*signValue*tan(y*M_PI);
+		}
+
+		if((y < 0.5) && (y > 0.25))
+		{
+			y = 0.5 - y;
+			return signValue/tan(y*M_PI);
+		}
+
+		if(y == 0.5)
+		{
+			if(infsign == 1.0)
+				return as_double(DF_POSITIVE_INF);
+			else
+				return as_double(DF_NEGTIVE_INF);
+		}
+	}
+	else
+	{
+		return copysign(0.0, x);
+	}
+
+	y = tan(y*M_PI);
+	return copysign(y, x);
 }
 
 OVERLOADABLE double tgamma(double x)
