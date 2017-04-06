@@ -4509,22 +4509,79 @@ OVERLOADABLE double lgamma_r(double x, private int *signgamp)
 
 OVERLOADABLE double modf(double x, global double *i)
 {
-	double retVal = floor(x);
-	*i = retVal;
+	if(x == as_double(DF_POSITIVE_INF))
+	{
+		*i = x;
+		return 0.0;
+	}
+
+	if(-x == as_double(DF_POSITIVE_INF))
+	{
+		*i = x;
+		return -0.0;
+	}
+
+	double retVal = floor(fabs(x));
+	if(x >= 0.0)
+		*i = retVal;
+	else
+	{
+		retVal = -retVal;
+		*i = retVal;
+	}
+
 	return x - retVal;
 }
 
 OVERLOADABLE double modf(double x, local double *i)
 {
-	double retVal = floor(x);
-	*i = retVal;
+	if(x == as_double(DF_POSITIVE_INF))
+	{
+		*i = x;
+		return 0.0;
+	}
+
+	if(-x == as_double(DF_POSITIVE_INF))
+	{
+		*i = x;
+		return -0.0;
+	}
+
+	double retVal = floor(fabs(x));
+	if(x >= 0.0)
+		*i = retVal;
+	else
+	{
+		retVal = -retVal;
+		*i = retVal;
+	}
+
 	return x - retVal;
 }
 
 OVERLOADABLE double modf(double x, private double *i)
 {
-	double retVal = floor(x);
-	*i = retVal;
+	if(x == as_double(DF_POSITIVE_INF))
+	{
+		*i = x;
+		return 0.0;
+	}
+
+	if(-x == as_double(DF_POSITIVE_INF))
+	{
+		*i = x;
+		return -0.0;
+	}
+
+	double retVal = floor(fabs(x));
+	if(x >= 0.0)
+		*i = retVal;
+	else
+	{
+		retVal = -retVal;
+		*i = retVal;
+	}
+
 	return x - retVal;
 }
 
