@@ -2530,29 +2530,59 @@ OVERLOADABLE double pown(double x, int n)
 
 OVERLOADABLE double powr(double x, double y)
 {
-	int hx,hy,ix,iy;
-	unsigned lx,ly;
+	ulong ux, uy;
+	ulong lx, ly;
 
-	hx = __HI(x); lx = __LO(x);
-	hy = __HI(y); ly = __LO(y);
-	ix = hx&0x7fffffff;  iy = hy&0x7fffffff;
+	lx = as_ulong(x);
+	ly = as_ulong(y);
+	ux = lx & DF_ABS_MASK;
+	uy = ly & DF_ABS_MASK;
 
-	/* y==zero: x**0 = 1 */
-	if((iy|ly)==0) return 1.0;
-
-	if(x < 0)return as_double(DF_ABS_MASK);
+	if(lx > DF_SIGN_MASK)return as_double(DF_POSITIVE_INF + 1);
 
 	/* +-NaN return x+y */
-	if(ix > 0x7ff00000 || ((ix==0x7ff00000)&&(lx!=0)))
+	if(ux > DF_POSITIVE_INF)
 		return x+y;
 
-	if(iy > 0x7ff00000 || ((iy==0x7ff00000)&&(ly!=0)))
+	if(uy > DF_POSITIVE_INF)
 	{
 		return x + y;
 	}
 
-	if(((ix==0x7ff00000)&&(lx==0)) && ((iy==0x7ff00000)&&(ly==0)))
-			return as_double(DF_ABS_MASK);
+	if(uy ==0 && ux == 0) return as_double(DF_POSITIVE_INF + 1);
+
+	if((lx == DF_POSITIVE_INF) && (ly == DF_POSITIVE_INF))
+		return as_double(DF_POSITIVE_INF);
+
+	if((lx == DF_POSITIVE_INF) && (ly == DF_NEGTIVE_INF))
+		return 0.0;
+
+	if((lx == DF_POSITIVE_INF) && (uy == 0))
+		return as_double(DF_POSITIVE_INF + 1);
+
+	if(ly == DF_POSITIVE_INF && ux == 0)
+		return 0.0;
+
+	if(ly == DF_NEGTIVE_INF && ux == 0)
+		return as_double(DF_POSITIVE_INF);
+
+	if(ly < DF_SIGN_MASK && ux == 0)
+		return 0.0;
+
+	if(ly > DF_SIGN_MASK && ux == 0)
+		return as_double(DF_POSITIVE_INF);
+
+	if(ly == DF_NEGTIVE_INF && x > 1.0)
+		return 0.0;
+
+	if(ly == DF_NEGTIVE_INF && x < 1.0)
+		return as_double(DF_POSITIVE_INF);
+
+	if(ly == DF_NEGTIVE_INF && x == 1.0)
+		return as_double(DF_POSITIVE_INF + 1);
+
+	if(ly == DF_POSITIVE_INF && x == 1.0)
+		return as_double(DF_POSITIVE_INF + 1);
 
 	return __ocl_internal_pow(x, y);
 }
