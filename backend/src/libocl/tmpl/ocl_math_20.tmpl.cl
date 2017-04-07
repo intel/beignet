@@ -3830,9 +3830,23 @@ INLINE void  __setLow(double *x, unsigned int val){
 
 OVERLOADABLE double fract(double x, double *p)
 {
+    ulong ux = as_ulong(x);
+    if((ux&DF_ABS_MASK) > DF_POSITIVE_INF)
+    {
+	*p = as_double(DF_POSITIVE_INF + 1);
+	return as_double(DF_POSITIVE_INF + 1);
+    }
+
     double ret = floor(x);
     *p =  ret;
-    return x -ret;
+
+    if(ret == as_double(DF_POSITIVE_INF))
+	return 0.0;
+
+    if(ret == as_double(DF_NEGTIVE_INF))
+		return as_double(DF_SIGN_MASK);;
+
+    return fmin(x -ret, 0x1.fffffffffffffp-1);
 }
 
 OVERLOADABLE double frexp(double x, int *exp)
