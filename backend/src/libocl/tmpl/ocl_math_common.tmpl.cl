@@ -311,7 +311,7 @@ OVERLOADABLE double atan(double x)
 	}
 }
 
-OVERLOADABLE double atan2(double x, double y)
+OVERLOADABLE double atan2(double y, double x)
 {
 	double tiny  = 1.0e-300,
 	zero  = 0.0,
@@ -329,21 +329,9 @@ OVERLOADABLE double atan2(double x, double y)
 	hy = __HI(y); iy = hy&0x7fffffff;
 	ly = __LO(y);
 	if(((ix|((lx|-lx)>>31))>0x7ff00000)||
-	   ((iy|((ly|-ly)>>31))>0x7ff00000))	/* x or y is NaN */
-	   return x+y;
+		((iy|((ly|-ly)>>31))>0x7ff00000))	/* x or y is NaN */
+			return x+y;
 
-	if((hx-0x3ff00000|lx)==0)
-		{
-			if(iy>=0x44100000) {	/* if |x| >= 2^66 */
-			if(iy>0x7ff00000 ||(iy==0x7ff00000 && (__LO(y)!=0)))
-			return y+y;		/* NaN */
-			if(hy >0)
-					return  pi_o_2;
-			else
-					return pi;
-			}
-				return atan(y);   /* x=1.0 */
-		}
 	m = ((hy>>31)&1)|((hx>>30)&2);  /* 2*sign(x)+sign(y) */
 
 	/* when y = 0 */
@@ -356,29 +344,34 @@ OVERLOADABLE double atan2(double x, double y)
 		}
 	}
 	/* when x = 0 */
-	if((ix|lx)==0) return (hx<0)?  -pi-tiny: pi+tiny;
+	if((ix|lx)==0) return (hy<0)?  -pi_o_2-tiny: pi_o_2+tiny;
 
 	/* when x is INF */
-	if(ix==0x7ff00000) {
-		if(iy==0x7ff00000) {
-		switch(m) {
-			case 0: return  pi_o_4+tiny;/* atan(+INF,+INF) */
-			case 1: return 3.0*pi_o_4-tiny;/* atan(-INF,+INF) */
-			case 2: return  3.0*pi_o_4+tiny;/*atan(+INF,-INF)*/
-			case 3: return -3.0*pi_o_4-tiny;/*atan(-INF,-INF)*/
+	if(ix==0x7ff00000)
+	{
+		if(iy==0x7ff00000)
+		{
+			switch(m)
+			{
+				case 0: return  pi_o_4+tiny;/* atan(+INF,+INF) */
+				case 1: return -pi_o_4-tiny;/* atan(-INF,+INF) */
+				case 2: return  3.0*pi_o_4+tiny;/*atan(+INF,-INF)*/
+				case 3: return -3.0*pi_o_4-tiny;/*atan(-INF,-INF)*/
+			}
 		}
-		}
-			else {
-		switch(m) {
-			case 0: return  zero  ; /* atan(+...,+INF) */
-			case 1: return pi_o_2; /* atan(-...,+INF) */
-			case 2: return  pi_o_2+tiny  ;  /* atan(+...,-INF) */
-			case 3: return -pi_o_2-tiny  ;  /* atan(-...,-INF) */
-		}
+		else
+		{
+			switch(m)
+			{
+				case 0: return  zero  ; /* atan(+...,+INF) */
+				case 1: return -zero; /* atan(-...,+INF) */
+				case 2: return  pi+tiny  ;  /* atan(+...,-INF) */
+				case 3: return -pi -tiny  ;  /* atan(-...,-INF) */
+			}
 		}
 	}
 	/* when y is INF */
-	if(iy==0x7ff00000) return (hx<0)? -pi-tiny: pi+tiny;
+	if(iy==0x7ff00000) return (hy<0)? -pi_o_2-tiny: pi_o_2+tiny;
 
 	/* compute y/x */
 	k = (iy-ix)>>20;
@@ -387,12 +380,11 @@ OVERLOADABLE double atan2(double x, double y)
 	else z=atan(fabs(y/x));	 /* safe to do y/x */
 	switch (m) {
 		case 0: return	   z  ;   /* atan(+,+) */
-		case 2: __setHigh(&z, __HI(z) ^ 0x80000000);
-			return	   pi_o_2 - z  ;   /* atan(-,+) */
-		case 1: return  pi_o_2 + (z-pi_lo);/* atan(+,-) */
+		case 1: __setHigh(&z, __HI(z) ^ 0x80000000);
+			return	z  ;   /* atan(-,+) */
+		case 2: return  pi-(z-pi_lo);/* atan(+,-) */
 		default: /* case 3 */
-			__setHigh(&z, __HI(z) ^ 0x80000000);
-				return  (z-pi_lo)-pi_o_2;/* atan(-,-) */
+				return  (z-pi_lo)-pi;/* atan(-,-) */
 	}
 }
 
