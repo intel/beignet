@@ -2699,42 +2699,60 @@ OVERLOADABLE double round(double x)
 OVERLOADABLE double rootn(double x, int n)
 {
 	double ax,re;
-	int sign = 0;
+	ulong ux = as_ulong(x);
+	ulong sign = ux&DF_SIGN_MASK;
 
 	if( n == 0 )return as_double(DF_POSITIVE_INF+1);
 
-	//rootn ( x, n )  returns a NaN for x < 0 and n is even.
-	if( x < 0 && 0 == (n&1) )
-	  return as_double(DF_POSITIVE_INF+1);
-	if( x == 0.0 ){
-	  switch( n & 0x80000001 ){
-		//rootn ( +-0,  n ) is +0 for even n > 0.
-		case 0:
-		  return 0.0f;
-		//rootn ( +-0,  n ) is +-0 for odd n > 0.
-		case 1:
-		  return x;
-		//rootn ( +-0,  n ) is +inf for even n < 0.
-		case 0x80000000:
-		  return as_double(DF_POSITIVE_INF);
+	if((ux&DF_ABS_MASK)== 0)
+	{
+		int neg = (n & 0x80000000);
+		int odd = (n & 1);
 
-		//rootn ( +-0,  n ) is +-inf for odd n < 0.
-		case 0x80000001:
-		  return copysign(as_double(DF_POSITIVE_INF), x);
-	  }
+		if(neg && odd)
+			return as_double(sign|DF_POSITIVE_INF);
+
+		if(neg && !odd)
+			return as_double(DF_POSITIVE_INF);
+
+		if(!neg && !odd)
+			return 0.0;
+
+		if(!neg && odd)
+			return as_double(sign);
 	}
 
-	ulong ux = as_ulong(x);
-	if((ux&DF_ABS_MASK) == DF_POSITIVE_INF) return x;
-	ax = fabs(x);
-	if(x <0.0f && (n&1))
-	  sign = 1;
+	if( x < 0 && ! (n&1) )
+		return as_double(DF_POSITIVE_INF+1);
 
-	  re = pow(ax,1.0/n);
-	if(sign)
-	  re = -re;
+	if((ux&DF_ABS_MASK) == DF_POSITIVE_INF)
+	{
+		if(n < 0)
+			return 0.0;
+
+		return x;
+	}
+
+	if(n == 1)
+		return x;
+	if(n == 2)
+		return sqrt(x);
+	if(n == 3)
+		return cbrt(x);
+
+	if(n == -1)
+		return 1.0/x;
+	if(n == -2)
+		return rsqrt(x);
+	if(n == -3)
+		return 1.0/cbrt(x);
+
+	if(x > 0.0f)
+		re = exp10(log10(x)/(double)n);
+	else
+		re = -exp10(log10(-x)/(double)n);
+
 	return re;
-
 }
 
 OVERLOADABLE double rsqrt(double x)
