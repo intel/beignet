@@ -24,6 +24,7 @@
 #ifndef __GBE_IR_LLVM_INCLUDES_HPP__
 #define __GBE_IR_LLVM_INCLUDES_HPP__
 
+#ifdef GBE_COMPILER_AVAILABLE
 #include "llvm/Config/llvm-config.h"
 
 #include "llvm/IR/BasicBlock.h"
@@ -75,7 +76,12 @@
 
 #include "llvm-c/Linker.h"
 #include "llvm/IRReader/IRReader.h"
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+#include <llvm/Bitcode/BitcodeWriter.h>
+//#include <llvm/Bitcode/BitcodeReader.h>
+#else
 #include "llvm/Bitcode/ReaderWriter.h"
+#endif
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
@@ -131,5 +137,11 @@
 #include "llvm/Transforms/IPO/FunctionAttrs.h"
 #include "llvm/Transforms/Scalar/GVN.h"
 #endif
+
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
+#include "llvm/Support/Error.h"
+#endif
+
+#endif /*GBE_COMPILER_AVAILABLE */
 
 #endif /* __GBE_IR_LLVM_INCLUDES_HPP__ */

@@ -62,7 +62,13 @@
 #include <clang/Basic/TargetOptions.h>
 #include <llvm/ADT/IntrusiveRefCntPtr.h>
 #include <llvm/IR/Module.h>
+
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+#include <llvm/Bitcode/BitcodeWriter.h>
+#include <clang/Lex/PreprocessorOptions.h>
+#else
 #include <llvm/Bitcode/ReaderWriter.h>
+#endif
 #include <llvm/Support/raw_ostream.h>
 #endif
 
@@ -694,14 +700,15 @@ namespace gbe {
     llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagID(new clang::DiagnosticIDs());
     clang::DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
 
-    // Create the compiler invocation
-    std::unique_ptr<clang::CompilerInvocation> CI(new clang::CompilerInvocation);
-    clang::CompilerInvocation::CreateFromArgs(*CI,
-                                              &args[0],
-                                              &args[0] + args.size(),
-                                              Diags);
     llvm::StringRef srcString(source);
+    // Create the compiler invocation
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    auto CI = std::make_shared<clang::CompilerInvocation>();
+    CI->getPreprocessorOpts().addRemappedFile("stringInput.cl",
+#else
+    std::unique_ptr<clang::CompilerInvocation> CI(new clang::CompilerInvocation);
     (*CI).getPreprocessorOpts().addRemappedFile("stringInput.cl",
+#endif
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
                 llvm::MemoryBuffer::getMemBuffer(srcString)
 #else
@@ -709,9 +716,17 @@ namespace gbe {
 #endif
                 );
 
+    clang::CompilerInvocation::CreateFromArgs(*CI,
+                                              &args[0],
+                                              &args[0] + args.size(),
+                                              Diags);
     // Create the compiler instance
     clang::CompilerInstance Clang;
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    Clang.setInvocation(std::move(CI));
+#else
     Clang.setInvocation(CI.release());
+#endif
     // Get ready to report problems
     Clang.createDiagnostics(DiagClient, false);
 

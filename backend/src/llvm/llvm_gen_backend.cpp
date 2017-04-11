@@ -357,6 +357,15 @@ namespace gbe
       GBE_ASSERT(! (isa<Constant>(value) && !isa<GlobalValue>(value)));
       Type *type = value->getType();
       auto typeID = type->getTypeID();
+      if (typeID == Type::PointerTyID)
+      {
+        Type *eltTy = dyn_cast<PointerType>(type)->getElementType();
+        if (eltTy->isStructTy()) {
+          StructType *strTy = dyn_cast<StructType>(eltTy);
+          if (strTy->getName().data() && strstr(strTy->getName().data(), "sampler"))
+            type = Type::getInt32Ty(value->getContext());
+        }
+      }
       switch (typeID) {
         case Type::IntegerTyID:
         case Type::FloatTyID:
@@ -573,7 +582,11 @@ namespace gbe
       pass = PASS_EMIT_REGISTERS;
     }
 
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    virtual llvm::StringRef getPassName() const { return "Gen Back-End"; }
+#else
     virtual const char *getPassName() const { return "Gen Back-End"; }
+#endif
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
@@ -2409,10 +2422,11 @@ namespace gbe
         }
 
         if (llvmInfo.isSamplerType()) {
-          ctx.input(argName, ir::FunctionArgument::SAMPLER, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type), 0);
+          ctx.input(argName, ir::FunctionArgument::SAMPLER, reg, llvmInfo, 4, 4, 0);
           (void)ctx.getFunction().getSamplerSet()->append(reg, &ctx);
           continue;
         }
+
         if(llvmInfo.isPipeType()) {
           llvmInfo.typeSize = getTypeSize(F.getParent(),unit,llvmInfo.typeName);
           ctx.input(argName, ir::FunctionArgument::PIPE, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type), BtiMap.find(&*I)->second);
@@ -4063,6 +4077,15 @@ namespace gbe
         regTranslator.newValueProxy(srcValue, dst);
         break;
       }
+      case GEN_OCL_INT_TO_SAMPLER:
+      case GEN_OCL_SAMPLER_TO_INT:
+      {
+        Value *srcValue = I.getOperand(0);
+        //srcValue->dump();
+        //dst->dump();
+        regTranslator.newValueProxy(srcValue, dst);
+        break;
+      }
       case GEN_OCL_ENQUEUE_GET_ENQUEUE_INFO_ADDR:
         regTranslator.newScalarProxy(ir::ocl::enqueuebufptr, dst);
         break;
@@ -4481,10 +4504,19 @@ namespace gbe
   /* append a new sampler. should be called before any reference to
    * a sampler_t value. */
   uint8_t GenWriter::appendSampler(CallSite::arg_iterator AI) {
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    CallInst *TC = dyn_cast<CallInst>(*AI);
+    Constant *CPV = TC ? dyn_cast<Constant>(TC->getOperand(0)) : NULL;
+#else
     Constant *CPV = dyn_cast<Constant>(*AI);
+#endif
     uint8_t index;
     if (CPV != NULL)
     {
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+      // Check if the Callee is sampler convert function
+      GBE_ASSERT(TC->getCalledFunction()->getName().str() == "__gen_ocl_int_to_sampler");
+#endif
       // This is not a kernel argument sampler, we need to append it to sampler set,
       // and allocate a sampler slot for it.
       const ir::Immediate &x = processConstantImm(CPV);
@@ -5464,6 +5496,8 @@ namespace gbe
           case GEN_OCL_GET_PIPE:
           case GEN_OCL_MAKE_RID:
           case GEN_OCL_GET_RID:
+          case GEN_OCL_INT_TO_SAMPLER:
+          case GEN_OCL_SAMPLER_TO_INT:
           {
             break;
           }

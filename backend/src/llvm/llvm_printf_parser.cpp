@@ -309,7 +309,11 @@ error:
     bool parseOnePrintfInstruction(CallInst * call);
     bool generateOneParameterInst(PrintfSlot& slot, Value* arg, Value*& new_arg);
 
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    virtual StringRef getPassName() const
+#else
     virtual const char *getPassName() const
+#endif
     {
       return "Printf Parser";
     }
@@ -515,7 +519,11 @@ error:
       case Type::FloatTyID: {
         /* llvm 3.6 will give a undef value for NAN. */
         if (dyn_cast<llvm::UndefValue>(arg)) {
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+          APFloat nan = APFloat::getNaN(APFloat::IEEEsingle(), false);
+#else
           APFloat nan = APFloat::getNaN(APFloat::IEEEsingle, false);
+#endif
           new_arg = ConstantFP::get(module->getContext(), nan);
         }
 

@@ -38,7 +38,7 @@ struct Block_literal {
   void *isa; // initialized to &_NSConcreteStackBlock or &_NSConcreteGlobalBlock
   int flags;
   int reserved;
-  __global void (*invoke)(void *, ...);
+  __global void* invoke;
   struct Block_descriptor_1 {
     unsigned long int reserved;         // NULL
     unsigned long int size;         // sizeof(struct Block_literal_1)
@@ -65,10 +65,6 @@ OVERLOADABLE int enqueue_kernel(queue_t q, int flag, ndrange_t ndrange, void (^b
 OVERLOADABLE int enqueue_kernel(queue_t q, int flag, ndrange_t ndrange,
                                 uint num_events_in_wait_list, const clk_event_t *event_wait_list,
                                 clk_event_t *event_ret, void (^block)(void));
-OVERLOADABLE int enqueue_kernel(queue_t q, int flag, ndrange_t ndrange, __private void *block, uint size0, ...);
-OVERLOADABLE int enqueue_kernel(queue_t q, int flag, ndrange_t ndrange,
-                                uint num_events_in_wait_list, const clk_event_t *event_wait_list,
-                                clk_event_t *event_ret,  __private void *block, uint size0, ...);
 
 queue_t get_default_queue(void);
 int __gen_enqueue_kernel(queue_t q, int flag, ndrange_t ndrange, void (^block)(void), int size);

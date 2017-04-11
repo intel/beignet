@@ -29,7 +29,11 @@ namespace ir {
   {
     uint64_t v64 = static_cast<uint64_t>(v);
     llvm::APInt apInt(16, v64, false);
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    return llvm::APFloat(llvm::APFloat::IEEEhalf(), apInt);
+#else
     return llvm::APFloat(llvm::APFloat::IEEEhalf, apInt);
+#endif
   }
 
   static uint16_t convAPFloatToU16(const llvm::APFloat& apf)
@@ -42,14 +46,22 @@ namespace ir {
   half::operator float(void) const {
     bool loseInfo;
     llvm::APFloat apf_self = convU16ToAPFloat(this->val);
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    apf_self.convert(llvm::APFloat::IEEEsingle(), llvm::APFloat::rmNearestTiesToEven, &loseInfo);
+#else
     apf_self.convert(llvm::APFloat::IEEEsingle, llvm::APFloat::rmNearestTiesToEven, &loseInfo);
+#endif
     return apf_self.convertToFloat();
   }
 
   half::operator double(void) const {
     bool loseInfo;
     llvm::APFloat apf_self = convU16ToAPFloat(this->val);
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    apf_self.convert(llvm::APFloat::IEEEdouble(), llvm::APFloat::rmNearestTiesToEven, &loseInfo);
+#else
     apf_self.convert(llvm::APFloat::IEEEdouble, llvm::APFloat::rmNearestTiesToEven, &loseInfo);
+#endif
     return apf_self.convertToDouble();
   }
 
@@ -70,7 +82,11 @@ namespace ir {
   }
 
   half half::convToHalf(uint16_t u16) {
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    llvm::APFloat res(llvm::APFloat::IEEEhalf(), llvm::APInt(16, 0, false));
+#else
     llvm::APFloat res(llvm::APFloat::IEEEhalf, llvm::APInt(16, 0, false));
+#endif
     uint64_t u64 = static_cast<uint64_t>(u16);
     llvm::APInt apInt(16, u64, false);
     res.convertFromAPInt(apInt, false, llvm::APFloat::rmNearestTiesToEven);
@@ -78,7 +94,11 @@ namespace ir {
   }
 
   half half::convToHalf(int16_t v16) {
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    llvm::APFloat res(llvm::APFloat::IEEEhalf(), llvm::APInt(16, 0, true));
+#else
     llvm::APFloat res(llvm::APFloat::IEEEhalf, llvm::APInt(16, 0, true));
+#endif
     uint64_t u64 = static_cast<uint64_t>(v16);
     llvm::APInt apInt(16, u64, true);
     res.convertFromAPInt(apInt, true, llvm::APFloat::rmNearestTiesToEven);

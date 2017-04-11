@@ -295,17 +295,18 @@ GEN_VALIDATE_ARRAY_INDEX(int, read_write image1d_buffer_t)
 // The work around is to use a LD message instead of normal sample message.
 ///////////////////////////////////////////////////////////////////////////////
 
-bool __gen_ocl_sampler_need_fix(sampler_t);
-bool __gen_ocl_sampler_need_rounding_fix(sampler_t);
+bool __gen_ocl_sampler_need_fix(int);
+bool __gen_ocl_sampler_need_rounding_fix(int);
+int __gen_ocl_sampler_to_int(sampler_t);
 
 bool __gen_sampler_need_fix(const sampler_t sampler)
 {
-  return __gen_ocl_sampler_need_fix(sampler);
+  return __gen_ocl_sampler_need_fix(__gen_ocl_sampler_to_int(sampler));
 }
 
 bool __gen_sampler_need_rounding_fix(const sampler_t sampler)
 {
-  return __gen_ocl_sampler_need_rounding_fix(sampler);
+  return __gen_ocl_sampler_need_rounding_fix(__gen_ocl_sampler_to_int(sampler));
 }
 
 INLINE_OVERLOADABLE float __gen_fixup_float_coord(float tmpCoord)

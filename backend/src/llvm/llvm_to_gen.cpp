@@ -402,9 +402,17 @@ namespace gbe
     passes.add(createScalarizePass());             // Expand all vector ops
 
     if(OCL_OUTPUT_CFG)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+      passes.add(createCFGPrinterLegacyPassPass());
+#else
       passes.add(createCFGPrinterPass());
+#endif
     if(OCL_OUTPUT_CFG_ONLY)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+      passes.add(createCFGOnlyPrinterLegacyPassPass());
+#else
       passes.add(createCFGOnlyPrinterPass());
+#endif
     passes.add(createGenPass(unit));
     passes.run(mod);
     errors = dc.str();

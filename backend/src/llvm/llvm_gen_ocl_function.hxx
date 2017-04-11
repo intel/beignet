@@ -266,3 +266,7 @@ DECL_LLVM_GEN_FUNCTION(MAKE_RID, __gen_ocl_make_rid)
 DECL_LLVM_GEN_FUNCTION(ENQUEUE_SET_NDRANGE_INFO, __gen_ocl_set_ndrange_info)
 DECL_LLVM_GEN_FUNCTION(ENQUEUE_GET_NDRANGE_INFO, __gen_ocl_get_ndrange_info)
 DECL_LLVM_GEN_FUNCTION(ENQUEUE_GET_ENQUEUE_INFO_ADDR, __gen_ocl_get_enqueue_info_addr)
+
+// sampler helper functions
+DECL_LLVM_GEN_FUNCTION(SAMPLER_TO_INT, __gen_ocl_sampler_to_int)
+DECL_LLVM_GEN_FUNCTION(INT_TO_SAMPLER, __gen_ocl_int_to_sampler)
