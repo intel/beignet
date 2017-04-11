@@ -238,7 +238,12 @@ namespace gbe {
         return true;
       }
 
-      virtual const char *getPassName() const {
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+      virtual StringRef getPassName() const
+#else
+      virtual const char *getPassName() const
+#endif
+      {
         return "SPIR backend: custom loop unrolling pass";
       }
 

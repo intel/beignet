@@ -29,7 +29,11 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm-c/Linker.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+#include "llvm/Bitcode/BitcodeWriter.h"
+#else
 #include "llvm/Bitcode/ReaderWriter.h"
+#endif /* LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40 */
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MemoryBuffer.h"

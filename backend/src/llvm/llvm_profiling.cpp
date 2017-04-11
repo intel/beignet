@@ -83,7 +83,11 @@ namespace gbe
     {
     }
 
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    virtual StringRef getPassName() const
+#else
     virtual const char *getPassName() const
+#endif
     {
       return "Timestamp Parser";
     }

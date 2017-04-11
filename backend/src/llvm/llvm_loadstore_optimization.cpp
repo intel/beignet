@@ -75,8 +75,12 @@ namespace gbe {
                                   const BasicBlock::iterator &start,
                                   unsigned maxVecSize,
                                   bool isLoad);
-
-    virtual const char *getPassName() const {
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    virtual StringRef getPassName() const
+#else
+    virtual const char *getPassName() const
+#endif
+    {
       return "Merge compatible Load/stores for Gen";
     }
   };

@@ -117,17 +117,28 @@ namespace gbe
 
         std::string ErrInfo;// = "Not Materializable";
         if (!fromSrc && newMF->isMaterializable()) {
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
-          if (newMF->Materialize(&ErrInfo)) {
-            printf("Can not materialize the function: %s, because %s\n", fnName.c_str(), ErrInfo.c_str());
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+          if (llvm::Error EC = newMF->materialize()) {
+            std::string Msg;
+            handleAllErrors(std::move(EC), [&](ErrorInfoBase &EIB) {
+              Msg = EIB.message();
+            });
+            printf("Can not materialize the function: %s, because %s\n", fnName.c_str(), Msg.c_str());
             return false;
           }
-#else
+          Gvs.push_back((GlobalValue *)newMF);
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
           if (std::error_code EC = newMF->materialize()) {
             printf("Can not materialize the function: %s, because %s\n", fnName.c_str(), EC.message().c_str());
             return false;
           }
           Gvs.push_back((GlobalValue *)newMF);
+#else
+         if (newMF->Materialize(&ErrInfo)) {
+            printf("Can not materialize the function: %s, because %s\n", fnName.c_str(), ErrInfo.c_str());
+            return false;
+          }
+
 #endif
         }
         if (!materializedFuncCall(src, lib, *newMF, MFS, Gvs))
@@ -250,21 +261,30 @@ namespace gbe
       }
       std::string ErrInfo;// = "Not Materializable";
       if (newMF->isMaterializable()) {
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
-        if (newMF->Materialize(&ErrInfo)) {
-          printf("Can not materialize the function: %s, because %s\n", fnName.c_str(), ErrInfo.c_str());
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+        if (llvm::Error EC = newMF->materialize()) {
+          std::string Msg;
+          handleAllErrors(std::move(EC), [&](ErrorInfoBase &EIB) {
+            Msg = EIB.message();
+          });
+          printf("Can not materialize the function: %s, because %s\n", fnName.c_str(), Msg.c_str());
           delete clonedLib;
           return NULL;
         }
-      }
-#else
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
         if (std::error_code EC = newMF->materialize()) {
           printf("Can not materialize the function: %s, because %s\n", fnName.c_str(), EC.message().c_str());
           delete clonedLib;
           return NULL;
         }
-      }
+#else
+        if (newMF->Materialize(&ErrInfo)) {
+          printf("Can not materialize the function: %s, because %s\n", fnName.c_str(), ErrInfo.c_str());
+          delete clonedLib;
+          return NULL;
+        }
 #endif
+      }
 
       if (!materializedFuncCall(*mod, *clonedLib, *newMF, materializedFuncs, Gvs)) {
         delete clonedLib;
@@ -292,7 +312,12 @@ namespace gbe
     Module::GlobalListType &GVlist = clonedLib->getGlobalList();
     for(Module::global_iterator GVitr = GVlist.begin();GVitr != GVlist.end();++GVitr) {
       GlobalValue * GV = &*GVitr;
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+      ExitOnError ExitOnErr("Can not materialize the clonedLib: ");
+      ExitOnErr(clonedLib->materialize(GV));
+#else
       clonedLib->materialize(GV);
+#endif
       Gvs.push_back(GV);
     }
     llvm::legacy::PassManager Extract;
@@ -300,7 +325,12 @@ namespace gbe
     Extract.add(createGVExtractionPass(Gvs, false));
     Extract.run(*clonedLib);
     /* Mark the library module as materialized for later use. */
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    ExitOnError ExitOnErr("Can not materialize the clonedLib: ");
+    ExitOnErr(clonedLib->materializeAll());
+#else
     clonedLib->materializeAll();
+#endif
 #endif
 
     /* the SPIR binary datalayout maybe different with beignet's bitcode */
@@ -309,14 +339,14 @@ namespace gbe
 
     /* We use beignet's bitcode as dst because it will have a lot of
        lazy functions which will not be loaded. */
-    char* errorMsg;
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
     if(LLVMLinkModules2(wrap(clonedLib), wrap(mod))) {
 #else
+    char* errorMsg;
     if(LLVMLinkModules(wrap(clonedLib), wrap(mod), LLVMLinkerDestroySource, &errorMsg)) {
+      printf("Fatal Error: link the bitcode error:\n%s\n", errorMsg);
 #endif
       delete clonedLib;
-      printf("Fatal Error: link the bitcode error:\n%s\n", errorMsg);
       return NULL;
     }
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
