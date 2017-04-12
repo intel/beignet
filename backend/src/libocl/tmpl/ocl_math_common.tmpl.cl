@@ -1551,7 +1551,7 @@ static inline double
 add_adjusted(double a, double b)
 {
     struct dd sum;
-    long hibits, lobits;
+    ulong hibits, lobits;
 
     sum = dd_add(a, b);
     if (sum.lo != 0) {
@@ -1611,33 +1611,6 @@ dd_mul(double a, double b)
     ret.hi = p + q;
     ret.lo = p - ret.hi + q + la * lb;
     return (ret);
-}
-
-double dd_add_rte(double a, double b)
-{
-    struct dd ret;
-    double s;
-
-    ret.hi = a + b;
-    s = ret.hi - a;
-    ret.lo = (a - (ret.hi - s)) + (b - s);
-    ulong hi = as_ulong(ret.hi);
-    ulong lo = as_ulong(ret.lo);
-    int hexp = (int)(((hi & 0x7FF0000000000000) >> 52) - 1023);
-    int lexp = (int)(((lo & 0x7FF0000000000000) >> 52) - 1023);
-    ulong hman = ((hi&0xFFFFFFFFFFFFF) |0x10000000000000);
-    ulong lman = ((lo&0xFFFFFFFFFFFFF) | 0x10000000000000);
-    long hsign = (hi & 0x8000000000000000);
-    long lsign = (lo & 0x8000000000000000);
-
-    if((hsign == lsign) && lo && (hexp -lexp == 54))
-    {
-        if((hi & 0x1) && lman)
-            hi += 1;
-        return as_double(hi);
-    }
-
-    return ret.hi;
 }
 
 double __frexp(double x, int *exp)
@@ -1703,7 +1676,7 @@ OVERLOADABLE double fma(double x, double y, double z)
     }
 
     adj = add_adjusted(r.lo, xy.lo);
-    double base = dd_add_rte(r.hi, adj);
+    double base = r.hi + adj;
     if (spread + ilogb(r.hi) > -1023)
         return (ldexp(base, spread));
     else
@@ -2708,61 +2681,36 @@ OVERLOADABLE double pown(double x, int n)
 
 OVERLOADABLE double powr(double x, double y)
 {
-	ulong ux, uy;
-	ulong lx, ly;
+    if( x < 0.0L )
+        return as_double(DF_POSITIVE_INF + 1);
 
-	lx = as_ulong(x);
-	ly = as_ulong(y);
-	ux = lx & DF_ABS_MASK;
-	uy = ly & DF_ABS_MASK;
+    if( isnan(x) || isnan(y) )
+        return x + y;
 
-	if(lx > DF_SIGN_MASK)return as_double(DF_POSITIVE_INF + 1);
+    if( x == 1.0L )
+    {
+        if(fabs(y) == INFINITY )
+            return as_double(DF_POSITIVE_INF + 1);
 
-	/* +-NaN return x+y */
-	if(ux > DF_POSITIVE_INF)
-		return x+y;
+        return 1.0L;
+    }
 
-	if(uy > DF_POSITIVE_INF)
-	{
-		return x + y;
-	}
 
-	if(uy ==0 && ux == 0) return as_double(DF_POSITIVE_INF + 1);
+    if( y == 0.0L )
+    {
+        if( x == 0.0L || x == INFINITY )
+            return as_double(DF_POSITIVE_INF + 1);
+        return 1.0L;
+    }
 
-	if((lx == DF_POSITIVE_INF) && (ly == DF_POSITIVE_INF))
-		return as_double(DF_POSITIVE_INF);
+    if( x == 0.0L )
+    {
+        if( y < 0.0L )
+            return INFINITY;
+        return 0.0L;
+    }
 
-	if((lx == DF_POSITIVE_INF) && (ly == DF_NEGTIVE_INF))
-		return 0.0;
-
-	if((lx == DF_POSITIVE_INF) && (uy == 0))
-		return as_double(DF_POSITIVE_INF + 1);
-
-	if(ly == DF_POSITIVE_INF && ux == 0)
-		return 0.0;
-
-	if(ly == DF_NEGTIVE_INF && ux == 0)
-		return as_double(DF_POSITIVE_INF);
-
-	if(ly < DF_SIGN_MASK && ux == 0)
-		return 0.0;
-
-	if(ly > DF_SIGN_MASK && ux == 0)
-		return as_double(DF_POSITIVE_INF);
-
-	if(ly == DF_NEGTIVE_INF && x > 1.0)
-		return 0.0;
-
-	if(ly == DF_NEGTIVE_INF && x < 1.0)
-		return as_double(DF_POSITIVE_INF);
-
-	if(ly == DF_NEGTIVE_INF && x == 1.0)
-		return as_double(DF_POSITIVE_INF + 1);
-
-	if(ly == DF_POSITIVE_INF && x == 1.0)
-		return as_double(DF_POSITIVE_INF + 1);
-
-	return __ocl_internal_pow(x, y);
+    return __ocl_internal_pow(x, y);
 }
 
 OVERLOADABLE double remainder(double x, double p)
