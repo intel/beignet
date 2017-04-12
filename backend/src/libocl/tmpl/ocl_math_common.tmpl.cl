@@ -1519,9 +1519,209 @@ OVERLOADABLE double floor(double x)
     }
 }
 
+/*-
+ * Copyright (c) 2005-2011 David Schultz <das@FreeBSD.ORG>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+struct dd {
+    double hi;
+    double lo;
+};
+
+static inline struct dd
+dd_add(double a, double b)
+{
+    struct dd ret;
+    double s;
+
+    ret.hi = a + b;
+    s = ret.hi - a;
+    ret.lo = (a - (ret.hi - s)) + (b - s);
+    return (ret);
+}
+
+static inline double
+add_adjusted(double a, double b)
+{
+    struct dd sum;
+    long hibits, lobits;
+
+    sum = dd_add(a, b);
+    if (sum.lo != 0) {
+        hibits = as_long(sum.hi);
+        if ((hibits & 1) == 0) {
+            /* hibits += (int)copysign(1.0, sum.hi * sum.lo) */
+            lobits = as_long(sum.lo);
+            hibits += 1 - ((hibits ^ lobits) >> 62);
+            sum.hi = as_double(hibits);
+        }
+    }
+    return (sum.hi);
+}
+
+static inline double
+add_and_denormalize(double a, double b, int scale)
+{
+    struct dd sum;
+    long hibits, lobits;
+    int bits_lost;
+
+    sum = dd_add(a, b);
+
+    if (sum.lo != 0) {
+        hibits = as_long(sum.hi);
+        bits_lost = -((int)(hibits >> 52) & 0x7ff) - scale + 1;
+        if ((bits_lost != 1) ^ (int)(hibits & 1)) {
+            /* hibits += (int)copysign(1.0, sum.hi * sum.lo) */
+            lobits = as_long(sum.lo);
+            hibits += 1 - (((hibits ^ lobits) >> 62) & 2);
+            sum.hi = as_double(hibits);
+        }
+    }
+    return (ldexp(sum.hi, scale));
+}
+
+static inline struct dd
+dd_mul(double a, double b)
+{
+    const double split = 0x1p27 + 1.0;
+    struct dd ret;
+    double ha, hb, la, lb, p, q;
+
+    p = a * split;
+    ha = a - p;
+    ha += p;
+    la = a - ha;
+
+    p = b * split;
+    hb = b - p;
+    hb += p;
+    lb = b - hb;
+
+    p = ha * hb;
+    q = ha * lb + la * hb;
+
+    ret.hi = p + q;
+    ret.lo = p - ret.hi + q + la * lb;
+    return (ret);
+}
+
+double dd_add_rte(double a, double b)
+{
+    struct dd ret;
+    double s;
+
+    ret.hi = a + b;
+    s = ret.hi - a;
+    ret.lo = (a - (ret.hi - s)) + (b - s);
+    ulong hi = as_ulong(ret.hi);
+    ulong lo = as_ulong(ret.lo);
+    int hexp = (int)(((hi & 0x7FF0000000000000) >> 52) - 1023);
+    int lexp = (int)(((lo & 0x7FF0000000000000) >> 52) - 1023);
+    ulong hman = ((hi&0xFFFFFFFFFFFFF) |0x10000000000000);
+    ulong lman = ((lo&0xFFFFFFFFFFFFF) | 0x10000000000000);
+    long hsign = (hi & 0x8000000000000000);
+    long lsign = (lo & 0x8000000000000000);
+
+    if((hsign == lsign) && lo && (hexp -lexp == 54))
+    {
+        if((hi & 0x1) && lman)
+            hi += 1;
+        return as_double(hi);
+    }
+
+    return ret.hi;
+}
+
+double __frexp(double x, int *exp)
+{
+    double two54 =  1.80143985094819840000e+16; /* 0x43500000, 0x00000000 */
+    int  hx, ix, lx;
+    hx = __HI(x);
+    ix = 0x7fffffff&hx;
+    lx = __LO(x);
+    *exp = 0;
+    if(ix>=0x7ff00000||((ix|lx)==0)) return x;  /* 0,inf,nan */
+    if (ix<0x00100000) {        /* subnormal */
+        x *= two54;
+        hx = __HI(x);
+        ix = hx&0x7fffffff;
+        *exp = -54;
+    }
+    *exp += (ix>>20)-1022;
+    hx = (hx&0x800fffff)|0x3fe00000;
+    __setHigh(&x, hx);
+    return x;
+}
+
 OVERLOADABLE double fma(double x, double y, double z)
 {
-	return mad(x, y, z);
+    double xs, ys, zs, adj;
+    struct dd xy, r;
+    int oround;
+    int ex, ey, ez;
+    int spread;
+
+    if (x == 0.0 || y == 0.0)
+        return (x * y + z);
+    if (z == 0.0)
+        return (x * y);
+    if (!isfinite(x) || !isfinite(y))
+        return (x * y + z);
+    if (!isfinite(z))
+        return (z);
+
+    xs = __frexp(x, &ex);
+    ys = __frexp(y, &ey);
+    zs = __frexp(z, &ez);
+    spread = ex + ey - ez;
+
+    if (spread < -53) {
+            return (z);
+    }
+
+    if (spread <= 53 * 2)
+        zs = ldexp(zs, -spread);
+    else
+        zs = copysign(2.225073858507201383090e-308, zs);
+
+
+    xy = dd_mul(xs, ys);
+    r = dd_add(xy.hi, zs);
+
+    spread = ex + ey;
+
+    if (r.hi == 0.0) {
+        return (xy.hi + zs + ldexp(xy.lo, spread));
+    }
+
+    adj = add_adjusted(r.lo, xy.lo);
+    double base = dd_add_rte(r.hi, adj);
+    if (spread + ilogb(r.hi) > -1023)
+        return (ldexp(base, spread));
+    else
+        return (add_and_denormalize(r.hi, adj, spread));
 }
 
 OVERLOADABLE double hypot(double x, double y)
