@@ -83,19 +83,25 @@ OVERLOADABLE float normalize(float x) {
   return x / m;
 }
 OVERLOADABLE float2 normalize(float2 x) {
-  float m = length(x);
+  float m = max(__gen_ocl_fabs(x.s0), __gen_ocl_fabs(x.s1));
   m = m == 0.0f ? 1.0f : m;
-  return x / m;
+  m = isinf(m) ? 1.0f : m;
+  x = x/m;
+  return x*rsqrt(dot(x,x));
 }
 OVERLOADABLE float3 normalize(float3 x) {
-  float m = length(x);
-  m = m == 0.0f ? 1.0f : m;
-  return x / m;
+ float m = max(__gen_ocl_fabs(x.s0), max(__gen_ocl_fabs(x.s1), __gen_ocl_fabs(x.s2)));
+ m = m == 0.0f ? 1.0f : m;
+ m = isinf(m) ? 1.0f : m;
+ x = x/m;
+ return x*rsqrt(dot(x,x));
 }
 OVERLOADABLE float4 normalize(float4 x) {
-  float m = length(x);
-  m = m == 0.0f ? 1.0f : m;
-  return x / m;
+ float m = max(__gen_ocl_fabs(x.s0), max(__gen_ocl_fabs(x.s1), max(__gen_ocl_fabs(x.s2), __gen_ocl_fabs(x.s3))));
+ m = m == 0.0f ? 1.0f : m;
+ m = isinf(m) ? 1.0f : m;
+ x = x/m;
+ return x*rsqrt(dot(x,x));
 }
 
 OVERLOADABLE float fast_length(float x) { return __gen_ocl_fabs(x); }
@@ -150,7 +156,7 @@ OVERLOADABLE double length(double x)
 
 OVERLOADABLE double length(double2 x)
 {
-	double m = max(fabs(x.s0), fabs(x.s1));
+	double m = max(fabs(x.s0) , fabs(x.s1));
 	BODY;
 }
 
@@ -189,25 +195,36 @@ OVERLOADABLE double distance(double4 x, double4 y)
 
 OVERLOADABLE double normalize(double x)
 {
-	return 1.0;
+	double m = length(x);
+	m = m == 0.0 ? 1.0 : m;
+	return x / m;
 }
 
 OVERLOADABLE double2 normalize(double2 x)
 {
-	double x2 = dot(x, x);
-	return x * rsqrt(x2);
+	double m = max(fabs(x.s0) , fabs(x.s1));
+         m = m==0.0 ? 1.0 : m;
+         m = isinf(m) ? 1.0 : m;
+         x = x/m;
+         return x*rsqrt(dot(x,x));
 }
 
 OVERLOADABLE double3 normalize(double3 x)
 {
-	double x2 = dot(x, x);
-	return x * rsqrt(x2);
+	double m = max(fabs(x.s0), max(fabs(x.s1), fabs(x.s2)));
+	m = m==0.0 ? 1.0 : m;
+	m = isinf(m) ? 1.0 : m;
+	x = x/m;
+	return x*rsqrt(dot(x,x));
 }
 
 OVERLOADABLE double4 normalize(double4 x)
 {
-	double x2 = dot(x, x);
-	return x * rsqrt(x2);
+	double m = max(fabs(x.s0), max(fabs(x.s1), max(fabs(x.s2), fabs(x.s3))));
+	m = m==0.0 ? 1.0 : m;
+	m = isinf(m) ? 1.0 : m;
+	x = x/m;
+	return x*rsqrt(dot(x,x));
 }
 
 OVERLOADABLE double3 cross(double3 v0, double3 v1)
