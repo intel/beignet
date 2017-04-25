@@ -362,7 +362,8 @@ namespace gbe
         Type *eltTy = dyn_cast<PointerType>(type)->getElementType();
         if (eltTy->isStructTy()) {
           StructType *strTy = dyn_cast<StructType>(eltTy);
-          if (strTy->getName().data() && strstr(strTy->getName().data(), "sampler"))
+          if (!strTy->isLiteral() && strTy->getName().data() &&
+              strstr(strTy->getName().data(), "sampler"))
             type = Type::getInt32Ty(value->getContext());
         }
       }
