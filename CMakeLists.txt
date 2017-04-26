@@ -211,18 +211,21 @@ ENDIF(EGL_FOUND)
 
 OPTION(OCLICD_COMPAT "OCL ICD compatibility mode" ON)
 IF(OCLICD_COMPAT)
-Find_Package(OCLIcd)
-IF(OCLIcd_FOUND)
-  MESSAGE(STATUS "Looking for OCL ICD header file - found")
-  configure_file (
-    "intel-beignet.icd.in"
-    "${ICD_FILE_NAME}"
-  )
-  install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${ICD_FILE_NAME} DESTINATION /etc/OpenCL/vendors)
-ELSE(OCLIcd_FOUND)
-  MESSAGE(STATUS "Looking for OCL ICD header file - not found")
-  MESSAGE(FATAL_ERROR "OCL ICD loader miss. If you really want to disable OCL ICD support, please run cmake with option -DOCLICD_COMPAT=0.")
-ENDIF(OCLIcd_FOUND)
+  Find_Package(OCLIcd)
+  IF(OCLIcd_FOUND)
+    MESSAGE(STATUS "Looking for OCL ICD header file - found")
+    configure_file (
+      "intel-beignet.icd.in"
+      "${ICD_FILE_NAME}"
+      )
+    IF(NOT OCL_ICD_INSTALL_PREFIX)
+      set(OCL_ICD_INSTALL_PREFIX "/etc/OpenCL/vendors")
+    ENDIF(NOT OCL_ICD_INSTALL_PREFIX)
+    install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${ICD_FILE_NAME} DESTINATION ${OCL_ICD_INSTALL_PREFIX})
+  ELSE(OCLIcd_FOUND)
+    MESSAGE(STATUS "Looking for OCL ICD header file - not found")
+    MESSAGE(FATAL_ERROR "OCL ICD loader miss. If you really want to disable OCL ICD support, please run cmake with option -DOCLICD_COMPAT=0.")
+  ENDIF(OCLIcd_FOUND)
 ENDIF(OCLICD_COMPAT)
 
 Find_Package(PythonInterp)
