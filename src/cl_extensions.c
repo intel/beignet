@@ -42,7 +42,7 @@ void check_opt1_extension(cl_extensions_t *extensions)
   {
     if (id == EXT_ID(khr_icd))
       extensions->extensions[id].base.ext_enabled = 1;
-#if  LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
     if (id == EXT_ID(khr_spir))
       extensions->extensions[id].base.ext_enabled = 1;
 #endif
