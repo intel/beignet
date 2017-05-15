@@ -361,7 +361,14 @@
 
 #define IS_KABYLAKE(devid) (IS_KBL_GT1(devid) || IS_KBL_GT15(devid) || IS_KBL_GT2(devid) || IS_KBL_GT3(devid) || IS_KBL_GT4(devid))
 
-#define IS_GEN9(devid)     (IS_SKYLAKE(devid) || IS_BROXTON(devid) || IS_KABYLAKE(devid))
+#define PCI_CHIP_GLK_3x6     0x3184
+#define PCI_CHIP_GLK_2x6     0x3185
+
+#define IS_GEMINILAKE(devid)      \
+  (devid == PCI_CHIP_GLK_3x6 ||   \
+   devid == PCI_CHIP_GLK_2x6)
+
+#define IS_GEN9(devid)     (IS_SKYLAKE(devid) || IS_BROXTON(devid) || IS_KABYLAKE(devid) || IS_GEMINILAKE(devid))
 
 #define MAX_OCLVERSION(devid) (IS_GEN9(devid) ? 200 : 120)
 
