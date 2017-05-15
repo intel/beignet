@@ -608,29 +608,58 @@ float __kernel_tanf(float x, float y, int iy)
         	return -1.0/(x+r);
 }
 
+/*Author : David Defour, Catherine Daramy, Florent de Dinechin, Christoph Lauter Contact :
+David.Defour@ens-lyon.fr, catherine_daramy@ens-lyon.fr
+    
+    This program is free software; you can redistribute it and/or modify it under the terms
+of the GNU Lesser General Public License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version. This program is distributed 
+in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU Lesser General Public License along with this program;
+if not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA*/
+
+/*                                                        23 */
+/*      tan(x) ~ x + T1*x + ... + T13*x      */
+float __kernel_tanf_fast(float x, float y, int iy)
+{
+    float x2 = x*x;
+    float sum;
+
+    sum = mad(0.0000392783222196f, x2, 0.0000969153770711f);
+    sum = mad(sum, x2, 0.0002391291200183f);
+    sum = mad(sum, x2, 0.0005900274263695f);
+    sum = mad(sum, x2, 0.0014558343682438f);
+    sum = mad(sum, x2, 0.0035921279340982f);
+    sum = mad(sum, x2, 0.0088632358238101f);
+    sum = mad(sum, x2, 0.0218694880604744f);
+    sum = mad(sum, x2, 0.0539682544767857f);
+    sum = mad(sum, x2, 0.1333333402872086f);
+    sum = mad(sum, x2, 0.3333333432674408f);
+    sum = sum*x2;
+    sum = mad(sum, x, x);
+
+    if(iy == 1)
+    {
+        sum = 1.0f/sum;
+        sum = -sum;
+    }
+
+    return sum;
+}
+
 OVERLOADABLE float tan(float x)
 {
     if (__ocl_math_fastpath_flag)
       return __gen_ocl_internal_fastpath_tan(x);
 
-    float y,z=0.0;
+    float y,na=0.0;
     int n, ix;
     float negative = x < 0.0f? -1.0f : 1.0f;
-    x = negative * x;
-
-    GEN_OCL_GET_FLOAT_WORD(ix,x);
-
-    ix &= 0x7fffffff;
-
-    /* tan(Inf or NaN) is NaN */
-    if (ix>=0x7f800000) return x-x;            /* NaN */
-
-    /* argument reduction needed */
-    else {
-      n = __ieee754_rem_pio2f(x,&y);
-      return negative * __kernel_tanf(y,0.0f,1-((n&1)<<1)); /*   1 -- n even
-                                                              -1 -- n odd */
-    }
+    x = fabs(x);
+    na = x -x;
+    n = __ieee754_rem_pio2f(x,&y);
+    return mad(negative , __kernel_tanf_fast(y, 0.0f, (n&1)), na);
 }
 
 OVERLOADABLE float __gen_ocl_internal_cospi(float x) {
