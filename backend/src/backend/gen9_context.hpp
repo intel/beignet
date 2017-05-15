@@ -82,5 +82,19 @@ namespace gbe
     private:
       virtual void newSelection(void);
   };
+
+  /* This class is used to implement the geminilake
+     specific logic for context. */
+  class GlkContext : public BxtContext
+  {
+    public:
+      virtual ~GlkContext(void) { };
+      GlkContext(const ir::Unit &unit, const std::string &name, uint32_t deviceID, bool relaxMath = false)
+        : BxtContext(unit, name, deviceID, relaxMath) {
+        };
+
+    private:
+      virtual void newSelection(void);
+  };
 }
 #endif /* __GBE_GEN9_CONTEXT_HPP__ */
