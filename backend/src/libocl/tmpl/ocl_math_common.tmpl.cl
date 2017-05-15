@@ -1214,59 +1214,64 @@ __constant float atanlo[4] = {
 };
 
 OVERLOADABLE float __gen_ocl_internal_atan(float x) {
-  /* copied from fdlibm */
-  float aT[11];
-  aT[0] = 3.3333334327e-01; /* 0x3eaaaaaa */
-  aT[1] =  -2.0000000298e-01; /* 0xbe4ccccd */
-  aT[2] =   1.4285714924e-01; /* 0x3e124925 */
-  aT[3] =  -1.1111110449e-01; /* 0xbde38e38 */
-  aT[4] =   9.0908870101e-02; /* 0x3dba2e6e */
-  aT[5] =  -7.6918758452e-02; /* 0xbd9d8795 */
-  aT[6] =   6.6610731184e-02; /* 0x3d886b35 */
-  const float one = 1.0, huge = 1.0e30;
+	/* copied from fdlibm */
+	 float aT[11];
+	 aT[0] = 3.3333334327e-01; /* 0x3eaaaaaa */
+	 aT[1] =  -2.0000000298e-01; /* 0xbe4ccccd */
+	 aT[2] =   1.4285714924e-01; /* 0x3e124925 */
+	 aT[3] =  -1.1111110449e-01; /* 0xbde38e38 */
+	 aT[4] =   9.0908870101e-02; /* 0x3dba2e6e */
+	 aT[5] =  -7.6918758452e-02; /* 0xbd9d8795 */
+	 aT[6] =   6.6610731184e-02; /* 0x3d886b35 */
+	 const float one = 1.0f, huge = 1.0e30;
 
-  float w,s1,s2,z;
-  int ix,hx,id;
+	 float w,s1,s2,z;
+	 int ix,hx;
+	 float extraVal = 0.0f;
+	 GEN_OCL_GET_FLOAT_WORD(hx,x);
+	 ix = hx&0x7fffffff;
 
-  GEN_OCL_GET_FLOAT_WORD(hx,x);
-  ix = hx&0x7fffffff;
-  if(ix>=0x50800000) {  /* if |x| >= 2^34 */
-      if(ix>0x7f800000)
-    return x+x;   /* NaN */
-      if(hx>0) return  atanhi[3]+atanlo[3];
-      else     return -atanhi[3]-atanlo[3];
-  } if (ix < 0x3ee00000) {  /* |x| < 0.4375 */
-      if (ix < 0x31000000) {  /* |x| < 2^-29 */
-    if(huge+x>one) return x;  /* raise inexact */
-      }
-      id = -1;
-  } else {
-  x = __gen_ocl_fabs(x);
-  if (ix < 0x3f980000) {    /* |x| < 1.1875 */
-      if (ix < 0x3f300000) {  /* 7/16 <=|x|<11/16 */
-    id = 0; x = ((float)2.0*x-one)/((float)2.0+x);
-      } else {      /* 11/16<=|x|< 19/16 */
-    id = 1; x  = (x-one)/(x+one);
-      }
-  } else {
-      if (ix < 0x401c0000) {  /* |x| < 2.4375 */
-    id = 2; x  = (x-(float)1.5)/(one+(float)1.5*x);
-      } else {      /* 2.4375 <= |x| < 2^66 */
-    id = 3; x  = -(float)1.0/x;
-      }
-  }}
-    /* end of argument reduction */
-  z = x*x;
-  w = z*z;
-    /* break sum from i=0 to 10 aT[i]z**(i+1) into odd and even poly */
-  s1 = z * mad(w, mad(w, mad(w, aT[6], aT[4]), aT[2]), aT[0]);
-  s2 = w * mad(w, mad(w, aT[5], aT[3]), aT[1]);
-  if (id<0) return x - x*(s1+s2);
-  else {
-      z = atanhi[id] - ((x*(s1+s2) - atanlo[id]) - x);
-      return (hx<0)? -z:z;
-  }
+	 if (ix >= 0x3ee00000)
+	 {
+		 x = __gen_ocl_fabs(x);
+		 if (ix < 0x3f980000)
+		 {	  /* |x| < 1.1875 */
+			 if (ix < 0x3f300000)
+			 {	/* 7/16 <=|x|<11/16 */
+				 extraVal = 0.4636476040f;
+				 x = mad(2.0f, x,  -1.0f)/(2.0f+x);
+			 }
+			 else
+			 {		/* 11/16<=|x|< 19/16 */
+				 extraVal = 0.7853981853f;
+				 x	= (x-one)/(x+one);
+			 }
+		 }
+		 else
+		 {
+			 if (ix < 0x401c0000)
+			 {	/* |x| < 2.4375 */
+				 extraVal = 0.9827937484f;
+				 x	= (x-1.5f)/mad(1.5f, x, one);
+			 }
+			 else
+			 {		/* 2.4375 <= |x| < 2^66 */
+				 extraVal = 1.5707963705f;
+				 x	= -1.0f/x;
+			 }
+		 }
+	 }
 
+	 /* end of argument reduction */
+	 z = x*x;
+	 w = z*z;
+	 /* break sum from i=0 to 10 aT[i]z**(i+1) into odd and even poly */
+	 s1 = z * mad(w, mad(w, mad(w, aT[6], aT[4]), aT[2]), aT[0]);
+	 s2 = w * mad(w, mad(w, aT[5], aT[3]), aT[1]);
+
+	 float retVal = mad(x, (-s1-s2), extraVal + x);
+	 float retVal1 =  (hx<0)? -retVal:retVal;
+	 return (extraVal == 0.0) ? retVal:retVal1;
 }
 OVERLOADABLE float __gen_ocl_internal_atanpi(float x) {
   return __gen_ocl_internal_atan(x) / M_PI_F;
