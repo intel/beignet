@@ -535,9 +535,141 @@ OVERLOADABLE float remquo(float x, float y, local int *quo) { BODY; }
 OVERLOADABLE float remquo(float x, float y, private int *quo) { BODY; }
 #undef BODY
 
+const __constant unsigned int two_over_pi12[] = {
+0, 0, 0xA2F, 0x983, 0x6E4, 0xe44, 0x152, 0x9FC,
+0x275, 0x7D1, 0xF53, 0x4DD, 0xC0D, 0xB62,
+0x959, 0x93C, 0x439, 0x041, 0xFE5, 0x163,
+};
+
+int payne_hanek12(float x, float *y) {
+  union { float f; unsigned u;} ieee;
+  ieee.f = x;
+  unsigned u = ieee.u;
+  int k = ((u & 0x7f800000) >> 23)-127;
+  int ma = (u & 0x7fffff) | 0x800000;
+  unsigned  high, low;
+  high = (ma & 0xfff000) >> 12;
+  low = ma & 0xfff;
+
+  // Two tune below macro, you need to fully understand the algorithm
+#define CALC_BLOCKS 7
+#define ZERO_BITS 2
+
+  unsigned result[CALC_BLOCKS];
+
+  // round down, note we need 2 bits integer precision
+  int index = (k-23-2) < 0 ? (k-23-2-11)/12 : (k-23-2)/12;
+
+  for (int i = 0; i < CALC_BLOCKS; i++) {
+    result[i] =  low * two_over_pi12[index+i+ZERO_BITS] ;
+    result[i] +=  high * two_over_pi12[index+i+1+ZERO_BITS];
+  }
+
+  for (int i = CALC_BLOCKS-1; i > 0; i--) {
+    int temp = result[i] >> 12;
+    result[i]  -= temp << 12;
+    result[i-1] += temp;
+  }
+#undef CALC_BLOCKS
+#undef ZERO_BITS
+
+  // get number of integer digits in result[0], note we only consider 12 valid bits
+  // and also it means the fraction digits in result[0] is (12-intDigit)
+
+  int intDigit = index*(-12) + (k-23);
+
+  // As the integer bits may be all included in result[0], and also maybe
+  // some bits in result[0], and some in result[1]. So we merge succesive bits,
+  // which makes easy coding.
+
+  unsigned b0 = (result[0] << 12) | result[1];
+  unsigned b1 = (result[2] << 12) | result[3];
+  unsigned b2 = (result[4] << 12) | result[5];
+  unsigned b3 = (result[6] << 12);
+
+  unsigned intPart = b0 >> (24-intDigit);
+
+  unsigned fract1 = ((b0 << intDigit) | (b1 >> (24-intDigit))) & 0xffffff;
+  unsigned fract2 = ((b1 << intDigit) | (b2 >> (24-intDigit))) & 0xffffff;
+  unsigned fract3 = ((b2 << intDigit) | (b3 >> (24-intDigit))) & 0xffffff;
+
+  // larger than 0.5? which mean larger than pi/4, we need
+  // transform from [0,pi/2] to [-pi/4, pi/4] through -(1.0-fract)
+  int largerPiBy4 = ((fract1 & 0x800000) != 0);
+  int sign = largerPiBy4 ? 1 : 0;
+  intPart = largerPiBy4 ? (intPart+1) : intPart;
+
+  fract1 = largerPiBy4 ? (fract1 ^ 0x00ffffff) : fract1;
+  fract2 = largerPiBy4 ? (fract2 ^ 0x00ffffff) : fract2;
+  fract3 = largerPiBy4 ? (fract3 ^ 0x00ffffff) : fract3;
+
+  int leadingZero = (fract1 == 0);
+
+  // +1 is for the hidden bit 1 in floating-point format
+  int exponent = leadingZero ? -(24+1) : -(0+1);
+
+  fract1 = leadingZero ? fract2 : fract1;
+  fract2 = leadingZero ? fract3 : fract2;
+
+  // fract1 may have leading zeros, add it
+  int shift = clz(fract1)-8;
+  exponent += -shift;
+
+  float pio2 = 0x1.921fb6p+0;
+  unsigned fdigit = ((fract1 << shift) | (fract2 >> (24-shift))) & 0xffffff;
+
+  // we know that denormal number will not appear here
+  ieee.u = (sign << 31) | ((exponent+127) << 23) | (fdigit & 0x7fffff);
+  *y = ieee.f * pio2;
+  return intPart;
+}
+
+int argumentReduceSmall12(float x, float * remainder) {
+    float halfPi = 2.0f/3.14159265f;
+    // pi/2 = 0.C90FDAA22168C234C4p+1;
+    float halfPi_p1 = (float) 0xC908/0x1.0p15,
+            halfPi_p2 = (float) 0x7DAA/0x1.0p27,
+            halfPi_p3 = (float) 0x22168C/0x1.0p51,
+            halfPi_p4 = (float) 0x234C4/0x1.0p71;
+
+    uint iy = (uint)mad(halfPi, x, 0.5f);
+    float y = (float)iy;
+    float rem = mad(y, -halfPi_p1, x);
+    rem = mad(y, -halfPi_p2, rem);
+    rem = mad(y, -halfPi_p3, rem);
+    *remainder = rem;
+
+    return iy;
+}
+
+int __ieee754_rem_pio2f12(float x, float *y) {
+  if (x < 2.5e2) {
+    return argumentReduceSmall12(x, y);
+  } else {
+    return payne_hanek12(x, y);
+  }
+}
+
 #define BODY \
-  *cosval = cos(x); \
-  return sin(x);
+    float y; \
+    float na ; \
+    uint n, ix; \
+    float negative = x < 0.0f? -1.0f : 1.0f; \
+    x = __gen_ocl_fabs(x); \
+    na = x -x; \
+    uint n0, n1; \
+    float v; \
+    n = __ieee754_rem_pio2f12(x,&y); \
+    float s = __kernel_sinf_12(y); \
+    float c = sqrt(fabs(mad(s, s, -1.0f))); \
+    n0 = (n&0x1); \
+    n1 = (n&0x2); \
+    float ss = n1 - 1.0f; \
+    v = (n0)?s:-c; \
+    *cosval = mad(v, ss, na); \
+    v = (n0)?c:s; \
+    v = (n1)?-v:v; \
+    return mad(v, negative, na);
 
 OVERLOADABLE float sincos(float x, global float *cosval) {
   if (__ocl_math_fastpath_flag)
