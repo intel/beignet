@@ -417,36 +417,26 @@ int payne_hanek(float x, float *y) {
 }
 
 int argumentReduceSmall(float x, float * remainder) {
-  union {
-    float f;
-    unsigned u;
-  } ieee;
+    float halfPi = 2.0f/3.14159265f;
+    // pi/2 = 0.C90FDAA22168C234C4p+1;
+    float halfPi_p1 = (float) 0xC908/0x1.0p15,
+            halfPi_p2 = (float) 0x7DAA/0x1.0p27,
+            halfPi_p3 = (float) 0x22168C/0x1.0p51,
+            halfPi_p4 = (float) 0x234C4/0x1.0p71;
 
-  float twoByPi = 2.0f/3.14159265f;
-  float piBy2_1h = (float) 0xc90/0x1.0p11,
-        piBy2_1l = (float) 0xfda/0x1.0p23,
-        piBy2_2h = (float) 0xa22/0x1.0p35,
-        piBy2_2l = (float) 0x168/0x1.0p47,
-        piBy2_3h = (float) 0xc23/0x1.0p59,
-        piBy2_3l = (float) 0x4c4/0x1.0p71;
+    uint iy = (uint)mad(halfPi, x, 0.5f);
+    float y = (float)iy;
+    float rem = mad(y, -halfPi_p1, x);
+    rem = mad(y, -halfPi_p2, rem);
+    rem = mad(y, -halfPi_p3, rem);
+    *remainder = rem;
 
-  float y = (float)(int)(twoByPi * x + 0.5f);
-  ieee.f = y;
-  ieee.u = ieee.u & 0xfffff000;
-
-  float yh = ieee.f;
-  float yl = y - yh;
-  float rem = x - yh*piBy2_1h - yh*piBy2_1l - yl*piBy2_1h - yl*piBy2_1l;
-  rem = rem - yh*piBy2_2h - yh*piBy2_2l + yl*piBy2_2h + yl*piBy2_2l;
-  rem = rem - yh*piBy2_3h - yh*piBy2_3l - yl*piBy2_3h - yl*piBy2_3l;
-
-  *remainder = rem;
-  return (int)y;
+    return iy;
 }
 
 
 int __ieee754_rem_pio2f(float x, float *y) {
-  if (x < 4000.0f) {
+  if (x < 2.5e2) {
     return argumentReduceSmall(x, y);
   } else {
     return payne_hanek(x, y);
