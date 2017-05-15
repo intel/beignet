@@ -489,29 +489,31 @@ OVERLOADABLE float sin(float x)
   if (__ocl_math_fastpath_flag)
     return __gen_ocl_internal_fastpath_sin(x);
 
-  const float pio4  =  7.8539812565e-01; /* 0x3f490fda */
-  float y,z=0.0;
-  int n, ix;
-
+  float y;
+  float na ;
+  uint n, ix;
   float negative = x < 0.0f? -1.0f : 1.0f;
   x = fabs(x);
 
-  GEN_OCL_GET_FLOAT_WORD(ix,x);
-  ix &= 0x7fffffff;
+  /* cos(Inf or NaN) is NaN */
+  na = x -x;
 
-    /* sin(Inf or NaN) is NaN */
-  if (ix >= 0x7f800000) return x-x;
-
-  if(x <= pio4)
-	  return negative * __kernel_sinf(x);
-  /* argument reduction needed */
-  else {
-      n = __ieee754_rem_pio2f(x,&y);
-      float s = __kernel_sinf(y);
-      float c = __kernel_cosf(y,0.0f);
-      float ret = (n&1) ? negative*c : negative*s;
-      return (n&3)> 1? -1.0f*ret : ret;
-  }
+  uint n0, n1;
+  float v;
+  n = __ieee754_rem_pio2f(x,&y);
+  float s = __kernel_sinf(y);
+  float c = sqrt(mad(-s, s, 1.0f));
+  n0 = (n&0x1);
+  n1 = (n&0x2);
+  v = (n0)?c:s;
+  v = (n1)?-v:v;
+  /* n&3   return
+	  0    sin(y)
+	  1    cos(y)
+	  2   -sin(y)
+	  3   -cos(y)
+  */
+  return mad(v, negative, na);
 }
 
 OVERLOADABLE float cos(float x)
