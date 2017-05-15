@@ -1187,10 +1187,15 @@ OVERLOADABLE float __gen_ocl_internal_asinpi(float x) {
   return __gen_ocl_internal_asin(x) / M_PI_F;
 }
 OVERLOADABLE float __gen_ocl_internal_acos(float x) {
-  if(x > 0.5)
-    return 2 * __gen_ocl_asin_util(native_sqrt((1-x)/2));
-  else
-    return M_PI_2_F - __gen_ocl_internal_asin(x);
+    float absX = fabs(x);
+    float asinX2 =__gen_ocl_asin_util(x);
+    float tmp = __gen_ocl_asin_util(native_sqrt(mad(-0.5f, absX, 0.5f)));
+    float asinX1 = mad(2.0f ,tmp, -M_PI_2_F);
+
+    float retVal = (x < 0.0f)?asinX1:-asinX1;
+    retVal = (absX > 0.5f)?retVal:asinX2;
+    retVal = (x <= 0.5f) ? M_PI_2_F - retVal:2.0f*tmp;
+    return retVal;
 }
 OVERLOADABLE float __gen_ocl_internal_acospi(float x) {
   return __gen_ocl_internal_acos(x) / M_PI_F;
