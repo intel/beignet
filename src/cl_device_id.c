@@ -254,6 +254,26 @@ static struct _cl_device_id intel_kbl_gt4_device = {
 #include "cl_gen9_device.h"
 };
 
+static struct _cl_device_id intel_glk18eu_device = {
+  .max_compute_unit = 18,
+  .max_thread_per_unit = 6,
+  .sub_slice_count = 3,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+#include "cl_gen9_device.h"
+};
+
+static struct _cl_device_id intel_glk12eu_device = {
+  .max_compute_unit = 12,
+  .max_thread_per_unit = 6,
+  .sub_slice_count = 2,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+#include "cl_gen9_device.h"
+};
+
 LOCAL cl_device_id
 cl_get_gt_device(cl_device_type device_type)
 {
@@ -737,6 +757,26 @@ kbl_gt4_break:
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
+    case PCI_CHIP_GLK_3x6:
+      DECL_INFO_STRING(glk18eu_break, intel_bxt18eu_device, name, "Intel(R) HD Graphics Geminilake(3x6)");
+glk18eu_break:
+      intel_glk18eu_device.device_id = device_id;
+      intel_glk18eu_device.platform = cl_get_platform_default();
+      ret = &intel_glk18eu_device;
+      cl_intel_platform_get_default_extension(ret);
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      break;
+
+    case PCI_CHIP_GLK_2x6:
+      DECL_INFO_STRING(glk12eu_break, intel_bxt12eu_device, name, "Intel(R) HD Graphics Geminilake(2x6)");
+glk12eu_break:
+      intel_glk12eu_device.device_id = device_id;
+      intel_glk12eu_device.platform = cl_get_platform_default();
+      ret = &intel_glk12eu_device;
+      cl_intel_platform_get_default_extension(ret);
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      break;
+
     case PCI_CHIP_SANDYBRIDGE_BRIDGE:
     case PCI_CHIP_SANDYBRIDGE_GT1:
     case PCI_CHIP_SANDYBRIDGE_GT2:
@@ -942,7 +982,9 @@ LOCAL cl_bool is_gen_device(cl_device_id device) {
          device == &intel_kbl_gt15_device ||
          device == &intel_kbl_gt2_device ||
          device == &intel_kbl_gt3_device ||
-         device == &intel_kbl_gt4_device;
+         device == &intel_kbl_gt4_device ||
+         device == &intel_glk18eu_device ||
+         device == &intel_glk12eu_device;
 }
 
 LOCAL cl_int
@@ -1365,7 +1407,8 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
         || device == &intel_skl_gt3_device || device == &intel_skl_gt4_device
         || device == &intel_bxt18eu_device || device == &intel_bxt12eu_device || device == &intel_kbl_gt1_device
         || device == &intel_kbl_gt2_device || device == &intel_kbl_gt3_device
-        || device == &intel_kbl_gt4_device || device == &intel_kbl_gt15_device) {
+        || device == &intel_kbl_gt4_device || device == &intel_kbl_gt15_device
+        || device == &intel_glk18eu_device || device == &intel_glk12eu_device) {
     *ver = 9;
   } else
     return CL_INVALID_VALUE;

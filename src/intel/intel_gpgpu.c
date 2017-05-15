@@ -2567,6 +2567,8 @@ intel_set_gpgpu_callbacks(int device_id)
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen8;
     intel_gpgpu_post_action = intel_gpgpu_post_action_gen7; //SKL need not restore SLM, same as gen7
     intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_gen7;
+    if(IS_GEMINILAKE(device_id))
+      intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_baytrail;
     intel_gpgpu_set_base_address = intel_gpgpu_set_base_address_gen9;
     intel_gpgpu_setup_bti = intel_gpgpu_setup_bti_gen9;
     intel_gpgpu_load_vfe_state = intel_gpgpu_load_vfe_state_gen8;
