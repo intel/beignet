@@ -1160,28 +1160,14 @@ INLINE float __gen_ocl_asin_util(float x) {
 }
 
 OVERLOADABLE float __gen_ocl_internal_asin(float x) {
-  uint ix;
-  union { uint i; float f; } u;
-  u.f = x;
-  ix = u.i & 0x7fffffff;
-  if(ix == 0x3f800000) {
-    return x * M_PI_2_F;  /* asin(|1|)=+-pi/2 with inexact */
-  }
-  if(ix > 0x3f800000) {            /* |x|>= 1 */
-    return  NAN;          /* asin(|x|>1) is NaN */
-  }
+    float asinX2 =__gen_ocl_asin_util(x);
+    float absX = fabs(x);
+    float asinX1 = mad(2.0f , __gen_ocl_asin_util(native_sqrt(mad(-0.5f, absX, 0.5f))) , -M_PI_2_F);
 
-  if(ix < 0x32000000) {            /* if |x| < 2**-27 */
-    if(HUGE_VALF + x > FLT_ONE) return x;   /* return x with inexact if x!=0*/
-  }
-
-  if(x < -0.5) {
-    return 2 * __gen_ocl_asin_util(native_sqrt((1+x) / 2)) - M_PI_2_F;
-  } else if(x > 0.5) {
-    return M_PI_2_F - 2 * __gen_ocl_asin_util(native_sqrt((1-x) / 2));
-  } else {
-    return __gen_ocl_asin_util(x);
-  }
+    float retVal = (x < 0.0f)?asinX1:-asinX1;
+    retVal = (absX > 0.5f)?retVal:asinX2;
+    retVal = (absX > 1.0f)?NAN:retVal;
+    return retVal;
 }
 OVERLOADABLE float __gen_ocl_internal_asinpi(float x) {
   return __gen_ocl_internal_asin(x) / M_PI_F;
