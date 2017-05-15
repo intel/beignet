@@ -2313,7 +2313,7 @@ OVERLOADABLE float __gen_ocl_internal_pow(float x, float y) {
   float y1,t1,t2,r,s,sn,t,u,v,w;
   int i,j,k,yisint,n;
   int hx,hy,ix,iy,is;
-  float bp[2],dp_h[2],dp_l[2],
+  float bp,dp_h,dp_l,
   zero    =  0.0,
   one	=  1.0,
   two	=  2.0,
@@ -2335,25 +2335,29 @@ OVERLOADABLE float __gen_ocl_internal_pow(float x, float y) {
   ivln2    =  1.4426950216e+00, /* 0x3fb8aa3b =1/ln2 */
   ivln2_h  =  1.4426879883e+00, /* 0x3fb8aa00 =16b 1/ln2*/
   ivln2_l  =  7.0526075433e-06; /* 0x36eca570 =1/ln2 tail*/
-  bp[0] = 1.0,bp[1] = 1.5,
-  dp_h[0] = 0.0,dp_h[1] = 5.84960938e-01,
-  dp_l[0] = 0.0,dp_l[1] = 1.56322085e-06;
+  bp = 1.0;//,bp1 = 1.5,
+  dp_h = 0.0;//,dp_h[1] = 5.84960938e-01,
+  dp_l = 0.0;//,dp_l[1] = 1.56322085e-06;
+
+  float retVal = 0.0f;
+  bool bRet = false;
+
   GEN_OCL_GET_FLOAT_WORD(hx,x);
   GEN_OCL_GET_FLOAT_WORD(hy,y);
-  ix = hx&0x7fffffff;  iy = hy&0x7fffffff;
-  if (ix < 0x00800000) {	   /* x < 2**-126  */
-    ix = 0;/* Gen does not support subnormal number now */
+  ax   = __gen_ocl_fabs(x);
+  ix = as_int(ax);  iy = as_int(fabs(y));
+
+  if(iy < 0x00800000 || hx==0x3f800000)
+  {
+     bRet = true;
+     retVal = one;
   }
-  if (iy < 0x00800000) {	  /* y < 2**-126  */
-    iy = 0;/* Gen does not support subnormal number now */
+  else if (ix > 0x7f800000 || iy > 0x7f800000)
+  {
+       bRet = true;
+       retVal = NAN;
   }
-   /* y==zero: x**0 = 1 */
-  if(iy==0) return one;
-  /* pow(+1, y) returns 1 for any y, even a NAN */
-  if(hx==0x3f800000) return one;
-  /* +-NaN return x+y */
-  if(ix > 0x7f800000 || iy > 0x7f800000)
-    return (x+0.0f)+y+(0.0f);
+
   /* determine if y is an odd int when x < 0
      * yisint = 0	... y is not an integer
      * yisint = 1	... y is an odd int
@@ -2361,138 +2365,135 @@ OVERLOADABLE float __gen_ocl_internal_pow(float x, float y) {
      */
   yisint  = 0;
   if(hx<0) {
-    if(iy>=0x4b800000) yisint = 2; /* even integer y */
-    else if(iy>=0x3f800000) {
-      k = (iy>>23)-0x7f;	   /* exponent */
-      j = iy>>(23-k);
-      if((j<<(23-k))==iy) yisint = 2-(j&1);
-    }
-  }
-  /* special value of y */
-  if (iy==0x7f800000) {	/* y is +-inf */
-    if (ix==0x3f800000)
-      //return  y - y;	/* inf**+-1 is NaN */
-      return one;
-    else if (ix > 0x3f800000)/* (|x|>1)**+-inf = inf,0 */
-      return (hy>=0)? y: zero;
-    else			/* (|x|<1)**-,+inf = inf,0 */
-      return (hy<0)?-y: zero;
-  }
-  if(iy==0x3f800000) {	/* y is  +-1 */
-    if(hy<0) return one/x; else return x;
-  }
-  if(hy==0x40000000) return x*x; /* y is  2 */
-  if(hy==0x3f000000) {	/* y is  0.5 */
-    if(hx>=0)return __gen_ocl_sqrt(x);
+    k = (iy>>23)-0x7f;		 /* exponent */
+    j = iy>>(23-k);
+    yisint = (iy>=0x3f800000 && (j<<(23-k))==iy)? 2-(j&1):yisint;
+    yisint = (iy>=0x4b800000) ? 2:yisint;
   }
 
-  ax   = __gen_ocl_fabs(x);
     /* special value of x */
   if(ix==0x7f800000||ix==0||ix==0x3f800000){
     z = ax;			/*x is +-0,+-inf,+-1*/
-    if(hy<0) z = one/z;	/* z = (1/|x|) */
-    if(hx<0) {
-      if(((ix-0x3f800000)|yisint)==0) {
-        z = (z-z)/(z-z); /* (-1)**non-int is NaN */
-      } else if(yisint==1)
-        z = -z;		/* (x<0)**odd = -(|x|**odd) */
-    }
-    return z;
+
+    z = (hy < 0)? one/z:z;
+    z = ((hx<0) && (((ix-0x3f800000)|yisint)==0))? NAN:z;
+    z = ((hx<0) && (yisint==1))? -z:z;
+
+    retVal = (bRet)? retVal:z;
+    bRet = true;
   }
+
   n = ((uint)hx>>31)-1;
 
   /* (x<0)**(non-int) is NaN */
-  if((n|yisint)==0) return (x-x)/(x-x);
+  if(!bRet && (n|yisint)==0)
+  {
+     bRet= true;
+     retVal = NAN;
+  }
 
   sn = one; /* s (sign of result -ve**odd) = -1 else = 1 */
   if((n|(yisint-1))==0) sn = -one;/* (-ve)**(odd int) */
 
   /* |y| is huge */
-  if(iy>0x4d000000) { /* if |y| > 2**27 */
-    /* over/underflow if x is not close to one */
-    if(ix<0x3f7ffff8) return (hy<0)? sn*huge*huge:sn*tiny*tiny;
-    if(ix>0x3f800007) return (hy>0)? sn*huge*huge:sn*tiny*tiny;
-    /* now |1-x| is tiny <= 2**-20, suffice to compute
-          log(x) by x-x^2/2+x^3/3-x^4/4 */
-    t = ax-1;		/* t has 20 trailing zeros */
-    w = (t*t)*((float)0.5-t*(0.333333333333f-t*0.25f));
-    u = ivln2_h*t;	/* ivln2_h has 16 sig. bits */
-    v = t*ivln2_l-w*ivln2;
-    t1 = u+v;
-    GEN_OCL_GET_FLOAT_WORD(is,t1);
-    GEN_OCL_SET_FLOAT_WORD(t1,is&0xfffff000);
-    t2 = v-(t1-u);
-  } else {
-    float s2,s_h,s_l,t_h,t_l;
-    n = 0;
-	/* take care subnormal number */
-    //if(ix<0x00800000)
-      //{ax *= two24; n -= 24; GEN_OCL_GET_FLOAT_WORD(ix,ax); }
-    n  += ((ix)>>23)-0x7f;
-    j  = ix&0x007fffff;
+  if(iy>0x4d000000)
+  { /* if |y| > 2**27 */
+	/* over/underflow if x is not close to one */
+	/* special value of y */
+	float b1 = (hy>=0)? y: zero;
+	float b2 = (hy<0)?-y: zero;
+	b1 = (ix > 0x3f800000)? b1:b2;
+	retVal = (iy==0x7f800000 && !bRet)? b1:retVal;
+	bRet = (iy==0x7f800000 && !bRet)? true: bRet;
+
+
+	b1 = (hy>0)? sn*huge*huge:0;
+	retVal = (ix>0x3f800007 && !bRet)? b1:retVal;
+	bRet = (ix>0x3f800007 && !bRet)? true:bRet;
+
+	/* now |1-x| is tiny <= 2**-20, suffice to compute
+	      log(x) by x-x^2/2+x^3/3-x^4/4 */
+	t = ax-1;		/* t has 20 trailing zeros */
+	w = (t*t)*((float)0.5-t*(0.333333333333f-t*0.25f));
+	u = ivln2_h*t;	/* ivln2_h has 16 sig. bits */
+	v = t*ivln2_l-w*ivln2;
+	t1 = u+v;
+	GEN_OCL_GET_FLOAT_WORD(is,t1);
+	GEN_OCL_SET_FLOAT_WORD(t1,is&0xfffff000);
+	t2 = v-(t1-u);
+  } 
+  else
+  {
+	float s2,s_h,s_l,t_h,t_l;
+	n = 0;
+	n  += ((ix)>>23)-0x7f;
+	j  = ix&0x007fffff;
 	/* determine interval */
-    ix = j|0x3f800000;		/* normalize ix */
-    if(j<=0x1cc471) k=0;	/* |x|<sqrt(3/2) */
-    else if(j<0x5db3d7) k=1;	/* |x|<sqrt(3)   */
-    else {k=0;n+=1;ix -= 0x00800000;}
-    GEN_OCL_SET_FLOAT_WORD(ax,ix);
+	ix = j|0x3f800000; /* normalize ix */
+
+	n = (j >= 0x5db3d7)?n+1:n;
+	ix = (j >= 0x5db3d7)? ix - 0x00800000:ix;
+	k = (j<=0x1cc471 || j >= 0x5db3d7)? 0:1;
+
+	GEN_OCL_SET_FLOAT_WORD(ax,ix);
+
+	bp = k? 1.5:bp;
+	dp_h = k? 5.84960938e-01:dp_h;
+	dp_l = k? 1.56322085e-06:dp_l;
 
 	/* compute s = s_h+s_l = (x-1)/(x+1) or (x-1.5)/(x+1.5) */
-    u = ax-bp[k];		/* bp[0]=1.0, bp[1]=1.5 */
-    v = one/(ax+bp[k]);
-    s = u*v;
-    s_h = s;
-    GEN_OCL_GET_FLOAT_WORD(is,s_h);
-    GEN_OCL_SET_FLOAT_WORD(s_h,is&0xfffff000);
-    /* t_h=ax+bp[k] High */
-    is = ((ix>>1)&0xfffff000)|0x20000000;
-    GEN_OCL_SET_FLOAT_WORD(t_h,is+0x00400000+(k<<21));
-    t_l = ax - (t_h-bp[k]);
-    s_l = v*((u-s_h*t_h)-s_h*t_l);
+	u = ax-bp;		/* bp[0]=1.0, bp[1]=1.5 */
+	v = one/(ax+bp);
+	s = u*v;
+	s_h = s;
+	GEN_OCL_GET_FLOAT_WORD(is,s_h);
+	GEN_OCL_SET_FLOAT_WORD(s_h,is&0xfffff000);
+	/* t_h=ax+bp[k] High */
+	is = ((ix>>1)&0xfffff000)|0x20000000;
+	GEN_OCL_SET_FLOAT_WORD(t_h,is+0x00400000+(k<<21));
+	t_l = ax - (t_h-bp);
+	s_l = v*(mad(-s_h, t_l, mad(-s_h, t_h, u)));
 
-    /* compute log(ax) */
-    s2 = s*s;
-    r = s2*s2*(L1+s2*L2);
-    r += s_l*(s_h+s);
-    s2  = s_h*s_h;
-    t_h = 3.0f+s2+r;
-    GEN_OCL_GET_FLOAT_WORD(is,t_h);
-    GEN_OCL_SET_FLOAT_WORD(t_h,is&0xffffe000);
-    t_l = r-((t_h-3.0f)-s2);
-    /* u+v = s*(1+...) */
-    u = s_h*t_h;
-    v = s_l*t_h+t_l*s;
-    /* 2/(3log2)*(s+...) */
-    p_h = u+v;
-    GEN_OCL_GET_FLOAT_WORD(is,p_h);
-    GEN_OCL_SET_FLOAT_WORD(p_h,is&0xffffe000);
-    p_l = v-(p_h-u);
-    z_h = cp_h*p_h;		/* cp_h+cp_l = 2/(3*log2) */
-    z_l = cp_l*p_h+p_l*cp+dp_l[k];
-    /* log2(ax) = (s+..)*2/(3*log2) = n + dp_h + z_h + z_l */
-    t = (float)n;
-    t1 = (((z_h+z_l)+dp_h[k])+t);
-    GEN_OCL_GET_FLOAT_WORD(is,t1);
-    GEN_OCL_SET_FLOAT_WORD(t1,is&0xffffe000);
-    t2 = z_l-(((t1-t)-dp_h[k])-z_h);
+	/* compute log(ax) */
+	s2 = s*s;
+	r = s2*s2*(mad(s2, L2, L1));
+	r = mad(s_l, (s_h+s), r);
+	t_h = mad(s_h, s_h, 3.0f)+r;
+	GEN_OCL_GET_FLOAT_WORD(is,t_h);
+	GEN_OCL_SET_FLOAT_WORD(t_h,is&0xffffe000);
+	t_l = r-(mad(-s_h, s_h, (t_h-3.0f)));
+	/* u+v = s*(1+...) */
+	u = s_h*t_h;
+	v = mad(s_l, t_h, t_l*s);
+	/* 2/(3log2)*(s+...) */
+	p_h = mad(s_h, t_h, v);
+	GEN_OCL_GET_FLOAT_WORD(is,p_h);
+	GEN_OCL_SET_FLOAT_WORD(p_h,is&0xffffe000);
+	p_l = v-(mad(-s_h, t_h, p_h));
+	z_l = mad(cp_l, p_h, mad(p_l, cp, dp_l));
+	/* log2(ax) = (s+..)*2/(3*log2) = n + dp_h + z_h + z_l */
+	t = (float)n;
+	t1 = ((mad(cp_h, p_h, z_l)+dp_h)+t);
+	GEN_OCL_GET_FLOAT_WORD(is,t1);
+	GEN_OCL_SET_FLOAT_WORD(t1,is&0xffffe000);
+	t2 = z_l-mad(-cp_h, p_h, ((t1-t)-dp_h));
   }
 
   /* split up y into y1+y2 and compute (y1+y2)*(t1+t2) */
   GEN_OCL_GET_FLOAT_WORD(is,y);
   GEN_OCL_SET_FLOAT_WORD(y1,is&0xffffe000);
-  p_l = (y-y1)*t1+y*t2;
+  p_l = mad((y-y1), t1, y*t2);
   p_h = y1*t1;
-  z = p_l+p_h;
+  z = mad(y1, t1, p_l);
+
   GEN_OCL_GET_FLOAT_WORD(j,z);
-  if (j>0x43000000)				/* if z > 128 */
-    return sn*huge*huge;			/* overflow */
-  else if (j==0x43000000) {			/* if z == 128 */
-    if(p_l+ovt>z-p_h) return sn*huge*huge;	/* overflow */
-  }
-  else if ((j&0x7fffffff)>0x43160000)		/* z <= -150 */
-    return sn*tiny*tiny;			/* underflow */
-  else if (j==0xc3160000){			/* z == -150 */
-    if(p_l<=z-p_h) return sn*tiny*tiny;		/* underflow */
+  if((j&0x7fffffff) >= 0x43000000 && !bRet)
+  {
+     retVal = ((j&0x7fffffff)>0x43160000)? 0.0:retVal;
+     retVal = (j > 0x43000000) ? sn*huge*huge:retVal;
+     retVal = (j == 0x43000000 && p_l+ovt>z-p_h)? sn*huge*huge:retVal;
+     retVal = (j == 0xc3160000 && p_l<=z-p_h)? 0.0:retVal;
+     bRet = (((j&0x7fffffff)>0x43160000) || (j == 0xc3160000 && p_l<=z-p_h) || retVal == sn*huge*huge)? true:false;
   }
 
   /*
@@ -2506,25 +2507,31 @@ OVERLOADABLE float __gen_ocl_internal_pow(float x, float y) {
     k = ((n&0x7fffffff)>>23)-0x7f;	/* new k for n */
     GEN_OCL_SET_FLOAT_WORD(t,n&~(0x007fffff>>k));
     n = ((n&0x007fffff)|0x00800000)>>(23-k);
-    if(j<0) n = -n;
-    p_h -= t;
+    n = (j<0)?-n:n;
+    p_h = mad(y1, t1, -t);
   }
+
   t = p_l+p_h;
   GEN_OCL_GET_FLOAT_WORD(is,t);
   GEN_OCL_SET_FLOAT_WORD(t,is&0xffff8000);
-  u = t*lg2_h;
-  v = (p_l-(t-p_h))*lg2+t*lg2_l;
-  z = u+v;
-  w = v-(z-u);
+
+  v = mad((p_l-(t-p_h)), lg2, t*lg2_l);
+  z = mad(t, lg2_h, v);
+  w = v-mad(-t, lg2_h, z);
   t  = z*z;
-  t1  = z - t*(P1+t*P2);
-  r  = (z*t1)/(t1-two)-(w+z*w);
+  t1  = mad(-t, (mad(t, P2, P1)), z);
+  r  = (z*t1)/(t1-two)-(mad(z, w, w));
   z  = one-(r-z);
+
   GEN_OCL_GET_FLOAT_WORD(j,z);
   j += (n<<23);
-  if((j>>23)<=0) z = __gen_ocl_scalbnf(z,n);	/* subnormal output */
-  else GEN_OCL_SET_FLOAT_WORD(z,j);
-  return sn*z;
+
+  if((j>>23)<=0)
+	z = 0;//__gen_ocl_scalbnf(z,n);	/* subnormal output */
+  else
+	GEN_OCL_SET_FLOAT_WORD(z,j);
+
+  return bRet ? retVal:sn*z;
 }
 
 #define BODY \
