@@ -521,36 +521,35 @@ OVERLOADABLE float cos(float x)
   if (__ocl_math_fastpath_flag)
     return __gen_ocl_internal_fastpath_cos(x);
 
-  const float pio4  =  7.8539812565e-01; /* 0x3f490fda */
-  float y,z=0.0;
-  int n, ix;
+  float y;
+  float na ;
+  
+  uint n, ix;
   x = __gen_ocl_fabs(x);
-  GEN_OCL_GET_FLOAT_WORD(ix,x);
 
-  ix &= 0x7fffffff;
+  /* cos(Inf or NaN) is NaN */
+  na = x -x;
 
-    /* cos(Inf or NaN) is NaN */
-  if (ix >= 0x7f800000) return x-x;
+  uint n0, n1;
+  float v;
 
-  if(x <= pio4)
-	  return __kernel_cosf(x, 0.f);
-  /* argument reduction needed */
-  else {
-      n = __ieee754_rem_pio2f(x,&y);
-      n &= 3;
-      float c = __kernel_cosf(y, 0.0f);
-      float s = __kernel_sinf(y);
-      float v = (n&1) ? s : c;
-      /* n&3   return
-          0    cos(y)
-          1   -sin(y)
-          2   -cos(y)
-          3    sin(y)
-      */
-      int mask = (n>>1) ^ n;
-      float sign = (mask&1) ? -1.0f : 1.0f;
-      return sign * v;
-  }
+  n = __ieee754_rem_pio2f(x,&y);
+  float s = __kernel_sinf(y);
+  float c = sqrt(fabs(mad(s, s, -1.0f)));
+
+  n0 = (n&0x1);
+  n1 = (n&0x2);
+
+  float ss = n1 - 1.0f;
+  v = (n0)?s:-c;
+
+  /* n&3   return
+      0    cos(y)
+      1   -sin(y)
+      2   -cos(y)
+      3    sin(y)
+  */
+  return mad(v, ss, na);
 }
 
 float __kernel_tanf(float x, float y, int iy)
