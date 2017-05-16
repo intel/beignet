@@ -1747,6 +1747,56 @@ clEnqueueMapImage(cl_command_queue command_queue,
   return mem_ptr;
 }
 
+static cl_int
+clEnqueueReadImageByKernel(cl_command_queue command_queue,
+                   cl_mem mem,
+                   cl_bool blocking_read,
+                   const size_t *porigin,
+                   const size_t *pregion,
+                   size_t row_pitch,
+                   size_t slice_pitch,
+                   void *ptr,
+                   cl_uint num_events_in_wait_list,
+                   const cl_event *event_wait_list,
+                   cl_event *event)
+{
+  cl_int err = CL_SUCCESS;
+  struct _cl_mem_image *image = NULL;
+  size_t region[3];
+  size_t origin[3];
+
+  image = cl_mem_image(mem);
+
+  err = check_image_region(image, pregion, region);
+  if (err != CL_SUCCESS)
+    return err;
+
+  err = check_image_origin(image, porigin, origin);
+  if (err != CL_SUCCESS)
+    return err;
+
+  if (image->tmp_ker_buf)
+    clReleaseMemObject(image->tmp_ker_buf);
+
+  image->tmp_ker_buf = clCreateBuffer(command_queue->ctx, CL_MEM_ALLOC_HOST_PTR,
+    mem->size, NULL, &err);
+  if (image->tmp_ker_buf == NULL || err != CL_SUCCESS) {
+    image->tmp_ker_buf = NULL;
+    return err;
+  }
+
+  err = clEnqueueCopyImageToBuffer(command_queue, mem, image->tmp_ker_buf, origin,
+    region, 0, 0, NULL, NULL);
+  if (err != CL_SUCCESS) {
+    clReleaseMemObject(image->tmp_ker_buf);
+    image->tmp_ker_buf = NULL;
+    return err;
+  }
+
+  return clEnqueueReadBuffer(command_queue, image->tmp_ker_buf, blocking_read, 0,
+    mem->size, ptr, num_events_in_wait_list, event_wait_list, event);
+}
+
 cl_int
 clEnqueueReadImage(cl_command_queue command_queue,
                    cl_mem mem,
@@ -1830,6 +1880,11 @@ clEnqueueReadImage(cl_command_queue command_queue,
     if (mem->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)) {
       err = CL_INVALID_OPERATION;
       break;
+    }
+
+    if (image->is_ker_copy) {
+      return clEnqueueReadImageByKernel(command_queue, mem, blocking_read, origin,
+        region, row_pitch, slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event);
     }
 
     err = cl_event_check_waitlist(num_events_in_wait_list, event_wait_list,
