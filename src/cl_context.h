@@ -129,7 +129,7 @@ struct _cl_context {
   void (CL_CALLBACK *pfn_notify)(const char *, const void *, size_t, void *);
                                      /* User's callback when error occur in context */
   void *user_data;                   /* A pointer to user supplied data */
-
+  cl_command_queue image_queue;      /* A internal command queue for image data copying */
 };
 
 #define CL_OBJECT_CONTEXT_MAGIC 0x20BBCADE993134AALL

@@ -145,6 +145,8 @@ struct _cl_mem_image {
   uint8_t is_image_from_buffer;       /* IMAGE from Buffer*/
   cl_mem nv12_image;               /* if the image is created from nv12 Image, it point to the image.*/
   uint8_t is_image_from_nv12_image;       /* IMAGE from NV12 Image*/
+  cl_bool is_ker_copy;      /* this object is copied by OCL kernel */
+  cl_mem tmp_ker_buf;       /* this object is tmp buffer for OCL kernel copying */
 };
 
 struct _cl_mem_gl_image {

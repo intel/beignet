@@ -153,6 +153,8 @@ cl_mem_allocate(enum cl_mem_type type,
   if (mem->type == CL_MEM_IMAGE_TYPE) {
     cl_mem_image(mem)->is_image_from_buffer = 0;
     cl_mem_image(mem)->is_image_from_nv12_image = 0;
+    cl_mem_image(mem)->is_ker_copy = 0;
+    cl_mem_image(mem)->tmp_ker_buf = NULL;
   }
 
   if (sz != 0) {
@@ -751,6 +753,80 @@ cl_image_tiling_t cl_get_default_tiling(cl_driver drv)
 }
 
 static cl_mem
+_cl_new_image_copy_from_host_ptr(cl_context ctx,
+                  cl_mem_flags flags,
+                  const cl_image_format *fmt,
+                  const cl_mem_object_type image_type,
+                  size_t w,
+                  size_t h,
+                  size_t depth,
+                  size_t pitch,
+                  size_t slice_pitch,
+                  size_t sz,
+                  size_t aligned_pitch,
+                  uint32_t intel_fmt,
+                  uint32_t bpp,
+                  cl_image_tiling_t tiling,
+                  void *data,           //pointer from application
+                  cl_int *errcode_ret)
+{
+  cl_int err = CL_SUCCESS;
+  cl_mem mem = NULL;
+  size_t origin[3] = {0, 0, 0};
+  size_t region[3] = {w, h, depth};
+  size_t aligned_slice_pitch = 0;
+
+  if (ctx->image_queue == NULL) {
+    ctx->image_queue = clCreateCommandQueueWithProperties(ctx, ctx->devices[0], 0, &err);
+    if (err != CL_SUCCESS || !ctx->image_queue) {
+      *errcode_ret = err;
+      ctx->image_queue = NULL;
+      return NULL;
+    }
+  }
+
+  // Map host ptr to OCL buffer
+  cl_mem buf = clCreateBuffer(ctx, CL_MEM_USE_HOST_PTR, sz, data, &err);
+  if (err != CL_SUCCESS) {
+    *errcode_ret = err;
+    return NULL;
+  }
+
+  mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, NULL, NULL, &err);
+  if (mem == NULL || err != CL_SUCCESS) {
+    clReleaseMemObject(buf);
+    return NULL;
+  }
+
+  cl_buffer_set_tiling(mem->bo, tiling, aligned_pitch);
+
+  if (image_type == CL_MEM_OBJECT_IMAGE2D)
+    aligned_slice_pitch = 0;
+  else
+    //SKL need use tiling's aligned_h to calc slice_pitch and IVB to BDW need CL_NO_TILE's aligned_h to calc.
+    aligned_slice_pitch = aligned_pitch * ALIGN(h, cl_buffer_get_tiling_align(ctx, tiling, 2));
+
+  cl_mem_image_init(cl_mem_image(mem), w, h, image_type, depth, *fmt,
+                    intel_fmt, bpp, aligned_pitch, aligned_slice_pitch, tiling,
+                    0, 0, 0);
+
+  err = clEnqueueCopyBufferToImage(ctx->image_queue, buf, mem, 0, origin, region, 0, NULL, NULL);
+  if(err != CL_SUCCESS) {
+    clReleaseMemObject(buf);
+    clReleaseMemObject(mem);
+    return NULL;
+  }
+
+  clReleaseMemObject(buf);
+  if (flags & CL_MEM_USE_HOST_PTR && data) {
+    mem->host_ptr = data;
+    cl_mem_image(mem)->host_row_pitch = pitch;
+    cl_mem_image(mem)->host_slice_pitch = slice_pitch;
+  }
+  return mem;
+}
+
+static cl_mem
 _cl_mem_new_image(cl_context ctx,
                   cl_mem_flags flags,
                   const cl_image_format *fmt,
@@ -765,6 +841,7 @@ _cl_mem_new_image(cl_context ctx,
                   cl_int *errcode_ret)
 {
   cl_int err = CL_SUCCESS;
+  cl_bool is_ker_copy = 0;
   cl_mem mem = NULL;
   cl_mem_object_type image_type = orig_image_type;
   uint32_t bpp = 0, intel_fmt = INTEL_UNSUPPORTED_FORMAT;
@@ -931,11 +1008,25 @@ _cl_mem_new_image(cl_context ctx,
 
   /* If sz is large than 128MB, map gtt may fail in some system.
      Because there is no obviours performance drop, disable tiling. */
-  if(tiling != CL_NO_TILE && sz > MAX_TILING_SIZE) {
-    tiling = CL_NO_TILE;
-    aligned_pitch = w * bpp;
-    aligned_h     = ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_NO_TILE, 1));
-    sz = aligned_pitch * aligned_h * depth;
+  if (tiling != CL_NO_TILE && sz > MAX_TILING_SIZE) {
+    if ((image_type == CL_MEM_OBJECT_IMAGE2D || image_type == CL_MEM_OBJECT_IMAGE3D) &&
+      buffer == NULL) {
+      if (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR)) {
+        mem = _cl_new_image_copy_from_host_ptr(ctx, flags, fmt, image_type, w, h, depth, pitch,
+          slice_pitch, sz, aligned_pitch, intel_fmt, bpp, tiling, data, &err);
+        if (mem != NULL) {
+          cl_mem_image(mem)->is_ker_copy = 1;
+          goto exit;
+        } else
+          goto error;
+      } else
+        is_ker_copy = 1;
+    } else {
+      tiling = CL_NO_TILE;
+      aligned_pitch = w * bpp;
+      aligned_h     = ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_NO_TILE, 1));
+      sz = aligned_pitch * aligned_h * depth;
+    }
   }
 
   if (image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
@@ -991,6 +1082,8 @@ _cl_mem_new_image(cl_context ctx,
   if(fmt->image_channel_order == CL_NV12_INTEL && data) {
       cl_mem_copy_image(cl_mem_image(mem), pitch, slice_pitch, data);
   }
+
+  cl_mem_image(mem)->is_ker_copy = is_ker_copy;
 
 exit:
   if (errcode_ret)
@@ -1388,6 +1481,10 @@ cl_mem_delete(cl_mem mem)
           cl_mem_image(mem)->nv12_image = NULL;
           mem->bo = NULL;
         }
+    }
+    if (cl_mem_image(mem)->tmp_ker_buf) {
+      cl_mem_delete(cl_mem_image(mem)->tmp_ker_buf);
+      cl_mem_image(mem)->tmp_ker_buf = NULL;
     }
   }
 

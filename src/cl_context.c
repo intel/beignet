@@ -342,6 +342,7 @@ cl_context_new(struct _cl_context_prop *props, cl_uint dev_num, cl_device_id* al
   TRY_ALLOC_NO_ERR (ctx->drv, cl_driver_new(props));
   ctx->props = *props;
   ctx->ver = cl_driver_get_ver(ctx->drv);
+  ctx->image_queue = NULL;
 
 exit:
   return ctx;
@@ -361,6 +362,11 @@ cl_context_delete(cl_context ctx)
   /* We are not done yet */
   if (CL_OBJECT_DEC_REF(ctx) > 1)
     return;
+
+  if (ctx->image_queue) {
+    clReleaseCommandQueue(ctx->image_queue);
+    ctx->image_queue = NULL;
+  }
 
   /* delete the internal programs. */
   for (i = CL_INTERNAL_KERNEL_MIN; i < CL_INTERNAL_KERNEL_MAX; i++) {
