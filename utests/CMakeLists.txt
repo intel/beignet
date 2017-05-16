@@ -282,6 +282,7 @@ set (utests_sources
   runtime_use_host_ptr_buffer.cpp
   runtime_alloc_host_ptr_buffer.cpp
   runtime_use_host_ptr_image.cpp
+  runtime_use_host_ptr_large_image.cpp
   compiler_get_max_sub_group_size.cpp
   compiler_get_sub_group_local_id.cpp
   compiler_sub_group_shuffle.cpp
