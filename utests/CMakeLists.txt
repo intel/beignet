@@ -111,6 +111,7 @@ set (utests_sources
   compiler_abs.cpp
   compiler_abs_diff.cpp
   compiler_fill_image.cpp
+  compiler_fill_large_image.cpp
   compiler_fill_image0.cpp
   compiler_fill_image_1d.cpp
   compiler_fill_image_3d.cpp
