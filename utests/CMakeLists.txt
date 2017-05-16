@@ -101,6 +101,7 @@ set (utests_sources
   compiler_convert_uchar_sat.cpp
   compiler_copy_buffer.cpp
   compiler_copy_image.cpp
+  compiler_copy_large_image.cpp
   compiler_copy_image_1d.cpp
   compiler_copy_image_3d.cpp
   compiler_copy_buffer_row.cpp
