@@ -199,6 +199,7 @@ namespace ir {
     GBE_SAFE_DELETE(liveness);
     this->liveness = GBE_NEW(ir::Liveness, *fn);
     this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
+    bool needRefreshDag = false;
 
     // Process all structure arguments and find all the direct loads we can
     // replace
@@ -207,13 +208,27 @@ namespace ir {
     for (uint32_t argID = 0; argID < argNum; ++argID) {
       FunctionArgument &arg = fn->getArg(argID);
       if (arg.type != FunctionArgument::STRUCTURE) continue;
-      if(this->lower(argID) == ARG_INDIRECT_READ)
+      if(this->lower(argID) == ARG_INDIRECT_READ) {
         indirctReadArgs.push_back(argID);
+        //when the return value is ARG_INDIRECT_READ, there is still possible
+        //that some IRs read it directly, and will be handled in buildConstantPush()
+        //so we need to refresh the dag afer function buildConstantPush
+        for (const auto &loadAddImm : seq) {
+          if (loadAddImm.argID == argID)
+            needRefreshDag = true;
+        }
+      }
     }
 
     // Build the constant push description and remove the instruction that
     // therefore become useless
     this->buildConstantPush();
+    if (needRefreshDag) {
+      GBE_SAFE_DELETE(dag);
+      GBE_SAFE_DELETE(liveness);
+      this->liveness = GBE_NEW(ir::Liveness, *fn);
+      this->dag = GBE_NEW(ir::FunctionDAG, *this->liveness);
+    }
     for (uint32_t i = 0; i < indirctReadArgs.size(); ++i){
       lowerIndirectRead(indirctReadArgs[i]);
     }
