@@ -55,9 +55,17 @@ namespace gbe {
         //          ((sampler & __CLK_FILTER_MASK) == CLK_FILTER_NEAREST));
         bool needFix = true;
         Value *needFixVal;
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+        CallInst *init = dyn_cast<CallInst>(I->getOperand(0));
+        if (init && init->getCalledValue()->getName().compare("__translate_sampler_initializer"))
+        {
+          const ConstantInt *ci = dyn_cast<ConstantInt>(init->getOperand(0));
+          uint32_t samplerInt = ci->getZExtValue();
+#else
         if (dyn_cast<ConstantInt>(I->getOperand(0))) {
           const ConstantInt *ci = dyn_cast<ConstantInt>(I->getOperand(0));
           uint32_t samplerInt = ci->getZExtValue();
+#endif
           needFix = ((samplerInt & __CLK_ADDRESS_MASK) == CLK_ADDRESS_CLAMP &&
                      (samplerInt & __CLK_FILTER_MASK) == CLK_FILTER_NEAREST);
           needFixVal = ConstantInt::get(boolTy, needFix);
@@ -65,14 +73,24 @@ namespace gbe {
           IRBuilder<> Builder(I->getParent());
 
           Builder.SetInsertPoint(I);
+
           Value *addressMask = ConstantInt::get(i32Ty, __CLK_ADDRESS_MASK);
-          Value *addressMode = Builder.CreateAnd(I->getOperand(0), addressMask);
           Value *clampInt =  ConstantInt::get(i32Ty, CLK_ADDRESS_CLAMP);
-          Value *isClampMode = Builder.CreateICmpEQ(addressMode, clampInt);
           Value *filterMask = ConstantInt::get(i32Ty, __CLK_FILTER_MASK);
-          Value *filterMode = Builder.CreateAnd(I->getOperand(0), filterMask);
           Value *nearestInt = ConstantInt::get(i32Ty, CLK_FILTER_NEAREST);
+
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+          Module *M = I->getParent()->getParent()->getParent();
+          Value* samplerCvt = M->getOrInsertFunction("__gen_ocl_sampler_to_int", i32Ty, I->getOperand(0)->getType(), nullptr);
+          Value *samplerVal = Builder.CreateCall(samplerCvt, {I->getOperand(0)});
+#else
+          Value *samplerVal = I->getOperand(0);
+#endif
+          Value *addressMode = Builder.CreateAnd(samplerVal, addressMask);
+          Value *isClampMode = Builder.CreateICmpEQ(addressMode, clampInt);
+          Value *filterMode = Builder.CreateAnd(samplerVal, filterMask);
           Value *isNearestMode = Builder.CreateICmpEQ(filterMode, nearestInt);
+
           needFixVal = Builder.CreateAnd(isClampMode, isNearestMode);
         }
 
@@ -83,16 +101,31 @@ namespace gbe {
         //  return ((sampler & CLK_NORMALIZED_COORDS_TRUE) == 0);
         bool needFix = true;
         Value *needFixVal;
+ #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+        CallInst *init = dyn_cast<CallInst>(I->getOperand(0));
+        if (init && init->getCalledValue()->getName().compare("__translate_sampler_initializer"))
+        {
+          const ConstantInt *ci = dyn_cast<ConstantInt>(init->getOperand(0));
+          uint32_t samplerInt = ci->getZExtValue();
+#else
         if (dyn_cast<ConstantInt>(I->getOperand(0))) {
           const ConstantInt *ci = dyn_cast<ConstantInt>(I->getOperand(0));
           uint32_t samplerInt = ci->getZExtValue();
+#endif
           needFix = samplerInt & CLK_NORMALIZED_COORDS_TRUE;
           needFixVal = ConstantInt::get(boolTy, needFix);
         } else {
           IRBuilder<> Builder(I->getParent());
           Builder.SetInsertPoint(I);
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+          Module *M = I->getParent()->getParent()->getParent();
+          Value* samplerCvt = M->getOrInsertFunction("__gen_ocl_sampler_to_int", i32Ty, I->getOperand(0)->getType(), nullptr);
+          Value *samplerVal = Builder.CreateCall(samplerCvt, {I->getOperand(0)});
+#else
+          Value *samplerVal = I->getOperand(0);
+#endif
           Value *normalizeMask = ConstantInt::get(i32Ty, CLK_NORMALIZED_COORDS_TRUE);
-          Value *normalizeMode = Builder.CreateAnd(I->getOperand(0), normalizeMask);
+          Value *normalizeMode = Builder.CreateAnd(samplerVal, normalizeMask);
           needFixVal = Builder.CreateICmpEQ(normalizeMode, ConstantInt::get(i32Ty, 0));
         }
         I->replaceAllUsesWith(needFixVal);
