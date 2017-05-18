@@ -2894,12 +2894,35 @@ float __gen_ocl_internal_pown(float x, int y) {
   return as_float((a & (0x807FFFFFu)) | (u & 0x80000000u) | 0x3F000000);
 float __gen_ocl_internal_frexp(float x, int *exp) { BODY; }
 
+float __fast_scalbnf(float x, int n) {
+  /* copy from fdlibm */
+  float two25 = 3.355443200e+07, /* 0x4c000000 */
+      twom25 = 2.9802322388e-08, /* 0x33000000 */
+      huge = 1.0e+30, tiny = 1.0e-30;
+  int k, ix, t, tmp;
+  float retVal;
+
+  GEN_OCL_GET_FLOAT_WORD(ix, x);
+  k = (ix & 0x7f800000) >> 23; /* extract exponent */
+  t = k;
+  k = k + n;
+  tmp = (ix & 0x807fffff);
+  x = as_float(tmp | (k << 23));
+  retVal = (k > 0) ? x : 0.0f;
+  retVal = (k > 0xfe) ? INFINITY : retVal;
+  retVal = (k <= -25) ? 0.0f : retVal;
+  x = as_float(tmp | ((k + 25) << 23));
+  retVal = ((k > 0) && (k <= 25)) ? x * twom25 : retVal;
+  retVal = (t == 0) ? 0.0f : retVal;
+
+  return retVal;
+}
+
 OVERLOADABLE float hypot(float x, float y) {
   if (__ocl_math_fastpath_flag)
     return __gen_ocl_internal_fastpath_hypot(x, y);
 
-  //return __gen_ocl_sqrt(x*x + y*y);
-  float a,b,an,bn,cn;
+  float a, b, an, bn, cn, retVal;
   int e;
   if (isfinite (x) && isfinite (y)){      /* Determine absolute values.  */
   x = __gen_ocl_fabs (x);
@@ -2907,19 +2930,42 @@ OVERLOADABLE float hypot(float x, float y) {
   /* Find the bigger and the smaller one.  */
   a = max(x,y);
   b = min(x,y);
-  /* Now 0 <= b <= a.  */
-  /* Write a = an * 2^e, b = bn * 2^e with 0 <= bn <= an < 1.  */
-  an = __gen_ocl_internal_frexp (a, &e);
-  bn = ldexp (b, - e);
-  /* Through the normalization, no unneeded overflow or underflow will occur here.  */
-  cn = __gen_ocl_sqrt (an * an + bn * bn);
-  return ldexp (cn, e);
-  }else{
-    if (isinf (x) || isinf (y))  /* x or y is infinite.  Return +Infinity.  */
-      return INFINITY;
-    else        /* x or y is NaN.  Return NaN.  */
-      return x + y;
+
+  bool skip = false;
+  uint u = as_uint(a);
+  uint x = u;
+  if (x == 0) {
+    e = 0;
+    an = x;
+    skip = true;
   }
+
+  if (x >= 0x800000) {
+    e = (x >> 23) - 126;
+    an = as_float((u & (0x807FFFFFu)) | 0x3F000000);
+    skip = true;
+  }
+
+  if (!skip) {
+    int msbOne = clz(x);
+    x <<= (msbOne - 8);
+    e = -117 - msbOne;
+    an = as_float((x & (0x807FFFFFu)) | 0x3F000000);
+  }
+
+  bn = __fast_scalbnf(b, -e);
+  /* Through the normalization, no unneeded overflow or underflow will occur
+   * here.  */
+  cn = __gen_ocl_sqrt(mad(an, an, bn * bn));
+  retVal = __fast_scalbnf(cn, e);
+  } else {
+    retVal = NAN; /* x or y is NaN.  Return NaN.  */
+    retVal = (isinf(x) || isinf(y))
+                 ? INFINITY
+                 : retVal; /* x or y is infinite.  Return +Infinity.  */
+  }
+
+  return retVal;
 }
 
 OVERLOADABLE float powr(float x, float y) {
