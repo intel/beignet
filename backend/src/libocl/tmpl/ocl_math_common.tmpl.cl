@@ -2550,30 +2550,6 @@ OVERLOADABLE float __gen_ocl_internal_pow(float x, float y) {
   return bRet ? retVal:sn*z;
 }
 
-#define BODY \
-  if (isnan(x_abs) || isinf(x_abs)) { \
-    x_log2 = 0; \
-    return x_abs; \
-  } \
-  uint u = as_uint(x_abs); \
-  uint a = u & 0x7FFFFFFFu; \
-  if (a == 0) { \
-    x_log2 = 0; \
-    return x_abs; \
-  } \
-  if (a >= 0x800000) { \
-    x_log2 = (a >> 23) - 126; \
-    return as_float((u & (0x807FFFFFu)) | 0x3F000000); \
-  } \
-  int e = -126; \
-  while (a < 0x400000) { \
-    e --; \
-    a <<= 1; \
-  } \
-  a <<= 1; \
-  x_log2 = e; \
-  float x_mant = as_float((a & (0x807FFFFFu)) | (u & 0x80000000u) | 0x3F000000);
-
 OVERLOADABLE float tgamma (float x)
 {
   /* based on glibc __ieee754_gammaf_r by Ulrich Drepper <drepper@cygnus.com> */
@@ -2641,8 +2617,38 @@ OVERLOADABLE float tgamma (float x)
         float x_int = __gen_ocl_internal_round (x_abs);
         float x_frac = x_abs - x_int;
         int x_log2;
+	 float x_mant;
+	 bool skip = false;
+	 if (isnan(x_abs) || isinf(x_abs)) {
+	  x_log2 = 0;
+	  x_mant = x_abs;
+	  skip = true;
+	 }
 
-        BODY
+	 uint u = as_uint(x_abs);
+	 uint a = u & 0x7FFFFFFFu;
+	 if (a == 0) {
+	  x_log2 = 0;
+	  x_mant = x_abs;
+	  skip = true;
+	 }
+	 if (a >= 0x800000 && !skip) {
+	  x_log2 = (a >> 23) - 126;
+	  x_mant = as_float((u & (0x807FFFFFu)) | 0x3F000000);
+	  skip = true;
+	 }
+
+	 int e = -126;
+	 if(!skip)
+	 {
+		while (a < 0x400000) {
+		  e --;
+		  a <<= 1;
+		}
+		a <<= 1;
+		x_log2 = e;
+		x_mant = as_float((a & (0x807FFFFFu)) | (u & 0x80000000u) | 0x3F000000);
+	 }
 
         if (x_mant < M_SQRT1_2_F)
           {
