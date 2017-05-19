@@ -297,7 +297,8 @@ set (utests_sources
   compiler_generic_pointer.cpp
   runtime_pipe_query.cpp
   compiler_pipe_builtin.cpp
-  compiler_device_enqueue.cpp)
+  compiler_device_enqueue.cpp
+  compiler_sqrt_div.cpp)
 
 if (LLVM_VERSION_NODOT VERSION_GREATER 34)
   SET(utests_sources
