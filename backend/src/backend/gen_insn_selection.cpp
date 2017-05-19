@@ -3698,6 +3698,74 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     }
   };
 
+  /*! there some patterns like:
+    sqrt r1, r2;
+    load r4, 1.0;       ===> rqrt r3, r2
+    div r3, r4, r1; */
+  class SqrtDivInstructionPattern : public SelectionPattern {
+  public:
+    /*! Register the pattern for all opcodes of the family */
+    SqrtDivInstructionPattern(void) : SelectionPattern(1, 1) { this->opcodes.push_back(ir::OP_DIV); }
+
+    /*! Implements base class */
+    virtual bool emit(Selection::Opaque &sel, SelectionDAG &dag) const {
+      using namespace ir;
+
+      // We are good to try. We need a MUL for one of the two sources
+      const ir::BinaryInstruction &insn = cast<ir::BinaryInstruction>(dag.insn);
+      if (insn.getType() != TYPE_FLOAT)
+        return false;
+      SelectionDAG *child0 = dag.child[0];
+      SelectionDAG *child1 = dag.child[1];
+      const GenRegister dst = sel.selReg(insn.getDst(0), TYPE_FLOAT);
+
+      if (child1 && child1->insn.getOpcode() == OP_SQR) {
+        GBE_ASSERT(cast<ir::UnaryInstruction>(child1->insn).getType() == TYPE_FLOAT);
+        GenRegister srcSQR = sel.selReg(child1->insn.getSrc(0), TYPE_FLOAT);
+        const GenRegister tmp = sel.selReg(sel.reg(ir::FAMILY_DWORD), ir::TYPE_FLOAT);
+        const GenRegister src0 = sel.selReg(insn.getSrc(0), TYPE_FLOAT);
+        float immVal = 0.0f;
+
+        if (child0 && child0->insn.getOpcode() == OP_LOADI) {
+          const auto &loadimm = cast<LoadImmInstruction>(child0->insn);
+          const Immediate imm = loadimm.getImmediate();
+          const Type type = imm.getType();
+          if (type == TYPE_FLOAT)
+            immVal = imm.getFloatValue();
+          else if (type == TYPE_S32 || type == TYPE_U32)
+            immVal = imm.getIntegerValue();
+        }
+
+        sel.push();
+        if (sel.isScalarReg(insn.getDst(0)))
+          sel.curr.execWidth = 1;
+
+        if (immVal == 1.0f) {
+          sel.MATH(dst, GEN_MATH_FUNCTION_RSQ, srcSQR);
+          if (child1->child[0])
+            child1->child[0]->isRoot = 1;
+        } else {
+          sel.MATH(tmp, GEN_MATH_FUNCTION_RSQ, srcSQR);
+          if (immVal != 0.0f) {
+            GenRegister isrc = GenRegister::immf(immVal);
+            sel.MUL(dst, tmp, isrc);
+          } else {
+            sel.MUL(dst, src0, tmp);
+            if (child0)
+              child0->isRoot = 1;
+          }
+
+          if (child1->child[0])
+            child1->child[0]->isRoot = 1;
+        }
+        sel.pop();
+
+        return true;
+      }
+      return false;
+    }
+  };
+
   /*! sel.{le,l,ge...} like patterns */
   class SelectModifierInstructionPattern : public SelectionPattern
   {
@@ -8084,6 +8152,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
 
   SelectionLibrary::SelectionLibrary(void) {
     this->insert<UnaryInstructionPattern>();
+    this->insert<SqrtDivInstructionPattern>();
     this->insert<BinaryInstructionPattern>();
     this->insert<TypedWriteInstructionPattern>();
     this->insert<SyncInstructionPattern>();
