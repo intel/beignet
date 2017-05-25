@@ -2146,6 +2146,36 @@ fail:
   return ret;
 }
 
+#define ALIGN16 16
+#define ALIGN4 4
+#define ALIGN1 1
+
+static size_t
+get_align_size_for_copy_kernel(struct _cl_mem_image* image, const size_t origin0, const size_t region0,
+                            const size_t offset, cl_image_format *fmt) {
+  size_t align_size = 0;
+
+  if((image->image_type == CL_MEM_OBJECT_IMAGE2D) && ((image->w * image->bpp) % ALIGN16 == 0) &&
+      ((origin0 * image->bpp) % ALIGN16 == 0) && (region0 % ALIGN16 == 0) && (offset % ALIGN16 == 0)){
+    fmt->image_channel_order = CL_RGBA;
+    fmt->image_channel_data_type = CL_UNSIGNED_INT32;
+    align_size = ALIGN16;
+  }
+  else if((image->image_type == CL_MEM_OBJECT_IMAGE2D) && ((image->w * image->bpp) % ALIGN4 == 0) &&
+      ((origin0 * image->bpp) % ALIGN4 == 0) && (region0 % ALIGN4 == 0) && (offset % ALIGN4 == 0)){
+    fmt->image_channel_order = CL_R;
+    fmt->image_channel_data_type = CL_UNSIGNED_INT32;
+    align_size = ALIGN4;
+  }
+  else{
+    fmt->image_channel_order = CL_R;
+    fmt->image_channel_data_type = CL_UNSIGNED_INT8;
+    align_size = ALIGN1;
+  }
+
+  return align_size;
+}
+
 LOCAL cl_int
 cl_mem_copy_image_to_buffer(cl_command_queue queue, cl_event event, struct _cl_mem_image* image, cl_mem buffer,
                          const size_t *src_origin, const size_t dst_offset, const size_t *region) {
@@ -2158,7 +2188,6 @@ cl_mem_copy_image_to_buffer(cl_command_queue queue, cl_event event, struct _cl_m
   cl_image_format fmt;
   size_t origin0, region0;
   size_t kn_dst_offset;
-  int align16 = 0;
   size_t align_size = 1;
   size_t w_saved;
 
@@ -2176,18 +2205,7 @@ cl_mem_copy_image_to_buffer(cl_command_queue queue, cl_event event, struct _cl_m
   w_saved = image->w;
   region0 = region[0] * bpp;
   kn_dst_offset = dst_offset;
-  if((image->image_type == CL_MEM_OBJECT_IMAGE2D) && ((image->w * image->bpp) % 16 == 0) &&
-      ((src_origin[0] * bpp) % 16 == 0) && (region0 % 16 == 0) && (dst_offset % 16 == 0)){
-    fmt.image_channel_order = CL_RGBA;
-    fmt.image_channel_data_type = CL_UNSIGNED_INT32;
-    align16 = 1;
-    align_size = 16;
-  }
-  else{
-    fmt.image_channel_order = CL_R;
-    fmt.image_channel_data_type = CL_UNSIGNED_INT8;
-    align_size = 1;
-  }
+  align_size = get_align_size_for_copy_kernel(image, src_origin[0], region0, dst_offset, &fmt);
   image->intel_fmt = cl_image_get_intel_format(&fmt);
   image->w = (image->w * image->bpp) / align_size;
   image->bpp = align_size;
@@ -2198,13 +2216,21 @@ cl_mem_copy_image_to_buffer(cl_command_queue queue, cl_event event, struct _cl_m
 
   /* setup the kernel and run. */
   if(image->image_type == CL_MEM_OBJECT_IMAGE2D) {
-    if(align16){
+    if(align_size == ALIGN16){
       extern char cl_internal_copy_image_2d_to_buffer_align16_str[];
       extern size_t cl_internal_copy_image_2d_to_buffer_align16_str_size;
 
       ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_BUFFER_ALIGN16,
                 cl_internal_copy_image_2d_to_buffer_align16_str,
                 (size_t)cl_internal_copy_image_2d_to_buffer_align16_str_size, NULL);
+    }
+    else if(align_size == ALIGN4){
+      extern char cl_internal_copy_image_2d_to_buffer_align4_str[];
+      extern size_t cl_internal_copy_image_2d_to_buffer_align4_str_size;
+
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_BUFFER_ALIGN4,
+                cl_internal_copy_image_2d_to_buffer_align4_str,
+                (size_t)cl_internal_copy_image_2d_to_buffer_align4_str_size, NULL);
     }
     else{
       extern char cl_internal_copy_image_2d_to_buffer_str[];
@@ -2262,7 +2288,6 @@ cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_event event, cl_mem buffe
   cl_image_format fmt;
   size_t origin0, region0;
   size_t kn_src_offset;
-  int align16 = 0;
   size_t align_size = 1;
   size_t w_saved = 0;
 
@@ -2280,18 +2305,7 @@ cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_event event, cl_mem buffe
   w_saved = image->w;
   region0 = region[0] * bpp;
   kn_src_offset = src_offset;
-  if((image->image_type == CL_MEM_OBJECT_IMAGE2D) && ((image->w * image->bpp) % 16 == 0) &&
-      ((dst_origin[0] * bpp) % 16 == 0) && (region0 % 16 == 0) && (src_offset % 16 == 0)){
-    fmt.image_channel_order = CL_RGBA;
-    fmt.image_channel_data_type = CL_UNSIGNED_INT32;
-    align16 = 1;
-    align_size = 16;
-  }
-  else{
-    fmt.image_channel_order = CL_R;
-    fmt.image_channel_data_type = CL_UNSIGNED_INT8;
-    align_size = 1;
-  }
+  align_size = get_align_size_for_copy_kernel(image, dst_origin[0], region0, src_offset, &fmt);
   image->intel_fmt = cl_image_get_intel_format(&fmt);
   image->w = (image->w * image->bpp) / align_size;
   image->bpp = align_size;
@@ -2302,13 +2316,21 @@ cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_event event, cl_mem buffe
 
   /* setup the kernel and run. */
   if(image->image_type == CL_MEM_OBJECT_IMAGE2D) {
-    if(align16){
+    if(align_size == ALIGN16){
       extern char cl_internal_copy_buffer_to_image_2d_align16_str[];
       extern size_t cl_internal_copy_buffer_to_image_2d_align16_str_size;
 
       ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_2D_ALIGN16,
                 cl_internal_copy_buffer_to_image_2d_align16_str,
                 (size_t)cl_internal_copy_buffer_to_image_2d_align16_str_size, NULL);
+    }
+    else if(align_size == ALIGN4){
+      extern char cl_internal_copy_buffer_to_image_2d_align4_str[];
+      extern size_t cl_internal_copy_buffer_to_image_2d_align4_str_size;
+
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_2D_ALIGN4,
+                cl_internal_copy_buffer_to_image_2d_align4_str,
+                (size_t)cl_internal_copy_buffer_to_image_2d_align4_str_size, NULL);
     }
     else{
       extern char cl_internal_copy_buffer_to_image_2d_str[];

@@ -62,9 +62,11 @@ enum _cl_internal_ker_type {
   CL_ENQUEUE_COPY_IMAGE_3D_TO_2D_ARRAY,       //copy image 3d to image 2d array
   CL_ENQUEUE_COPY_IMAGE_2D_TO_BUFFER,   //copy image 2d to buffer
   CL_ENQUEUE_COPY_IMAGE_2D_TO_BUFFER_ALIGN16,
+  CL_ENQUEUE_COPY_IMAGE_2D_TO_BUFFER_ALIGN4,
   CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER,   //copy image 3d tobuffer
   CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_2D,   //copy buffer to image 2d
   CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_2D_ALIGN16,
+  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_2D_ALIGN4,
   CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_3D,   //copy buffer to image 3d
   CL_ENQUEUE_FILL_BUFFER_UNALIGN,      //fill buffer with 1 aligne pattern, pattern size=1
   CL_ENQUEUE_FILL_BUFFER_ALIGN2,       //fill buffer with 2 aligne pattern, pattern size=2
