@@ -1418,6 +1418,60 @@ OVERLOADABLE float __gen_ocl_internal_exp(float x) {
   }
 }
 
+OVERLOADABLE float __gen_ocl_internal_simple_exp(float x) {
+  float o_threshold = 8.8721679688e+01, /* 0x42b17180 */
+      u_threshold = -1.0397208405e+02,  /* 0xc2cff1b5 */
+      twom100 = 7.8886090522e-31,       /* 2**-100=0x0d800000 */
+      ivln2 = 1.4426950216e+00,         /* 0x3fb8aa3b =1/ln2 */
+      one = 1.0, P1 = 1.6666667163e-01, /* 0x3e2aaaab */
+      P2 = -2.7777778450e-03;           /* 0xbb360b61 */
+  float y, hi = 0.0, lo = 0.0, c, t;
+  int k = 0;
+  unsigned hx;
+  float ln2HI_0 = 6.9313812256e-01;  /* 0x3f317180 */
+  float ln2HI_1 = -6.9313812256e-01; /* 0xbf317180 */
+  float ln2LO_0 = 9.0580006145e-06;  /* 0x3717f7d1 */
+  float ln2LO_1 = -9.0580006145e-06; /* 0xb717f7d1 */
+  float half_0 = 0.5;
+  float half_1 = -0.5;
+  float retVal = -1.0f;
+  hx = as_uint(fabs(x));
+
+  /* filter out non-finite argument */
+  /* if |x|>=88.721... */
+  if (hx >= 0x42b17218) {
+    float tmp = (x > 0) ? x : 0.0;
+    retVal = (x > 0) ? INFINITY : retVal; /* overflow */
+    retVal = (hx > 0x7f800000) ? NAN : retVal;
+    retVal = (hx == 0x7f800000) ? tmp : retVal;
+    retVal = (x < u_threshold) ? 0.0 : retVal; /* underflow */
+
+    if (retVal != -1.0f)
+      return retVal;
+  }
+
+  /* argument reduction */
+  float tmp = (x < 0) ? half_1 : half_0;
+  k = mad(ivln2, x, tmp);
+  t = k;
+  hi = mad(t, -ln2HI_0, x); /* t*ln2HI is exact here */
+  lo = t * ln2LO_0;
+  x = hi - lo;
+
+  /* x is now in primary range */
+  t = x * x;
+  c = mad(t, mad(t, -P2, -P1), x);
+  y = one - ((lo + (x * c) / (c - 2.0f)) - hi);
+
+  unsigned hy;
+  GEN_OCL_GET_FLOAT_WORD(hy, y);
+
+  float factor = (k >= -125) ? 1.0f : twom100;
+  k = (k >= -125) ? k : k + 100;
+  GEN_OCL_SET_FLOAT_WORD(y, hy + (k << 23)); /* add k to y's exponent */
+  return y * factor;
+}
+
 /* erf,erfc from glibc s_erff.c -- float version of s_erf.c.
  * Conversion to float by Ian Lance Taylor, Cygnus Support, ian@cygnus.com.
  */
@@ -3151,10 +3205,10 @@ OVERLOADABLE float exp(float x) {
     return __gen_ocl_internal_fastpath_exp(x);
 
   /* Use native instruction when it has enough precision */
-  if (x > -0x1.6p1 && x < 0x1.6p1)
+  if (fabs(x) < 0x1.6p1)
     return __gen_ocl_internal_fastpath_exp(x);
 
-  return  __gen_ocl_internal_exp(x);
+  return __gen_ocl_internal_simple_exp(x);
 }
 
 OVERLOADABLE float exp2(float x) {
