@@ -2983,10 +2983,12 @@ namespace gbe
           this->newRegister(const_cast<GlobalVariable*>(&v));
           ir::Register reg = regTranslator.getScalar(const_cast<GlobalVariable*>(&v), 0);
           ir::Constant &con = unit.getConstantSet().getConstant(v.getName());
-          ctx.LOADI(getType(ctx, v.getType()), reg, ctx.newIntegerImmediate(con.getOffset(), getType(ctx, v.getType())));
           if (!legacyMode) {
-            ctx.ADD(getType(ctx, v.getType()), reg, ir::ocl::constant_addrspace, reg);
-          }
+            ir::Register regload = ctx.reg(getFamily(getType(ctx, v.getType())));
+            ctx.LOADI(getType(ctx, v.getType()), regload, ctx.newIntegerImmediate(con.getOffset(), getType(ctx, v.getType())));
+            ctx.ADD(getType(ctx, v.getType()), reg, ir::ocl::constant_addrspace, regload);
+          } else
+            ctx.LOADI(getType(ctx, v.getType()), reg, ctx.newIntegerImmediate(con.getOffset(), getType(ctx, v.getType())));
         }
       } else if(addrSpace == ir::MEM_PRIVATE) {
           this->newRegister(const_cast<GlobalVariable*>(&v));
