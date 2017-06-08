@@ -389,6 +389,7 @@ namespace ir {
   public:
     /*! Return the value stored in the instruction */
     Immediate getImmediate(void) const;
+    void setImmediateIndex(ImmediateIndex immIndex);
     /*! Return the type of the stored value */
     Type getType(void) const;
     /*! Return true if the given instruction is an instance of this class */

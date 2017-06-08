@@ -833,6 +833,9 @@ namespace ir {
       INLINE Immediate getImmediate(const Function &fn) const {
         return fn.getImmediate(immediateIndex);
       }
+      INLINE void setImmediateIndex(ImmediateIndex immIndex) {
+        immediateIndex = immIndex;
+      }
       INLINE Type getType(void) const { return this->type; }
       bool wellFormed(const Function &fn, std::string &why) const;
       INLINE void out(std::ostream &out, const Function &fn) const;
@@ -2443,6 +2446,10 @@ DECL_MEM_FN(MemInstruction, void,     setBtiReg(Register reg), setBtiReg(reg))
   Immediate LoadImmInstruction::getImmediate(void) const {
     const Function &fn = this->getFunction();
     return reinterpret_cast<const internal::LoadImmInstruction*>(this)->getImmediate(fn);
+  }
+
+  void LoadImmInstruction::setImmediateIndex(ImmediateIndex immIndex) {
+    reinterpret_cast<internal::LoadImmInstruction*>(this)->setImmediateIndex(immIndex);
   }
 
   ///////////////////////////////////////////////////////////////////////////

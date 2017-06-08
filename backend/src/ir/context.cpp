@@ -24,6 +24,7 @@
 #include "ir/context.hpp"
 #include "ir/unit.hpp"
 #include "ir/lowering.hpp"
+#include "ir/constopt.hpp"
 
 namespace gbe {
 namespace ir {
@@ -81,6 +82,10 @@ namespace ir {
     // Properly order labels and compute the CFG, it's needed by FunctionArgumentLower
     fn->sortLabels();
     fn->computeCFG();
+
+    //TODO: do constant folding and propagation for GEN IR
+    //here as the first step, we just do constant folding for kernel struct args
+    foldFunctionStructArgConstOffset(unit, fn->getName());
 
     // Spill function argument to the stack if required and identify which
     // function arguments can use constant push

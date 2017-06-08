@@ -73,6 +73,8 @@ set (GBE_SRC
     ir/value.hpp
     ir/lowering.cpp
     ir/lowering.hpp
+    ir/constopt.cpp
+    ir/constopt.hpp
     ir/profiling.cpp
     ir/profiling.hpp
     ir/printf.cpp
