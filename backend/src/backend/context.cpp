@@ -469,35 +469,54 @@ namespace gbe
       kernel->args[argID].info.typeQual = arg.info.typeQual;
       kernel->args[argID].info.argName = arg.info.argName;
       kernel->args[argID].info.typeSize = arg.info.typeSize;
+      kernel->args[argID].arg_space_type = GBE_ADDRESS_SPACE_PRIVATE;
+
       switch (arg.type) {
         case ir::FunctionArgument::VALUE:
+          kernel->args[argID].type = GBE_ARG_VALUE;
+          kernel->args[argID].arg_type = GBE_ARG_TYPE_VALUE;
+          kernel->args[argID].size = arg.size;
+          break;
         case ir::FunctionArgument::STRUCTURE:
           kernel->args[argID].type = GBE_ARG_VALUE;
+          kernel->args[argID].arg_type = GBE_ARG_TYPE_STRUCT;
           kernel->args[argID].size = arg.size;
           break;
         case ir::FunctionArgument::GLOBAL_POINTER:
           kernel->args[argID].type = GBE_ARG_GLOBAL_PTR;
+          kernel->args[argID].arg_type = GBE_ARG_TYPE_POINTER;
+          kernel->args[argID].arg_space_type = GBE_ADDRESS_SPACE_GLOBAL;
           kernel->args[argID].size = sizeof(void*);
           kernel->args[argID].bti = arg.bti;
           break;
         case ir::FunctionArgument::CONSTANT_POINTER:
           kernel->args[argID].type = GBE_ARG_CONSTANT_PTR;
+          kernel->args[argID].arg_type = GBE_ARG_TYPE_POINTER;
+          kernel->args[argID].arg_space_type = GBE_ADDRESS_SPACE_CONSTANT;
           kernel->args[argID].size = sizeof(void*);
           break;
         case ir::FunctionArgument::LOCAL_POINTER:
           kernel->args[argID].type = GBE_ARG_LOCAL_PTR;
-          kernel->args[argID].size = 0;
+          kernel->args[argID].arg_type = GBE_ARG_TYPE_POINTER;
+          kernel->args[argID].arg_space_type = GBE_ADDRESS_SPACE_LOCAL;
+          kernel->args[argID].size = arg.size;
           break;
         case ir::FunctionArgument::IMAGE:
           kernel->args[argID].type = GBE_ARG_IMAGE;
+          kernel->args[argID].arg_type = GBE_ARG_TYPE_IMAGE;
+          /* image objects are always allocated from the global address space */
+          kernel->args[argID].arg_space_type = GBE_ADDRESS_SPACE_GLOBAL;
           kernel->args[argID].size = sizeof(void*);
           break;
         case ir::FunctionArgument::SAMPLER:
           kernel->args[argID].type = GBE_ARG_SAMPLER;
+          kernel->args[argID].arg_type = GBE_ARG_TYPE_SAMPLER;
           kernel->args[argID].size = sizeof(void*);
           break;
         case ir::FunctionArgument::PIPE:
           kernel->args[argID].type = GBE_ARG_PIPE;
+          kernel->args[argID].arg_type = GBE_ARG_TYPE_PIPE;
+          kernel->args[argID].arg_space_type = GBE_ADDRESS_SPACE_GLOBAL;
           kernel->args[argID].size = sizeof(void*);
           kernel->args[argID].bti = arg.bti;
           break;

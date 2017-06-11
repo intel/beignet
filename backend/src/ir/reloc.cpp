@@ -67,7 +67,7 @@ namespace ir {
     for (uint32_t i = 0; i < sz; i++) {
       IN_UPDATE_SZ(refOffset);
       IN_UPDATE_SZ(defOffset);
-      addEntry(refOffset, defOffset);
+      addEntry(refOffset, defOffset, NULL);
     }
 
     IN_UPDATE_SZ(magic);

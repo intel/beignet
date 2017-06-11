@@ -45,7 +45,9 @@ namespace gbe {
 
   /*! Info for the kernel argument */
   struct KernelArgument {
-    gbe_arg_type type; //!< Pointer, structure, image, regular value?
+    gbe_arg_type type; //!< Pointer, structure, image, regular value?  Delete it later
+    gbe_argument_type arg_type; //!< Pointer, structure, image, regular value
+    gbe_address_space_type arg_space_type;
     uint32_t size;     //!< Size of the argument
     uint32_t align;    //!< addr alignment of the argument
     uint8_t bti;      //!< binding table index for __global buffer
@@ -100,6 +102,9 @@ namespace gbe {
     INLINE uint32_t getArgSize(uint32_t argID) const {
       return argID >= argNum ? 0u : args[argID].size;
     }
+    INLINE gbe_address_space_type getArgAddressSpace(uint32_t argID) const {
+      return argID >= argNum ? GBE_ADDRESS_SPACE_INVALID : args[argID].arg_space_type;
+    }
     /*! Return the bti for __global buffer */
     INLINE uint8_t getArgBTI(uint32_t argID) const {
       return argID >= argNum ? 0u : args[argID].bti;
@@ -111,6 +116,9 @@ namespace gbe {
     /*! Return the type of the given argument */
     INLINE gbe_arg_type getArgType(uint32_t argID) const {
       return argID >= argNum ? GBE_ARG_INVALID : args[argID].type;
+    }
+    INLINE gbe_argument_type getArgumentType(uint32_t argID) const {
+      return argID >= argNum ? GBE_ARG_TYPE_INVALID : args[argID].arg_type;
     }
     /*! Get the offset where to patch. Returns -1 if no patch needed */
     int32_t getCurbeOffset(gbe_curbe_type type, uint32_t subType) const;
@@ -303,6 +311,9 @@ namespace gbe {
         return NULL;
       return blockFuncs[index].c_str();
     }
+    const size_t getDeviceEnqueueKernelNameGetSize(void) const {
+      return blockFuncs.size();
+    }
     /*! Build a program from a ir::Unit */
     bool buildFromUnit(const ir::Unit &unit, std::string &error);
     /*! Buils a program from a LLVM Module */
@@ -341,6 +352,8 @@ namespace gbe {
     /*! Compile a kernel */
     virtual Kernel *compileKernel(const ir::Unit &unit, const std::string &name,
                                   bool relaxMath, int profiling) = 0;
+    /*! Generate binary format */
+    virtual void *toBinaryFormat(size_t &ret_size) = 0;
     /*! Allocate an empty kernel. */
     virtual Kernel *allocateKernel(const std::string &name) = 0;
     /*! Kernels sorted by their name */

@@ -27,6 +27,7 @@
 
 #include "sys/vector.hpp"
 #include <string.h>
+#include <map>
 
 namespace gbe {
 namespace ir {
@@ -42,17 +43,31 @@ namespace ir {
 
     unsigned int refOffset;
     unsigned int defOffset;
+    friend bool operator< (const RelocEntry& a, const RelocEntry& b) {
+      if (a.defOffset < b.defOffset)
+        return true;
+      if (a.refOffset < b.refOffset)
+        return true;
+      return false;
+    }
   };
 
   class RelocTable : public NonCopyable, public Serializable
   {
     public:
-      void addEntry(unsigned refOffset, unsigned defOffset) {
+      void addEntry(unsigned refOffset, unsigned defOffset, const char *name) {
         entries.push_back(RelocEntry(refOffset, defOffset));
+        RelocEntry& re = entries.back();
+        entryNames[re] = name;
+      }
+      std::string getEntryName(RelocEntry& re) {
+        if (entryNames.find(re) == entryNames.end())
+          return std::string();
+        return entryNames[re];
       }
       RelocTable() : Serializable() {}
-      RelocTable(const RelocTable& other) : Serializable(other),
-                                            entries(other.entries) {}
+      RelocTable(const RelocTable& other) :
+        Serializable(other), entries(other.entries), entryNames(other.entryNames) {}
       uint32_t getCount() { return entries.size(); }
       void getData(char *p) {
         if (entries.size() > 0 && p)
@@ -80,6 +95,7 @@ namespace ir {
     virtual uint32_t deserializeFromBin(std::istream& ins);
     private:
       vector<RelocEntry> entries;
+      std::map<RelocEntry, std::string> entryNames;
       GBE_CLASS(RelocTable);
   };
 

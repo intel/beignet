@@ -30,6 +30,7 @@
 #undef GBE_COMPILER_AVAILABLE
 #include "backend/program.cpp"
 #include "backend/gen_program.cpp"
+#include "backend/gen_program_elf.cpp"
 #include "ir/sampler.cpp"
 #include "ir/image.cpp"
 

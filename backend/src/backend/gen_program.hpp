@@ -55,13 +55,20 @@ namespace gbe
     GBE_CLASS(GenKernel);  //!< Use custom allocators
   };
 
+  class GenProgramElfContext;
+
   /*! Describe a compiled program */
   class GenProgram : public Program
   {
+  protected:
+    GenProgramElfContext* elf_ctx;
+
   public:
     /*! Create an empty program */
-    GenProgram(uint32_t deviceID, const void* mod = NULL, const void* ctx = NULL, const char* asm_fname = NULL, uint32_t fast_relaxed_math = 0) :
-      Program(fast_relaxed_math), deviceID(deviceID),module((void*)mod), llvm_ctx((void*)ctx), asm_file_name(asm_fname) {}
+    GenProgram(uint32_t deviceID, const void* mod = NULL, const void* ctx = NULL, const char* asm_fname = NULL,
+               uint32_t fast_relaxed_math = 0) :
+      Program(fast_relaxed_math), elf_ctx(NULL), deviceID(deviceID), module((void*)mod), llvm_ctx((void*)ctx),
+         asm_file_name(asm_fname) {}
     /*! Current device ID*/
     uint32_t deviceID;
     /*! Destroy the program */
@@ -70,6 +77,8 @@ namespace gbe
     virtual void CleanLlvmResource(void);
     /*! Implements base class */
     virtual Kernel *compileKernel(const ir::Unit &unit, const std::string &name, bool relaxMath, int profiling);
+    /*! Generate binary format */
+    virtual void *toBinaryFormat(size_t &ret_size);
     /*! Allocate an empty kernel. */
     virtual Kernel *allocateKernel(const std::string &name) {
       return GBE_NEW(GenKernel, name, deviceID);

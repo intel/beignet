@@ -1703,8 +1703,7 @@ namespace gbe
             for (uint32_t k = 0; k < relocs.size(); k++) {
               unit.getRelocTable().addEntry(
                   refOffset + relocs[k].refOffset,
-                  relocs[k].defOffset
-                  );
+                  relocs[k].defOffset, name);
             }
           }
         }

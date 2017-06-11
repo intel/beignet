@@ -47,6 +47,7 @@ typedef struct _gbe_program *gbe_program;
 /*! Opaque structure that interfaces a GBE kernel (ie one OCL function) */
 typedef struct _gbe_kernel *gbe_kernel;
 
+// Delete later
 /*! Argument type for each function call */
 enum gbe_arg_type {
   GBE_ARG_VALUE = 0,            // int, float and so on
@@ -57,6 +58,25 @@ enum gbe_arg_type {
   GBE_ARG_SAMPLER = 5,          // sampler_t
   GBE_ARG_PIPE = 6,             // pipe
   GBE_ARG_INVALID = 0xffffffff
+};
+
+/*! Argument type for each function call */
+enum gbe_argument_type {
+  GBE_ARG_TYPE_INVALID = 0,
+  GBE_ARG_TYPE_VALUE = 1, // int, fp, etc
+  GBE_ARG_TYPE_STRUCT = 2,
+  GBE_ARG_TYPE_POINTER = 3,
+  GBE_ARG_TYPE_IMAGE = 4,
+  GBE_ARG_TYPE_SAMPLER= 5,
+  GBE_ARG_TYPE_PIPE = 6,  // pipe
+};
+
+enum gbe_address_space_type {
+  GBE_ADDRESS_SPACE_PRIVATE = 0,
+  GBE_ADDRESS_SPACE_GLOBAL = 1,
+  GBE_ADDRESS_SPACE_CONSTANT = 2,
+  GBE_ADDRESS_SPACE_LOCAL = 3,
+  GBE_ADDRESS_SPACE_INVALID = 4,
 };
 
 /*! Get argument info values */
