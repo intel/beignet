@@ -85,6 +85,7 @@ set (GBE_SRC
     ir/structurizer.cpp
     ir/reloc.hpp
     ir/reloc.cpp
+    backend/compiler_api.cpp
     backend/context.cpp
     backend/context.hpp
     backend/program.cpp
