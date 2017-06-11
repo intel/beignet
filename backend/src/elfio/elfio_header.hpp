@@ -111,7 +111,6 @@ template< class T > class elf_header_impl : public elf_header
     {
         stream.seekp( 0 );
         stream.write( reinterpret_cast<const char*>( &header ), sizeof( header ) );
-
         return stream.good();
     }
 
