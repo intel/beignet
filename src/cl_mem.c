@@ -817,6 +817,13 @@ _cl_new_image_copy_from_host_ptr(cl_context ctx,
     return NULL;
   }
 
+  err = clFinish(ctx->image_queue);
+  if(err != CL_SUCCESS) {
+    clReleaseMemObject(buf);
+    clReleaseMemObject(mem);
+    return NULL;
+  }
+
   clReleaseMemObject(buf);
   if (flags & CL_MEM_USE_HOST_PTR && data) {
     mem->host_ptr = data;
