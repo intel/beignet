@@ -2650,6 +2650,95 @@ error:
   goto exit;
 }
 
+static cl_int
+get_mapped_address(cl_mem mem)
+{
+  cl_int slot = -1;
+  if (!mem->mapped_ptr_sz) {
+    mem->mapped_ptr_sz = 16;
+    mem->mapped_ptr = (cl_mapped_ptr *)malloc(
+        sizeof(cl_mapped_ptr) * mem->mapped_ptr_sz);
+    if (!mem->mapped_ptr) {
+      cl_mem_unmap_auto(mem);
+      return slot;
+    }
+    memset(mem->mapped_ptr, 0, mem->mapped_ptr_sz * sizeof(cl_mapped_ptr));
+    slot = 0;
+  } else {
+    int i = 0;
+    for (; i < mem->mapped_ptr_sz; i++) {
+      if (mem->mapped_ptr[i].ptr == NULL) {
+        slot = i;
+        break;
+      }
+    }
+    if (i == mem->mapped_ptr_sz) {
+      cl_mapped_ptr *new_ptr = (cl_mapped_ptr *)malloc(
+          sizeof(cl_mapped_ptr) * mem->mapped_ptr_sz * 2);
+      if (!new_ptr) {
+        cl_mem_unmap_auto(mem);
+        return slot;
+      }
+      memset(new_ptr, 0, 2 * mem->mapped_ptr_sz * sizeof(cl_mapped_ptr));
+      memcpy(new_ptr, mem->mapped_ptr,
+          mem->mapped_ptr_sz * sizeof(cl_mapped_ptr));
+      slot = mem->mapped_ptr_sz;
+      mem->mapped_ptr_sz *= 2;
+      free(mem->mapped_ptr);
+      mem->mapped_ptr = new_ptr;
+    }
+  }
+
+  assert(slot != -1);
+  return slot;
+}
+
+LOCAL cl_int
+cl_mem_record_map_mem_for_kernel(cl_mem mem, void *ptr, void **mem_ptr, size_t offset,
+                      size_t size, const size_t *origin, const size_t *region,
+                      cl_mem tmp_ker_buf, uint8_t write_map)
+{
+  // TODO: Need to add MT safe logic.
+
+  cl_int slot = -1;
+  int err = CL_SUCCESS;
+  size_t sub_offset = 0;
+
+  //ptr = (char*)ptr + offset + sub_offset;
+  if(mem->flags & CL_MEM_USE_HOST_PTR) {
+    assert(mem->host_ptr);
+    //only calc ptr here, will do memcpy in enqueue
+    *mem_ptr = (char*)ptr + offset + sub_offset;
+  } else {
+    *mem_ptr = ptr;
+  }
+  /* Record the mapped address. */
+  slot = get_mapped_address(mem);
+  if (slot == -1) {
+    err = CL_OUT_OF_HOST_MEMORY;
+    goto error;
+  }
+  mem->mapped_ptr[slot].ptr = *mem_ptr;
+  mem->mapped_ptr[slot].v_ptr = ptr;
+  mem->mapped_ptr[slot].size = size;
+  mem->mapped_ptr[slot].ker_write_map = write_map;
+  mem->mapped_ptr[slot].tmp_ker_buf = tmp_ker_buf;
+  if(origin) {
+    assert(region);
+    mem->mapped_ptr[slot].origin[0] = origin[0];
+    mem->mapped_ptr[slot].origin[1] = origin[1];
+    mem->mapped_ptr[slot].origin[2] = origin[2];
+    mem->mapped_ptr[slot].region[0] = region[0];
+    mem->mapped_ptr[slot].region[1] = region[1];
+    mem->mapped_ptr[slot].region[2] = region[2];
+  }
+  mem->map_ref++;
+error:
+  if (err != CL_SUCCESS)
+    *mem_ptr = NULL;
+  return err;
+}
+
 LOCAL cl_int
 cl_mem_record_map_mem(cl_mem mem, void *ptr, void **mem_ptr, size_t offset,
                       size_t size, const size_t *origin, const size_t *region)
@@ -2674,43 +2763,11 @@ cl_mem_record_map_mem(cl_mem mem, void *ptr, void **mem_ptr, size_t offset,
     *mem_ptr = ptr;
   }
   /* Record the mapped address. */
-  if (!mem->mapped_ptr_sz) {
-    mem->mapped_ptr_sz = 16;
-    mem->mapped_ptr = (cl_mapped_ptr *)malloc(
-        sizeof(cl_mapped_ptr) * mem->mapped_ptr_sz);
-    if (!mem->mapped_ptr) {
-      cl_mem_unmap_auto(mem);
-      err = CL_OUT_OF_HOST_MEMORY;
-      goto error;
-    }
-    memset(mem->mapped_ptr, 0, mem->mapped_ptr_sz * sizeof(cl_mapped_ptr));
-    slot = 0;
-  } else {
-    int i = 0;
-    for (; i < mem->mapped_ptr_sz; i++) {
-      if (mem->mapped_ptr[i].ptr == NULL) {
-        slot = i;
-        break;
-      }
-    }
-    if (i == mem->mapped_ptr_sz) {
-      cl_mapped_ptr *new_ptr = (cl_mapped_ptr *)malloc(
-          sizeof(cl_mapped_ptr) * mem->mapped_ptr_sz * 2);
-      if (!new_ptr) {
-        cl_mem_unmap_auto(mem);
-        err = CL_OUT_OF_HOST_MEMORY;
-        goto error;
-      }
-      memset(new_ptr, 0, 2 * mem->mapped_ptr_sz * sizeof(cl_mapped_ptr));
-      memcpy(new_ptr, mem->mapped_ptr,
-          mem->mapped_ptr_sz * sizeof(cl_mapped_ptr));
-      slot = mem->mapped_ptr_sz;
-      mem->mapped_ptr_sz *= 2;
-      free(mem->mapped_ptr);
-      mem->mapped_ptr = new_ptr;
-    }
+  slot = get_mapped_address(mem);
+  if (slot == -1) {
+    err = CL_OUT_OF_HOST_MEMORY;
+    goto error;
   }
-  assert(slot != -1);
   mem->mapped_ptr[slot].ptr = *mem_ptr;
   mem->mapped_ptr[slot].v_ptr = ptr;
   mem->mapped_ptr[slot].size = size;

@@ -61,6 +61,8 @@ typedef struct _cl_mapped_ptr {
   size_t size;
   size_t origin[3];  /* mapped origin */
   size_t region[3];  /* mapped region */
+  cl_mem tmp_ker_buf;       /* this object is tmp buffer for OCL kernel copying */
+  uint8_t ker_write_map;    /* this flag is used to indicate CL_MAP_WRITE for OCL kernel copying */
 }cl_mapped_ptr;
 
 typedef struct _cl_mem_dstr_cb {
@@ -367,6 +369,9 @@ extern cl_mem cl_mem_new_image_from_fd(cl_context ctx,
 
 extern cl_int cl_mem_record_map_mem(cl_mem mem, void *ptr, void **mem_ptr, size_t offset,
                       size_t size, const size_t *origin, const size_t *region);
+
+extern cl_int cl_mem_record_map_mem_for_kernel(cl_mem mem, void *ptr, void **mem_ptr, size_t offset,
+                      size_t size, const size_t *origin, const size_t *region, cl_mem tmp_ker_buf, uint8_t write_map);
 
 extern cl_int cl_mem_set_destructor_callback(cl_mem memobj,
                       void(CL_CALLBACK *pfn_notify)(cl_mem, void *), void *user_data);
