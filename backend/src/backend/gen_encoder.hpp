@@ -231,6 +231,10 @@ namespace gbe
                           uint32_t msg_type,
                           unsigned char vme_search_path_lut,
                           unsigned char lut_sub);
+    virtual void IME(unsigned char bti,
+                         GenRegister dest,
+                         GenRegister msg,
+                         uint32_t msg_type);
     virtual void FLUSH_SAMPLERCACHE(GenRegister dst);
 
     /*! TypedWrite instruction for texture */

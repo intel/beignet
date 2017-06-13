@@ -217,7 +217,8 @@ namespace ir {
       return T::isClassOf(*this);
     }
     /*! max_src used by vme for payload passing and setting */
-    static const uint32_t MAX_SRC_NUM = 40;
+    //static const uint32_t MAX_SRC_NUM = 48;
+    static const uint32_t MAX_SRC_NUM = 64;
     static const uint32_t MAX_DST_NUM = 32;
     DebugInfo DBGInfo;
   protected:
@@ -420,6 +421,16 @@ namespace ir {
 
   /*! Video motion estimation */
   class VmeInstruction : public Instruction {
+  public:
+    uint8_t getImageIndex() const;
+    uint8_t getMsgType() const;
+    Type getSrcType(void) const;
+    Type getDstType(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  class ImeInstruction : public Instruction {
   public:
     uint8_t getImageIndex() const;
     uint8_t getMsgType() const;
@@ -880,6 +891,7 @@ namespace ir {
   Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, uint8_t srcNum, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset);
   /*! video motion estimation */
   Instruction VME(uint8_t imageIndex, Tuple dst, Tuple src, uint32_t dstNum, uint32_t srcNum, int msg_type, int vme_search_path_lut, int lut_sub);
+  Instruction IME(uint8_t imageIndex, Tuple dst, Tuple src, uint32_t dstNum, uint32_t srcNum, int msg_type);
   /*! get image information , such as width/height/depth/... */
   Instruction GET_IMAGE_INFO(int infoType, Register dst, uint8_t imageIndex, Register infoReg);
   /*! label labelIndex */

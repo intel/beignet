@@ -576,6 +576,7 @@ skl_gt1_break:
 #endif
       cl_intel_platform_get_default_extension(ret);
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      cl_intel_platform_enable_extension(ret, cl_intel_device_side_avc_motion_estimation_ext_id);
       break;
 
     case PCI_CHIP_SKYLAKE_ULT_GT2:
@@ -601,6 +602,7 @@ skl_gt2_break:
 #endif
       cl_intel_platform_get_default_extension(ret);
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      cl_intel_platform_enable_extension(ret, cl_intel_device_side_avc_motion_estimation_ext_id);
       break;
 
     case PCI_CHIP_SKYLAKE_ULT_GT3:
@@ -624,6 +626,7 @@ skl_gt3_break:
       cl_intel_platform_enable_extension(ret, cl_khr_fp64_ext_id);
 #endif
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      cl_intel_platform_enable_extension(ret, cl_intel_device_side_avc_motion_estimation_ext_id);
       break;
 
     case PCI_CHIP_SKYLAKE_DT_GT4:
@@ -643,6 +646,7 @@ skl_gt4_break:
 #endif
       cl_intel_platform_get_default_extension(ret);
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      cl_intel_platform_enable_extension(ret, cl_intel_device_side_avc_motion_estimation_ext_id);
       break;
 
     case PCI_CHIP_BROXTON_0:

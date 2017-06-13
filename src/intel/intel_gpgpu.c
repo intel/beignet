@@ -1337,6 +1337,75 @@ intel_gpgpu_bind_image_for_vme_gen7(intel_gpgpu_t *gpgpu,
   assert(index < GEN_MAX_SURFACES);
 }
 
+static void
+intel_gpgpu_bind_image_for_vme_gen9(intel_gpgpu_t *gpgpu,
+                                    uint32_t index,
+                                    dri_bo* obj_bo,
+                                    uint32_t obj_bo_offset,
+                                    uint32_t format,
+                                    cl_mem_object_type type,
+                                    uint32_t bpp,
+                                    int32_t w,
+                                    int32_t h,
+                                    int32_t depth,
+                                    int32_t pitch,
+                                    int32_t slice_pitch,
+                                    int32_t tiling)
+{
+  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual + gpgpu->aux_offset.surface_heap_offset;
+  gen9_media_surface_state_t *ss = (gen9_media_surface_state_t *) &heap->surface[index * sizeof(gen8_surface_state_t)];
+
+  memset(ss, 0, sizeof(gen8_surface_state_t));
+  ss->ss0.rotation = 0; //++
+  ss->ss1.uv_offset_v_direction = 0;
+  ss->ss1.pic_struct = 0;
+  ss->ss1.width = w - 1;
+  ss->ss1.height = h - 1;
+  if (tiling == GPGPU_NO_TILE) {
+    ss->ss2.tile_mode = 0;
+  }
+  else if (tiling == GPGPU_TILE_X){
+    ss->ss2.tile_mode = 2;
+  }
+  else if (tiling == GPGPU_TILE_Y){
+    ss->ss2.tile_mode = 3;
+  }
+  ss->ss2.half_pitch_for_chroma = 0;
+  ss->ss2.surface_pitch = pitch - 1;
+  ss->ss2.address_control = 1; //++ CLAMP: 0; MIRROR:1;
+  ss->ss2.mem_compress_enable = 0; //++
+  ss->ss2.mem_compress_mode = 0; //++
+  ss->ss2.uv_offset_v_direction_msb = 0; //++
+  ss->ss2.uv_offset_u_direction = 0; //++
+  ss->ss2.interleave_chroma = 0;
+  ss->ss2.surface_format = 12; //Y8_UNORM
+  //ss->ss2.surface_format = 4; //PLANAR_420_8
+  ss->ss3.y_offset_for_u = 0;
+  ss->ss3.x_offset_for_u = 0;
+  ss->ss4.y_offset_for_v = 0;
+  ss->ss4.x_offset_for_v = 0;
+  ss->ss5.surface_object_control_state = cl_gpgpu_get_cache_ctrl();
+  ss->ss5.tiled_res_mode = 0;  //++ TRMODE_NONE: 0; TRMODE_TILEYF: 1; TRMODE_TILEYS:2
+  ss->ss5.vert_line_stride_offset = 0; //++
+  ss->ss5.vert_line_stride = 0;  //++
+  ss->ss6.base_addr = (obj_bo->offset64 + obj_bo_offset) & 0xffffffff;  //
+  ss->ss7.base_addr_high = ((obj_bo->offset64 + obj_bo_offset) >> 32) & 0xffffffff; //
+
+
+  heap->binding_table[index] = offsetof(surface_heap_t, surface) +
+                               index * surface_state_sz;
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
+                    I915_GEM_DOMAIN_RENDER,
+                    I915_GEM_DOMAIN_RENDER,
+                    obj_bo_offset,
+                    gpgpu->aux_offset.surface_heap_offset +
+                    heap->binding_table[index] +
+                    offsetof(gen9_media_surface_state_t, ss6),
+                    obj_bo);
+
+  assert(index < GEN_MAX_SURFACES);
+}
+
 
 static void
 intel_gpgpu_bind_image_gen75(intel_gpgpu_t *gpgpu,
@@ -2562,6 +2631,7 @@ intel_set_gpgpu_callbacks(int device_id)
   }
   if (IS_GEN9(device_id)) {
     cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen9;
+    cl_gpgpu_bind_image_for_vme = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_for_vme_gen9;
     intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen8;
     cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen9;
     intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen8;

@@ -682,6 +682,50 @@ namespace ir {
       uint32_t dstNum;
     };
 
+    class ALIGNED_INSTRUCTION ImeInstruction :
+      public BasePolicy,
+      public TupleSrcPolicy<ImeInstruction>,
+      public TupleDstPolicy<ImeInstruction>
+    {
+    public:
+      ImeInstruction(uint8_t imageIdx, Tuple dstTuple, Tuple srcTuple,
+                     uint32_t dstNum, uint32_t srcNum, int msg_type) {
+        this->opcode = OP_IME;
+        this->dst = dstTuple;
+        this->src = srcTuple;
+        this->dstNum = dstNum;
+        this->srcNum = srcNum;
+        this->imageIdx = imageIdx;
+        this->msg_type = msg_type;
+      }
+      INLINE bool wellFormed(const Function &fn, std::string &why) const;
+      INLINE void out(std::ostream &out, const Function &fn) const {
+        this->outOpcode(out);
+        out << " src_surface id " << (int)this->getImageIndex()
+            << " ref_surface id " << (int)this->getImageIndex() + 1;
+        for(uint32_t i = 0; i < dstNum; i++){
+          out<< " %" << this->getDst(fn, i);
+        }
+        for(uint32_t i = 0; i < srcNum; i++){
+          out<< " %" << this->getSrc(fn, i);
+        }
+        out
+            << " msg_type " << (int)this->getMsgType();
+      }
+      Tuple src;
+      Tuple dst;
+
+      INLINE uint8_t getImageIndex(void) const { return this->imageIdx; }
+      INLINE uint8_t getMsgType(void) const { return this->msg_type; }
+
+      INLINE Type getSrcType(void) const { return TYPE_U32; }
+      INLINE Type getDstType(void) const { return TYPE_U32; }
+      uint8_t imageIdx;
+      uint8_t msg_type;
+      uint32_t srcNum;
+      uint32_t dstNum;
+    };
+
 
     class ALIGNED_INSTRUCTION TypedWriteInstruction : // TODO
       public BasePolicy,
@@ -1454,6 +1498,8 @@ namespace ir {
     { return true; }
     INLINE bool VmeInstruction::wellFormed(const Function &fn, std::string &why) const
     { return true; }
+    INLINE bool ImeInstruction::wellFormed(const Function &fn, std::string &why) const
+    { return true; }
     INLINE bool TypedWriteInstruction::wellFormed(const Function &fn, std::string &why) const
     { return true; }
     INLINE bool GetImageInfoInstruction::wellFormed(const Function &fn, std::string &why) const
@@ -2182,6 +2228,9 @@ END_INTROSPECTION(WaitInstruction)
 START_INTROSPECTION(VmeInstruction)
 #include "ir/instruction.hxx"
 END_INTROSPECTION(VmeInstruction)
+START_INTROSPECTION(ImeInstruction)
+#include "ir/instruction.hxx"
+END_INTROSPECTION(ImeInstruction)
 
 START_INTROSPECTION(WorkGroupInstruction)
 #include "ir/instruction.hxx"
@@ -2404,6 +2453,10 @@ DECL_MEM_FN(VmeInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(VmeInstruction, Type, getDstType(void), getDstType())
 DECL_MEM_FN(VmeInstruction, uint8_t, getImageIndex(void), getImageIndex())
 DECL_MEM_FN(VmeInstruction, uint8_t, getMsgType(void), getMsgType())
+DECL_MEM_FN(ImeInstruction, Type, getSrcType(void), getSrcType())
+DECL_MEM_FN(ImeInstruction, Type, getDstType(void), getDstType())
+DECL_MEM_FN(ImeInstruction, uint8_t, getImageIndex(void), getImageIndex())
+DECL_MEM_FN(ImeInstruction, uint8_t, getMsgType(void), getMsgType())
 DECL_MEM_FN(TypedWriteInstruction, Type, getSrcType(void), getSrcType())
 DECL_MEM_FN(TypedWriteInstruction, Type, getCoordType(void), getCoordType())
 DECL_MEM_FN(TypedWriteInstruction, uint8_t, getImageIndex(void), getImageIndex())
@@ -2708,6 +2761,9 @@ DECL_MEM_FN(MemInstruction, void,     setBtiReg(Register reg), setBtiReg(reg))
 
   Instruction VME(uint8_t imageIndex, Tuple dst, Tuple src, uint32_t dstNum, uint32_t srcNum, int msg_type, int vme_search_path_lut, int lut_sub) {
     return internal::VmeInstruction(imageIndex, dst, src, dstNum, srcNum, msg_type, vme_search_path_lut, lut_sub).convert();
+  }
+  Instruction IME(uint8_t imageIndex, Tuple dst, Tuple src, uint32_t dstNum, uint32_t srcNum, int msg_type) {
+    return internal::ImeInstruction(imageIndex, dst, src, dstNum, srcNum, msg_type).convert();
   }
 
   Instruction TYPED_WRITE(uint8_t imageIndex, Tuple src, uint8_t srcNum, Type srcType, Type coordType) {

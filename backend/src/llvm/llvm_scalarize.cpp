@@ -717,6 +717,7 @@ namespace gbe {
             break;
           }
           case GEN_OCL_VME:
+          case GEN_OCL_IME:
           case GEN_OCL_SUB_GROUP_BLOCK_READ_UI_MEM2:
           case GEN_OCL_SUB_GROUP_BLOCK_READ_UI_MEM4:
           case GEN_OCL_SUB_GROUP_BLOCK_READ_UI_MEM8:

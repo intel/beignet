@@ -193,6 +193,7 @@ namespace gbe
            this->opcode == SEL_OP_BYTE_GATHERA64  ||
            this->opcode == SEL_OP_SAMPLE ||
            this->opcode == SEL_OP_VME ||
+           this->opcode == SEL_OP_IME ||
            this->opcode == SEL_OP_DWORD_GATHER ||
            this->opcode == SEL_OP_OBREAD ||
            this->opcode == SEL_OP_MBREAD;
@@ -740,6 +741,7 @@ namespace gbe
     void SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *msgPayloads, uint32_t msgNum, uint32_t bti, uint32_t sampler, bool isLD, bool isUniform);
     /*! Encode vme instructions */
     void VME(uint32_t bti, GenRegister *dst, GenRegister *payloadVal, uint32_t dstNum, uint32_t srcNum, uint32_t msg_type, uint32_t vme_search_path_lut, uint32_t lut_sub);
+    void IME(uint32_t bti, GenRegister *dst, GenRegister *payloadVal, uint32_t dstNum, uint32_t srcNum, uint32_t msg_type);
     /*! Encode typed write instructions */
     void TYPED_WRITE(GenRegister *msgs, uint32_t msgNum, uint32_t bti, bool is3D);
     /*! Get image information */
@@ -2731,6 +2733,25 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     insn->extra.msg_type = msg_type;
     insn->extra.vme_search_path_lut = vme_search_path_lut;
     insn->extra.lut_sub = lut_sub;
+  }
+
+  void Selection::Opaque::IME(uint32_t bti, GenRegister *dst, GenRegister *payloadVal,
+                              uint32_t dstNum, uint32_t srcNum, uint32_t msg_type) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_IME, dstNum, srcNum);
+    SelectionVector *dstVector = this->appendVector();
+
+    for (uint32_t elemID = 0; elemID < dstNum; ++elemID)
+      insn->dst(elemID) = dst[elemID];
+    for (uint32_t elemID = 0; elemID < srcNum; ++elemID)
+      insn->src(elemID) = payloadVal[elemID];
+
+    dstVector->regNum = dstNum;
+    dstVector->isSrc = 0;
+    dstVector->offsetID = 0;
+    dstVector->reg = &insn->dst(0);
+
+    insn->setbti(bti);
+    insn->extra.ime_msg_type = msg_type;
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -7045,6 +7066,47 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     DECL_CTOR(VmeInstruction, 1, 1);
   };
 
+  DECL_PATTERN(ImeInstruction)
+  {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::ImeInstruction &insn, bool &markChildren) const
+    {
+      using namespace ir;
+      uint32_t msg_type;
+      msg_type = insn.getMsgType();
+      GBE_ASSERT(msg_type == 1 || msg_type == 2 || msg_type == 3);
+      uint32_t payloadLen = 0;
+      if(msg_type == 2){
+        payloadLen = 6;
+      }
+      else if(msg_type == 1 || msg_type == 3){
+        payloadLen = 8;
+      }
+      uint32_t selDstNum = insn.getDstNum() + payloadLen;
+      uint32_t srcNum = insn.getSrcNum();
+      vector<GenRegister> dst(selDstNum);
+      vector<GenRegister> payloadVal(srcNum);
+      uint32_t valueID = 0;
+      for (valueID = 0; valueID < insn.getDstNum(); ++valueID)
+        dst[valueID] = sel.selReg(insn.getDst(valueID), insn.getDstType());
+      for (valueID = insn.getDstNum(); valueID < selDstNum; ++valueID)
+        dst[valueID] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+
+      for (valueID = 0; valueID < srcNum; ++valueID)
+        payloadVal[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
+
+      uint32_t bti = insn.getImageIndex() + BTI_WORKAROUND_IMAGE_OFFSET;
+      if (bti > BTI_MAX_ID) {
+        std::cerr << "Too large bti " << bti;
+        return false;
+      }
+
+      sel.IME(bti, dst.data(), payloadVal.data(), selDstNum, srcNum, msg_type);
+
+      return true;
+    }
+    DECL_CTOR(ImeInstruction, 1, 1);
+  };
+
   /*! Typed write instruction pattern. */
   DECL_PATTERN(TypedWriteInstruction)
   {
@@ -8201,6 +8263,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     this->insert<SelectModifierInstructionPattern>();
     this->insert<SampleInstructionPattern>();
     this->insert<VmeInstructionPattern>();
+    this->insert<ImeInstructionPattern>();
     this->insert<GetImageInfoInstructionPattern>();
     this->insert<ReadARFInstructionPattern>();
     this->insert<RegionInstructionPattern>();

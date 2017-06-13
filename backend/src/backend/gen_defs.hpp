@@ -219,6 +219,7 @@ enum GenMessageTarget {
   GEN_SFID_DATAPORT_DATA            = 10,
   GEN_SFID_PIXEL_INTERPOLATOR       = 11,
   GEN_SFID_DATAPORT1_DATA           = 12, /* New for HSW and BDW. */
+  GEN_SFID_CHECK_REFINE             = 13, /* New for SLK+*/
 };
 
 #define GEN_PREDICATE_NONE                    0

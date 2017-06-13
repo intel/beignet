@@ -62,6 +62,111 @@ namespace gbe
     }
   }
 
+  void Gen9Context::emitImeInstruction(const SelectionInstruction &insn) {
+    const GenRegister dst = ra->genReg(insn.dst(0));
+    const unsigned int msg_type = insn.extra.ime_msg_type;
+
+    GBE_ASSERT(msg_type == 1 || msg_type == 2 || msg_type == 3);
+    uint32_t execWidth_org = p->curr.execWidth;
+    int virt_pld_len;
+    int phi_pld_len = 0;
+    int virt_rsp_len;
+
+#define PHI_SIC_PAYLOAD_LEN 8
+#define PHI_IME_PAYLOAD_LEN 6
+#define PHI_VME_WRITEBACK_LEN 7
+
+    if(msg_type == 1 || msg_type == 2 || msg_type == 3)
+      virt_rsp_len = PHI_VME_WRITEBACK_LEN;
+    if(msg_type == 1 || msg_type == 3)
+      phi_pld_len = PHI_SIC_PAYLOAD_LEN;
+    else if(msg_type == 2)
+      phi_pld_len = PHI_IME_PAYLOAD_LEN;
+    if(execWidth_org == 8)
+      virt_pld_len = phi_pld_len;
+    else if(execWidth_org == 16)
+      virt_pld_len = (phi_pld_len + 1) / 2;
+    p->push();
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.noMask = 1;
+    p->curr.execWidth = 1;
+    /* Now cl_intel_device_side_avc_motion_estimation is impelemented based on simd16 mode.
+     * So fall back to simd8 is not acceptable now.
+     * */
+    GBE_ASSERT(execWidth_org == 16);
+    /* Use MOV to Setup bits of payload: mov payload value stored in insn.src(x) to
+     * consecutive payload grf.
+     * In simd8 mode, one virtual grf register map to one physical grf register. But
+     * in simd16 mode, one virtual grf register map to two physical grf registers.
+     * So we should treat them differently.
+     * */
+    if(execWidth_org == 8){
+      for(int i=0; i < virt_pld_len; i++){
+        GenRegister payload_grf = ra->genReg(insn.dst(virt_rsp_len+i));
+        payload_grf.vstride = GEN_VERTICAL_STRIDE_0;
+        payload_grf.width = GEN_WIDTH_1;
+        payload_grf.hstride = GEN_HORIZONTAL_STRIDE_0;
+        payload_grf.subphysical = 1;
+        for(int j=0; j < 8; j++){
+          payload_grf.subnr = (7 - j) * typeSize(GEN_TYPE_UD);
+          GenRegister payload_val = ra->genReg(insn.src(i*8+j));
+          payload_val.vstride = GEN_VERTICAL_STRIDE_0;
+          payload_val.width = GEN_WIDTH_1;
+          payload_val.hstride = GEN_HORIZONTAL_STRIDE_0;
+
+          p->MOV(payload_grf, payload_val);
+        }
+      }
+    }
+    else if(execWidth_org == 16){
+      for(int i=0; i < virt_pld_len; i++){
+        int nr_num = 2;
+        if( (i == virt_pld_len-1) && (phi_pld_len%2 == 1) )
+          nr_num = 1;
+        for(int k = 0; k < nr_num; k++){
+          GenRegister payload_grf = ra->genReg(insn.dst(virt_rsp_len+i));
+          payload_grf.nr += k;
+          payload_grf.vstride = GEN_VERTICAL_STRIDE_0;
+          payload_grf.width = GEN_WIDTH_1;
+          payload_grf.hstride = GEN_HORIZONTAL_STRIDE_0;
+          payload_grf.subphysical = 1;
+          for(int j=0; j < 8; j++){
+            payload_grf.subnr = (7 - j) * typeSize(GEN_TYPE_UD);
+            GenRegister payload_val = ra->genReg(insn.src(i*16+k*8+j));
+            payload_val.vstride = GEN_VERTICAL_STRIDE_0;
+            payload_val.width = GEN_WIDTH_1;
+            payload_val.hstride = GEN_HORIZONTAL_STRIDE_0;
+
+            p->MOV(payload_grf, payload_val);
+          }
+        }
+      }
+    }
+    p->pop();
+
+#undef PHI_SIC_PAYLOAD_LEN
+#undef PHI_IME_PAYLOAD_LEN
+#undef PHI_VME_WRITEBACK_LEN
+
+    p->push();
+    p->curr.predicate = GEN_PREDICATE_NONE;
+    p->curr.noMask = 1;
+    p->curr.execWidth = 1;
+    GenRegister payload_did = GenRegister::retype(ra->genReg(insn.dst(virt_rsp_len)), GEN_TYPE_UB);
+    payload_did.vstride = GEN_VERTICAL_STRIDE_0;
+    payload_did.width = GEN_WIDTH_1;
+    payload_did.hstride = GEN_HORIZONTAL_STRIDE_0;
+    payload_did.subphysical = 1;
+    payload_did.subnr = 20 * typeSize(GEN_TYPE_UB);
+    GenRegister grf0 = GenRegister::ub1grf(0, 20);
+    p->MOV(payload_did, grf0);
+    p->pop();
+
+    const GenRegister msgPayload = ra->genReg(insn.dst(virt_rsp_len));
+    const unsigned char bti = insn.getbti();
+    p->IME(bti, dst, msgPayload, msg_type);
+  }
+
   void BxtContext::newSelection(void) {
     this->sel = GBE_NEW(SelectionBxt, *this);
   }

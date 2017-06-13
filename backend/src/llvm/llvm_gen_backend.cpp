@@ -4048,6 +4048,7 @@ namespace gbe
       case GEN_OCL_SIMD_ID:
       case GEN_OCL_SIMD_SHUFFLE:
       case GEN_OCL_VME:
+      case GEN_OCL_IME:
       case GEN_OCL_WORK_GROUP_ALL:
       case GEN_OCL_WORK_GROUP_ANY:
       case GEN_OCL_WORK_GROUP_BROADCAST:
@@ -4951,6 +4952,41 @@ namespace gbe
             ctx.VME(imageID, dstTuple, srcTuple, dst_length, src_length,
                     msg_type, vme_search_path_lut_x.getIntegerValue(),
                     lut_sub_x.getIntegerValue());
+            break;
+          }
+          case GEN_OCL_IME:
+          {
+
+            const uint8_t imageID = getImageID(I);
+
+            AI++;
+            AI++;
+
+            Constant *msg_type_cpv = dyn_cast<Constant>(*(AI + 64));
+            assert(msg_type_cpv);
+            const ir::Immediate &msg_type_x = processConstantImm(msg_type_cpv);
+            int msg_type = msg_type_x.getIntegerValue();
+            // msy_type (00: IDM [BDW+], 01: SIC, 10: IME, 11: FBR)
+            GBE_ASSERT(msg_type == 1 || msg_type == 2 || msg_type == 3);
+            uint32_t src_length = ((msg_type == 1 || msg_type == 3) ? 64 : 48);
+
+            vector<ir::Register> dstTupleData, srcTupleData;
+            for (uint32_t i = 0; i < src_length; i++, AI++){
+              srcTupleData.push_back(this->getRegister(*AI));
+            }
+
+            const ir::Tuple srcTuple = ctx.arrayTuple(&srcTupleData[0], src_length);
+
+            uint32_t dst_length;
+            dst_length = 7;
+            for (uint32_t elemID = 0; elemID < dst_length; ++elemID) {
+              const ir::Register reg = this->getRegister(&I, elemID);
+              dstTupleData.push_back(reg);
+            }
+            const ir::Tuple dstTuple = ctx.arrayTuple(&dstTupleData[0], dst_length);
+
+            ctx.IME(imageID, dstTuple, srcTuple, dst_length, src_length,
+                    msg_type);
             break;
           }
           case GEN_OCL_IN_PRIVATE:
