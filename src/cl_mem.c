@@ -2162,14 +2162,13 @@ get_align_size_for_copy_kernel(struct _cl_mem_image* image, const size_t origin0
                             const size_t offset, cl_image_format *fmt) {
   size_t align_size = 0;
 
-  if((image->image_type == CL_MEM_OBJECT_IMAGE2D) && ((image->w * image->bpp) % ALIGN16 == 0) &&
-      ((origin0 * image->bpp) % ALIGN16 == 0) && (region0 % ALIGN16 == 0) && (offset % ALIGN16 == 0)){
+  if (((image->w * image->bpp) % ALIGN16 == 0) && ((origin0 * image->bpp) % ALIGN16 == 0) && (region0 % ALIGN16 == 0) &&
+      (offset % ALIGN16 == 0)) {
     fmt->image_channel_order = CL_RGBA;
     fmt->image_channel_data_type = CL_UNSIGNED_INT32;
     align_size = ALIGN16;
-  }
-  else if((image->image_type == CL_MEM_OBJECT_IMAGE2D) && ((image->w * image->bpp) % ALIGN4 == 0) &&
-      ((origin0 * image->bpp) % ALIGN4 == 0) && (region0 % ALIGN4 == 0) && (offset % ALIGN4 == 0)){
+  } else if (((image->w * image->bpp) % ALIGN4 == 0) && ((origin0 * image->bpp) % ALIGN4 == 0) &&
+             (region0 % ALIGN4 == 0) && (offset % ALIGN4 == 0)) {
     fmt->image_channel_order = CL_R;
     fmt->image_channel_data_type = CL_UNSIGNED_INT32;
     align_size = ALIGN4;
@@ -2247,11 +2246,28 @@ cl_mem_copy_image_to_buffer(cl_command_queue queue, cl_event event, struct _cl_m
           cl_internal_copy_image_2d_to_buffer_str, (size_t)cl_internal_copy_image_2d_to_buffer_str_size, NULL);
     }
   }else if(image->image_type == CL_MEM_OBJECT_IMAGE3D) {
-    extern char cl_internal_copy_image_3d_to_buffer_str[];
-    extern size_t cl_internal_copy_image_3d_to_buffer_str_size;
+    if (align_size == ALIGN16) {
+      extern char cl_internal_copy_image_3d_to_buffer_align16_str[];
+      extern size_t cl_internal_copy_image_3d_to_buffer_align16_str_size;
 
-    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER,
-          cl_internal_copy_image_3d_to_buffer_str, (size_t)cl_internal_copy_image_3d_to_buffer_str_size, NULL);
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER_ALIGN16,
+                                                  cl_internal_copy_image_3d_to_buffer_align16_str,
+                                                  (size_t)cl_internal_copy_image_3d_to_buffer_align16_str_size, NULL);
+    } else if (align_size == ALIGN4) {
+      extern char cl_internal_copy_image_3d_to_buffer_align4_str[];
+      extern size_t cl_internal_copy_image_3d_to_buffer_align4_str_size;
+
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER_ALIGN4,
+                                                  cl_internal_copy_image_3d_to_buffer_align4_str,
+                                                  (size_t)cl_internal_copy_image_3d_to_buffer_align4_str_size, NULL);
+    } else {
+      extern char cl_internal_copy_image_3d_to_buffer_str[];
+      extern size_t cl_internal_copy_image_3d_to_buffer_str_size;
+
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER,
+                                                  cl_internal_copy_image_3d_to_buffer_str,
+                                                  (size_t)cl_internal_copy_image_3d_to_buffer_str_size, NULL);
+    }
   }
 
   if (!ker) {
@@ -2347,11 +2363,27 @@ cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_event event, cl_mem buffe
           cl_internal_copy_buffer_to_image_2d_str, (size_t)cl_internal_copy_buffer_to_image_2d_str_size, NULL);
     }
   }else if(image->image_type == CL_MEM_OBJECT_IMAGE3D) {
+    if (align_size == ALIGN16) {
+      extern char cl_internal_copy_buffer_to_image_3d_align16_str[];
+      extern size_t cl_internal_copy_buffer_to_image_3d_align16_str_size;
+
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_3D_ALIGN16,
+                                                  cl_internal_copy_buffer_to_image_3d_align16_str,
+                                                  (size_t)cl_internal_copy_buffer_to_image_3d_align16_str_size, NULL);
+    } else if (align_size == ALIGN4) {
+      extern char cl_internal_copy_buffer_to_image_3d_align4_str[];
+      extern size_t cl_internal_copy_buffer_to_image_3d_align4_str_size;
+
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_3D_ALIGN4,
+                                                  cl_internal_copy_buffer_to_image_3d_align4_str,
+                                                  (size_t)cl_internal_copy_buffer_to_image_3d_align4_str_size, NULL);
+    } else {
       extern char cl_internal_copy_buffer_to_image_3d_str[];
       extern size_t cl_internal_copy_buffer_to_image_3d_str_size;
 
       ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_3D,
           cl_internal_copy_buffer_to_image_3d_str, (size_t)cl_internal_copy_buffer_to_image_3d_str_size, NULL);
+    }
   }
   if (!ker)
     return CL_OUT_OF_RESOURCES;
