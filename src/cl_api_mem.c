@@ -1857,23 +1857,28 @@ clEnqueueReadImageByKernel(cl_command_queue command_queue,
   if (image->tmp_ker_buf)
     clReleaseMemObject(image->tmp_ker_buf);
 
-  image->tmp_ker_buf = clCreateBuffer(command_queue->ctx, CL_MEM_ALLOC_HOST_PTR,
-    mem->size, NULL, &err);
+  size_t buf_size = region[0] * region[1] * region[2] * image->bpp;
+  image->tmp_ker_buf = clCreateBuffer(command_queue->ctx, CL_MEM_USE_HOST_PTR,
+    buf_size, ptr, &err);
   if (image->tmp_ker_buf == NULL || err != CL_SUCCESS) {
     image->tmp_ker_buf = NULL;
     return err;
   }
 
+  cl_event e;
   err = clEnqueueCopyImageToBuffer(command_queue, mem, image->tmp_ker_buf, origin,
-    region, 0, 0, NULL, NULL);
+    region, 0, num_events_in_wait_list, event_wait_list, &e);
   if (err != CL_SUCCESS) {
     clReleaseMemObject(image->tmp_ker_buf);
+    clReleaseEvent(e);
     image->tmp_ker_buf = NULL;
     return err;
   }
 
-  return clEnqueueReadBuffer(command_queue, image->tmp_ker_buf, blocking_read, 0,
-    mem->size, ptr, num_events_in_wait_list, event_wait_list, event);
+  err = clEnqueueReadBuffer(command_queue, image->tmp_ker_buf, blocking_read, 0,
+    buf_size, ptr, 1, &e, event);
+  clReleaseEvent(e);
+  return err;
 }
 
 cl_int
@@ -2064,14 +2069,20 @@ clEnqueueWriteImageByKernel(cl_command_queue command_queue,
   if (image->tmp_ker_buf)
     clReleaseMemObject(image->tmp_ker_buf);
 
-  image->tmp_ker_buf = clCreateBuffer(command_queue->ctx, CL_MEM_USE_HOST_PTR, mem->size, (void*)ptr, &err);
+  size_t buf_size = region[0] * region[1] * region[2] * image->bpp;
+  image->tmp_ker_buf = clCreateBuffer(command_queue->ctx, CL_MEM_USE_HOST_PTR, buf_size, (void*)ptr, &err);
   if (image->tmp_ker_buf == NULL || err != CL_SUCCESS) {
     image->tmp_ker_buf = NULL;
     return err;
   }
 
-  return clEnqueueCopyBufferToImage(command_queue, image->tmp_ker_buf, mem, 0, origin, region,
+  err = clEnqueueCopyBufferToImage(command_queue, image->tmp_ker_buf, mem, 0, origin, region,
     num_events_in_wait_list, event_wait_list, event);
+
+  if (blocking_write)
+    err = clFinish(command_queue);
+
+  return err;
 }
 
 cl_int
