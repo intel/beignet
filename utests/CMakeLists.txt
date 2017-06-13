@@ -307,7 +307,8 @@ set (utests_sources
   compiler_device_enqueue.cpp
   compiler_sqrt_div.cpp
   compiler_remove_negative_add.cpp
-  compiler_fdiv2rcp.cpp)
+  compiler_fdiv2rcp.cpp
+  compiler_intra_prediction.cpp)
 
 if (LLVM_VERSION_NODOT VERSION_GREATER 34)
   SET(utests_sources
