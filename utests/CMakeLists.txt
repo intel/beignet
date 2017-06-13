@@ -308,6 +308,7 @@ set (utests_sources
   compiler_sqrt_div.cpp
   compiler_remove_negative_add.cpp
   compiler_fdiv2rcp.cpp
+  compiler_block_motion_estimate_intel.cpp
   compiler_skip_check.cpp
   compiler_intra_prediction.cpp)
 
