@@ -40,6 +40,33 @@ namespace gbe
     return elements;
   }
 
+  class ReplaceInfo
+  {
+  public:
+    ReplaceInfo(SelectionInstruction &insn,
+                const GenRegister &intermedia,
+                const GenRegister &replacement) : insn(insn), intermedia(intermedia), replacement(replacement)
+    {
+      assert(insn.opcode == SEL_OP_MOV || insn.opcode == SEL_OP_ADD);
+      assert(&(insn.dst(0)) == &intermedia);
+      this->elements = CalculateElements(intermedia, insn.state.execWidth);
+      replacementOverwritten = false;
+    }
+    ~ReplaceInfo()
+    {
+      this->toBeReplaceds.clear();
+    }
+
+    SelectionInstruction &insn;
+    const GenRegister &intermedia;
+    uint32_t elements;
+    const GenRegister &replacement;
+    set<GenRegister *> toBeReplaceds;
+    set<SelectionInstruction*> toBeReplacedInsns;
+    bool replacementOverwritten;
+    GBE_CLASS(ReplaceInfo);
+  };
+
   class SelOptimizer
   {
   public:
@@ -66,32 +93,7 @@ namespace gbe
 
   private:
     // local copy propagation
-    class ReplaceInfo
-    {
-    public:
-      ReplaceInfo(SelectionInstruction& insn,
-                  const GenRegister& intermedia,
-                  const GenRegister& replacement) :
-                  insn(insn), intermedia(intermedia), replacement(replacement)
-      {
-        assert(insn.opcode == SEL_OP_MOV || insn.opcode == SEL_OP_ADD);
-        assert(&(insn.dst(0)) == &intermedia);
-        this->elements = CalculateElements(intermedia, insn.state.execWidth);
-        replacementOverwritten = false;
-      }
-      ~ReplaceInfo()
-      {
-        this->toBeReplaceds.clear();
-      }
 
-      SelectionInstruction& insn;
-      const GenRegister& intermedia;
-      uint32_t elements;
-      const GenRegister& replacement;
-      set<GenRegister*> toBeReplaceds;
-      bool replacementOverwritten;
-      GBE_CLASS(ReplaceInfo);
-    };
     typedef map<ir::Register, ReplaceInfo*> ReplaceInfoMap;
     ReplaceInfoMap replaceInfoMap;
     void doLocalCopyPropagation();
@@ -332,13 +334,328 @@ namespace gbe
     virtual void run();
   };
 
+  class SelGlobalImmMovOpt : public SelGlobalOptimizer
+  {
+  public:
+    SelGlobalImmMovOpt(const GenContext& ctx, uint32_t features, intrusive_list<SelectionBlock> *blockList) :
+      SelGlobalOptimizer(ctx, features)
+      {
+        mblockList = blockList;
+      }
+
+    virtual void run();
+
+    void addToReplaceInfoMap(SelectionInstruction& insn);
+    void doGlobalCopyPropagation();
+    bool CanBeReplaced(const ReplaceInfo* info, SelectionInstruction& insn, const GenRegister& var);
+    void cleanReplaceInfoMap();
+    void doReplacement(ReplaceInfo* info);
+
+  private:
+    intrusive_list<SelectionBlock> *mblockList;
+
+    typedef map<ir::Register, ReplaceInfo*> ReplaceInfoMap;
+    ReplaceInfoMap replaceInfoMap;
+
+  };
+
+  extern void outputSelectionInst(SelectionInstruction &insn);
+
+  void SelGlobalImmMovOpt::cleanReplaceInfoMap()
+  {
+    for (auto& pair : replaceInfoMap) {
+      ReplaceInfo* info = pair.second;
+      doReplacement(info);
+      delete info;
+    }
+    replaceInfoMap.clear();
+  }
+
+#define RESULT() switch(insn->opcode) \
+            { \
+              case SEL_OP_ADD: \
+                result = s0 + s1; \
+                break; \
+              case SEL_OP_MUL: \
+                result = s0 * s1; \
+                break; \
+              case SEL_OP_AND: \
+                result = s0 & s1; \
+                break; \
+              case SEL_OP_OR: \
+                result = s0 | s1; \
+                break; \
+              case SEL_OP_XOR: \
+                result = s0 ^ s1; \
+                break; \
+              default: \
+                assert(0); \
+                break; \
+            }
+
+  void SelGlobalImmMovOpt::doReplacement(ReplaceInfo* info)
+  {
+    for (GenRegister* reg : info->toBeReplaceds) {
+      GenRegister::propagateRegister(*reg, info->replacement);
+    }
+
+    //after imm opt, maybe both src are imm, convert it to mov
+    for (SelectionInstruction* insn : info->toBeReplacedInsns) {
+      GenRegister& src0 = insn->src(0);
+      GenRegister& src1 = insn->src(1);
+      if (src0.file == GEN_IMMEDIATE_VALUE)
+      {
+        if (src1.file == GEN_IMMEDIATE_VALUE)
+        {
+          if (src0.type == GEN_TYPE_F)
+          {
+            float s0 = src0.value.f;
+            if (src0.absolute)
+              s0 = fabs(s0);
+            if (src0.negation)
+              s0 = -s0;
+
+            float s1 = src1.value.f;
+            if (src1.absolute)
+              s1 = fabs(s1);
+            if (src1.negation)
+              s1 = -s1;
+
+            float result;
+            switch(insn->opcode)
+            {
+              case SEL_OP_ADD:
+                result = s0 + s1;
+                break;
+              case SEL_OP_MUL:
+                result = s0 * s1;
+                break;
+              default:
+                assert(0);
+                break;
+            }
+
+            insn->src(0) = GenRegister::immf(result);
+          }
+          else if (src0.type == GEN_TYPE_D && src1.type == GEN_TYPE_D)
+          {
+            int s0 = src0.value.d;
+            if (src0.absolute)
+              s0 = abs(s0);
+            if (src0.negation)
+              s0 = -s0;
+
+            int s1 = src1.value.d;
+            if (src1.absolute)
+              s1 = abs(s1);
+            if (src1.negation)
+              s1 = -s1;
+
+            int result;
+            RESULT();
+            insn->src(0) = GenRegister::immd(result);
+            }
+            else if(src0.type == GEN_TYPE_UD || src1.type == GEN_TYPE_UD)
+            {
+              unsigned int s0 = src0.value.ud;
+              if (src0.absolute)
+                s0 = abs(s0);
+              if (src0.negation)
+                s0 = -s0;
+
+              unsigned int s1 = src1.value.ud;
+              if (src1.absolute)
+                s1 = abs(s1);
+              if (src1.negation)
+                s1 = -s1;
+
+              unsigned int result;
+              RESULT();
+              insn->src(0) = GenRegister::immud(result);
+            }
+            else
+            {
+              assert(0);
+            }
+
+            insn->opcode = SEL_OP_MOV;
+            insn->srcNum = 1;
+        }
+        else
+        {
+          //src0 cant be immediate, so exchange with src1
+          GenRegister tmp;
+          tmp = src0;
+          src0 = src1;
+          src1 = tmp;
+        }
+      }
+    }
+
+    info->insn.parent->insnList.erase(&(info->insn));
+  }
+
+  void SelGlobalImmMovOpt::addToReplaceInfoMap(SelectionInstruction& insn)
+  {
+    assert(insn.opcode == SEL_OP_MOV);
+    const GenRegister& src = insn.src(0);
+    const GenRegister& dst = insn.dst(0);
+    if (src.type != dst.type)
+      return;
+
+    ReplaceInfo* info = new ReplaceInfo(insn, dst, src);
+    replaceInfoMap[dst.reg()] = info;
+  }
+
+  bool SelGlobalImmMovOpt::CanBeReplaced(const ReplaceInfo* info, SelectionInstruction& insn, const GenRegister& var)
+  {
+    if(var.file == GEN_IMMEDIATE_VALUE)
+      return false;
+
+    switch(insn.opcode)
+    {
+      // imm source is supported by these instructions. And
+      // the src operators can be exchange in these instructions
+      case SEL_OP_ADD:
+      case SEL_OP_MUL:
+      case SEL_OP_AND:
+      case SEL_OP_OR:
+      case SEL_OP_XOR:
+        break;
+      default:
+        return false;
+    }
+
+    if(info->intermedia.type != var.type)
+    {
+        assert(info->replacement.file == GEN_IMMEDIATE_VALUE);
+        if(!((var.type == GEN_TYPE_D && info->intermedia.type == GEN_TYPE_UD)
+          || (var.type == GEN_TYPE_UD && info->intermedia.type == GEN_TYPE_D)))
+        {
+          return false;
+        }
+    }
+
+    if (info->intermedia.quarter == var.quarter &&
+          info->intermedia.subnr == var.subnr &&
+            info->intermedia.nr == var.nr)
+    {
+      uint32_t elements = CalculateElements(var, insn.state.execWidth);  //considering width, hstrid, vstrid and execWidth
+      if (info->elements != elements)
+        return false;
+    }
+
+#ifdef DEBUG_GLOBAL_IMM_OPT
+    outputSelectionInst(insn);
+#endif
+
+    return true;
+  }
+
+  void SelGlobalImmMovOpt::doGlobalCopyPropagation()
+  {
+    for(SelectionBlock &block : *mblockList)
+    {
+      for (SelectionInstruction &insn :block.insnList)
+      {
+        for (uint8_t i = 0; i < insn.srcNum; ++i)
+        {
+            ReplaceInfoMap::iterator it = replaceInfoMap.find(insn.src(i).reg());
+            if (it != replaceInfoMap.end())
+            {
+              ReplaceInfo *info = it->second;
+              if (CanBeReplaced(info, insn, insn.src(i)))
+              {
+                info->toBeReplaceds.insert(&insn.src(i));
+                info->toBeReplacedInsns.insert(&insn);
+              }
+              else
+              {
+                replaceInfoMap.erase(it);
+                delete info;
+              }
+            }
+        }
+
+        for (uint8_t i = 0; i < insn.dstNum; ++i)
+        {
+          ReplaceInfoMap::iterator it = replaceInfoMap.find(insn.dst(i).reg());
+          if (it != replaceInfoMap.end())
+          {
+            ReplaceInfo *info = it->second;
+            if(&(info->insn) != &insn)
+            {
+              replaceInfoMap.erase(it);
+              delete info;
+            }
+          }
+        }
+      }
+
+      if(replaceInfoMap.empty())
+        break;
+    }
+
+    cleanReplaceInfoMap();
+  }
+
+  void SelGlobalImmMovOpt::run()
+  {
+    bool canbeOpt = false;
+
+    /*global immediates are set in entry block, the following is example of GEN IR
+
+          decl_input.global %41 dst
+            ## 0 output register ##
+            ## 0 pushed register
+            ## 3 blocks ##
+          LABEL $0
+            LOADI.uint32 %42 0
+            LOADI.uint32 %43 48
+
+          LABEL $1
+            MUL.int32 %44 %3   %12
+            ADD.int32 %49 %42 %48
+            ...
+    */
+    SelectionBlock &block = *mblockList->begin();
+    for(SelectionInstruction &insn : block.insnList)
+    {
+        GenRegister src0 = insn.src(0);
+        if(insn.opcode == SEL_OP_MOV &&
+            src0.file == GEN_IMMEDIATE_VALUE &&
+            (src0.type == GEN_TYPE_UD || src0.type == GEN_TYPE_D || src0.type == GEN_TYPE_F))
+        {
+          addToReplaceInfoMap(insn);
+          canbeOpt = true;
+
+#ifdef DEBUG_GLOBAL_IMM_OPT
+          outputSelectionInst(insn);
+#endif
+        }
+    }
+
+    if(!canbeOpt) return;
+
+    doGlobalCopyPropagation();
+  }
+
   void SelGlobalOptimizer::run()
   {
 
   }
 
+  BVAR(OCL_GLOBAL_IMM_OPTIMIZATION, true);
+
   void Selection::optimize()
   {
+    //do global imm opt first to make more local opt
+    if(OCL_GLOBAL_IMM_OPTIMIZATION)
+    {
+      SelGlobalImmMovOpt gopt(getCtx(), opt_features, blockList);
+      gopt.run();
+    }
+
     //do basic block level optimization
     for (SelectionBlock &block : *blockList) {
       SelBasicBlockOptimizer bbopt(getCtx(), getCtx().getLiveOut(block.bb), opt_features, block);
