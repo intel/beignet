@@ -605,6 +605,10 @@ skl_gt2_break:
 
     case PCI_CHIP_SKYLAKE_ULT_GT3:
       DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake ULT GT3");
+    case PCI_CHIP_SKYLAKE_ULT_GT3E1:
+      DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake ULT GT3E");
+    case PCI_CHIP_SKYLAKE_ULT_GT3E2:
+      DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake ULT GT3E");
     case PCI_CHIP_SKYLAKE_HALO_GT3:
       DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake Halo GT3");
     case PCI_CHIP_SKYLAKE_SRV_GT3:
