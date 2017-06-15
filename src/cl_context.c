@@ -358,9 +358,24 @@ cl_context_delete(cl_context ctx)
   if (UNLIKELY(ctx == NULL))
     return;
 
+  int internal_ctx_refs = 1;
+  // determine how many ctx refs are held by internal_prgs and built_in_prgs
+  for (i = CL_INTERNAL_KERNEL_MIN; i < CL_INTERNAL_KERNEL_MAX; i++) {
+    if (ctx->internal_kernels[i] && ctx->internal_prgs[i])
+      ++internal_ctx_refs;
+  }
+
+  if (ctx->built_in_prgs)
+    ++internal_ctx_refs;
+
   /* We are not done yet */
-  if (CL_OBJECT_DEC_REF(ctx) > 1)
+  if (CL_OBJECT_DEC_REF(ctx) > internal_ctx_refs)
     return;
+
+  // create a temporary extra ref here so cl_program_delete doesn't
+  // attempt a recursive full cl_context_delete when cleaning up
+  // our internal programs
+  CL_OBJECT_INC_REF(ctx);
 
   /* delete the internal programs. */
   for (i = CL_INTERNAL_KERNEL_MIN; i < CL_INTERNAL_KERNEL_MAX; i++) {
@@ -381,6 +396,8 @@ cl_context_delete(cl_context ctx)
 
   cl_program_delete(ctx->built_in_prgs);
   ctx->built_in_prgs = NULL;
+
+  CL_OBJECT_DEC_REF(ctx);
 
   cl_free(ctx->prop_user);
   cl_free(ctx->devices);
