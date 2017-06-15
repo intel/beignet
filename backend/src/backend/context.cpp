@@ -340,7 +340,6 @@ namespace gbe
   ///////////////////////////////////////////////////////////////////////////
   // Generic Context (shared by the simulator and the HW context)
   ///////////////////////////////////////////////////////////////////////////
-  IVAR(OCL_SIMD_WIDTH, 8, 15, 16);
 
   Context::Context(const ir::Unit &unit, const std::string &name) :
     unit(unit), fn(*unit.getFunction(name)), name(name), liveness(NULL), dag(NULL), useDWLabel(false)
@@ -361,10 +360,7 @@ namespace gbe
   }
 
   void Context::startNewCG(uint32_t simdWidth) {
-    if (simdWidth == 0 || OCL_SIMD_WIDTH != 15)
-      this->simdWidth = nextHighestPowerOf2(OCL_SIMD_WIDTH);
-    else
-      this->simdWidth = simdWidth;
+    this->simdWidth = simdWidth;
     GBE_SAFE_DELETE(this->registerAllocator);
     GBE_SAFE_DELETE(this->scratchAllocator);
     GBE_ASSERT(dag != NULL && liveness != NULL);

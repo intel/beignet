@@ -59,6 +59,7 @@
 #include <clang/CodeGen/CodeGenAction.h>
 #endif
 
+#include "sys/cvar.hpp"
 #include <cstring>
 #include <sstream>
 #include <memory>
@@ -138,17 +139,24 @@ namespace gbe {
   }
 
   /*! We must avoid spilling at all cost with Gen */
-  static const struct CodeGenStrategy {
+  struct CodeGenStrategy {
     uint32_t simdWidth;
     uint32_t reservedSpillRegs;
     bool limitRegisterPressure;
-  } codeGenStrategy[] = {
+  };
+  static const struct CodeGenStrategy codeGenStrategyDefault[] = {
     {16, 0, false},
     {8, 0, false},
     {8, 8, false},
     {8, 16, false},
   };
+  static const struct CodeGenStrategy codeGenStrategySimd16[] = {
+    {16, 0, false},
+    {16, 8, false},
+    {16, 16, false},
+  };
 
+  IVAR(OCL_SIMD_WIDTH, 8, 15, 16);
   Kernel *GenProgram::compileKernel(const ir::Unit &unit, const std::string &name,
                                     bool relaxMath, int profiling) {
 #ifdef GBE_COMPILER_AVAILABLE
@@ -156,19 +164,23 @@ namespace gbe {
     // when the function already provides the simd width we need to use (i.e.
     // non zero)
     const ir::Function *fn = unit.getFunction(name);
+    const struct CodeGenStrategy* codeGenStrategy = codeGenStrategyDefault;
     if(fn == NULL)
       GBE_ASSERT(0);
-    uint32_t codeGenNum = sizeof(codeGenStrategy) / sizeof(codeGenStrategy[0]);
+    uint32_t codeGenNum = sizeof(codeGenStrategyDefault) / sizeof(codeGenStrategyDefault[0]);
     uint32_t codeGen = 0;
     GenContext *ctx = NULL;
-    if (fn->getSimdWidth() == 8) {
+    if ( fn->getSimdWidth() != 0 && OCL_SIMD_WIDTH != 15) {
+      GBE_ASSERTM(0, "unsupported SIMD width!");
+    }else if (fn->getSimdWidth() == 8 || OCL_SIMD_WIDTH == 8) {
       codeGen = 1;
-    } else if (fn->getSimdWidth() == 16) {
-      codeGenNum = 1;
-    } else if (fn->getSimdWidth() == 0) {
+    } else if (fn->getSimdWidth() == 16 || OCL_SIMD_WIDTH == 16){
+      codeGenStrategy = codeGenStrategySimd16;
+      codeGenNum = sizeof(codeGenStrategySimd16) / sizeof(codeGenStrategySimd16[0]);
+    } else if (fn->getSimdWidth() == 0 && OCL_SIMD_WIDTH == 15) {
       codeGen = 0;
     } else
-      GBE_ASSERT(0);
+      GBE_ASSERTM(0, "unsupported SIMD width!");
     Kernel *kernel = NULL;
 
     // Stop when compilation is successful
