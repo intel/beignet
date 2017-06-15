@@ -126,6 +126,10 @@
 #define cl_intel_planar_yuv
 #define cl_intel_media_block_io
 
+#if __clang_major__*10 + __clang_minor__ > 40
+#define cl_intel_required_subgroup_size
+#endif
+
 #pragma OPENCL EXTENSION cl_khr_fp64 : disable
 #pragma OPENCL EXTENSION cl_khr_fp16 : disable
 #endif

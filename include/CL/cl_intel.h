@@ -197,6 +197,12 @@ typedef CL_API_ENTRY cl_int
 						      void* /*param_value*/,
 						      size_t* /*param_value_size_ret*/ );
 #endif
+
+/* cl_intel_required_subgroup_size extension*/
+#define CL_DEVICE_SUB_GROUP_SIZES_INTEL                 0x4108
+#define CL_KERNEL_SPILL_MEM_SIZE_INTEL                  0x4109
+#define CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL          0x410A
+
 #ifdef __cplusplus
 }
 #endif

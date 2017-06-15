@@ -153,4 +153,6 @@ DECL_INFO_STRING(spir_versions, "1.2")
 .partition_type = {0},
 .image_pitch_alignment = 1,
 .image_base_address_alignment = 4096,
+.sub_group_sizes = {8, 16},
+.sub_group_sizes_sz = sizeof(size_t) * 2,
 .cmrt_device = NULL
