@@ -2124,6 +2124,7 @@ namespace gbe
     // Loop over the kernel metadatas to set the required work group size.
     size_t reqd_wg_sz[3] = {0, 0, 0};
     size_t hint_wg_sz[3] = {0, 0, 0};
+    size_t reqd_sg_sz = 0;
     ir::FunctionArgument::InfoFromLLVM llvmInfo;
     MDNode *addrSpaceNode = NULL;
     MDNode *typeNameNode = NULL;
@@ -2219,6 +2220,27 @@ namespace gbe
       functionAttributes += buffer;
       functionAttributes += " ";
     }
+    if ((attrNode = F.getMetadata("intel_reqd_sub_group_size"))) {
+      GBE_ASSERT(attrNode->getNumOperands() == 1);
+      ConstantInt *sz = mdconst::extract<ConstantInt>(attrNode->getOperand(0));
+      GBE_ASSERT(sz);
+      reqd_sg_sz = sz->getZExtValue();
+      if(!(reqd_sg_sz == 8 || reqd_sg_sz == 16)){
+        F.getContext().emitError("Required sub group size is illegal!");
+        ctx.getUnit().setValid(false);
+        return;
+      }
+      functionAttributes += "intel_reqd_sub_group_size";
+      std::stringstream param;
+      char buffer[100] = {0};
+      param << "(";
+      param << reqd_sg_sz;
+      param << ")";
+      param >> buffer;
+      functionAttributes += buffer;
+      functionAttributes += " ";
+    }
+
 #else
     /* First find the meta data belong to this function. */
     MDNode *node = getKernelFunctionMetadata(&F);
@@ -2344,6 +2366,8 @@ namespace gbe
 #endif /* LLVM 3.9 Function metadata */
 
     ctx.getFunction().setCompileWorkGroupSize(reqd_wg_sz[0], reqd_wg_sz[1], reqd_wg_sz[2]);
+    if (reqd_sg_sz)
+      ctx.setSimdWidth(reqd_sg_sz);
 
     ctx.getFunction().setFunctionAttributes(functionAttributes);
     // Loop over the arguments and output registers for them
