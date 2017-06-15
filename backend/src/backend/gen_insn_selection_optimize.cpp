@@ -189,6 +189,40 @@ namespace gbe
     if (insn.opcode == SEL_OP_BSWAP) //should remove once bswap issue is fixed
       return false;
 
+    //the src modifier is not supported by the following instructions
+    if(info->replacement.negation || info->replacement.absolute)
+    {
+      switch(insn.opcode)
+      {
+        case SEL_OP_MATH:
+        {
+          switch(insn.extra.function)
+          {
+            case GEN_MATH_FUNCTION_INT_DIV_QUOTIENT:
+            case GEN_MATH_FUNCTION_INT_DIV_REMAINDER:
+            case GEN_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER:
+              return false;
+            default:
+              break;
+          }
+
+          break;
+        }
+        case SEL_OP_CBIT:
+        case SEL_OP_FBH:
+        case SEL_OP_FBL:
+        case SEL_OP_BRC:
+        case SEL_OP_BRD:
+        case SEL_OP_BFREV:
+        case SEL_OP_LZD:
+        case SEL_OP_HADD:
+        case SEL_OP_RHADD:
+          return false;
+        default:
+          break;
+      }
+    }
+
     if (insn.isWrite() || insn.isRead()) //register in selection vector
       return false;
 
