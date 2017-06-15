@@ -1375,6 +1375,10 @@ cl_get_device_info(cl_device_id     device,
       src_ptr = device->driver_version;
       src_size = device->driver_version_sz;
       break;
+    case CL_DEVICE_SUB_GROUP_SIZES_INTEL:
+      src_ptr = device->sub_group_sizes;
+      src_size = device->sub_group_sizes_sz;
+      break;
 
     default:
       return CL_INVALID_VALUE;
@@ -1518,6 +1522,7 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
     DECL_FIELD(COMPILE_WORK_GROUP_SIZE, kernel->compile_wg_sz)
     DECL_FIELD(PRIVATE_MEM_SIZE, kernel->stack_size)
     case CL_KERNEL_GLOBAL_WORK_SIZE:
+    {
       dimension = cl_check_builtin_kernel_dimension(kernel, device);
       if ( !dimension ) return CL_INVALID_VALUE;
       if (param_value_size_ret != NULL)
@@ -1535,6 +1540,18 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
         return CL_SUCCESS;
       }
       return CL_SUCCESS;
+    }
+    case CL_KERNEL_SPILL_MEM_SIZE_INTEL:
+    {
+      if (param_value && param_value_size < sizeof(cl_ulong))
+        return CL_INVALID_VALUE;
+      if (param_value_size_ret != NULL)
+        *param_value_size_ret = sizeof(cl_ulong);
+      if (param_value)
+        *(cl_ulong*)param_value = (cl_ulong)interp_kernel_get_scratch_size(kernel->opaque);
+      return CL_SUCCESS;
+    }
+
     default:
       return CL_INVALID_VALUE;
   };
@@ -1617,6 +1634,16 @@ cl_get_kernel_subgroup_info(cl_kernel kernel,
         return CL_SUCCESS;
       }
       break;
+    }
+    case CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL:
+    {
+      if (param_value && param_value_size < sizeof(size_t))
+        return CL_INVALID_VALUE;
+      if (param_value_size_ret != NULL)
+        *param_value_size_ret = sizeof(size_t);
+      if (param_value)
+        *(size_t*)param_value = interp_kernel_get_simd_width(kernel->opaque);
+      return CL_SUCCESS;
     }
     default:
       return CL_INVALID_VALUE;

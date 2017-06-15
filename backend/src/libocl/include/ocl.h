@@ -124,6 +124,10 @@
 #define cl_intel_subgroups
 #define cl_intel_subgroups_short
 
+#if __clang_major__*10 + __clang_minor__ > 40
+#define cl_intel_required_subgroup_size
+#endif
+
 #pragma OPENCL EXTENSION cl_khr_fp64 : disable
 #pragma OPENCL EXTENSION cl_khr_fp16 : disable
 #endif

@@ -136,6 +136,8 @@ struct _cl_device_id {
   uint32_t atomic_test_result;
   cl_uint image_pitch_alignment;
   cl_uint image_base_address_alignment;
+  size_t sub_group_sizes[2];
+  size_t sub_group_sizes_sz;
 
   //inited as NULL, created only when cmrt kernel is used
   void* cmrt_device;  //realtype: CmDevice*
