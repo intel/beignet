@@ -328,4 +328,7 @@ extern float as_float(uint32_t i);
 extern uint32_t as_uint(float f);
 /* Check is intel subgroups short enabled. */
 extern int cl_check_subgroups_short(void);
+
+/* Check is intel_required_subgroup_size enabled. */
+extern int cl_check_reqd_subgroup(void);
 #endif /* __UTEST_HELPER_HPP__ */

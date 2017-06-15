@@ -289,6 +289,7 @@ set (utests_sources
   compiler_sub_group_shuffle_down.cpp
   compiler_sub_group_shuffle_up.cpp
   compiler_sub_group_shuffle_xor.cpp
+  compiler_reqd_sub_group_size.cpp
   builtin_global_linear_id.cpp
   builtin_local_linear_id.cpp
   multi_queue_events.cpp
