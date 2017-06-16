@@ -67,7 +67,7 @@ namespace gbe {
     bool     isSimpleLoadStore(Value *I);
     bool     optimizeLoadStore(BasicBlock &BB);
 
-    bool     isLoadStoreCompatible(Value *A, Value *B);
+    bool     isLoadStoreCompatible(Value *A, Value *B, int *dist, int* elementSize, int maxVecSize);
     void     mergeLoad(BasicBlock &BB, SmallVector<Instruction*, 16> &merged);
     void     mergeStore(BasicBlock &BB, SmallVector<Instruction*, 16> &merged);
     bool     findConsecutiveAccess(BasicBlock &BB,
@@ -109,7 +109,7 @@ namespace gbe {
     return NULL;
   }
 
-  bool GenLoadStoreOptimization::isLoadStoreCompatible(Value *A, Value *B) {
+  bool GenLoadStoreOptimization::isLoadStoreCompatible(Value *A, Value *B, int *dist, int* elementSize, int maxVecSize) {
     Value *ptrA = getPointerOperand(A);
     Value *ptrB = getPointerOperand(B);
     unsigned ASA = getAddressSpace(A);
@@ -136,7 +136,11 @@ namespace gbe {
     // The Instructions are connsecutive if the size of the first load/store is
     // the same as the offset.
     int64_t sz = TD->getTypeStoreSize(Ty);
-    return ((-offset) == sz);
+    *dist = -offset;
+    *elementSize = sz;
+
+    //a insn with small distance from the search load/store is a candidate one
+    return (abs(-offset) < sz*maxVecSize);
   }
 
   void GenLoadStoreOptimization::mergeLoad(BasicBlock &BB, SmallVector<Instruction*, 16> &merged) {
@@ -163,6 +167,25 @@ namespace gbe {
       values[i]->replaceAllUsesWith(S);
     }
   }
+
+  class mergedInfo{
+    public:
+    Instruction* mInsn;
+    int mOffset;
+
+    void init(Instruction* insn, int offset)
+    {
+      mInsn = insn;
+      mOffset = offset;
+    }
+  };
+
+  struct offsetSorter {
+    bool operator()(mergedInfo* m0, mergedInfo* m1) const {
+    return m0->mOffset < m1->mOffset;
+    }
+  };
+
   // When searching for consecutive memory access, we do it in a small window,
   // if the window is too large, it would take up too much compiling time.
   // An Important rule we have followed is don't try to change load/store order.
@@ -177,7 +200,6 @@ namespace gbe {
 
     if(!isSimpleLoadStore(&*start)) return false;
 
-    merged.push_back(&*start);
     unsigned targetAddrSpace = getAddressSpace(&*start);
 
     BasicBlock::iterator E = BB.end();
@@ -187,11 +209,27 @@ namespace gbe {
     unsigned maxLimit = maxVecSize * 8;
     bool reordered = false;
 
-    for(unsigned ss = 0; J != E && ss <= maxLimit; ++ss, ++J) {
-      if((isLoad && isa<LoadInst>(*J)) || (!isLoad && isa<StoreInst>(*J))) {
-        if(isLoadStoreCompatible(merged[merged.size()-1], &*J)) {
-          merged.push_back(&*J);
-        }
+    bool ready = false;
+    int elementSize;
+
+    SmallVector<mergedInfo *, 16> searchInsnArray;
+    mergedInfo meInfoArray[16];
+    int indx = 0;
+    meInfoArray[indx++].init(&*start, 0);
+
+    searchInsnArray.push_back(&meInfoArray[0]);
+    BasicBlock::iterator I = start;
+    ++I;
+
+    for(unsigned ss = 0; I!= E && ss <= maxLimit; ++ss, ++I) {
+      if((isLoad && isa<LoadInst>(*I)) || (!isLoad && isa<StoreInst>(*J))) {
+          int distance;
+          if(isLoadStoreCompatible(searchInsnArray[0]->mInsn, &*I, &distance, &elementSize, maxVecSize))
+          {
+            meInfoArray[indx].init(&*I, distance);
+            searchInsnArray.push_back(&meInfoArray[indx]);
+            indx++;
+          }
       } else if((isLoad && isa<StoreInst>(*J))) {
         // simple stop to keep read/write order
         StoreInst *st = cast<StoreInst>(&*J);
@@ -212,6 +250,37 @@ namespace gbe {
       }
 
       if(merged.size() >= maxVecSize) break;
+    }
+
+    if(indx > 1)
+    {
+      //try to sort the load/store by the offset from the start
+      //the farthest is at the beginning. this is easy to find the
+      //continuous load/store
+      std::sort(searchInsnArray.begin(), searchInsnArray.end(), offsetSorter());
+
+      // try to find continuous loadstore insn in the candidate array
+      for(unsigned i = 0; i < searchInsnArray.size(); i++)
+      {
+        unsigned j;
+        for(j = 0; j < maxVecSize-1 && (j+i+1) < searchInsnArray.size(); j++)
+        {
+          if(searchInsnArray[i+j+1]->mOffset - searchInsnArray[i+j]->mOffset != elementSize)
+            break;
+
+          //this means the search load/store which offset is 0, is in the sequence
+          if(searchInsnArray[i+j]->mOffset == 0 || searchInsnArray[i+j+1]->mOffset == 0)
+            ready = true;
+        }
+
+        if(j > 0 && ready)
+        {
+          for(unsigned k = 0; k < j+1; k++)
+            merged.push_back(searchInsnArray[i+k]->mInsn);
+
+          break;
+        }
+      }
     }
 
     return reordered;
