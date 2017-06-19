@@ -201,38 +201,19 @@ OVERLOADABLE float inline __gen_ocl_internal_log_valid(float x) {
   k += (i>>23);
   f = x - 1.0f;
   fsq = f * f;
-
-  if((0x007fffff & (15 + ix)) < 16) { /* |f| < 2**-20 */
-      R = fsq * (0.5f - 0.33333333333333333f * f);
-      return k * ln2_hi + k * ln2_lo + f - R;
-  }
-
-  s = f / (2.0f + f);
+  s = mad(-2.0f, 1.0f / (2.0f + f), 1.0f);
   z = s * s;
-  i = ix - (0x6147a << 3);
   w = z * z;
-  j = (0x6b851 << 3) - ix;
-  t1= w * mad(w, Lg4, Lg2);
-  t2= z * mad(w, Lg3, Lg1);
-  i |= j;
-  R = t2 + t1;
-  partial = (i > 0) ? -mad(s, 0.5f * fsq, -0.5f * fsq) : (s * f);
-
-  return mad(s, R, f) - partial + k * ln2_hi + k * ln2_lo;;
+  t1 = w * mad(w, Lg4, Lg2);
+  R = mad(z, mad(w, Lg3, Lg1), t1);
+  w = 0.5f * fsq;
+  partial = -mad(s, w, -w);
+  return mad(k, ln2_lo, mad(k, ln2_hi, mad(s, R, f) - partial));
 }
 
 OVERLOADABLE float __gen_ocl_internal_log(float x)
 {
-  union { unsigned int i; float f; } u;
-  u.f = x;
-  int ix = u.i;
-
-  if (ix < 0 )
-	return NAN;  /* log(-#) = NaN */
-  if (ix >= 0x7f800000)
-    return NAN;
-
-  return __gen_ocl_internal_log_valid(x);
+  return __gen_ocl_internal_log_valid(x) + (x - x);
 }
 
 OVERLOADABLE float __gen_ocl_internal_log10(float x)
@@ -244,12 +225,10 @@ OVERLOADABLE float __gen_ocl_internal_log10(float x)
   log10_2lo  =  7.9034151668e-07; /* 0x355427db */
 
   float y, z;
-  int i, k, hx;
+  int i, k;
+  unsigned int hx;
 
   u.f = x; hx = u.i;
-
-  if (hx<0)
-    return NAN; /* log(-#) = NaN */
   if (hx >= 0x7f800000)
     return NAN;
 
@@ -267,17 +246,8 @@ OVERLOADABLE float __gen_ocl_internal_log2(float x)
 {
   const float zero   =  0.0,
   invln2 = 0x1.715476p+0f;
-  int ix;
 
-  union { float f; int i; } u;
-  u.f = x; ix = u.i;
-
-  if (ix < 0)
-	return NAN;    /** log(-#) = NaN */
-  if (ix >= 0x7f800000)
-	return NAN;
-
-  return invln2 * __gen_ocl_internal_log_valid(x);
+  return invln2 * __gen_ocl_internal_log_valid(x) + (x - x);
 }
 
 
