@@ -366,9 +366,6 @@ cl_context_delete(cl_context ctx)
       ++internal_ctx_refs;
   }
 
-  if (ctx->built_in_prgs)
-    ++internal_ctx_refs;
-
   if (ctx->image_queue)
     ++internal_ctx_refs;
 
@@ -382,29 +379,30 @@ cl_context_delete(cl_context ctx)
   CL_OBJECT_INC_REF(ctx);
 
   if (ctx->image_queue) {
-    clReleaseCommandQueue(ctx->image_queue);
+    cl_command_queue q = ctx->image_queue;
     ctx->image_queue = NULL;
+    clReleaseCommandQueue(q);
   }
 
   /* delete the internal programs. */
   for (i = CL_INTERNAL_KERNEL_MIN; i < CL_INTERNAL_KERNEL_MAX; i++) {
     if (ctx->internal_kernels[i]) {
-      cl_kernel_delete(ctx->internal_kernels[i]);
+      cl_kernel k = ctx->internal_kernels[i];
       ctx->internal_kernels[i] = NULL;
+      cl_kernel_delete(k);
 
       assert(ctx->internal_prgs[i]);
-      cl_program_delete(ctx->internal_prgs[i]);
+      cl_program p = ctx->internal_prgs[i];
       ctx->internal_prgs[i] = NULL;
+      cl_program_delete(p);
     }
 
     if (ctx->built_in_kernels[i]) {
-      cl_kernel_delete(ctx->built_in_kernels[i]);
+      cl_kernel k = ctx->built_in_kernels[i];
       ctx->built_in_kernels[i] = NULL;
+      cl_kernel_delete(k);
     }
   }
-
-  cl_program_delete(ctx->built_in_prgs);
-  ctx->built_in_prgs = NULL;
 
   CL_OBJECT_DEC_REF(ctx);
 
