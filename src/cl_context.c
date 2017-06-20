@@ -386,12 +386,6 @@ cl_context_delete(cl_context ctx)
       ctx->internal_prgs[i] = NULL;
       cl_program_delete(p);
     }
-
-    if (ctx->built_in_kernels[i]) {
-      cl_kernel k = ctx->built_in_kernels[i];
-      ctx->built_in_kernels[i] = NULL;
-      cl_kernel_delete(k);
-    }
   }
 
   CL_OBJECT_DEC_REF(ctx);
