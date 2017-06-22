@@ -180,6 +180,15 @@ extern gbe_dup_printfset_cb *gbe_dup_printfset;
 typedef void (gbe_output_printf_cb) (void* printf_info, void* buf_addr);
 extern gbe_output_printf_cb* gbe_output_printf;
 
+
+/*! Create a new program from the llvm file (zero terminated string) */
+typedef gbe_program (gbe_program_new_from_llvm_file_cb)(uint32_t deviceID,
+                                                        const char *fileName,
+                                                        size_t stringSize,
+                                                        char *err,
+                                                        size_t *err_size);
+extern gbe_program_new_from_llvm_file_cb *gbe_program_new_from_llvm_file;
+
 /*! Create a new program from the given source code (zero terminated string) */
 typedef gbe_program (gbe_program_new_from_source_cb)(uint32_t deviceID,
                                                      const char *source,
@@ -231,7 +240,6 @@ extern gbe_program_serialize_to_binary_cb *gbe_program_serialize_to_binary;
 
 /*! Create a new program from the given LLVM file */
 typedef gbe_program (gbe_program_new_from_llvm_cb)(uint32_t deviceID,
-                                                   const char *fileName,
                                                    const void *module,
                                                    const void *llvm_ctx,
                                                    const char *asm_file_name,

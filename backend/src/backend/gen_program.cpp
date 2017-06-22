@@ -455,7 +455,6 @@ namespace gbe {
   }
 
   static gbe_program genProgramNewFromLLVM(uint32_t deviceID,
-                                           const char *fileName,
                                            const void* module,
                                            const void* llvm_ctx,
                                            const char* asm_file_name,
@@ -475,7 +474,7 @@ namespace gbe {
 #ifdef GBE_COMPILER_AVAILABLE
     std::string error;
     // Try to compile the program
-    if (program->buildFromLLVMFile(fileName, module, error, optLevel) == false) {
+    if (program->buildFromLLVMModule(module, error, optLevel) == false) {
       if (err != NULL && errSize != NULL && stringSize > 0u) {
         const size_t msgSize = std::min(error.size(), stringSize-1u);
         std::memcpy(err, error.c_str(), msgSize);
@@ -598,7 +597,7 @@ namespace gbe {
     acquireLLVMContextLock();
     llvm::Module* module = (llvm::Module*)p->module;
 
-    if (p->buildFromLLVMFile(NULL, module, error, optLevel) == false) {
+    if (p->buildFromLLVMModule(module, error, optLevel) == false) {
       if (err != NULL && errSize != NULL && stringSize > 0u) {
         const size_t msgSize = std::min(error.size(), stringSize-1u);
         std::memcpy(err, error.c_str(), msgSize);

@@ -40,6 +40,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IRReader/IRReader.h"
 #endif
 
 #include <cstring>
@@ -113,32 +114,17 @@ namespace gbe {
   IVAR(OCL_PROFILING_LOG, 0, 0, 1); // Int for different profiling types.
   BVAR(OCL_OUTPUT_BUILD_LOG, false);
 
-  bool Program::buildFromLLVMFile(const char *fileName,
-                                         const void* module,
-                                         std::string &error,
-                                         int optLevel) {
+  bool Program::buildFromLLVMModule(const void* module,
+                                              std::string &error,
+                                              int optLevel) {
     ir::Unit *unit = new ir::Unit();
-    llvm::Module * cloned_module = NULL;
     bool ret = false;
-    if(module){
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
-      cloned_module = llvm::CloneModule((llvm::Module*)module).release();
-#else
-      cloned_module = llvm::CloneModule((llvm::Module*)module);
-#endif
-    }
+
     bool strictMath = true;
     if (fast_relaxed_math || !OCL_STRICT_CONFORMANCE)
       strictMath = false;
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
-    llvm::Module * linked_module = module ? llvm::CloneModule((llvm::Module*)module).release() : NULL;
-    // Src now will be removed automatically. So clone it.
-    if (llvmToGen(*unit, fileName, linked_module, optLevel, strictMath, OCL_PROFILING_LOG, error) == false) {
-#else
-    if (llvmToGen(*unit, fileName, module, optLevel, strictMath, OCL_PROFILING_LOG, error) == false) {
-#endif
-      if (fileName)
-        error = std::string(fileName) + " not found";
+
+    if (llvmToGen(*unit, module, optLevel, strictMath, OCL_PROFILING_LOG, error) == false) {
       delete unit;
       return false;
     }
@@ -147,13 +133,8 @@ namespace gbe {
     if(!unit->getValid()) {
       delete unit;   //clear unit
       unit = new ir::Unit();
-      if(cloned_module){
-        //suppose file exists and llvmToGen will not return false.
-        llvmToGen(*unit, fileName, cloned_module, 0, strictMath, OCL_PROFILING_LOG, error);
-      }else{
-        //suppose file exists and llvmToGen will not return false.
-        llvmToGen(*unit, fileName, module, 0, strictMath, OCL_PROFILING_LOG, error);
-      }
+      //suppose file exists and llvmToGen will not return false.
+      llvmToGen(*unit, module, 0, strictMath, OCL_PROFILING_LOG, error);
     }
     if(unit->getValid()){
       std::string error2;
@@ -163,9 +144,6 @@ namespace gbe {
       error = error + error2;
     }
     delete unit;
-    if(cloned_module){
-      delete (llvm::Module*) cloned_module;
-    }
     return ret;
   }
 
@@ -1094,7 +1072,7 @@ EXTEND_QUOTE:
           fclose(asmDumpStream);
       }
 
-      p = gbe_program_new_from_llvm(deviceID, NULL, out_module, llvm_ctx,
+      p = gbe_program_new_from_llvm(deviceID, out_module, llvm_ctx,
                                     dumpASMFileName.empty() ? NULL : dumpASMFileName.c_str(),
                                     stringSize, err, errSize, optLevel, options);
       if (err != NULL)
@@ -1112,6 +1090,45 @@ EXTEND_QUOTE:
     return p;
   }
 #endif
+
+#ifdef GBE_COMPILER_AVAILABLE
+
+  static gbe_program programNewFromLLVMFile(uint32_t deviceID,
+                                            const char *fileName,
+                                            size_t string_size,
+                                            char *err,
+                                            size_t *err_size)
+  {
+    gbe_program p = NULL;
+    if (fileName == NULL)
+      return NULL;
+
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
+    llvm::LLVMContext& c = GBEGetLLVMContext();
+#else
+    llvm::LLVMContext& c = llvm::getGlobalContext();
+#endif
+    // Get the module from its file
+    llvm::SMDiagnostic errDiag;
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
+    llvm::Module *module = parseIRFile(fileName, errDiag, c).release();
+#else
+    llvm::Module *module = ParseIRFile(fileName, errDiag, c);
+#endif
+
+    int optLevel = 1;
+
+    //module will be delete in programCleanLlvmResource
+    p = gbe_program_new_from_llvm(deviceID, module, &c, NULL,
+                                  string_size, err, err_size, optLevel, NULL);
+    if (OCL_OUTPUT_BUILD_LOG && err && *err_size)
+      llvm::errs() << err << "\n";
+
+    return p;
+  }
+#endif
+
+
 
 #ifdef GBE_COMPILER_AVAILABLE
 
@@ -1502,6 +1519,7 @@ void releaseLLVMContextLock()
 }
 
 GBE_EXPORT_SYMBOL gbe_program_new_from_source_cb *gbe_program_new_from_source = NULL;
+GBE_EXPORT_SYMBOL gbe_program_new_from_llvm_file_cb *gbe_program_new_from_llvm_file = NULL;
 GBE_EXPORT_SYMBOL gbe_program_compile_from_source_cb *gbe_program_compile_from_source = NULL;
 GBE_EXPORT_SYMBOL gbe_program_link_program_cb *gbe_program_link_program = NULL;
 GBE_EXPORT_SYMBOL gbe_program_check_opt_cb *gbe_program_check_opt = NULL;
@@ -1564,6 +1582,7 @@ namespace gbe
   {
     CallBackInitializer(void) {
       gbe_program_new_from_source = gbe::programNewFromSource;
+      gbe_program_new_from_llvm_file = gbe::programNewFromLLVMFile;
       gbe_program_compile_from_source = gbe::programCompileFromSource;
       gbe_program_link_program = gbe::programLinkProgram;
       gbe_program_check_opt = gbe::programCheckOption;
