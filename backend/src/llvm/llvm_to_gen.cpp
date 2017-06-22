@@ -288,7 +288,7 @@ namespace gbe
     dc->process(diagnostic);
   }
 
-  bool llvmToGen(ir::Unit &unit, const char *fileName,const void* module,
+  bool llvmToGen(ir::Unit &unit, const void* module,
                  int optLevel, bool strictMath, int profiling, std::string &errors)
   {
     std::string errInfo;
@@ -296,23 +296,9 @@ namespace gbe
     if (OCL_OUTPUT_LLVM_BEFORE_LINK || OCL_OUTPUT_LLVM_AFTER_LINK || OCL_OUTPUT_LLVM_AFTER_GEN)
       o = std::unique_ptr<llvm::raw_fd_ostream>(new llvm::raw_fd_ostream(fileno(stdout), false));
 
-    // Get the module from its file
-    llvm::SMDiagnostic Err;
-
     Module* cl_mod = NULL;
     if (module) {
       cl_mod = reinterpret_cast<Module*>(const_cast<void*>(module));
-    } else if (fileName){
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
-      llvm::LLVMContext& c = GBEGetLLVMContext();
-#else
-      llvm::LLVMContext& c = llvm::getGlobalContext();
-#endif
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
-      cl_mod = parseIRFile(fileName, Err, c).release();
-#else
-      cl_mod = ParseIRFile(fileName, Err, c);
-#endif
     }
 
     if (!cl_mod) return false;
@@ -335,8 +321,7 @@ namespace gbe
     /* Before do any thing, we first filter in all CL functions in bitcode. */
     /* Also set unit's pointer size in runBitCodeLinker */
     M.reset(runBitCodeLinker(cl_mod, strictMath, unit));
-    if (!module)
-      delete cl_mod;
+
     if (M.get() == 0)
       return true;
 
