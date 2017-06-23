@@ -176,6 +176,14 @@ ENDIF(INVOKE_CMRT)
 # Threads
 Find_Package(Threads)
 
+pkg_check_modules(ELF_LIB REQUIRED libelf)
+IF(ELF_LIB_FOUND)
+	MESSAGE(STATUS "Looking for libelf - found at ${ELF_LIB_PREFIX} ${ELF_LIB_VERSION}")
+	INCLUDE_DIRECTORIES(${ELF_LIB_INCLUDE_DIRS})
+ELSE(ELF_LIB_FOUND)
+	MESSAGE(STATUS "Looking for libelf - not found")
+ENDIF(ELF_LIB_FOUND)
+
 IF(X11_FOUND)
 # Xext
 pkg_check_modules(XEXT REQUIRED xext)
@@ -331,8 +339,14 @@ ENDIF(BUILD_EXAMPLES)
 
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(backend)
-ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(utests EXCLUDE_FROM_ALL)
+
+OPTION(NEW_RUNTIME "New runtime implementation for OpenCL" OFF)
+IF(NEW_RUNTIME)
+ADD_SUBDIRECTORY(runtime)
+ELSE(NEW_RUNTIME)
+ADD_SUBDIRECTORY(src)
+ENDIF(NEW_RUNTIME)
 
 # compile benchmark only if standalone compiler is not provided
 IF (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))

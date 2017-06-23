@@ -367,7 +367,7 @@ add_custom_target(utest_generator
     )
 
 #compiler_fill_gl_image test case also need xlib
-if (OPENGL_FOUND AND EGL_FOUND AND X11_FOUND)
+if (OPENGL_FOUND AND EGL_FOUND AND X11_FOUND AND NOT NEW_RUNTIME)
   SET(utests_sources ${utests_sources} compiler_fill_gl_image.cpp)
   SET(CMAKE_CXX_FLAGS "-DHAS_GL_EGL_X11 ${CMAKE_CXX_FLAGS} ${DEF_OCL_PCH_PCM_PATH}")
   SET(CMAKE_C_FLAGS "-DHAS_GL_EGL_X11 ${CMAKE_C_FLAGS} ${DEF_OCL_PCH_PCM_PATH}")
