@@ -666,7 +666,6 @@ gen_gpgpu_upload_final_curbe(cl_kernel kernel, cl_kernel_gen kernel_gen,
     }
 
     assert(ip_offset < 0 || dw_ip_offset < 0);
-    assert(ip_offset >= 0 || dw_ip_offset >= 0);
 
     if (id_offset[0] >= 0) {
       ids[0] = (uint32_t *)alloca(sizeof(uint32_t) * gpu->thread.thread_num * gpu->simd_size);
