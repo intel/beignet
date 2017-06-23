@@ -17,7 +17,6 @@
  */
 #include "llvm/ADT/Triple.h"
 #include "llvm/Config/llvm-config.h"
-#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -28,6 +27,12 @@
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/CodeGen/CodeGenAction.h"
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+#include <llvm/Bitcode/BitcodeWriter.h>
+#include <clang/Lex/PreprocessorOptions.h>
+#else
+#include "llvm/Bitcode/ReaderWriter.h"
+#endif
 
 #include "src/GBEConfig.h"
 #include "backend/gen_program.hpp"
@@ -64,14 +69,14 @@ loadProgramFromLLVMIRBinary(uint32_t deviceID, const char *binary, size_t size)
     return NULL;
 
   llvm::StringRef llvm_bin_str(binary_content);
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
   llvm::LLVMContext &c = GBEGetLLVMContext();
 #else
   llvm::LLVMContext &c = llvm::getGlobalContext();
 #endif
   llvm::SMDiagnostic Err;
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
   std::unique_ptr<llvm::MemoryBuffer> memory_buffer = llvm::MemoryBuffer::getMemBuffer(llvm_bin_str, "llvm_bin_str");
   acquireLLVMContextLock();
   llvm::Module *module = llvm::parseIR(memory_buffer->getMemBufferRef(), Err, c).release();
@@ -81,9 +86,10 @@ loadProgramFromLLVMIRBinary(uint32_t deviceID, const char *binary, size_t size)
   llvm::Module *module = llvm::ParseIR(memory_buffer, Err, c);
 #endif
 
-  if (module == NULL)
+  if (module == NULL) {
+    llvm::errs() << Err.getMessage();
     return NULL;
-
+  }
   // if load 32 bit spir binary, the triple should be spir-unknown-unknown.
   llvm::Triple triple(module->getTargetTriple());
   if (triple.getArchName() == "spir" && triple.getVendorName() == "unknown" &&
@@ -337,7 +343,7 @@ buildLLVMModuleFromSource(const char *source, size_t src_length, const char **he
 // The ParseCommandLineOptions used for mllvm args can not be used with multithread
 // and GVN now have a 100 inst limit on block scan. Now only pass a bigger limit
 // for each context only once, this can also fix multithread bug.
-#if LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
   static bool ifsetllvm = false;
   if (!ifsetllvm) {
     args.push_back("-mllvm");
@@ -388,17 +394,20 @@ buildLLVMModuleFromSource(const char *source, size_t src_length, const char **he
   llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagID(new clang::DiagnosticIDs());
   clang::DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
 
-  // Create the compiler invocation
-  std::unique_ptr<clang::CompilerInvocation> CI(new clang::CompilerInvocation);
-  clang::CompilerInvocation::CreateFromArgs(*CI, &args[0], &args[0] + args.size(), Diags);
   llvm::StringRef srcString(source, src_length - 1);
-  (*CI).getPreprocessorOpts().addRemappedFile("stringInput.cl",
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
-                                              llvm::MemoryBuffer::getMemBuffer(srcString)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    auto CI = std::make_shared<clang::CompilerInvocation>();
+    CI->getPreprocessorOpts().addRemappedFile("stringInput.cl",
 #else
-                                              llvm::MemoryBuffer::getMemBuffer(srcString).release()
+    std::unique_ptr<clang::CompilerInvocation> CI(new clang::CompilerInvocation);
+    (*CI).getPreprocessorOpts().addRemappedFile("stringInput.cl",
 #endif
-                                                );
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
+                llvm::MemoryBuffer::getMemBuffer(srcString)
+#else
+                llvm::MemoryBuffer::getMemBuffer(srcString).release()
+#endif
+                );
 
   if (headers) {
     for (int n = 0; n < headerNum; n++) {
@@ -408,7 +417,7 @@ buildLLVMModuleFromSource(const char *source, size_t src_length, const char **he
       std::string hdPath("/cl/include/path/");
       hdPath += header_names[n];
       (*CI).getPreprocessorOpts().addRemappedFile(hdPath,
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
                                                   llvm::MemoryBuffer::getMemBuffer(headerString)
 #else
                                                   llvm::MemoryBuffer::getMemBuffer(headerString).release()
@@ -417,9 +426,17 @@ buildLLVMModuleFromSource(const char *source, size_t src_length, const char **he
     }
   }
 
+  clang::CompilerInvocation::CreateFromArgs(*CI,
+                                            &args[0],
+                                            &args[0] + args.size(),
+                                            Diags);
   // Create the compiler instance
   clang::CompilerInstance Clang;
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+  Clang.setInvocation(std::move(CI));
+#else
   Clang.setInvocation(CI.release());
+#endif
   // Get ready to report problems
   Clang.createDiagnostics(DiagClient, false);
 
@@ -463,7 +480,7 @@ buildLLVMModuleFromSource(const char *source, size_t src_length, const char **he
   if (!retVal)
     return false;
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
   llvm::Module *module = Act->takeModule();
 #else
   llvm::Module *module = Act->takeModule().release();
@@ -471,7 +488,7 @@ buildLLVMModuleFromSource(const char *source, size_t src_length, const char **he
   *out_module = module;
 
 // Dump the LLVM if requested.
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 6)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 36
   if (!dumpLLVMFileName.empty()) {
     std::string err;
     llvm::raw_fd_ostream ostream(dumpLLVMFileName.c_str(),
@@ -654,7 +671,7 @@ GenCompileProgram(uint32_t deviceID, const char *source, size_t src_length, cons
   //FIXME: if use new allocated context to link two modules there would be context mismatch
   //for some functions, so we use global context now, need switch to new context later.
   llvm::Module *out_module = NULL;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
   llvm::LLVMContext *llvm_ctx = &GBEGetLLVMContext();
 #else
   llvm::LLVMContext *llvm_ctx = &llvm::getGlobalContext();
@@ -729,9 +746,9 @@ GenLinkProgram(uint32_t deviceID, int binary_num, const char **binaries, size_t 
   for (int i = 1; i < binary_num; i++) {
     llvm::Module *mod = loadProgramFromLLVMIRBinary(deviceID, binaries[i], binSizes[i]);
     bool link_ret =
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
       LLVMLinkModules2(wrap(target_module), wrap(mod));
-#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
       LLVMLinkModules(wrap(target_module), wrap(mod), LLVMLinkerPreserveSource_Removed, &errMsg);
 #else
       LLVMLinkModules(wrap(target_module), wrap(mod), LLVMLinkerPreserveSource, &errMsg);
