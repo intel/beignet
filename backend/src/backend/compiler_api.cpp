@@ -743,8 +743,27 @@ GenLinkProgram(uint32_t deviceID, int binary_num, const char **binaries, size_t 
   if (target_module == NULL)
     return false;
 
+  llvm::Triple target_triple(target_module->getTargetTriple());
+  if (target_triple.getArchName() == "spir" &&
+      target_triple.getVendorName() == "unknown" && target_triple.getOSName() == "unknown") {
+    target_module->setTargetTriple("spir");
+  } else if (target_triple.getArchName() == "spir64" &&
+             target_triple.getVendorName() == "unknown" && target_triple.getOSName() == "unknown") {
+    target_module->setTargetTriple("spir64");
+  }
+
   for (int i = 1; i < binary_num; i++) {
     llvm::Module *mod = loadProgramFromLLVMIRBinary(deviceID, binaries[i], binSizes[i]);
+
+    llvm::Triple triple(mod->getTargetTriple());
+    if (triple.getArchName() == "spir" &&
+        triple.getVendorName() == "unknown" && triple.getOSName() == "unknown") {
+      mod->setTargetTriple("spir");
+    } else if (triple.getArchName() == "spir64" &&
+               triple.getVendorName() == "unknown" && triple.getOSName() == "unknown") {
+      mod->setTargetTriple("spir64");
+    }
+
     bool link_ret =
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
       LLVMLinkModules2(wrap(target_module), wrap(mod));
