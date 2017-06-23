@@ -214,13 +214,29 @@ using namespace ELFIO;
 /* The format for Compiler info is:
  -------------------------------
  | GEN_NOTE_TYPE_COMPILER_INFO |
- ----------------------------------------
+ --------------------------------------
  | Compiler name (GBE_Compiler  e.g.) |
- ----------------------------------------
+ --------------------------------------
  | LLVM version major:4 |
  ------------------------
  | LLVM version minor:4 |
  ------------------------ */
+
+/* The format for printf is:
+ ---------------------------
+ | GEN_NOTE_TYPE_CL_PRINTF |
+ ---------------------------
+ | The Kernel name |
+ -------------------------------
+ | CL printf bti:4 |
+ ----------------------
+ | CL printf number:4 |
+ -------------------------------------------
+ | CL printf id for one printf statement:4 |
+ -------------------------------------------
+ | printf format string |
+ ------------------------
+ */
 
 class GenProgramElfContext
 {
@@ -232,6 +248,7 @@ public:
     GEN_NOTE_TYPE_CL_INFO = 4,
     GEN_NOTE_TYPE_CL_DEVICE_ENQUEUE_INFO = 5,
     GEN_NOTE_TYPE_COMPILER_INFO = 6,
+    GEN_NOTE_TYPE_CL_PRINTF = 7,
   };
 
   struct KernelInfoHelper {
@@ -393,6 +410,32 @@ void GenProgramElfContext::emitOneKernelCLInfo(GenKernel &kernel)
   size_t wg_sz[3];
   uint32_t wg_sz_size = 0;
   uint32_t arg_info_size = 0;
+
+  /* Add printf info for this kernel */
+  if (kernel.getPrintfNum() != 0) {
+    std::map<uint32_t, std::string> all_printf;
+    uint32_t printf_n = kernel.collectPrintfStr(all_printf);
+    assert(printf_n == kernel.getPrintfNum());
+    std::ostringstream oss;
+    size_t sz = 0;
+
+    uint32_t bti = kernel.getPrintfBufBTI();
+    oss.write((char *)(&bti), sizeof(uint32_t));
+    sz += sizeof(uint32_t);
+    oss.write((char *)(&printf_n), sizeof(uint32_t));
+    sz += sizeof(uint32_t);
+
+    for (auto iter = all_printf.begin(); iter != all_printf.end(); iter++) {
+      uint32_t id = iter->first;
+      oss.write((char *)(&id), sizeof(uint32_t));
+      sz += sizeof(uint32_t);
+      oss.write(iter->second.c_str(), strlen(iter->second.c_str()) + 1);
+      sz += strlen(iter->second.c_str()) + 1;
+    }
+
+    this->cl_note_writer->add_note(GenProgramElfContext::GEN_NOTE_TYPE_CL_PRINTF,
+                                   kernel.getName(), oss.str().c_str(), sz);
+  }
 
   if ((kernel.getFunctionAttributes())[0] != 0)
     attr_size = ::strlen(kernel.getFunctionAttributes()) + 1;

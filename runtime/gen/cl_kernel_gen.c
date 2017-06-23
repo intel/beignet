@@ -107,6 +107,17 @@ cl_kernel_delete_gen(cl_device_id device, cl_kernel kernel)
     kernel_gen->image_info = NULL;
   }
 
+  if (kernel_gen->printf_ids) {
+    assert(kernel_gen->printf_num > 0);
+    CL_FREE(kernel_gen->printf_ids);
+  }
+  kernel_gen->printf_ids = NULL;
+  if (kernel_gen->printf_strings) {
+    assert(kernel_gen->printf_num > 0);
+    CL_FREE(kernel_gen->printf_strings);
+  }
+  kernel_gen->printf_strings = NULL;
+
   CL_FREE(kernel_gen);
 }
 
@@ -153,56 +164,16 @@ cl_kernel_get_info_gen(cl_device_id device, cl_kernel kernel, cl_uint param_name
 }
 
 static cl_int
-cl_program_gen_get_kernel_func_cl_info(cl_device_id device, cl_kernel kernel)
+cl_program_gen_get_kernel_func_arg_info(cl_kernel kernel, void *desc, cl_uint desc_size,
+                                        cl_program_gen prog_gen, cl_kernel_gen kernel_gen)
 {
-  cl_program prog = kernel->program;
-  cl_program_gen prog_gen;
-  cl_kernel_gen kernel_gen;
-  cl_int offset;
-  void *desc;
   void *ptr;
-  cl_char *name;
-  cl_uint name_size;
-  cl_uint desc_size;
-  cl_uint desc_type;
   cl_uint wg_sz_size;
   cl_uint attr_size;
   cl_uint arg_info_size;
-  int i;
   char *arg_type_qual_str;
   char *arg_access_qualifier_str;
-
-  DEV_PRIVATE_DATA(prog, device, prog_gen);
-  DEV_PRIVATE_DATA(kernel, device, kernel_gen);
-
-  assert(kernel->name);
-
-  if (prog_gen->func_cl_info == NULL)
-    return CL_SUCCESS;
-
-  offset = 0;
-  desc = NULL;
-  while (offset < prog_gen->func_cl_info_data->d_size) {
-    name_size = *(cl_uint *)(prog_gen->func_cl_info_data->d_buf + offset);
-    desc_size = *(cl_uint *)(prog_gen->func_cl_info_data->d_buf + offset + sizeof(cl_uint));
-    desc_type = *(cl_uint *)(prog_gen->func_cl_info_data->d_buf + offset + 2 * sizeof(cl_uint));
-    name = prog_gen->func_cl_info_data->d_buf + offset + sizeof(cl_uint) * 3;
-
-    if (desc_type != GEN_NOTE_TYPE_CL_INFO) {
-      offset += 3 * sizeof(cl_uint) + ALIGN(name_size, 4) + ALIGN(desc_size, 4);
-      continue;
-    }
-
-    if (strcmp((char *)name, (char *)kernel->name) == 0) { // Find the kernel info slot
-      desc = prog_gen->func_cl_info_data->d_buf + offset + sizeof(cl_uint) * 3 + ALIGN(name_size, 4);
-      break;
-    }
-
-    offset += 3 * sizeof(cl_uint) + ALIGN(name_size, 4) + ALIGN(desc_size, 4);
-  }
-
-  if (desc == NULL)
-    return CL_SUCCESS;
+  int i;
 
   ptr = desc;
   attr_size = *(cl_uint *)ptr;
@@ -311,6 +282,80 @@ cl_program_gen_get_kernel_func_cl_info(cl_device_id device, cl_kernel kernel)
 
   if (ptr - desc != desc_size)
     return CL_INVALID_PROGRAM;
+
+  return CL_SUCCESS;
+}
+
+static cl_int
+cl_program_gen_get_kernel_func_cl_info(cl_device_id device, cl_kernel kernel)
+{
+  cl_program prog = kernel->program;
+  cl_program_gen prog_gen;
+  cl_kernel_gen kernel_gen;
+  cl_uint name_size;
+  cl_uint desc_size;
+  void *desc;
+  cl_uint desc_type;
+  cl_int offset;
+  cl_char *name;
+  int i;
+  cl_int ret = CL_SUCCESS;
+  cl_bool already_set = CL_FALSE;
+
+  DEV_PRIVATE_DATA(prog, device, prog_gen);
+  DEV_PRIVATE_DATA(kernel, device, kernel_gen);
+
+  assert(kernel->name);
+
+  if (prog_gen->func_cl_info == NULL)
+    return CL_SUCCESS;
+
+  offset = 0;
+  desc = NULL;
+  while (offset < prog_gen->func_cl_info_data->d_size) {
+    name_size = *(cl_uint *)(prog_gen->func_cl_info_data->d_buf + offset);
+    desc_size = *(cl_uint *)(prog_gen->func_cl_info_data->d_buf + offset + sizeof(cl_uint));
+    desc_type = *(cl_uint *)(prog_gen->func_cl_info_data->d_buf + offset + 2 * sizeof(cl_uint));
+    name = prog_gen->func_cl_info_data->d_buf + offset + sizeof(cl_uint) * 3;
+    desc = prog_gen->func_cl_info_data->d_buf + offset + sizeof(cl_uint) * 3 + ALIGN(name_size, 4);
+
+    if (strcmp((char *)name, (char *)kernel->name) != 0) { // Find the kernel info slot
+      offset += 3 * sizeof(cl_uint) + ALIGN(name_size, 4) + ALIGN(desc_size, 4);
+      continue;
+    }
+
+    if (desc_type == GEN_NOTE_TYPE_CL_PRINTF) {
+      kernel_gen->printf_bti = *(cl_uint *)desc;
+      desc += sizeof(cl_uint);
+      kernel_gen->printf_num = *(cl_uint *)desc;
+      desc += sizeof(cl_uint);
+
+      kernel_gen->printf_strings = CL_CALLOC(kernel_gen->printf_num, sizeof(char *));
+      kernel_gen->printf_ids = CL_CALLOC(kernel_gen->printf_num, sizeof(cl_uint));
+
+      if (kernel_gen->printf_strings == NULL)
+        return CL_OUT_OF_HOST_MEMORY;
+      if (kernel_gen->printf_ids == NULL)
+        return CL_OUT_OF_HOST_MEMORY;
+
+      for (i = 0; i < kernel_gen->printf_num; i++) {
+        kernel_gen->printf_ids[i] = *(cl_uint *)desc;
+        desc += sizeof(cl_uint);
+        kernel_gen->printf_strings[i] = desc;
+        desc += strlen(desc) + 1;
+      }
+    } else if (desc_type == GEN_NOTE_TYPE_CL_INFO) {
+      if (already_set) {
+        /* Can not contain two CL info for one kernel */
+        return CL_INVALID_KERNEL_DEFINITION;
+      }
+      ret = cl_program_gen_get_kernel_func_arg_info(kernel, desc, desc_size, prog_gen, kernel_gen);
+      if (ret != CL_SUCCESS)
+        return ret;
+    }
+
+    offset += 3 * sizeof(cl_uint) + ALIGN(name_size, 4) + ALIGN(desc_size, 4);
+  }
 
   return CL_SUCCESS;
 }

@@ -168,7 +168,11 @@ namespace gbe {
     uint32_t getPrintfNum() const {
       return printfSet ? printfSet->getPrintfNum() : 0;
     }
-
+    uint32_t collectPrintfStr(std::map<uint32_t, std::string>& all_printf) const {
+      if (printfSet)
+        return printfSet->collectPrintfStr(all_printf);
+      return 0;
+    }
     void * dupPrintfSet() const {
       void* ptr = printfSet ? (void *)(new ir::PrintfSet(*printfSet)) : NULL;
       return ptr;

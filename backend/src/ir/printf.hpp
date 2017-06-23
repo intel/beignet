@@ -123,7 +123,7 @@ namespace gbe
         type = PRINTF_SLOT_TYPE_STRING;
       }
 
-      PrintfSlot(PrintfState& st) {
+      PrintfSlot(PrintfState& st, std::string& s) : str(s) {
         type = PRINTF_SLOT_TYPE_STATE;
         state = st;
       }
@@ -135,6 +135,7 @@ namespace gbe
         } else if (other.type == PRINTF_SLOT_TYPE_STATE) {
           type = PRINTF_SLOT_TYPE_STATE;
           state = other.state;
+          str = other.str;
         } else {
           type = PRINTF_SLOT_TYPE_NONE;
         }
@@ -244,6 +245,40 @@ namespace gbe
       }
 
       void outputPrintf(void* buf_addr);
+
+      uint32_t collectPrintfStr(std::map<uint32_t, std::string>& all_printf) const {
+        uint32_t n = 0;
+        for (auto iter = fmts.begin(); iter != fmts.end(); iter++) {
+          std::string s;
+          const PrintfFmt& fmt = iter->second;
+          for (auto &m : fmt) {
+            if (m.type == PRINTF_SLOT_TYPE_STATE && m.state.conversion_specifier == PRINTF_CONVERSION_S) {
+              std::string ss = m.state.str;
+              if (m.state.precision > 0 && (static_cast<size_t>(m.state.precision) < ss.size())) {
+                ss.resize(m.state.precision);
+              }
+              if (m.state.min_width > 0 && (static_cast<size_t>(m.state.min_width) > ss.size())) {
+                std::string spaces;
+                spaces.resize(static_cast<size_t>(m.state.min_width)  - ss.size(), ' ');
+                if (m.state.left_justified) {
+                  ss = ss + spaces;
+                } else {
+                  ss = spaces + ss;
+                }
+              }
+
+              s += ss;
+            } else {
+              s += m.str;
+            }
+          }
+
+          all_printf.insert(std::pair<uint32_t, std::string>(iter->first, s));
+          n++;
+        }
+
+        return n;
+      }
 
     private:
       std::map<uint32_t, PrintfFmt> fmts;

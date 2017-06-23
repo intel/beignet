@@ -82,6 +82,14 @@ typedef struct gen_gpgpu {
   } mem;
 
   struct {
+    uint32_t printf_buf_size;
+    drm_intel_bo *printf_bo; /* Printf buffer */
+    uint32_t printf_num;
+    cl_uint *printf_ids;
+    char **printf_strings;
+  } printf;
+
+  struct {
     uint64_t sampler_bitmap; /* sampler usage bitmap. */
   } sampler;
 
@@ -460,6 +468,59 @@ gen_gpgpu_setup_scratch(gen_gpgpu *gpu)
 }
 
 static cl_int
+gen_gpgpu_setup_printf_buffer(gen_gpgpu *gpu, cl_kernel_gen kernel_gen, const size_t *global_wk_sz_use)
+{
+  drm_intel_bufmgr *bufmgr = gpu->bufmgr;
+  uint32_t buf_size;
+  cl_uint i;
+
+  if (kernel_gen->printf_num == 0)
+    return CL_SUCCESS;
+
+  /* An guess size. */
+  buf_size = global_wk_sz_use[0] * global_wk_sz_use[1] * global_wk_sz_use[2] *
+             sizeof(int) * 16 * kernel_gen->printf_num;
+  if (buf_size > 16 * 1024 * 1024) //at most.
+    buf_size = 16 * 1024 * 1024;
+  if (buf_size < 1 * 1024 * 1024) // at least.
+    buf_size = 1 * 1024 * 1024;
+
+  gpu->printf.printf_ids = CL_CALLOC(kernel_gen->printf_num, sizeof(cl_uint));
+  gpu->printf.printf_strings = CL_CALLOC(kernel_gen->printf_num, sizeof(char *));
+
+  if (gpu->printf.printf_ids == NULL || gpu->printf.printf_strings == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
+
+  for (i = 0; i < kernel_gen->printf_num; i++) {
+    gpu->printf.printf_ids[i] = kernel_gen->printf_ids[i];
+    gpu->printf.printf_strings[i] = CL_MALLOC(strlen(kernel_gen->printf_strings[i]) + 1);
+    if (gpu->printf.printf_strings[i] == NULL)
+      return CL_OUT_OF_HOST_MEMORY;
+
+    memcpy(gpu->printf.printf_strings[i], kernel_gen->printf_strings[i],
+           strlen(kernel_gen->printf_strings[i]) + 1);
+  }
+
+  gpu->printf.printf_buf_size = buf_size;
+  gpu->printf.printf_num = kernel_gen->printf_num;
+  gpu->printf.printf_bo = drm_intel_bo_alloc(bufmgr, "PRINTF_BO", buf_size, 4096);
+  if (gpu->printf.printf_bo == NULL)
+    return CL_OUT_OF_RESOURCES;
+
+  drm_intel_bo_map(gpu->printf.printf_bo, 1);
+  memset(gpu->printf.printf_bo->virtual, 0, buf_size);
+  *(uint32_t *)(gpu->printf.printf_bo->virtual) = 4; // first four is for the length.
+  drm_intel_bo_unmap(gpu->printf.printf_bo);
+
+  if (gpu->mem.max_bti < kernel_gen->printf_bti)
+    gpu->mem.max_bti = kernel_gen->printf_bti;
+
+  gen_gpgpu_setup_bti(gpu, gpu->printf.printf_bo, 0, buf_size,
+                      kernel_gen->printf_bti, I965_SURFACEFORMAT_RAW);
+  return CL_SUCCESS;
+}
+
+static cl_int
 gen_setup_constant_buffer_for_20(cl_kernel kernel, cl_kernel_gen kernel_gen,
                                  cl_program_gen prog_gen, gen_gpgpu *gpu)
 {
@@ -821,6 +882,19 @@ cl_command_queue_delete_gpgpu(void *gpgpu)
     gpu->mem.scratch_bo = NULL;
   }
 
+  if (gpu->printf.printf_bo) {
+    cl_uint i;
+    assert(gpu->printf.printf_num > 0);
+    for (i = 0; i < gpu->printf.printf_num; i++) {
+      CL_FREE(gpu->printf.printf_strings[i]);
+    }
+    CL_FREE(gpu->printf.printf_strings);
+    CL_FREE(gpu->printf.printf_ids);
+
+    drm_intel_bo_unreference(gpu->printf.printf_bo);
+    gpu->printf.printf_bo = NULL;
+  }
+
   if (gpu->mem.stack_bo) {
     drm_intel_bo_unreference(gpu->mem.stack_bo);
     gpu->mem.stack_bo = NULL;
@@ -988,6 +1062,7 @@ cl_command_queue_ND_range_gen_once(cl_command_queue queue, cl_kernel kernel, cl_
     if (ret != CL_SUCCESS)
       break;
 
+    gen_gpgpu_setup_printf_buffer(gpu, kernel_gen, global_wk_sz_use);
     gen_gpgpu_setup_kernel_exec_svm_mem(kernel, kernel_gen, gpu);
 
     /* also setup the device enqueue helper bo if exist */
@@ -1502,7 +1577,7 @@ cl_command_queue_gen_handle_device_enqueue(cl_command_queue queue, cl_kernel ker
         fixed_global_off[i] = ndrange_info->global_work_offset[i];
     }
 
-//    int *slm_sizes = (int *)ptr;
+    //    int *slm_sizes = (int *)ptr;
     int slm_size = block->descriptor->slm_size;
     ptr += slm_size;
 
@@ -1570,6 +1645,14 @@ cl_command_queue_finish_gpgpu(void *gpgpu)
       return CL_INVALID_VALUE;
 
     intel_batchbuffer_finish(gpu->batch);
+
+    if (gpu->printf.printf_num > 0) {
+      drm_intel_bo_map(gpu->printf.printf_bo, 0);
+      cl_gen_output_printf(gpu->printf.printf_bo->virtual, gpu->printf.printf_buf_size,
+                           gpu->printf.printf_ids, gpu->printf.printf_strings,
+                           gpu->printf.printf_num);
+      drm_intel_bo_unmap(gpu->printf.printf_bo);
+    }
   }
 
   return CL_SUCCESS;

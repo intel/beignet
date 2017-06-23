@@ -78,6 +78,7 @@ set(OPENCL_GEN_SRC
 	cl_compiler_gen.c
 	cl_event_gen.c
 	cl_sampler_gen.c
+	cl_printf_gen.c
 	)
 
 if (X11_FOUND)

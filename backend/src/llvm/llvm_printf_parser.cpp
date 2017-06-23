@@ -245,16 +245,18 @@ again:
 
       /* Now parse the % start conversion_specifier. */
       ret_char = __parse_printf_state(p, end, &rend, &state);
-      if (ret_char < 0)
+      if (ret_char < 0) {
         goto error;
+      } else {
+        std::string s(p, size_t(rend - p));
+        printf_fmt->push_back(PrintfSlot(state, s));
+        num++;
 
-      printf_fmt->push_back(state);
-      num++;
+        if (rend == end)
+          break;
 
-      if (rend == end)
-        break;
-
-      begin = rend;
+        begin = rend;
+      }
     }
 
 #if 0

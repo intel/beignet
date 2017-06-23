@@ -173,6 +173,10 @@ typedef struct _cl_kernel_gen {
   cl_gen_image_info_offset image_info;
   cl_uint virt_reg_phy_offset_num; // The mapping between virtual reg and phy offset
   cl_gen_virt_phy_offset virt_reg_phy_offset;
+  cl_uint printf_num;
+  cl_int printf_bti;
+  cl_uint *printf_ids;
+  char **printf_strings;
 } _cl_kernel_gen;
 typedef _cl_kernel_gen *cl_kernel_gen;
 
@@ -191,6 +195,7 @@ enum cl_gen_program_note_type {
   GEN_NOTE_TYPE_CL_INFO = 4,
   GEN_NOTE_TYPE_CL_DEVICE_ENQUEUE_INFO = 5,
   GEN_NOTE_TYPE_COMPILER_INFO = 6,
+  GEN_NOTE_TYPE_CL_PRINTF = 7,
 };
 
 typedef struct _cl_program_gen_device_enqueue_info {
@@ -262,6 +267,7 @@ extern int cl_command_queue_finish_gpgpu(void *gpgpu);
 extern void cl_enqueue_nd_range_delete_gen(cl_event event);
 extern cl_int cl_command_queue_create_gen(cl_device_id device, cl_command_queue queue);
 extern void cl_command_queue_delete_gen(cl_device_id device, cl_command_queue queue);
+extern void cl_gen_output_printf(void *buf_addr, uint32_t buf_size, cl_uint *ids, char **fmts, uint32_t printf_num);
 
 /************************************ Compiler ******************************************/
 extern cl_int cl_compiler_load_gen(cl_device_id device);
