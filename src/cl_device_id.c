@@ -149,7 +149,7 @@ static struct _cl_device_id intel_skl_gt1_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 2,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
@@ -159,7 +159,7 @@ static struct _cl_device_id intel_skl_gt2_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 3,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
@@ -169,7 +169,7 @@ static struct _cl_device_id intel_skl_gt3_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 6,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
@@ -179,7 +179,7 @@ static struct _cl_device_id intel_skl_gt4_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 9,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
@@ -209,7 +209,7 @@ static struct _cl_device_id intel_kbl_gt1_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 2,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
@@ -219,7 +219,7 @@ static struct _cl_device_id intel_kbl_gt15_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 3,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
@@ -229,7 +229,7 @@ static struct _cl_device_id intel_kbl_gt2_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 3,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
@@ -239,7 +239,7 @@ static struct _cl_device_id intel_kbl_gt3_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 6,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
@@ -249,7 +249,7 @@ static struct _cl_device_id intel_kbl_gt4_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 9,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
