@@ -656,7 +656,7 @@ cl_program_link(cl_context context, cl_uint num_devices, const cl_device_id *dev
 }
 
 LOCAL cl_int
-cl_program_get_kernel_names(cl_program p, cl_uint *kerne_num, size_t size, char *names, size_t *name_ret)
+cl_program_get_kernel_names(cl_program p, size_t *kerne_num, size_t size, char *names, size_t *name_ret)
 {
   /* This function will get all possible kernel names, at least one device has it */
   char **known_kernel_list = NULL;

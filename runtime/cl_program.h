@@ -74,7 +74,7 @@ extern cl_int cl_program_compile(cl_program p, cl_uint num_input_headers, const 
 extern cl_program cl_program_link(cl_context context, cl_uint num_devices, const cl_device_id *device_list,
                                   cl_uint num_input_programs, const cl_program *input_programs,
                                   const char *options, cl_int *errcode_ret);
-extern cl_int cl_program_get_kernel_names(cl_program p, cl_uint *kerne_num, size_t size, char *names, size_t *name_ret);
+extern cl_int cl_program_get_kernel_names(cl_program p, size_t *kerne_num, size_t size, char *names, size_t *name_ret);
 extern cl_program cl_program_create_with_built_in_kernles(cl_context context, cl_uint num_devices,
                                                           const cl_device_id *device_list, const char *kernel_names,
                                                           cl_int *errcode_ret);

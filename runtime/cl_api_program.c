@@ -32,8 +32,9 @@ clGetProgramInfo(cl_program program,
   size_t src_size = 0;
   const char *ret_str = "";
   cl_int ref;
-  cl_uint num_dev, kernels_num;
+  cl_uint num_dev;
   cl_int i;
+  size_t kernels_num;
 
   if (!CL_OBJECT_IS_PROGRAM(program)) {
     return CL_INVALID_PROGRAM;
@@ -61,7 +62,7 @@ clGetProgramInfo(cl_program program,
       return err;
 
     src_ptr = &kernels_num;
-    src_size = sizeof(cl_uint);
+    src_size = sizeof(size_t);
   } else if (param_name == CL_PROGRAM_SOURCE) {
     if (!program->source) {
       src_ptr = ret_str;
