@@ -1322,8 +1322,9 @@ namespace gbe
       if(typeBaseNameNode) {
         llvmInfo.typeBaseName= (cast<MDString>(typeBaseNameNode->getOperand(opID)))->getString();
       }
-      llvmInfo.typeName= (cast<MDString>(typeNameNode->getOperand(opID)))->getString();
-      llvmInfo.typeQual = (cast<MDString>(typeQualNode->getOperand(opID)))->getString();
+      if (typeQualNode) {
+        llvmInfo.typeQual = (cast<MDString>(typeQualNode->getOperand(opID)))->getString();
+      }
       bool isImage = llvmInfo.isImageType();
       bool isPipe = llvmInfo.isPipeType();
       if (I->getType()->isPointerTy() || isImage || isPipe) {

@@ -43,8 +43,9 @@ namespace gbe
   bool isKernelFunction(const llvm::Function &F) {
     bool bKernel = false;
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
-    bKernel = F.getMetadata("kernel_arg_name") != NULL;
-#else
+    if (F.getMetadata("kernel_arg_name") != NULL)
+      return true;
+#endif
     const Module *module = F.getParent();
     const Module::NamedMDListType& globalMD = module->getNamedMDList();
     for(auto i = globalMD.begin(); i != globalMD.end(); i++) {
@@ -61,7 +62,6 @@ namespace gbe
         if(op == &F) bKernel = true;
       }
     }
-#endif
     return bKernel;
   }
 
