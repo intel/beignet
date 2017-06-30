@@ -459,14 +459,10 @@ namespace gbe
             else if(src0.type == GEN_TYPE_UD || src1.type == GEN_TYPE_UD)
             {
               unsigned int s0 = src0.value.ud;
-              if (src0.absolute)
-                s0 = abs(s0);
               if (src0.negation)
                 s0 = -s0;
 
               unsigned int s1 = src1.value.ud;
-              if (src1.absolute)
-                s1 = abs(s1);
               if (src1.negation)
                 s1 = -s1;
 
