@@ -3279,6 +3279,34 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         sel.MATH(dst, function, src0, src1);
       } else if(type == TYPE_FLOAT) {
         GBE_ASSERT(op != OP_REM);
+        SelectionDAG *child0 = dag.child[0];
+        if (child0 && child0->insn.getOpcode() == OP_LOADI) {
+          const auto &loadimm = cast<LoadImmInstruction>(child0->insn);
+          const Immediate imm = loadimm.getImmediate();
+          float immVal = imm.getFloatValue();
+          int* dwPtr = (int*)&immVal;
+
+          //if immedia is a exactly pow of 2, it can be converted to RCP
+          if((*dwPtr & 0x7FFFFF) == 0) {
+            if(immVal == -1.0f)
+            {
+              GenRegister tmp = GenRegister::negate(src1);
+              sel.MATH(dst, GEN_MATH_FUNCTION_INV, tmp);
+            }
+            else {
+              sel.MATH(dst, GEN_MATH_FUNCTION_INV, src1);
+              if(immVal != 1.0f) {
+                GenRegister isrc = GenRegister::immf(immVal);
+                sel.MUL(dst, dst, isrc);
+              }
+            }
+
+            if(dag.child[1])
+              dag.child[1]->isRoot = 1;
+            return true;
+          }
+        }
+
         sel.MATH(dst, GEN_MATH_FUNCTION_FDIV, src0, src1);
       } else if (type == TYPE_S64 || type == TYPE_U64) {
         GenRegister tmp[15];
