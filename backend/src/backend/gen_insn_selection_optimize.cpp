@@ -103,7 +103,7 @@ namespace gbe
     void doReplacement(ReplaceInfo* info);
     bool CanBeReplaced(const ReplaceInfo* info, const SelectionInstruction& insn, const GenRegister& var);
     void cleanReplaceInfoMap();
-    void doNegAddOptimization(SelectionInstruction &insn);
+    void doZeroAddedOptimization(SelectionInstruction &insn);
 
     SelectionBlock &bb;
     const ir::Liveness::LiveOut& liveout;
@@ -291,7 +291,7 @@ namespace gbe
       if (insn.opcode == SEL_OP_MOV)
         addToReplaceInfoMap(insn);
 
-      doNegAddOptimization(insn);
+      doZeroAddedOptimization(insn);
     }
     cleanReplaceInfoMap();
   }
@@ -303,12 +303,12 @@ namespace gbe
      Also it can be used for the same like instruction sequence.
      Do it just like a:  mov b, -b, so it is a Mov operation like LocalCopyPropagation
   */
-  void SelBasicBlockOptimizer::doNegAddOptimization(SelectionInstruction &insn) {
+  void SelBasicBlockOptimizer::doZeroAddedOptimization(SelectionInstruction &insn) {
     if (insn.opcode == SEL_OP_ADD) {
       GenRegister src0 = insn.src(0);
       GenRegister src1 = insn.src(1);
-      if ((src0.negation && src1.file == GEN_IMMEDIATE_VALUE && src1.value.f == 0.0f) ||
-          (src1.negation && src0.file == GEN_IMMEDIATE_VALUE && src0.value.f == 0.0f))
+      if ((src1.file == GEN_IMMEDIATE_VALUE && src1.value.f == 0.0f) ||
+          (src0.file == GEN_IMMEDIATE_VALUE && src0.value.f == 0.0f))
         addToReplaceInfoMap(insn);
     }
   }
