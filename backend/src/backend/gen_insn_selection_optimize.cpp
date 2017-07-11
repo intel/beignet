@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <climits>
 #include <map>
+#include <math.h>
 
 namespace gbe
 {
