@@ -371,6 +371,7 @@ cl_program_create_with_built_in_kernles(cl_context     ctx,
                                   cl_int *             errcode_ret)
 {
   cl_int err = CL_SUCCESS;
+  cl_program built_in_prgs = NULL;
 
   assert(ctx);
   INVALID_DEVICE_IF (num_devices != 1);
@@ -382,11 +383,11 @@ cl_program_create_with_built_in_kernles(cl_context     ctx,
   extern size_t cl_internal_built_in_kernel_str_size;
   char* p_built_in_kernel_str =cl_internal_built_in_kernel_str;
 
-  cl_program built_in_prgs = cl_program_create_from_binary(ctx, 1,
-                                                          &ctx->devices[0],
-                                                          (size_t*)&cl_internal_built_in_kernel_str_size,
-                                                          (const unsigned char **)&p_built_in_kernel_str,
-                                                          &binary_status, &err);
+  built_in_prgs = cl_program_create_from_binary(ctx, 1,
+                                                &ctx->devices[0],
+                                                (size_t*)&cl_internal_built_in_kernel_str_size,
+                                                (const unsigned char **)&p_built_in_kernel_str,
+                                                &binary_status, &err);
   if (!built_in_prgs)
     return NULL;
 
