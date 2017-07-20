@@ -435,32 +435,18 @@ cl_context_get_static_kernel_from_bin(cl_context ctx, cl_int index,
 
     ctx->internal_prgs[index]->is_built = 1;
 
-    /* All CL_ENQUEUE_FILL_BUFFER_ALIGN16_xxx use the same program, different kernel. */
-    if (index >= CL_ENQUEUE_FILL_BUFFER_ALIGN8_8 && index <= CL_ENQUEUE_FILL_BUFFER_ALIGN8_64) {
-      int i = CL_ENQUEUE_FILL_BUFFER_ALIGN8_8;
-      for (; i <= CL_ENQUEUE_FILL_BUFFER_ALIGN8_64; i++) {
-        if (index != i) {
-          assert(ctx->internal_prgs[i] == NULL);
-          assert(ctx->internal_kernels[i] == NULL);
-          cl_program_add_ref(ctx->internal_prgs[index]);
-          ctx->internal_prgs[i] = ctx->internal_prgs[index];
-        }
-
-        if (i == CL_ENQUEUE_FILL_BUFFER_ALIGN8_8) {
-          ctx->internal_kernels[i] = cl_program_create_kernel(ctx->internal_prgs[index],
+    if (index == CL_ENQUEUE_FILL_BUFFER_ALIGN8_8) {
+      ctx->internal_kernels[index] = cl_program_create_kernel(ctx->internal_prgs[index],
                                                               "__cl_fill_region_align8_2", NULL);
-        } else if (i == CL_ENQUEUE_FILL_BUFFER_ALIGN8_16) {
-          ctx->internal_kernels[i] = cl_program_create_kernel(ctx->internal_prgs[index],
+    } else if (index == CL_ENQUEUE_FILL_BUFFER_ALIGN8_16) {
+      ctx->internal_kernels[index] = cl_program_create_kernel(ctx->internal_prgs[index],
                                                               "__cl_fill_region_align8_4", NULL);
-        } else if (i == CL_ENQUEUE_FILL_BUFFER_ALIGN8_32) {
-          ctx->internal_kernels[i] = cl_program_create_kernel(ctx->internal_prgs[index],
+    } else if (index == CL_ENQUEUE_FILL_BUFFER_ALIGN8_32) {
+      ctx->internal_kernels[index] = cl_program_create_kernel(ctx->internal_prgs[index],
                                                               "__cl_fill_region_align8_8", NULL);
-        } else if (i == CL_ENQUEUE_FILL_BUFFER_ALIGN8_64) {
-          ctx->internal_kernels[i] = cl_program_create_kernel(ctx->internal_prgs[index],
+    } else if (index == CL_ENQUEUE_FILL_BUFFER_ALIGN8_64) {
+      ctx->internal_kernels[index] = cl_program_create_kernel(ctx->internal_prgs[index],
                                                               "__cl_fill_region_align8_16", NULL);
-        } else
-          assert(0);
-      }
     } else {
       ctx->internal_kernels[index] = cl_kernel_dup(ctx->internal_prgs[index]->ker[0]);
     }
