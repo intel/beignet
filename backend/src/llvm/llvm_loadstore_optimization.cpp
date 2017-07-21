@@ -61,21 +61,24 @@ namespace gbe {
       #endif
       return optimizeLoadStore(BB);
     }
-    Type    *getValueType(Value *insn);
-    Value   *getPointerOperand(Value *I);
+    Type *getValueType(Value *insn);
+    Value *getPointerOperand(Value *I);
     unsigned getAddressSpace(Value *I);
-    bool     isSimpleLoadStore(Value *I);
-    bool     optimizeLoadStore(BasicBlock &BB);
+    bool isSimpleLoadStore(Value *I);
+    bool optimizeLoadStore(BasicBlock &BB);
 
-    bool     isLoadStoreCompatible(Value *A, Value *B, int *dist, int* elementSize, int maxVecSize);
-    void     mergeLoad(BasicBlock &BB, SmallVector<Instruction*, 16> &merged, Instruction *start,int offset);
-    void     mergeStore(BasicBlock &BB, SmallVector<Instruction*, 16> &merged, Instruction *start,int offset);
-    bool     findConsecutiveAccess(BasicBlock &BB,
-                                  SmallVector<Instruction*, 16> &merged,
-                                  const BasicBlock::iterator &start,
-                                  unsigned maxVecSize,
-                                  bool isLoad,
-                                  int *addrOffset);
+    bool isLoadStoreCompatible(Value *A, Value *B, int *dist, int *elementSize,
+                               int maxVecSize);
+    void mergeLoad(BasicBlock &BB, SmallVector<Instruction *, 16> &merged,
+                   Instruction *first, int offset);
+    void mergeStore(BasicBlock &BB, SmallVector<Instruction *, 16> &merged,
+                    Instruction *first, Instruction *last, int offset);
+    bool findConsecutiveAccess(BasicBlock &BB,
+                               SmallVector<Instruction *, 16> &merged,
+                               const BasicBlock::iterator &start,
+                               unsigned maxVecSize, bool isLoad,
+                               int *addrOffset, Instruction *&first,
+                               Instruction *&last);
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
     virtual StringRef getPassName() const
 #else
@@ -146,7 +149,7 @@ namespace gbe {
 
   void GenLoadStoreOptimization::mergeLoad(BasicBlock &BB,
                                             SmallVector<Instruction*, 16> &merged,
-                                            Instruction *start,
+                                            Instruction *first,
                                             int offset) {
     IRBuilder<> Builder(&BB);
 
@@ -155,7 +158,7 @@ namespace gbe {
     for(unsigned i = 0; i < size; i++) {
       values.push_back(merged[i]);
     }
-    LoadInst *ld = cast<LoadInst>(start);
+    LoadInst *ld = cast<LoadInst>(first);
     unsigned align = ld->getAlignment();
     unsigned addrSpace = ld->getPointerAddressSpace();
     // insert before first load
@@ -214,7 +217,9 @@ namespace gbe {
                             const BasicBlock::iterator &start,
                             unsigned maxVecSize,
                             bool isLoad,
-                            int *addrOffset) {
+                            int *addrOffset,
+                            Instruction *&first,
+                            Instruction *&last) {
     if(!isSimpleLoadStore(&*start)) return false;
 
     unsigned targetAddrSpace = getAddressSpace(&*start);
@@ -233,6 +238,7 @@ namespace gbe {
     int elementSize;
 
     SmallVector<mergedInfo *, 32> searchInsnArray;
+    SmallVector<mergedInfo *, 32> orderedInstrs;
     mergedInfo meInfoArray[32];
     int indx = 0;
     meInfoArray[indx++].init(&*start, 0);
@@ -275,13 +281,15 @@ namespace gbe {
 
     if(indx > 1)
     {
+      first = (*searchInsnArray.begin())->mInsn;
       //try to sort the load/store by the offset from the start
       //the farthest is at the beginning. this is easy to find the
       //continuous load/store
+      orderedInstrs = searchInsnArray;
       std::sort(searchInsnArray.begin(), searchInsnArray.end(), offsetSorter());
 
       // try to find continuous loadstore insn in the candidate array
-      for(unsigned i = 0; i < searchInsnArray.size(); i++)
+      for (unsigned i = 0; i < searchInsnArray.size(); i++)
       {
         unsigned j;
         for(j = 0; j < maxVecSize-1 && (j+i+1) < searchInsnArray.size(); j++)
@@ -306,6 +314,17 @@ namespace gbe {
             if (k >= maxVecSize)
               break;
           }
+          // find the last instruction if we are trying to merge STOREs.
+          // we will later use it as the insertion point.
+          if (!isLoad)
+            for (auto insn = orderedInstrs.rbegin();
+                 insn != orderedInstrs.rend(); ++insn) {
+              if (std::find(merged.begin(), merged.end(), (*insn)->mInsn) !=
+                  merged.end()) {
+                last = (*insn)->mInsn;
+                break;
+              }
+            }
 
           break;
         }
@@ -317,7 +336,8 @@ namespace gbe {
 
   void GenLoadStoreOptimization::mergeStore(BasicBlock &BB,
                                             SmallVector<Instruction*, 16> &merged,
-                                            Instruction *start,
+                                            Instruction *first,
+                                            Instruction *last,
                                             int offset) {
     IRBuilder<> Builder(&BB);
 
@@ -326,7 +346,7 @@ namespace gbe {
     for(unsigned i = 0; i < size; i++) {
       values.push_back(cast<StoreInst>(merged[i])->getValueOperand());
     }
-    StoreInst *st = cast<StoreInst>(start);
+    StoreInst *st = cast<StoreInst>(first);
     if(!st)
       return;
 
@@ -334,7 +354,7 @@ namespace gbe {
 
     unsigned align = st->getAlignment();
     // insert before the last store
-    Builder.SetInsertPoint(merged[size-1]);
+    Builder.SetInsertPoint(last);
 
     Type *dataTy = st->getValueOperand()->getType();
     VectorType *vecTy = VectorType::get(dataTy, size);
@@ -405,13 +425,14 @@ namespace gbe {
           continue;
 
         int addrOffset = 0;
+        Instruction *first = nullptr, *last = nullptr;
         unsigned maxVecSize = (ty->isFloatTy() || ty->isIntegerTy(32)) ? 4 :
                               (ty->isIntegerTy(16) ? 8 : 16);
-        bool reorder = findConsecutiveAccess(BB, merged, BBI, maxVecSize, isLoad, &addrOffset);
+        bool reorder = findConsecutiveAccess(BB, merged, BBI, maxVecSize,
+                                             isLoad, &addrOffset, first, last);
         uint32_t size = merged.size();
         uint32_t pos = 0;
         bool doDeleting = size > 1;
-        BasicBlock::iterator startLS = BBI;
         if (doDeleting) {
           // choose next undeleted instruction
           BBI = findSafeInstruction(merged, BBI, reorder);
@@ -423,9 +444,9 @@ namespace gbe {
                              (size >= 4 ? 4 : size));
           SmallVector<Instruction*, 16> mergedVec(merged.begin() + pos, merged.begin() + pos + vecSize);
           if(isLoad)
-            mergeLoad(BB, mergedVec, &*startLS, addrOffset);
+            mergeLoad(BB, mergedVec, first, addrOffset);
           else
-            mergeStore(BB, mergedVec, &*startLS, addrOffset);
+            mergeStore(BB, mergedVec, first, last, addrOffset);
           // remove merged insn
           for(uint32_t i = 0; i < mergedVec.size(); i++)
             mergedVec[i]->eraseFromParent();
