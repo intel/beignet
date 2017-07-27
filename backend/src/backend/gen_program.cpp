@@ -504,7 +504,7 @@ namespace gbe {
   {
 #ifdef GBE_COMPILER_AVAILABLE
     using namespace gbe;
-    char* errMsg;
+    char* errMsg = NULL;
     if(((GenProgram*)dst_program)->module == NULL){
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
       ((GenProgram*)dst_program)->module = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module).release();
@@ -512,7 +512,7 @@ namespace gbe {
       ((GenProgram*)dst_program)->module = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module);
 #endif
       errSize = 0;
-    }else{
+    } else {
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
       // Src now will be removed automatically. So clone it.
       llvm::Module* src = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module).release();
@@ -528,7 +528,7 @@ namespace gbe {
 #else
       if (LLVMLinkModules(wrap(dst), wrap(src), LLVMLinkerPreserveSource, &errMsg)) {
 #endif
-        if (err != NULL && errSize != NULL && stringSize > 0u) {
+        if (err != NULL && errSize != NULL && stringSize > 0u && errMsg) {
           strncpy(err, errMsg, stringSize-1);
           err[stringSize-1] = '\0';
           *errSize = strlen(err);
