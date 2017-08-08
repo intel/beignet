@@ -35,6 +35,8 @@
 #include "cl_sampler.h"
 #include "cl_alloc.h"
 #include "cl_utils.h"
+#include "cl_enqueue.h"
+#include "cl_event.h"
 
 #include "CL/cl.h"
 #include "CL/cl_gl.h"
@@ -134,6 +136,80 @@ cl_int clEnqueueAcquireGLObjects (cl_command_queue command_queue,
                                   cl_event *event)
 {
   cl_int err = CL_SUCCESS;
+  cl_int e_status, i;
+  cl_event e = NULL;
+  enqueue_data *data = NULL;
+
+  do {
+    if (!CL_OBJECT_IS_COMMAND_QUEUE(command_queue)) {
+      err = CL_INVALID_COMMAND_QUEUE;
+      break;
+    }
+
+    if (UNLIKELY(command_queue->ctx->props.gl_type == CL_GL_NOSHARE)) {
+      err = CL_INVALID_CONTEXT;
+      break;
+    }
+
+    if ((num_objects == 0 && mem_objects != NULL) ||
+        (num_objects > 0 && mem_objects == NULL)) {
+      err = CL_INVALID_VALUE;
+      break;
+    }
+
+    for (i = 0; i < num_objects; i++) {
+      if (!cl_mem_image(mem_objects[i])) {
+        err = CL_INVALID_MEM_OBJECT;
+        break;
+      }
+      if (!IS_GL_IMAGE(mem_objects[i])) {
+        err = CL_INVALID_GL_OBJECT;
+        break;
+      }
+    }
+    if (err != CL_SUCCESS) {
+      break;
+    }
+
+    err = cl_event_check_waitlist(num_events_in_wait_list, event_wait_list,
+                                  event, command_queue->ctx);
+    if (err != CL_SUCCESS) {
+      break;
+    }
+
+    e = cl_event_create(command_queue->ctx, command_queue, num_events_in_wait_list,
+                        event_wait_list, CL_COMMAND_ACQUIRE_GL_OBJECTS, &err);
+    if (err != CL_SUCCESS) {
+      break;
+    }
+
+    e_status = cl_event_is_ready(e);
+
+    data = &e->exec_data;
+    data->type = EnqueueReturnSuccesss;
+
+    if (e_status == CL_COMPLETE) {
+      // Sync mode, no need to queue event.
+      err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
+      if (err != CL_SUCCESS) {
+        break;
+      }
+    } else {
+      err = cl_event_exec(e, CL_SUBMITTED, CL_TRUE); // Submit to get the address.
+      if (err != CL_SUCCESS) {
+        break;
+      }
+
+      cl_command_queue_enqueue_event(command_queue, e);
+    }
+  } while (0);
+
+  if (err == CL_SUCCESS && event) {
+    *event = e;
+  } else {
+    cl_event_delete(e);
+  }
+
   return err;
 }
 
@@ -146,5 +222,79 @@ cl_int clEnqueueReleaseGLObjects (cl_command_queue command_queue,
                                   cl_event *event)
 {
   cl_int err = CL_SUCCESS;
+  cl_int e_status, i;
+  cl_event e = NULL;
+  enqueue_data *data = NULL;
+
+  do {
+    if (!CL_OBJECT_IS_COMMAND_QUEUE(command_queue)) {
+      err = CL_INVALID_COMMAND_QUEUE;
+      break;
+    }
+
+    if (UNLIKELY(command_queue->ctx->props.gl_type == CL_GL_NOSHARE)) {
+      err = CL_INVALID_CONTEXT;
+      break;
+    }
+
+    if ((num_objects == 0 && mem_objects != NULL) ||
+        (num_objects > 0 && mem_objects == NULL)) {
+      err = CL_INVALID_VALUE;
+      break;
+    }
+
+    for (i = 0; i < num_objects; i++) {
+      if (!cl_mem_image(mem_objects[i])) {
+        err = CL_INVALID_MEM_OBJECT;
+        break;
+      }
+      if (!IS_GL_IMAGE(mem_objects[i])) {
+        err = CL_INVALID_GL_OBJECT;
+        break;
+      }
+    }
+    if (err != CL_SUCCESS) {
+      break;
+    }
+
+    err = cl_event_check_waitlist(num_events_in_wait_list, event_wait_list,
+                                  event, command_queue->ctx);
+    if (err != CL_SUCCESS) {
+      break;
+    }
+
+    e = cl_event_create(command_queue->ctx, command_queue, num_events_in_wait_list,
+                        event_wait_list, CL_COMMAND_ACQUIRE_GL_OBJECTS, &err);
+    if (err != CL_SUCCESS) {
+      break;
+    }
+
+    e_status = cl_event_is_ready(e);
+
+    data = &e->exec_data;
+    data->type = EnqueueReturnSuccesss;
+
+    if (e_status == CL_COMPLETE) {
+      // Sync mode, no need to queue event.
+      err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
+      if (err != CL_SUCCESS) {
+        break;
+      }
+    } else {
+      err = cl_event_exec(e, CL_SUBMITTED, CL_TRUE); // Submit to get the address.
+      if (err != CL_SUCCESS) {
+        break;
+      }
+
+      cl_command_queue_enqueue_event(command_queue, e);
+    }
+  } while (0);
+
+  if (err == CL_SUCCESS && event) {
+    *event = e;
+  } else {
+    cl_event_delete(e);
+  }
+
   return err;
 }
