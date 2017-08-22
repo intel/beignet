@@ -46,13 +46,6 @@ namespace gbe
   BVAR(OCL_OUTPUT_CFG_GEN_IR, false);
   using namespace llvm;
 
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
-  llvm::LLVMContext& GBEGetLLVMContext() {
-    static llvm::LLVMContext GBEContext;
-    return GBEContext;
-  }
-#endif
-
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
   #define TARGETLIBRARY  TargetLibraryInfoImpl
 #else

@@ -28,6 +28,8 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm-c/Linker.h"
+#include "llvm-c/BitReader.h"
+#include "llvm-c/BitWriter.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
 #include "llvm/Bitcode/BitcodeWriter.h"
@@ -126,15 +128,24 @@ namespace gbe {
 
   void GenProgram::CleanLlvmResource(void){
 #ifdef GBE_COMPILER_AVAILABLE
+    llvm::LLVMContext* ctx = NULL;
     if(module){
+      ctx = &((llvm::Module*)module)->getContext();
+      (void)ctx;
       delete (llvm::Module*)module;
       module = NULL;
     }
-
+//llvm's version < 3.9, ctx is global ctx, can't be deleted.
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
+    //each module's context is individual, just delete it, ignaor llvm_ctx.
+    if (ctx != NULL)
+      delete ctx;
+#else
     if(llvm_ctx){
       delete (llvm::LLVMContext*)llvm_ctx;
       llvm_ctx = NULL;
     }
+#endif
 #endif
   }
 
@@ -353,19 +364,19 @@ namespace gbe {
     binary_content.assign(binary+1, size-1);
     llvm::StringRef llvm_bin_str(binary_content);
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
-    llvm::LLVMContext& c = GBEGetLLVMContext();
+    llvm::LLVMContext *c = new llvm::LLVMContext;
 #else
-    llvm::LLVMContext& c = llvm::getGlobalContext();
+    llvm::LLVMContext *c = &llvm::getGlobalContext();
 #endif
     llvm::SMDiagnostic Err;
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
     std::unique_ptr<llvm::MemoryBuffer> memory_buffer = llvm::MemoryBuffer::getMemBuffer(llvm_bin_str, "llvm_bin_str");
     acquireLLVMContextLock();
-    llvm::Module* module = llvm::parseIR(memory_buffer->getMemBufferRef(), Err, c).release();
+    llvm::Module* module = llvm::parseIR(memory_buffer->getMemBufferRef(), Err, *c).release();
 #else
     llvm::MemoryBuffer* memory_buffer = llvm::MemoryBuffer::getMemBuffer(llvm_bin_str, "llvm_bin_str");
     acquireLLVMContextLock();
-    llvm::Module* module = llvm::ParseIR(memory_buffer, Err, c);
+    llvm::Module* module = llvm::ParseIR(memory_buffer, Err, *c);
 #endif
     // if load 32 bit spir binary, the triple should be spir-unknown-unknown.
     llvm::Triple triple(module->getTargetTriple());
@@ -506,23 +517,31 @@ namespace gbe {
     using namespace gbe;
     char* errMsg = NULL;
     if(((GenProgram*)dst_program)->module == NULL){
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
+      LLVMModuleRef modRef;
+      LLVMParseBitcodeInContext2(wrap(new llvm::LLVMContext()),
+                                 LLVMWriteBitcodeToMemoryBuffer(wrap((llvm::Module*)((GenProgram*)src_program)->module)),
+                                 &modRef);
+      ((GenProgram*)dst_program)->module = llvm::unwrap(modRef);
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
       ((GenProgram*)dst_program)->module = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module).release();
 #else
       ((GenProgram*)dst_program)->module = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module);
 #endif
       errSize = 0;
     } else {
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
-      // Src now will be removed automatically. So clone it.
-      llvm::Module* src = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module).release();
-#else
       llvm::Module* src = (llvm::Module*)((GenProgram*)src_program)->module;
-#endif
       llvm::Module* dst = (llvm::Module*)((GenProgram*)dst_program)->module;
-
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
-      if (LLVMLinkModules2(wrap(dst), wrap(src))) {
+      if (&src->getContext() != &dst->getContext()) {
+        LLVMModuleRef modRef;
+        LLVMParseBitcodeInContext2(wrap(&dst->getContext()),
+                                    LLVMWriteBitcodeToMemoryBuffer(wrap(src)),
+                                    &modRef);
+        src = llvm::unwrap(modRef);
+      }
+      llvm::Module* clone = llvm::CloneModule(src).release();
+      if (LLVMLinkModules2(wrap(dst), wrap(clone))) {
 #elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
       if (LLVMLinkModules(wrap(dst), wrap(src), LLVMLinkerPreserveSource_Removed, &errMsg)) {
 #else
@@ -536,7 +555,6 @@ namespace gbe {
         return true;
       }
     }
-    // Everything run fine
 #endif
     return false;
   }
