@@ -1104,22 +1104,22 @@ EXTEND_QUOTE:
       return NULL;
 
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
-    llvm::LLVMContext& c = GBEGetLLVMContext();
+    llvm::LLVMContext *c = new llvm::LLVMContext;
 #else
-    llvm::LLVMContext& c = llvm::getGlobalContext();
+    llvm::LLVMContext *c = &llvm::getGlobalContext();
 #endif
     // Get the module from its file
     llvm::SMDiagnostic errDiag;
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
-    llvm::Module *module = parseIRFile(fileName, errDiag, c).release();
+    llvm::Module *module = parseIRFile(fileName, errDiag, *c).release();
 #else
-    llvm::Module *module = ParseIRFile(fileName, errDiag, c);
+    llvm::Module *module = ParseIRFile(fileName, errDiag, *c);
 #endif
 
     int optLevel = 1;
 
     //module will be delete in programCleanLlvmResource
-    p = gbe_program_new_from_llvm(deviceID, module, &c, NULL,
+    p = gbe_program_new_from_llvm(deviceID, module, c, NULL,
                                   string_size, err, err_size, optLevel, NULL);
     if (OCL_OUTPUT_BUILD_LOG && err && *err_size)
       llvm::errs() << err << "\n";
@@ -1152,11 +1152,10 @@ EXTEND_QUOTE:
 
     gbe_program p;
     acquireLLVMContextLock();
-    //FIXME: if use new allocated context to link two modules there would be context mismatch
-    //for some functions, so we use global context now, need switch to new context later.
+
     llvm::Module * out_module;
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
-    llvm::LLVMContext* llvm_ctx = &GBEGetLLVMContext();
+    llvm::LLVMContext* llvm_ctx = new llvm::LLVMContext;
 #else
     llvm::LLVMContext* llvm_ctx = &llvm::getGlobalContext();
 #endif
