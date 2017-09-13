@@ -1949,23 +1949,33 @@ namespace gbe
     indirect_src = GenRegister::indirect(dst.type, 0, GEN_WIDTH_1,
                                          GEN_VERTICAL_STRIDE_ONE_DIMENSIONAL, GEN_HORIZONTAL_STRIDE_0);
 
-    p->push();
-      p->curr.execWidth = 8;
-      p->curr.quarterControl = GEN_COMPRESSION_Q1;
-      p->MOV(a0, tmp);
-      p->MOV(dst, indirect_src);
-    p->pop();
-
-    if (simdWidth == 16) {
+    if (sel->isScalarReg(dst.reg())) {
+      p->push();
+        p->curr.execWidth = 1;
+        p->curr.predicate = GEN_PREDICATE_NONE;
+        p->curr.noMask = 1;
+        p->MOV(a0, tmp);
+        p->MOV(dst, indirect_src);
+      p->pop();
+    } else {
       p->push();
         p->curr.execWidth = 8;
-        p->curr.quarterControl = GEN_COMPRESSION_Q2;
-
-        const GenRegister nextDst = GenRegister::Qn(dst, 1);
-        const GenRegister nextOffset = GenRegister::Qn(tmp, 1);
-        p->MOV(a0, nextOffset);
-        p->MOV(nextDst, indirect_src);
+        p->curr.quarterControl = GEN_COMPRESSION_Q1;
+        p->MOV(a0, tmp);
+        p->MOV(dst, indirect_src);
       p->pop();
+
+      if (simdWidth == 16) {
+        p->push();
+          p->curr.execWidth = 8;
+          p->curr.quarterControl = GEN_COMPRESSION_Q2;
+
+          const GenRegister nextDst = GenRegister::Qn(dst, 1);
+          const GenRegister nextOffset = GenRegister::Qn(tmp, 1);
+          p->MOV(a0, nextOffset);
+          p->MOV(nextDst, indirect_src);
+        p->pop();
+      }
     }
   }
 
