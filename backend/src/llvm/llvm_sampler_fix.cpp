@@ -81,7 +81,11 @@ namespace gbe {
 
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
           Module *M = I->getParent()->getParent()->getParent();
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
+          Value* samplerCvt = M->getOrInsertFunction("__gen_ocl_sampler_to_int", i32Ty, I->getOperand(0)->getType());
+#else
           Value* samplerCvt = M->getOrInsertFunction("__gen_ocl_sampler_to_int", i32Ty, I->getOperand(0)->getType(), nullptr);
+#endif
           Value *samplerVal = Builder.CreateCall(samplerCvt, {I->getOperand(0)});
 #else
           Value *samplerVal = I->getOperand(0);
@@ -119,7 +123,11 @@ namespace gbe {
           Builder.SetInsertPoint(I);
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
           Module *M = I->getParent()->getParent()->getParent();
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
+          Value* samplerCvt = M->getOrInsertFunction("__gen_ocl_sampler_to_int", i32Ty, I->getOperand(0)->getType());
+#else
           Value* samplerCvt = M->getOrInsertFunction("__gen_ocl_sampler_to_int", i32Ty, I->getOperand(0)->getType(), nullptr);
+#endif
           Value *samplerVal = Builder.CreateCall(samplerCvt, {I->getOperand(0)});
 #else
           Value *samplerVal = I->getOperand(0);

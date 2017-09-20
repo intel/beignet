@@ -74,7 +74,11 @@ namespace gbe {
               if (F.hasFnAttribute(Attribute::NoDuplicate)) {
                 auto attrs = F.getAttributes();
                 F.setAttributes(attrs.removeAttribute(M.getContext(),
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
+                                AttributeList::FunctionIndex,
+#else
                                 AttributeSet::FunctionIndex,
+#endif
                                 Attribute::NoDuplicate));
                 changed = true;
               }

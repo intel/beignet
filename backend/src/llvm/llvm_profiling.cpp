@@ -162,12 +162,19 @@ namespace gbe
       /* Add the timestamp store function call. */
       // __gen_ocl_store_timestamp(int nth, int type);
       Value *Args[2] = {ConstantInt::get(intTy, pointNum++), ConstantInt::get(intTy, profilingType)};
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
       builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
               "__gen_ocl_calc_timestamp", Type::getVoidTy(module->getContext()),
               IntegerType::getInt32Ty(module->getContext()),
-              IntegerType::getInt32Ty(module->getContext()),
-              NULL)),
+              IntegerType::getInt32Ty(module->getContext()))),
               ArrayRef<Value*>(Args));
+#else
+      builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
+              "__gen_ocl_calc_timestamp", Type::getVoidTy(module->getContext()),
+              IntegerType::getInt32Ty(module->getContext()),
+              IntegerType::getInt32Ty(module->getContext()), nullptr)),
+              ArrayRef<Value*>(Args));
+#endif
     }
     /* We insert one store_profiling at the end of the last block to hold the place. */
     llvm::Function::iterator BE = F.end();
@@ -177,12 +184,19 @@ namespace gbe
     builder->SetInsertPoint(&*retInst);
     Value *Args2[2] = {profilingBuf, ConstantInt::get(intTy, profilingType)};
 
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
     builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
             "__gen_ocl_store_profiling", Type::getVoidTy(module->getContext()),
             ptrTy,
-            IntegerType::getInt32Ty(module->getContext()),
-            NULL)),
+            IntegerType::getInt32Ty(module->getContext()))),
             ArrayRef<Value*>(Args2));
+#else
+    builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
+            "__gen_ocl_store_profiling", Type::getVoidTy(module->getContext()),
+            ptrTy,
+            IntegerType::getInt32Ty(module->getContext()), nullptr)),
+            ArrayRef<Value*>(Args2));
+#endif
 
     delete builder;
     return changed;
