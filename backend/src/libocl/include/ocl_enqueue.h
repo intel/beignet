@@ -43,13 +43,29 @@ struct Block_literal {
     unsigned long int reserved;         // NULL
     unsigned long int size;         // sizeof(struct Block_literal_1)
     // optional helper functions
-    void (*copy_helper)(void *dst, void *src);     // IFF (1<<25)
-    void (*dispose_helper)(void *src);             // IFF (1<<25)
+    void *copy_helper;                // IFF (1<<25)
+    void *dispose_helper;             // IFF (1<<25)
     // required ABI.2010.3.16
     const char *signature;                         // IFF (1<<30)
   } *descriptor;
   // imported variables
 };
+
+#if __clang_major__*10 + __clang_minor__ >= 50
+typedef struct ndrange_info_t ndrange_t;
+#endif
+
+#if __clang_major__*10 + __clang_minor__ >= 50
+#define BLOCK_TYPE void*
+#else
+#define BLOCK_TYPE __private void*
+#endif
+
+#if __clang_major__*10 + __clang_minor__ >= 40
+#define EVENT_TYPE clk_event_t*
+#else
+#define EVENT_TYPE __private clk_event_t*
+#endif
 
 clk_event_t create_user_event(void);
 void retain_event(clk_event_t event);
@@ -58,17 +74,16 @@ void set_user_event_status(clk_event_t event, int status);
 bool is_valid_event(clk_event_t event);
 void capture_event_profiling_info(clk_event_t event, int name, global void *value);
 
-uint __get_kernel_work_group_size_impl(__private void *block);
-uint __get_kernel_preferred_work_group_multiple_impl(__private void *block);
+uint __get_kernel_work_group_size_impl(BLOCK_TYPE block);
+uint __get_kernel_preferred_work_group_multiple_impl(BLOCK_TYPE block);
 
-OVERLOADABLE int enqueue_kernel(queue_t q, int flag, ndrange_t ndrange, void (^block)(void));
-OVERLOADABLE int enqueue_kernel(queue_t q, int flag, ndrange_t ndrange,
-                                uint num_events_in_wait_list, const clk_event_t *event_wait_list,
-                                clk_event_t *event_ret, void (^block)(void));
+int __enqueue_kernel_basic(queue_t q, int flag, ndrange_t ndrange, BLOCK_TYPE block);
+int __enqueue_kernel_basic_events(queue_t q, int flag, ndrange_t ndrange,
+                                  uint num_events_in_wait_list, const EVENT_TYPE event_wait_list,
+                                  EVENT_TYPE event_ret, BLOCK_TYPE block);
 
 queue_t get_default_queue(void);
-int __gen_enqueue_kernel(queue_t q, int flag, ndrange_t ndrange, void (^block)(void), int size);
-int __gen_enqueue_kernel_slm(queue_t q, int flag, ndrange_t ndrange, __private void * block, int count, __private int* slm_sizes);
+int __gen_enqueue_kernel_slm(queue_t q, int flag, ndrange_t ndrange, BLOCK_TYPE block, int count, __private int* slm_sizes);
 
 OVERLOADABLE ndrange_t ndrange_1D(size_t global_work_size);
 OVERLOADABLE ndrange_t ndrange_1D(size_t global_work_size, size_t local_work_size);
