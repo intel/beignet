@@ -605,8 +605,13 @@ static void convertInstruction(Instruction *Inst, ConversionState &State) {
     for (SwitchInst::CaseIt I = Switch->case_begin(),
              E = Switch->case_end();
          I != E; ++I) {
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
+      NewInst->addCase(cast<ConstantInt>(convertConstant(I->getCaseValue())),
+                       I->getCaseSuccessor());
+#else
       NewInst->addCase(cast<ConstantInt>(convertConstant(I.getCaseValue())),
                        I.getCaseSuccessor());
+#endif
     }
     Switch->eraseFromParent();
   } else {

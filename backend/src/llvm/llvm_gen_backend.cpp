@@ -740,6 +740,8 @@ namespace gbe
     DECL_VISIT_FN(AtomicCmpXchgInst, AtomicCmpXchgInst);
 #undef DECL_VISIT_FN
 
+    // Emit rounding instructions from gen native function
+    void emitRoundingCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode);
     // Emit unary instructions from gen native function
     void emitUnaryCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode, ir::Type = ir::TYPE_FLOAT);
     // Emit unary instructions from gen native function
@@ -972,7 +974,7 @@ namespace gbe
             CallInst *ci = dyn_cast<CallInst>(theUser);
             pointer = ci ? ci->getArgOperand(0) : NULL;
           } else {
-            theUser->dump();
+            //theUser->dump();
             GBE_ASSERT(0 && "Unknown instruction operating on pointers\n");
           }
 
@@ -1120,7 +1122,7 @@ namespace gbe
           pointerBaseMap.insert(std::make_pair(ptr, basePhi));
           return basePhi;
       } else {
-        ptr->dump();
+        //ptr->dump();
         GBE_ASSERT(0 && "Unhandled instruction in getPointerBase\n");
         return ptr;
       }
@@ -1201,7 +1203,7 @@ namespace gbe
           BtiValueMap.insert(std::make_pair(Val, btiPhi));
           return btiPhi;
         } else {
-          Val->dump();
+          //Val->dump();
           GBE_ASSERT(0 && "Unhandled instruction in getBtiRegister\n");
           return Val;
         }
@@ -1655,7 +1657,7 @@ namespace gbe
         }
       default:
         {
-          c->dump();
+          //c->dump();
           NOT_IMPLEMENTED;
         }
     }
@@ -1907,7 +1909,7 @@ namespace gbe
   ir::ImmediateIndex GenWriter::processConstantImmIndex(Constant *CPV, int32_t index) {
     if (dyn_cast<ConstantExpr>(CPV) == NULL)
       return processConstantImmIndexImpl(CPV, index);
-    CPV->dump();
+    //CPV->dump();
     GBE_ASSERT(0 && "unsupported constant.\n");
     return ctx.newImmediate((uint32_t)0);
   }
@@ -4154,6 +4156,21 @@ namespace gbe
     };
   }
 
+  void GenWriter::emitRoundingCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode) {
+    if (I.getType()->isHalfTy()) {
+      const ir::Register src = this->getRegister(I.getOperand(0));
+      const ir::Register srcFloat = ctx.reg(ir::FAMILY_DWORD);
+      const ir::Register dstFloat = ctx.reg(ir::FAMILY_DWORD);
+      const ir::Register dst = this->getRegister(&I);
+      ctx.F16TO32(ir::TYPE_FLOAT, ir::TYPE_U16, srcFloat, src);
+      ctx.ALU1(opcode, ir::TYPE_FLOAT, dstFloat, srcFloat);
+      ctx.F32TO16(ir::TYPE_U16, ir::TYPE_FLOAT, dst, dstFloat);
+    } else {
+      GBE_ASSERT(I.getType()->isFloatTy());
+      this->emitUnaryCallInst(I,CS,opcode);
+    }
+  }
+
   void GenWriter::emitUnaryCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode, ir::Type type) {
     CallSite::arg_iterator AI = CS.arg_begin();
 #if GBE_DEBUG
@@ -4738,10 +4755,10 @@ namespace gbe
           }
           break;
           case Intrinsic::sqrt: this->emitUnaryCallInst(I,CS,ir::OP_SQR); break;
-          case Intrinsic::ceil: this->emitUnaryCallInst(I,CS,ir::OP_RNDU); break;
-          case Intrinsic::trunc: this->emitUnaryCallInst(I,CS,ir::OP_RNDZ); break;
-          case Intrinsic::rint: this->emitUnaryCallInst(I,CS,ir::OP_RNDE); break;
-          case Intrinsic::floor: this->emitUnaryCallInst(I,CS,ir::OP_RNDD); break;
+          case Intrinsic::ceil: this->emitRoundingCallInst(I,CS,ir::OP_RNDU); break;
+          case Intrinsic::trunc: this->emitRoundingCallInst(I,CS,ir::OP_RNDZ); break;
+          case Intrinsic::rint: this->emitRoundingCallInst(I,CS,ir::OP_RNDE); break;
+          case Intrinsic::floor: this->emitRoundingCallInst(I,CS,ir::OP_RNDD); break;
           case Intrinsic::sin: this->emitUnaryCallInst(I,CS,ir::OP_SIN); break;
           case Intrinsic::cos: this->emitUnaryCallInst(I,CS,ir::OP_COS); break;
           case Intrinsic::log2: this->emitUnaryCallInst(I,CS,ir::OP_LOG); break;
@@ -5531,9 +5548,13 @@ namespace gbe
           case GEN_OCL_ENQUEUE_SET_NDRANGE_INFO:
           {
             GBE_ASSERT(AI != AE);
+            Value *dstValue;
+            if(I.hasStructRetAttr())
+              dstValue = *AI++;
+            else
+              dstValue = &I;
             Value *srcValue = *AI;
             ++AI;
-            Value *dstValue = &I;
             regTranslator.newValueProxy(srcValue, dstValue);
             break;
           }
