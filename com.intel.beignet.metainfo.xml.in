@@ -10,7 +10,7 @@
 <metadata_license>MIT</metadata_license>
 <project_license>LGPL-2.1+</project_license>
 <url type="homepage">https://www.freedesktop.org/wiki/Software/Beignet/</url>
-<url type="bugtracker">https://bugs.freedesktop.org/buglist.cgi?product=Beignet&component=Beignet&resolution=---</url>
+<url type="bugtracker">https://bugs.freedesktop.org/buglist.cgi?product=Beignet&amp;component=Beignet&amp;resolution=---</url>
 <developer_name>Intel</developer_name>
 <releases>
 <release version="@version@"></release>
