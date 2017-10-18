@@ -16,12 +16,13 @@
  *
  */
 #include "ocl_memcpy.h"
+typedef int __attribute__((may_alias)) AI;
 
 #define DECL_TWO_SPACE_MEMCOPY_FN(NAME, DST_SPACE, SRC_SPACE) \
 void __gen_memcpy_ ##NAME## _align (DST_SPACE uchar* dst, SRC_SPACE uchar* src, size_t size) { \
   size_t index = 0; \
   while((index + 4) <= size) { \
-    *((DST_SPACE uint *)(dst + index)) = *((SRC_SPACE uint *)(src + index)); \
+    *((DST_SPACE AI *)(dst + index)) = *((SRC_SPACE AI *)(src + index)); \
     index += 4; \
   } \
   while(index < size) { \
