@@ -37,9 +37,7 @@ Environment variables are used all over the code. Most important ones are:
   precision math instructions compliant with OpenCL Spec. So we provide a
   software version to meet the high precision requirement. Obviously the
   software version's performance is not as good as native version supported by
-  GEN hardware. What's more, most graphics application don't need this high
-  precision, so we choose 0 as the default value. So OpenCL apps do not suffer
-  the performance penalty for using high precision math functions.
+  GEN hardware.
 
 - `OCL_SIMD_WIDTH` `(8 or 16)`. Select the number of lanes per hardware thread,
   Normally, you don't need to set it, we will select suitable simd width for
