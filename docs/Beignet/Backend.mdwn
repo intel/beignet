@@ -9,10 +9,10 @@ Status
 ------
 
 After two years development, beignet is mature now. It now supports all the
-OpenCL 1.2 mandatory features. Beignet get almost 100% pass rate with both
-OpenCV 3.0 test suite and the piglit opencl test suite. There are some 
-performance tuning related items remained, see [[here|Backend/TODO]] for a
-(incomplete) lists of things to do.
+OpenCL 1.2 mandatory features. Beignet gets almost 100% pass rate with both
+the OpenCV 3.0 test suite and the piglit opencl test suite. There are some 
+performance tuning related items remained, see [[here|Backend/TODO]] for an
+(incomplete) list of things to do.
 
 Interface with the run-time
 ---------------------------
@@ -63,7 +63,7 @@ Environment variables are used all over the code. Most important ones are:
 - `OCL_OUTPUT_REG_ALLOC` `(0 or 1)`. Output Gen register allocations, including
   virtual register to physical register mapping, live ranges.
 
-- `OCL_OUTPUT_BUILD_LOG` `(0 or 1)`. Output error messages if there is any
+- `OCL_OUTPUT_BUILD_LOG` `(0 or 1)`. Output error messages if there are any
   during CL kernel compiling and linking.
 
 - `OCL_OUTPUT_CFG` `(0 or 1)`. Output control flow graph in .dot file.
@@ -72,22 +72,22 @@ Environment variables are used all over the code. Most important ones are:
   but without instructions in each BasicBlock.
 
 - `OCL_PRE_ALLOC_INSN_SCHEDULE` `(0 or 1)`. The instruction scheduler in
-  beignet are currently splitted into two passes: before and after register
-  allocation. The pre-alloc scheduler tend to decrease register pressure.
+  beignet is currently split into two passes: before and after register
+  allocation. The pre-alloc scheduler tends to decrease register pressure.
   This variable is used to disable/enable pre-alloc scheduler. This pass is
   disabled now for some bugs.
 
 - `OCL_POST_ALLOC_INSN_SCHEDULE` `(0 or 1)`. Disable/enable post-alloc
-  instruction scheduler. The post-alloc scheduler tend to reduce instruction
+  instruction scheduler. The post-alloc scheduler tends to reduce instruction
   latency. By default, this is enabled now.
 
-- `OCL_SIMD16_SPILL_THRESHOLD` `(0 to 256)`. Tune how much registers can be
-  spilled under SIMD16. Default value is 16. We find spill too much register
-  under SIMD16 is not as good as fall back to SIMD8 mode. So we set the
+- `OCL_SIMD16_SPILL_THRESHOLD` `(0 to 256)`. Tune how many registers can be
+  spilled under SIMD16. Default value is 16. We find spilling too many registers
+  under SIMD16 is not as good as falling back to SIMD8 mode. So we set the
   variable to control spilled register number under SIMD16.
 
 - `OCL_USE_PCH` `(0 or 1)`. The default value is 1. If it is enabled, we use
-  a pre compiled header file which include all basic ocl headers. This would
+  a pre compiled header file which includes all basic ocl headers. This would
   reduce the compile time.
 
 Implementation details
