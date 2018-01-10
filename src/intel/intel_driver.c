@@ -235,8 +235,6 @@ if(intel->x11_display) {
     intel_driver_init_shared(intel, intel->dri_ctx);
     Xfree(driver_name);
   }
-  else
-    fprintf(stderr, "X server found. dri2 connection failed! \n");
 }
 #endif
 
