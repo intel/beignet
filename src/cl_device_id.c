@@ -274,6 +274,36 @@ static struct _cl_device_id intel_glk12eu_device = {
 #include "cl_gen9_device.h"
 };
 
+static struct _cl_device_id intel_cfl_gt1_device = {
+  .max_compute_unit = 12,
+  .max_thread_per_unit = 7,
+  .sub_slice_count = 2,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 256,
+  .max_clock_frequency = 1000,
+#include "cl_gen9_device.h"
+};
+
+static struct _cl_device_id intel_cfl_gt2_device = {
+  .max_compute_unit = 24,
+  .max_thread_per_unit = 7,
+  .sub_slice_count = 3,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 256,
+  .max_clock_frequency = 1000,
+#include "cl_gen9_device.h"
+};
+
+static struct _cl_device_id intel_cfl_gt3_device = {
+  .max_compute_unit = 48,
+  .max_thread_per_unit = 7,
+  .sub_slice_count = 6,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 256,
+  .max_clock_frequency = 1000,
+#include "cl_gen9_device.h"
+};
+
 LOCAL cl_device_id
 cl_get_gt_device(cl_device_type device_type)
 {
@@ -785,6 +815,64 @@ glk12eu_break:
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
+    case PCI_CHIP_COFFEELAKE_S_GT1_1:
+    case PCI_CHIP_COFFEELAKE_S_GT1_2:
+    case PCI_CHIP_COFFEELAKE_S_GT1_3:
+      DECL_INFO_STRING(cfl_gt1_break, intel_cfl_gt1_device, name, "Intel(R) UHD Graphics Coffee Lake Desktop GT1");
+    case PCI_CHIP_COFFEELAKE_U_GT1_1:
+    case PCI_CHIP_COFFEELAKE_U_GT1_2:
+      DECL_INFO_STRING(cfl_gt1_break, intel_cfl_gt1_device, name, "Intel(R) UHD Graphics Coffee Lake Mobile GT1");
+cfl_gt1_break:
+      intel_cfl_gt1_device.device_id = device_id;
+      intel_cfl_gt1_device.platform = cl_get_platform_default();
+      ret = &intel_cfl_gt1_device;
+      cl_intel_platform_get_default_extension(ret);
+#ifdef ENABLE_FP64
+      cl_intel_platform_enable_extension(ret, cl_khr_fp64_ext_id);
+#endif
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      break;
+
+    case PCI_CHIP_COFFEELAKE_S_GT2_1:
+    case PCI_CHIP_COFFEELAKE_S_GT2_2:
+    case PCI_CHIP_COFFEELAKE_S_GT2_3:
+    case PCI_CHIP_COFFEELAKE_S_GT2_4:
+      DECL_INFO_STRING(cfl_gt2_break, intel_cfl_gt2_device, name, "Intel(R) UHD Graphics Coffee Lake Desktop GT2");
+    case PCI_CHIP_COFFEELAKE_H_GT2_1:
+    case PCI_CHIP_COFFEELAKE_H_GT2_2:
+      DECL_INFO_STRING(cfl_gt2_break, intel_cfl_gt2_device, name, "Intel(R) UHD Graphics Coffee Lake Halo GT2");
+    case PCI_CHIP_COFFEELAKE_U_GT2_1:
+    case PCI_CHIP_COFFEELAKE_U_GT2_2:
+    case PCI_CHIP_COFFEELAKE_U_GT2_3:
+      DECL_INFO_STRING(cfl_gt2_break, intel_cfl_gt2_device, name, "Intel(R) UHD Graphics Coffee Lake Mobile GT2");
+cfl_gt2_break:
+      intel_cfl_gt2_device.device_id = device_id;
+      intel_cfl_gt2_device.platform = cl_get_platform_default();
+      ret = &intel_cfl_gt2_device;
+      cl_intel_platform_get_default_extension(ret);
+#ifdef ENABLE_FP64
+      cl_intel_platform_enable_extension(ret, cl_khr_fp64_ext_id);
+#endif
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      break;
+
+    case PCI_CHIP_COFFEELAKE_U_GT3_1:
+    case PCI_CHIP_COFFEELAKE_U_GT3_2:
+    case PCI_CHIP_COFFEELAKE_U_GT3_3:
+    case PCI_CHIP_COFFEELAKE_U_GT3_4:
+    case PCI_CHIP_COFFEELAKE_U_GT3_5:
+      DECL_INFO_STRING(cfl_gt3_break, intel_cfl_gt3_device, name, "Intel(R) UHD Graphics Coffee Lake Mobile GT3");
+cfl_gt3_break:
+      intel_cfl_gt3_device.device_id = device_id;
+      intel_cfl_gt3_device.platform = cl_get_platform_default();
+      ret = &intel_cfl_gt3_device;
+      cl_intel_platform_get_default_extension(ret);
+#ifdef ENABLE_FP64
+      cl_intel_platform_enable_extension(ret, cl_khr_fp64_ext_id);
+#endif
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      break;
+
     case PCI_CHIP_SANDYBRIDGE_BRIDGE:
     case PCI_CHIP_SANDYBRIDGE_GT1:
     case PCI_CHIP_SANDYBRIDGE_GT2:
@@ -992,7 +1080,10 @@ LOCAL cl_bool is_gen_device(cl_device_id device) {
          device == &intel_kbl_gt3_device ||
          device == &intel_kbl_gt4_device ||
          device == &intel_glk18eu_device ||
-         device == &intel_glk12eu_device;
+         device == &intel_glk12eu_device ||
+         device == &intel_cfl_gt1_device ||
+         device == &intel_cfl_gt2_device ||
+         device == &intel_cfl_gt3_device;
 }
 
 LOCAL cl_int
@@ -1420,7 +1511,9 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
         || device == &intel_bxt18eu_device || device == &intel_bxt12eu_device || device == &intel_kbl_gt1_device
         || device == &intel_kbl_gt2_device || device == &intel_kbl_gt3_device
         || device == &intel_kbl_gt4_device || device == &intel_kbl_gt15_device
-        || device == &intel_glk18eu_device || device == &intel_glk12eu_device) {
+        || device == &intel_glk18eu_device || device == &intel_glk12eu_device
+        || device == &intel_cfl_gt1_device || device == &intel_cfl_gt1_device
+        || device == &intel_cfl_gt3_device) {
     *ver = 9;
   } else
     return CL_INVALID_VALUE;
