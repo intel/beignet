@@ -27,35 +27,11 @@ clCreateCommandQueue(cl_context context,
                      cl_command_queue_properties properties,
                      cl_int *errcode_ret)
 {
-  cl_command_queue queue = NULL;
-  cl_int err = CL_SUCCESS;
-
-  do {
-    if (!CL_OBJECT_IS_CONTEXT(context)) {
-      err = CL_INVALID_CONTEXT;
-      break;
-    }
-
-    err = cl_devices_list_include_check(context->device_num, context->devices, 1, &device);
-    if (err)
-      break;
-
-    if (properties & ~(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE)) {
-      err = CL_INVALID_VALUE;
-      break;
-    }
-
-    if (properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) { /*not supported now.*/
-      err = CL_INVALID_QUEUE_PROPERTIES;
-      break;
-    }
-
-    queue = cl_create_command_queue(context, device, properties, 0, &err);
-  } while (0);
-
-  if (errcode_ret)
-    *errcode_ret = err;
-  return queue;
+  cl_queue_properties props[3];
+  props[0] = CL_QUEUE_PROPERTIES;
+  props[1] = properties;
+  props[2] = 0;
+  return clCreateCommandQueueWithProperties(context, device, props, errcode_ret);
 }
 
 /* 2.0 new API for create command queue. */
