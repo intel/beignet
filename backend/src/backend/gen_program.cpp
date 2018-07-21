@@ -454,7 +454,11 @@ namespace gbe {
 #ifdef GBE_COMPILER_AVAILABLE
       std::string str;
       llvm::raw_string_ostream OS(str);
+#if LLVM_VERSION_MAJOR >= 7
+      llvm::WriteBitcodeToFile(*((llvm::Module*)prog->module), OS);
+#else
       llvm::WriteBitcodeToFile((llvm::Module*)prog->module, OS);
+#endif
       std::string& bin_str = OS.str();
       int llsz = bin_str.size();
       *binary = (char *)malloc(sizeof(char) * (llsz+1) );
@@ -545,7 +549,11 @@ namespace gbe {
                                     &modRef);
         src = llvm::unwrap(modRef);
       }
+#if LLVM_VERSION_MAJOR >= 7
+      llvm::Module* clone = llvm::CloneModule(*src).release();
+#else
       llvm::Module* clone = llvm::CloneModule(src).release();
+#endif
       if (LLVMLinkModules2(wrap(dst), wrap(clone))) {
 #elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
       if (LLVMLinkModules(wrap(dst), wrap(src), LLVMLinkerPreserveSource_Removed, &errMsg)) {

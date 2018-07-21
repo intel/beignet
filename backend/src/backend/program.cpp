@@ -794,7 +794,11 @@ namespace gbe {
       llvm::raw_fd_ostream ostream (dumpSPIRBinaryName.c_str(),
                                     err, llvm::sys::fs::F_None);
       if (!err)
+#if LLVM_VERSION_MAJOR<7
         llvm::WriteBitcodeToFile(*out_module, ostream);
+#else
+        llvm::WriteBitcodeToFile(**out_module, ostream);
+#endif
     }
 #endif
     return true;

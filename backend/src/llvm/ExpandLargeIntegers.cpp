@@ -99,8 +99,8 @@ using namespace llvm;
 
 #ifdef DEBUG
   #undef DEBUG
-  #define DEBUG(...)
 #endif
+#define DEBUG(...)
 // Break instructions up into no larger than 64-bit chunks.
 static const unsigned kChunkBits = 64;
 static const unsigned kChunkBytes = kChunkBits / CHAR_BIT;

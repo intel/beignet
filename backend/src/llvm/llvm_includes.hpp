@@ -89,6 +89,10 @@
 #include "llvm/CodeGen/IntrinsicLowering.h"
 
 #include "llvm/Transforms/Scalar.h"
+#if LLVM_VERSION_MAJOR >= 7
+#include "llvm/Transforms/Utils.h"
+#include "llvm/Transforms/InstCombine/InstCombine.h"
+#endif
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInstrInfo.h"

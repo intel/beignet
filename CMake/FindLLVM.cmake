@@ -113,10 +113,10 @@ macro(add_one_lib name)
 endmacro()
 
 #Assume clang lib path same as llvm lib path
+add_one_lib("clangCodeGen")
 add_one_lib("clangFrontend")
 add_one_lib("clangSerialization")
 add_one_lib("clangDriver")
-add_one_lib("clangCodeGen")
 add_one_lib("clangSema")
 add_one_lib("clangStaticAnalyzerFrontend")
 add_one_lib("clangStaticAnalyzerCheckers")

@@ -340,7 +340,11 @@ namespace gbe
     /* We use beignet's bitcode as dst because it will have a lot of
        lazy functions which will not be loaded. */
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
+#if LLVM_VERSION_MAJOR >= 7
+    llvm::Module * linked_module = llvm::CloneModule(*(llvm::Module*)mod).release();
+#else
     llvm::Module * linked_module = llvm::CloneModule((llvm::Module*)mod).release();
+#endif
     if(LLVMLinkModules2(wrap(clonedLib), wrap(linked_module))) {
 #else
     char* errorMsg;
