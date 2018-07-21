@@ -5248,7 +5248,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           write64Stateless(sel, address, src);
         sel.pop();
       } else {
-        GBE_ASSERT(sel.hasLongType());
+        GBE_ASSERTM(sel.hasLongType(), "Long (int64) not supported on this device");
         write64Stateless(sel, address, src);
       }
     }
@@ -5833,7 +5833,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
 
         /* The special case, when dst is half, float->word->half will lose accuracy. */
         if (dstType == TYPE_HALF) {
-          GBE_ASSERT(sel.hasHalfType());
+          GBE_ASSERTM(sel.hasHalfType(), "Half precision not supported on this device");
           type = GEN_TYPE_HF;
         }
 
@@ -5874,7 +5874,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
 
       if (dstType == TYPE_HALF) {
         /* There is no MOV for Long <---> Half. So Long-->Float-->half. */
-        GBE_ASSERT(sel.hasLongType());
+        GBE_ASSERTM(sel.hasLongType(), "Long (int64) not supported on this device");
         GBE_ASSERT(sel.hasHalfType());
         sel.push();
         if (sel.isScalarReg(insn.getSrc(0))) {
@@ -6176,7 +6176,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         }
       } else if (srcType == ir::TYPE_HALF) {
         /* No need to consider old platform. if we support half, we must have native long. */
-        GBE_ASSERT(sel.hasLongType());
+        GBE_ASSERTM(sel.hasLongType(), "Long (int64) not supported on this device");
         GBE_ASSERT(sel.hasHalfType());
         uint32_t type = dstType == TYPE_U64 ? GEN_TYPE_UD : GEN_TYPE_D;
         GenRegister tmp = GenRegister::retype(sel.selReg(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0))), TYPE_U32), type);
@@ -6200,7 +6200,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           sel.MOV(dst, tmp);
         }
       } else if (src.type == GEN_TYPE_DF) {
-        GBE_ASSERT(sel.hasDoubleType());
+        GBE_ASSERTM(sel.hasDoubleType(), "Double precision not supported on this device");
         GBE_ASSERT(sel.hasLongType()); //So far, if we support double, we support native long.
 
         // Just Mov
@@ -6219,7 +6219,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       const GenRegister dst = sel.selReg(insn.getDst(0), dstType);
       const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
 
-      GBE_ASSERT(sel.hasDoubleType());
+      GBE_ASSERTM(sel.hasDoubleType(), "Double precision not supported on this device (if this is a literal, use '1.0f' not '1.0')");
 
       if (sel.isScalarReg(insn.getDst(0))) {
         // dst is scalar, just MOV and nothing more.
@@ -6258,7 +6258,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       const GenRegister dst = sel.selReg(insn.getDst(0), dstType);
       const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
 
-      GBE_ASSERT(sel.hasDoubleType());
+      GBE_ASSERTM(sel.hasDoubleType(), "Double precision not supported on this device (if this is a literal, use '1.0f' not '1.0')");
       GBE_ASSERT(sel.hasHalfType()); //So far, if we support double, we support half.
 
       if (sel.isScalarReg(insn.getDst(0))) { // uniform case.
@@ -6324,7 +6324,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       // Special case, half -> char/short.
       /* [DevBDW+]:	Format conversion to or from HF (Half Float) must be DWord-aligned and
          strided by a DWord on the destination. */
-      GBE_ASSERT(sel.hasHalfType());
+      GBE_ASSERTM(sel.hasHalfType(), "Half precision not supported on this device");
       GenRegister tmp;
       sel.push();
       if (sel.isScalarReg(insn.getSrc(0))) {
@@ -6356,7 +6356,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       // Special case, char/uchar -> half
       /* [DevBDW+]:  Format conversion to or from HF (Half Float) must be DWord-aligned and
          strided by a DWord on the destination. */
-      GBE_ASSERT(sel.hasHalfType());
+      GBE_ASSERTM(sel.hasHalfType(), "Half precision not supported on this device");
       GenRegister tmp = GenRegister::retype(sel.unpacked_uw(sel.reg(FAMILY_DWORD, sel.isScalarReg(insn.getSrc(0)))), GEN_TYPE_HF);
       sel.push();
       if (sel.isScalarReg(insn.getSrc(0))) {
@@ -6378,7 +6378,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
       const RegisterFamily dstFamily = getFamily(dstType);
 
-      GBE_ASSERT(sel.hasDoubleType());
+      GBE_ASSERTM(sel.hasDoubleType(), "Double precision not supported on this device (if this is a literal, use '1.0f' not '1.0')");
       GBE_ASSERT(sel.hasHalfType()); //So far, if we support double, we support half.
       if (sel.isScalarReg(insn.getDst(0))) {
         // dst is scalar, just MOV and nothing more.
@@ -6422,7 +6422,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       const GenRegister dst = sel.selReg(insn.getDst(0), dstType);
       const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
 
-      GBE_ASSERT(sel.hasDoubleType());
+      GBE_ASSERTM(sel.hasDoubleType(), "Double precision not supported on this device");
       GBE_ASSERT(sel.hasLongType()); //So far, if we support double, we support native long.
       // Just Mov
       sel.MOV(dst, src);
@@ -6437,7 +6437,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       const GenRegister src = sel.selReg(insn.getSrc(0), srcType);
       const RegisterFamily srcFamily = getFamily(srcType);
 
-      GBE_ASSERT(sel.hasDoubleType());
+      GBE_ASSERTM(sel.hasDoubleType(), "Double precision not supported on this device");
       GBE_ASSERT(sel.hasLongType()); //So far, if we support double, we support native long.
 
       if (sel.hasLongType() && sel.hasLongRegRestrict()) {
