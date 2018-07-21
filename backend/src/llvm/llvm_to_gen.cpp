@@ -322,7 +322,11 @@ namespace gbe
     DataLayout DL(&mod);
     
     gbeDiagnosticContext dc;
+#if LLVM_VERSION_MAJOR >= 6
+    mod.getContext().setDiagnosticHandlerCallBack(&gbeDiagnosticHandler,&dc);
+#else
     mod.getContext().setDiagnosticHandler(&gbeDiagnosticHandler,&dc);
+#endif
 
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
     mod.setDataLayout(DL);

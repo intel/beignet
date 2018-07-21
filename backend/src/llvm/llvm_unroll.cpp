@@ -205,7 +205,9 @@ namespace gbe {
           if (parentTripCount != 0 && currTripCount * parentTripCount > 32) {
             //Don't change the unrollID if doesn't force unroll.
             //setUnrollID(parentL, false);
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
+#if LLVM_VERSION_MAJOR >= 6
+            loopInfo.erase(parentL);
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
             loopInfo.markAsRemoved(parentL);
 #else
             LPM.deleteLoopFromQueue(parentL);
