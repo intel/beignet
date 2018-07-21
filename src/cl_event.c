@@ -183,6 +183,25 @@ cl_event_new(cl_context ctx, cl_command_queue queue, cl_command_type type,
   return e;
 }
 
+/* This exists to prevent long chains of events from filling up memory (https://bugs.launchpad.net/ubuntu/+source/beignet/+bug/1354086).  Call only after the dependencies are complete, or failed and marked as such in this event's status, or when this event is being destroyed */
+LOCAL void
+cl_event_delete_depslist(cl_event event)
+{
+  CL_OBJECT_LOCK(event);
+  cl_event *old_depend_events = event->depend_events;
+  int depend_count = event->depend_event_num;
+  event->depend_event_num = 0;
+  event->depend_events = NULL;
+  CL_OBJECT_UNLOCK(event);
+  if (old_depend_events) {
+    assert(depend_count);
+    for (int i = 0; i < depend_count; i++) {
+      cl_event_delete(old_depend_events[i]);
+    }
+    cl_free(old_depend_events);
+  }
+}
+
 LOCAL void
 cl_event_delete(cl_event event)
 {
@@ -199,13 +218,7 @@ cl_event_delete(cl_event event)
 
   assert(list_node_out_of_list(&event->enqueue_node));
 
-  if (event->depend_events) {
-    assert(event->depend_event_num);
-    for (i = 0; i < event->depend_event_num; i++) {
-      cl_event_delete(event->depend_events[i]);
-    }
-    cl_free(event->depend_events);
-  }
+  cl_event_delete_depslist(event);
 
   /* Free all the callbacks. Last ref, no need to lock. */
   while (!list_empty(&event->callbacks)) {
@@ -565,7 +578,11 @@ cl_event_exec(cl_event event, cl_int exec_to_status, cl_bool ignore_depends)
   assert(depend_status <= CL_COMPLETE || ignore_depends || exec_to_status == CL_QUEUED);
   if (depend_status < CL_COMPLETE) { // Error happend, cancel exec.
     ret = cl_event_set_status(event, depend_status);
+    cl_event_delete_depslist(event);
     return depend_status;
+  }
+  if (depend_status == CL_COMPLETE) { // Avoid memory leak
+    cl_event_delete_depslist(event);
   }
 
   if (cur_status <= exec_to_status) {

@@ -44,7 +44,7 @@ typedef struct _cl_event {
   cl_command_type event_type; /* Event type. */
   cl_bool is_barrier;         /* Is this event a barrier */
   cl_int status;              /* The execution status */
-  cl_event *depend_events;    /* The events must complete before this. */
+  cl_event *depend_events;    /* The events must complete before this. May disappear after they have completed - see cl_event_delete_depslist*/
   cl_uint depend_event_num;   /* The depend events number. */
   list_head callbacks;        /* The events The event callback functions */
   list_node enqueue_node;     /* The node in the enqueue list. */
