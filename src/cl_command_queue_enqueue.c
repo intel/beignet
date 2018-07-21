@@ -65,6 +65,8 @@ worker_thread_function(void *Arg)
       if (cl_event_is_ready(e) <= CL_COMPLETE) {
         list_node_del(&e->enqueue_node);
         list_add_tail(&ready_list, &e->enqueue_node);
+      } else if(!(queue->props & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)){
+        break; /* in in-order mode, can't skip over non-ready events */
       }
     }
 
@@ -80,18 +82,20 @@ worker_thread_function(void *Arg)
     CL_OBJECT_UNLOCK(queue);
 
     /* Do the really job without lock.*/
-    exec_status = CL_SUBMITTED;
-    list_for_each_safe(pos, n, &ready_list)
-    {
-      e = list_entry(pos, _cl_event, enqueue_node);
-      cl_event_exec(e, exec_status, CL_FALSE);
-    }
+    if (queue->props & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) { /* in in-order mode, need to get each all the way to CL_COMPLETE before starting the next one */
+      exec_status = CL_SUBMITTED;
+      list_for_each_safe(pos, n, &ready_list)
+      {
+        e = list_entry(pos, _cl_event, enqueue_node);
+        cl_event_exec(e, exec_status, CL_FALSE);
+      }
 
-    /* Notify all waiting for flush. */
-    CL_OBJECT_LOCK(queue);
-    worker->in_exec_status = CL_SUBMITTED;
-    CL_OBJECT_NOTIFY_COND(queue);
-    CL_OBJECT_UNLOCK(queue);
+      /* Notify all waiting for flush. */
+      CL_OBJECT_LOCK(queue);
+      worker->in_exec_status = CL_SUBMITTED;
+      CL_OBJECT_NOTIFY_COND(queue);
+      CL_OBJECT_UNLOCK(queue);
+    }
 
     list_for_each_safe(pos, n, &ready_list)
     {

@@ -103,6 +103,11 @@ extern cl_int cl_command_queue_wait_finish(cl_command_queue queue);
 extern cl_int cl_command_queue_wait_flush(cl_command_queue queue);
 /* Note: Must call this function with queue's lock. */
 extern cl_event *cl_command_queue_record_in_queue_events(cl_command_queue queue, cl_uint *list_num);
+/* Whether it is valid to call cl_event_exec directly, instead of cl_command_queue_enqueue_event */
+static inline cl_bool cl_command_queue_allow_bypass_submit(cl_command_queue queue){
+  return (queue->props & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)/* if out-of-order, always */
+    || list_empty(&queue->worker.enqueued_events);/* if in-order, only if empty */
+}
 
 #endif /* __CL_COMMAND_QUEUE_H__ */
 

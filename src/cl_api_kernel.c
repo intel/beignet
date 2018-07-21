@@ -223,6 +223,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
     count *= global_wk_sz_rem[2] ? 2 : 1;
 
     const size_t *global_wk_all[2] = {global_wk_sz_div, global_wk_sz_rem};
+    cl_bool allow_immediate_submit = cl_command_queue_allow_bypass_submit(command_queue);
     /* Go through the at most 8 cases and euque if there is work items left */
     for (i = 0; i < 2; i++) {
       for (j = 0; j < 2; j++) {
@@ -263,7 +264,7 @@ clEnqueueNDRangeKernel(cl_command_queue command_queue,
             break;
           }
 
-          err = cl_event_exec(e, (event_status == CL_COMPLETE ? CL_SUBMITTED : CL_QUEUED), CL_FALSE);
+          err = cl_event_exec(e, ((allow_immediate_submit && event_status == CL_COMPLETE) ? CL_SUBMITTED : CL_QUEUED), CL_FALSE);
           if (err != CL_SUCCESS) {
             break;
           }

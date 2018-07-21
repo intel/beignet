@@ -188,7 +188,7 @@ cl_int clEnqueueAcquireGLObjects (cl_command_queue command_queue,
     data = &e->exec_data;
     data->type = EnqueueReturnSuccesss;
 
-    if (e_status == CL_COMPLETE) {
+    if (cl_command_queue_allow_bypass_submit(command_queue) && (e_status == CL_COMPLETE)) {
       // Sync mode, no need to queue event.
       err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
@@ -274,7 +274,7 @@ cl_int clEnqueueReleaseGLObjects (cl_command_queue command_queue,
     data = &e->exec_data;
     data->type = EnqueueReturnSuccesss;
 
-    if (e_status == CL_COMPLETE) {
+    if (cl_command_queue_allow_bypass_submit(command_queue) && (e_status == CL_COMPLETE)) {
       // Sync mode, no need to queue event.
       err = cl_event_exec(e, CL_COMPLETE, CL_FALSE);
       if (err != CL_SUCCESS) {
