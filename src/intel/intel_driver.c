@@ -235,8 +235,13 @@ if(intel->x11_display) {
     intel_driver_init_shared(intel, intel->dri_ctx);
     Xfree(driver_name);
   }
-  else
-    fprintf(stderr, "X server found. dri2 connection failed! \n");
+  else {
+    /* if you run beignet under wayland environment,
+       XOpenDisplay succeeds, but VA_DRI2QueryExtension fails.
+       we fall back to using DRM render node. */
+    if(intel->x11_display) XCloseDisplay(intel->x11_display);
+    intel->x11_display = NULL;
+  }
 }
 #endif
 
