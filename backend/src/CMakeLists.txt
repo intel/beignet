@@ -181,7 +181,7 @@ endif(LLVM_VERSION_NODOT VERSION_EQUAL 34)
 
 link_directories (${LLVM_LIBRARY_DIR} ${DRM_LIBDIR})
 
-#do not build nor install if the standalone compiler is given
+#do not build nor install if the standalone compiler is givenen
 if (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
 if (BUILD_STANDALONE_GBE_COMPILER STREQUAL "true")
 macro(remove_cxx_flag flag)
@@ -203,14 +203,14 @@ ADD_EXECUTABLE(gbe_bin_generater gbe_bin_generater.cpp)
 TARGET_LINK_LIBRARIES(gbe_bin_generater gbe)
 endif ()
 
-install (TARGETS gbe LIBRARY DESTINATION ${BEIGNET_INSTALL_DIR})
-install (FILES ${OCL_OBJECT_DIR}/beignet.bc DESTINATION ${BEIGNET_INSTALL_DIR})
-install (FILES ${OCL_OBJECT_DIR}/beignet.pch DESTINATION ${BEIGNET_INSTALL_DIR})
+install (TARGETS gbe LIBRARY DESTINATION ${BEIGNET_INSTALL_DIR} COMPONENT beignet)
+install (FILES ${OCL_OBJECT_DIR}/beignet.bc DESTINATION ${BEIGNET_INSTALL_DIR} COMPONENT beignet)
+install (FILES ${OCL_OBJECT_DIR}/beignet.pch DESTINATION ${BEIGNET_INSTALL_DIR} COMPONENT beignet)
 if (ENABLE_OPENCL_20)
-install (FILES ${OCL_OBJECT_DIR}/beignet_20.bc DESTINATION ${BEIGNET_INSTALL_DIR})
-install (FILES ${OCL_OBJECT_DIR}/beignet_20.pch DESTINATION ${BEIGNET_INSTALL_DIR})
+install (FILES ${OCL_OBJECT_DIR}/beignet_20.bc DESTINATION ${BEIGNET_INSTALL_DIR} COMPONENT beignet)
+install (FILES ${OCL_OBJECT_DIR}/beignet_20.pch DESTINATION ${BEIGNET_INSTALL_DIR} COMPONENT beignet)
 endif (ENABLE_OPENCL_20)
-install (FILES ${OCL_HEADER_FILES} DESTINATION ${BEIGNET_INSTALL_DIR}/include)
+install (FILES ${OCL_HEADER_FILES} DESTINATION ${BEIGNET_INSTALL_DIR}/include COMPONENT beignet)
 endif (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
 
-install (TARGETS gbeinterp LIBRARY DESTINATION ${BEIGNET_INSTALL_DIR})
+install (TARGETS gbeinterp LIBRARY DESTINATION ${BEIGNET_INSTALL_DIR} COMPONENT beignet)

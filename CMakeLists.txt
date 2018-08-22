@@ -32,7 +32,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}
 INCLUDE (FindPkgConfig)
 
 SET(CMAKE_VERBOSE_MAKEFILE "false")
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMake/")
 INCLUDE (GNUInstallDirs OPTIONAL)
 # support old CMake without GNUInstallDirs
 if (NOT CMAKE_INSTALL_FULL_LIBDIR)
@@ -79,7 +79,14 @@ elseif (COMPILER STREQUAL "CLANG")
 elseif (COMPILER STREQUAL "ICC")
   set (CMAKE_C_CXX_FLAGS "${CMAKE_C_CXX_FLAGS}  -wd2928 -Wall -fPIC -fstrict-aliasing -fp-model fast -msse4.1 -Wl,-E")
 endif ()
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_C_CXX_FLAGS} -std=c++0x -Wno-invalid-offsetof")
+
+# NOTE: Some dependencies like pybind11 requires -std=c++11 or greater
+set (CMAKE_BUILD_TYPE Release) # Release or Debug
+set (CMAKE_CXX_EXTENSIONS OFF) # OFF -> -std=c++11, ON -> -std=gnu++11
+set (CMAKE_CXX_STANDARD 14)
+set (CMAKE_CXX_STANDARD_REQUIRED true)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_C_CXX_FLAGS} -std=c++14 -Wno-invalid-offsetof")
+
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_CXX_FLAGS}")
 set (CMAKE_CXX_FLAGS_DEBUG          "-O0 -g -DGBE_DEBUG=1")
 set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -DGBE_DEBUG=1")
@@ -219,7 +226,7 @@ IF(OCLIcd_FOUND)
     "intel-beignet.icd.in"
     "${ICD_FILE_NAME}"
   )
-  install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${ICD_FILE_NAME} DESTINATION /etc/OpenCL/vendors)
+  install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${ICD_FILE_NAME} DESTINATION /etc/OpenCL/vendors COMPONENT beignet)
 ELSE(OCLIcd_FOUND)
   MESSAGE(STATUS "Looking for OCL ICD header file - not found")
 ENDIF(OCLIcd_FOUND)
@@ -231,7 +238,11 @@ IF (EXPERIMENTAL_DOUBLE)
   ADD_DEFINITIONS(-DENABLE_FP64)
 ENDIF(EXPERIMENTAL_DOUBLE)
 
-OPTION(ENABLE_OPENCL_20 "Enable opencl 2.0 support" OFF)
+IF(NOT ENABLE_OPENCL_20)
+  OPTION(ENABLE_OPENCL_20 "Enable opencl 2.0 support" OFF)
+ENDIF()
+message (STATUS "ENABLE_OPENCL_20 = ${ENABLE_OPENCL_20}")
+
 IF (ENABLE_OPENCL_20)
   Find_Program(LSPCI lspci)
   IF (NOT LSPCI)
@@ -242,7 +253,7 @@ IF (ENABLE_OPENCL_20)
                           OUTPUT_VARIABLE PCI_ID_NOT_USED)
 
   IF (NOT SUPPORT_OCL20_DEVICE EQUAL 1)
-    MESSAGE(FATAL_ERROR "Only SKL and newer devices support OpenCL 2.0 now, your device don't support.")
+    MESSAGE(STATUS "Compiling OpenCL 2.0 on a device that does not support OpenCL 2.0")
   ENDIF (NOT SUPPORT_OCL20_DEVICE EQUAL 1)
 
   IF (NOT HAVE_DRM_INTEL_BO_SET_SOFTPIN)
@@ -306,7 +317,10 @@ ENDIF(BUILD_EXAMPLES)
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(backend)
 ADD_SUBDIRECTORY(src)
+
+# IF(BUILD_UNIT_TESTS)
 ADD_SUBDIRECTORY(utests EXCLUDE_FROM_ALL)
+# ENDIF()
 
 # compile benchmark only if standalone compiler is not provided
 IF (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
