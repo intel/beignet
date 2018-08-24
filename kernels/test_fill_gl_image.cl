@@ -1,5 +1,5 @@
 __kernel void
-test_fill_gl_image(image2d_t img, int color)
+test_fill_gl_image(write_only image2d_t img, int color)
 {
 	int2 coord;
         float4 color_v4;

@@ -25,6 +25,7 @@
 extern "C" {
 #endif
 extern gbe_program_new_from_source_cb *compiler_program_new_from_source;
+extern gbe_program_new_from_llvm_file_cb *compiler_program_new_from_llvm_file;
 extern gbe_program_compile_from_source_cb *compiler_program_compile_from_source;
 extern gbe_program_new_gen_program_cb *compiler_program_new_gen_program;
 extern gbe_program_link_program_cb *compiler_program_link_program;

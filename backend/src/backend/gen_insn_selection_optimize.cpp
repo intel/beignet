@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <climits>
 #include <map>
+#include <math.h>
 
 namespace gbe
 {
@@ -74,8 +75,7 @@ namespace gbe
                   const GenRegister& replacement) :
                   insn(insn), intermedia(intermedia), replacement(replacement)
       {
-        assert(insn.opcode == SEL_OP_MOV);
-        assert(&(insn.src(0)) == &replacement);
+        assert(insn.opcode == SEL_OP_MOV || insn.opcode == SEL_OP_ADD);
         assert(&(insn.dst(0)) == &intermedia);
         this->elements = CalculateElements(intermedia, insn.state.execWidth);
         replacementOverwritten = false;
@@ -102,6 +102,7 @@ namespace gbe
     void doReplacement(ReplaceInfo* info);
     bool CanBeReplaced(const ReplaceInfo* info, const SelectionInstruction& insn, const GenRegister& var);
     void cleanReplaceInfoMap();
+    void doNegAddOptimization(SelectionInstruction &insn);
 
     SelectionBlock &bb;
     const ir::Liveness::LiveOut& liveout;
@@ -159,10 +160,18 @@ namespace gbe
 
   void SelBasicBlockOptimizer::addToReplaceInfoMap(SelectionInstruction& insn)
   {
-    assert(insn.opcode == SEL_OP_MOV);
-    const GenRegister& src = insn.src(0);
+    assert(insn.opcode == SEL_OP_MOV || insn.opcode == SEL_OP_ADD);
+    GenRegister &src = insn.src(0);
+    if (insn.opcode == SEL_OP_ADD) {
+      if (src.file == GEN_IMMEDIATE_VALUE)
+        src = insn.src(1);
+    }
+
     const GenRegister& dst = insn.dst(0);
-    if (src.type != dst.type || src.file != dst.file || src.hstride != dst.hstride)
+    if (src.type != dst.type || src.file != dst.file)
+      return;
+
+    if (src.hstride != GEN_HORIZONTAL_STRIDE_0 && src.hstride != dst.hstride )
       return;
 
     if (liveout.find(dst.reg()) != liveout.end())
@@ -180,6 +189,40 @@ namespace gbe
 
     if (insn.opcode == SEL_OP_BSWAP) //should remove once bswap issue is fixed
       return false;
+
+    //the src modifier is not supported by the following instructions
+    if(info->replacement.negation || info->replacement.absolute)
+    {
+      switch(insn.opcode)
+      {
+        case SEL_OP_MATH:
+        {
+          switch(insn.extra.function)
+          {
+            case GEN_MATH_FUNCTION_INT_DIV_QUOTIENT:
+            case GEN_MATH_FUNCTION_INT_DIV_REMAINDER:
+            case GEN_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER:
+              return false;
+            default:
+              break;
+          }
+
+          break;
+        }
+        case SEL_OP_CBIT:
+        case SEL_OP_FBH:
+        case SEL_OP_FBL:
+        case SEL_OP_BRC:
+        case SEL_OP_BRD:
+        case SEL_OP_BFREV:
+        case SEL_OP_LZD:
+        case SEL_OP_HADD:
+        case SEL_OP_RHADD:
+          return false;
+        default:
+          break;
+      }
+    }
 
     if (insn.isWrite() || insn.isRead()) //register in selection vector
       return false;
@@ -246,8 +289,27 @@ namespace gbe
 
       if (insn.opcode == SEL_OP_MOV)
         addToReplaceInfoMap(insn);
+
+      doNegAddOptimization(insn);
     }
     cleanReplaceInfoMap();
+  }
+
+  /* LLVM transform Mad(a, -b, c) to
+     Add b, -b, 0
+     Mad val, a, b, c
+     for Gen support negtive modifier, mad(a, -b, c) is native suppoted.
+     Also it can be used for the same like instruction sequence.
+     Do it just like a:  mov b, -b, so it is a Mov operation like LocalCopyPropagation
+  */
+  void SelBasicBlockOptimizer::doNegAddOptimization(SelectionInstruction &insn) {
+    if (insn.opcode == SEL_OP_ADD) {
+      GenRegister src0 = insn.src(0);
+      GenRegister src1 = insn.src(1);
+      if ((src0.negation && src1.file == GEN_IMMEDIATE_VALUE && src1.value.f == 0.0f) ||
+          (src1.negation && src0.file == GEN_IMMEDIATE_VALUE && src0.value.f == 0.0f))
+        addToReplaceInfoMap(insn);
+    }
   }
 
   void SelBasicBlockOptimizer::run()

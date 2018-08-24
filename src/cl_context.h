@@ -120,8 +120,6 @@ struct _cl_context {
                                     /* All programs internal used, for example clEnqueuexxx api use */
   cl_kernel  internal_kernels[CL_INTERNAL_KERNEL_MAX];
                                     /* All kernels  for clenqueuexxx api, for example clEnqueuexxx api use */
-  cl_program built_in_prgs;  /*all built-in kernels belongs to this program only*/
-  cl_kernel  built_in_kernels[CL_INTERNAL_KERNEL_MAX];
   uint32_t ver;                     /* Gen version */
   struct _cl_context_prop props;
   cl_context_properties * prop_user; /* a copy of user passed context properties when create context */

@@ -18,13 +18,13 @@ foreach (KF ${KERNEL_FILES})
       OUTPUT ${output_file}
       COMMAND rm -rf ${output_file}
       COMMAND ${GBE_BIN_GENERATER} -s -o${output_file} -t${GEN_PCI_ID} ${input_file}
-      DEPENDS ${input_file} ${GBE_BIN_FILE})
+      DEPENDS ${input_file} ${GBE_BIN_FILE} beignet_bitcode)
   else(GEN_PCI_ID)
     add_custom_command(
       OUTPUT ${output_file}
       COMMAND rm -rf ${output_file}
       COMMAND ${GBE_BIN_GENERATER} -s -o${output_file} ${input_file}
-      DEPENDS ${input_file} ${GBE_BIN_FILE})
+      DEPENDS ${input_file} ${GBE_BIN_FILE} beignet_bitcode)
   endif(GEN_PCI_ID)
 endforeach (KF)
 endmacro (MakeKernelBinStr)
@@ -187,4 +187,4 @@ target_link_libraries(
                       ${CMAKE_DL_LIBS}
                       ${OPENGL_LIBRARIES}
                       ${EGL_LIBRARIES})
-install (TARGETS cl LIBRARY DESTINATION ${BEIGNET_INSTALL_DIR} COMPONENT beignet)
+install (TARGETS cl LIBRARY DESTINATION ${BEIGNET_INSTALL_DIR})

@@ -23,6 +23,8 @@
 #define int1 int
 #define float1 float
 
+#pragma OPENCL EXTENSION cl_khr_3d_image_writes : enable
+
 #define DECL_IMAGE_READ_SAMPLE_RETTYPE(IMG_TYPE, DATA_YPE, SUFFIX, N) \
   OVERLOADABLE DATA_YPE read_image ## SUFFIX(IMG_TYPE cl_image, const sampler_t sampler, int##N coord); \
   OVERLOADABLE DATA_YPE read_image ## SUFFIX(IMG_TYPE cl_image, const sampler_t sampler, float##N coord);

@@ -142,8 +142,9 @@ union Gen7NativeInstruction
 
       struct {
         uint32_t dest_reg_file:1;
-        uint32_t flag_subreg_num:1;
-        uint32_t pad0:2;
+        uint32_t flag_sub_reg_nr:1;
+        uint32_t flag_reg_nr:1;
+        uint32_t pad0:1;
         uint32_t src0_abs:1;
         uint32_t src0_negate:1;
         uint32_t src1_abs:1;

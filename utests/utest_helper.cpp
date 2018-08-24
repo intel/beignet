@@ -939,18 +939,23 @@ int cl_check_subgroups_short(void)
   return 1;
 }
 
-int cl_check_ocl20(void)
+int cl_check_ocl20(bool or_beignet)
 {
   size_t param_value_size;
   size_t ret_sz;
   OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_OPENCL_C_VERSION, 0, 0, &param_value_size);
   if(param_value_size == 0) {
     printf("Not OpenCL 2.0 device, ");
+    if(or_beignet){
     if(cl_check_beignet()) {
       printf("Beignet extension test!");
       return 1;
     } else {
       printf("Not beignet device , Skip!");
+      return 0;
+    }
+    }else{
+      printf("Skip!");
       return 0;
     }
   }
@@ -961,11 +966,16 @@ int cl_check_ocl20(void)
   if(!strstr(device_version_str, "2.0")) {
     free(device_version_str);
     printf("Not OpenCL 2.0 device, ");
-    if(cl_check_beignet()) {
-      printf("Beignet extension test!");
-      return 1;
-    } else {
-      printf("Not beignet device , Skip!");
+    if(or_beignet){
+      if(cl_check_beignet()) {
+        printf("Beignet extension test!");
+        return 1;
+      } else {
+        printf("Not beignet device , Skip!");
+        return 0;
+      }
+    }else{
+      printf("Skip!");
       return 0;
     }
   }
@@ -1108,4 +1118,24 @@ float as_float(uint32_t i)
   union uint32_cast _tmp;
   _tmp._uint = i;
   return _tmp._float;
+}
+
+int cl_check_reqd_subgroup(void)
+{
+  if (!cl_check_subgroups())
+    return 0;
+  std::string extStr;
+  size_t param_value_size;
+  OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_EXTENSIONS, 0, 0, &param_value_size);
+  std::vector<char> param_value(param_value_size);
+  OCL_CALL(clGetDeviceInfo, device, CL_DEVICE_EXTENSIONS, param_value_size,
+           param_value.empty() ? NULL : &param_value.front(), &param_value_size);
+  if (!param_value.empty())
+    extStr = std::string(&param_value.front(), param_value_size-1);
+
+  if (std::strstr(extStr.c_str(), "cl_intel_required_subgroup_size") == NULL) {
+    printf("No cl_intel_required_subgroup_size, Skip!");
+    return 0;
+  }
+  return 1;
 }

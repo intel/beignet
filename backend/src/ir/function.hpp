@@ -186,7 +186,7 @@ namespace ir {
 
 
       // only llvm-3.6 or later has kernel_arg_base_type in metadata.
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR <= 5)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
       bool isImage1dT() const {
         return typeName.compare("image1d_t") == 0;
       }

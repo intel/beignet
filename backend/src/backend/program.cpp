@@ -31,6 +31,7 @@
 #include "ir/value.hpp"
 #include "ir/unit.hpp"
 #include "ir/printf.hpp"
+#include "src/cl_device_data.h"
 
 #ifdef GBE_COMPILER_AVAILABLE
 #include "llvm/llvm_to_gen.hpp"
@@ -39,6 +40,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IRReader/IRReader.h"
 #endif
 
 #include <cstring>
@@ -51,34 +53,23 @@
 #include <mutex>
 
 #ifdef GBE_COMPILER_AVAILABLE
-/* Not defined for LLVM 3.0 */
-#if !defined(LLVM_VERSION_MAJOR)
-#define LLVM_VERSION_MAJOR 3
-#endif /* !defined(LLVM_VERSION_MAJOR) */
-
-/* Not defined for LLVM 3.0 */
-#if !defined(LLVM_VERSION_MINOR)
-#define LLVM_VERSION_MINOR 0
-#endif /* !defined(LLVM_VERSION_MINOR) */
 
 #include <clang/CodeGen/CodeGenAction.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/CompilerInvocation.h>
-#if LLVM_VERSION_MINOR <= 1
-#include <clang/Frontend/DiagnosticOptions.h>
-#else
 #include <clang/Basic/DiagnosticOptions.h>
-#endif  /* LLVM_VERSION_MINOR <= 1 */
 #include <clang/Frontend/TextDiagnosticPrinter.h>
 #include <clang/Basic/TargetInfo.h>
 #include <clang/Basic/TargetOptions.h>
 #include <llvm/ADT/IntrusiveRefCntPtr.h>
-#if LLVM_VERSION_MINOR <= 2
-#include <llvm/Module.h>
-#else
 #include <llvm/IR/Module.h>
-#endif  /* LLVM_VERSION_MINOR <= 2 */
+
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+#include <llvm/Bitcode/BitcodeWriter.h>
+#include <clang/Lex/PreprocessorOptions.h>
+#else
 #include <llvm/Bitcode/ReaderWriter.h>
+#endif
 #include <llvm/Support/raw_ostream.h>
 #endif
 
@@ -123,32 +114,17 @@ namespace gbe {
   IVAR(OCL_PROFILING_LOG, 0, 0, 1); // Int for different profiling types.
   BVAR(OCL_OUTPUT_BUILD_LOG, false);
 
-  bool Program::buildFromLLVMFile(const char *fileName,
-                                         const void* module,
-                                         std::string &error,
-                                         int optLevel) {
+  bool Program::buildFromLLVMModule(const void* module,
+                                              std::string &error,
+                                              int optLevel) {
     ir::Unit *unit = new ir::Unit();
-    llvm::Module * cloned_module = NULL;
     bool ret = false;
-    if(module){
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
-      cloned_module = llvm::CloneModule((llvm::Module*)module).release();
-#else
-      cloned_module = llvm::CloneModule((llvm::Module*)module);
-#endif
-    }
+
     bool strictMath = true;
     if (fast_relaxed_math || !OCL_STRICT_CONFORMANCE)
       strictMath = false;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
-    llvm::Module * linked_module = module ? llvm::CloneModule((llvm::Module*)module).release() : NULL;
-    // Src now will be removed automatically. So clone it.
-    if (llvmToGen(*unit, fileName, linked_module, optLevel, strictMath, OCL_PROFILING_LOG, error) == false) {
-#else
-    if (llvmToGen(*unit, fileName, module, optLevel, strictMath, OCL_PROFILING_LOG, error) == false) {
-#endif
-      if (fileName)
-        error = std::string(fileName) + " not found";
+
+    if (llvmToGen(*unit, module, optLevel, strictMath, OCL_PROFILING_LOG, error) == false) {
       delete unit;
       return false;
     }
@@ -157,13 +133,8 @@ namespace gbe {
     if(!unit->getValid()) {
       delete unit;   //clear unit
       unit = new ir::Unit();
-      if(cloned_module){
-        //suppose file exists and llvmToGen will not return false.
-        llvmToGen(*unit, fileName, cloned_module, 0, strictMath, OCL_PROFILING_LOG, error);
-      }else{
-        //suppose file exists and llvmToGen will not return false.
-        llvmToGen(*unit, fileName, module, 0, strictMath, OCL_PROFILING_LOG, error);
-      }
+      //suppose file exists and llvmToGen will not return false.
+      llvmToGen(*unit, module, 0, strictMath, OCL_PROFILING_LOG, error);
     }
     if(unit->getValid()){
       std::string error2;
@@ -173,9 +144,6 @@ namespace gbe {
       error = error + error2;
     }
     delete unit;
-    if(cloned_module){
-      delete (llvm::Module*) cloned_module;
-    }
     return ret;
   }
 
@@ -667,7 +635,7 @@ namespace gbe {
     // The ParseCommandLineOptions used for mllvm args can not be used with multithread
     // and GVN now have a 100 inst limit on block scan. Now only pass a bigger limit
     // for each context only once, this can also fix multithread bug.
-#if LLVM_VERSION_MINOR >= 8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
     static bool ifsetllvm = false;
     if(!ifsetllvm) {
       args.push_back("-mllvm");
@@ -685,10 +653,6 @@ namespace gbe {
     args.push_back("-disable-llvm-optzns");
     if(bFastMath)
       args.push_back("-D __FAST_RELAXED_MATH__=1");
-#if LLVM_VERSION_MINOR <= 2
-    args.push_back("-triple");
-    args.push_back("nvptx");
-#else
     args.push_back("-x");
     args.push_back("cl");
     args.push_back("-triple");
@@ -697,7 +661,6 @@ namespace gbe {
       args.push_back("-fblocks");
     } else
       args.push_back("spir");
-#endif /* LLVM_VERSION_MINOR <= 2 */
     args.push_back("stringInput.cl");
     args.push_back("-ffp-contract=on");
     if(OCL_DEBUGINFO) args.push_back("-g");
@@ -715,24 +678,33 @@ namespace gbe {
     llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagID(new clang::DiagnosticIDs());
     clang::DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
 
-    // Create the compiler invocation
-    std::unique_ptr<clang::CompilerInvocation> CI(new clang::CompilerInvocation);
-    clang::CompilerInvocation::CreateFromArgs(*CI,
-                                              &args[0],
-                                              &args[0] + args.size(),
-                                              Diags);
     llvm::StringRef srcString(source);
+    // Create the compiler invocation
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    auto CI = std::make_shared<clang::CompilerInvocation>();
+    CI->getPreprocessorOpts().addRemappedFile("stringInput.cl",
+#else
+    std::unique_ptr<clang::CompilerInvocation> CI(new clang::CompilerInvocation);
     (*CI).getPreprocessorOpts().addRemappedFile("stringInput.cl",
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#endif
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
                 llvm::MemoryBuffer::getMemBuffer(srcString)
 #else
                 llvm::MemoryBuffer::getMemBuffer(srcString).release()
 #endif
                 );
 
+    clang::CompilerInvocation::CreateFromArgs(*CI,
+                                              &args[0],
+                                              &args[0] + args.size(),
+                                              Diags);
     // Create the compiler instance
     clang::CompilerInstance Clang;
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    Clang.setInvocation(std::move(CI));
+#else
     Clang.setInvocation(CI.release());
+#endif
     // Get ready to report problems
     Clang.createDiagnostics(DiagClient, false);
 
@@ -776,7 +748,7 @@ namespace gbe {
     if (!retVal)
       return false;
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
     llvm::Module *module = Act->takeModule();
 #else
     llvm::Module *module = Act->takeModule().release();
@@ -785,16 +757,12 @@ namespace gbe {
     *out_module = module;
 
 // Dump the LLVM if requested.
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 6)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 36
     if (!dumpLLVMFileName.empty()) {
       std::string err;
       llvm::raw_fd_ostream ostream (dumpLLVMFileName.c_str(),
                                     err,
-      #if LLVM_VERSION_MINOR == 3
-                                    0
-      #else
                                     llvm::sys::fs::F_None
-      #endif
                                     );
 
       if (err.empty()) {
@@ -806,11 +774,7 @@ namespace gbe {
       std::string err;
       llvm::raw_fd_ostream ostream (dumpSPIRBinaryName.c_str(),
                                     err,
-      #if LLVM_VERSION_MINOR == 3
-                                    0
-      #else
                                     llvm::sys::fs::F_None
-      #endif
                                     );
       if (err.empty())
         llvm::WriteBitcodeToFile(*out_module, ostream);
@@ -855,6 +819,7 @@ namespace gbe {
                                      size_t *errSize,
                                      uint32_t &oclVersion)
   {
+    uint32_t maxoclVersion = oclVersion;
     std::string pchFileName;
     bool findPCH = false;
 #if defined(__ANDROID__)
@@ -1022,15 +987,9 @@ EXTEND_QUOTE:
     }
 
     if (useDefaultCLCVersion) {
-#ifdef ENABLE_OPENCL_20
-      clOpt.push_back("-D__OPENCL_C_VERSION__=200");
-      clOpt.push_back("-cl-std=CL2.0");
-      oclVersion = 200;
-#else
       clOpt.push_back("-D__OPENCL_C_VERSION__=120");
       clOpt.push_back("-cl-std=CL1.2");
       oclVersion = 120;
-#endif
     }
     //for clCompilerProgram usage.
     if(temp_header_path){
@@ -1061,7 +1020,12 @@ EXTEND_QUOTE:
       clOpt.push_back("-include-pch");
       clOpt.push_back(pchFileName);
     }
-
+    if (oclVersion > maxoclVersion){
+      if (err && stringSize > 0 && errSize) {
+         *errSize = snprintf(err, stringSize, "Requested OpenCL version %lf is higher than maximum supported version %lf\n", (float)oclVersion/100.0,(float)maxoclVersion/100.0);
+      }
+      return false;
+    }
     return true;
   }
 
@@ -1076,7 +1040,7 @@ EXTEND_QUOTE:
     std::vector<std::string> clOpt;
     std::string dumpLLVMFileName, dumpASMFileName;
     std::string dumpSPIRBinaryName;
-    uint32_t oclVersion = 0;
+    uint32_t oclVersion = MAX_OCLVERSION(deviceID);
     if (!processSourceAndOption(source, options, NULL, clOpt,
                                 dumpLLVMFileName, dumpASMFileName, dumpSPIRBinaryName,
                                 optLevel,
@@ -1108,13 +1072,15 @@ EXTEND_QUOTE:
           fclose(asmDumpStream);
       }
 
-      p = gbe_program_new_from_llvm(deviceID, NULL, out_module, llvm_ctx,
+      p = gbe_program_new_from_llvm(deviceID, out_module, llvm_ctx,
                                     dumpASMFileName.empty() ? NULL : dumpASMFileName.c_str(),
                                     stringSize, err, errSize, optLevel, options);
       if (err != NULL)
         *errSize += clangErrSize;
       if (OCL_OUTPUT_BUILD_LOG && options)
-        llvm::errs() << options;
+        llvm::errs() << "options:" << options << "\n";
+      if (OCL_OUTPUT_BUILD_LOG && err && *errSize)
+        llvm::errs() << err << "\n";
     } else
       p = NULL;
 
@@ -1124,6 +1090,45 @@ EXTEND_QUOTE:
     return p;
   }
 #endif
+
+#ifdef GBE_COMPILER_AVAILABLE
+
+  static gbe_program programNewFromLLVMFile(uint32_t deviceID,
+                                            const char *fileName,
+                                            size_t string_size,
+                                            char *err,
+                                            size_t *err_size)
+  {
+    gbe_program p = NULL;
+    if (fileName == NULL)
+      return NULL;
+
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
+    llvm::LLVMContext *c = new llvm::LLVMContext;
+#else
+    llvm::LLVMContext *c = &llvm::getGlobalContext();
+#endif
+    // Get the module from its file
+    llvm::SMDiagnostic errDiag;
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
+    llvm::Module *module = parseIRFile(fileName, errDiag, *c).release();
+#else
+    llvm::Module *module = ParseIRFile(fileName, errDiag, *c);
+#endif
+
+    int optLevel = 1;
+
+    //module will be delete in programCleanLlvmResource
+    p = gbe_program_new_from_llvm(deviceID, module, c, NULL,
+                                  string_size, err, err_size, optLevel, NULL);
+    if (OCL_OUTPUT_BUILD_LOG && err && *err_size)
+      llvm::errs() << err << "\n";
+
+    return p;
+  }
+#endif
+
+
 
 #ifdef GBE_COMPILER_AVAILABLE
 
@@ -1139,7 +1144,7 @@ EXTEND_QUOTE:
     std::vector<std::string> clOpt;
     std::string dumpLLVMFileName, dumpASMFileName;
     std::string dumpSPIRBinaryName;
-    uint32_t oclVersion = 0;
+    uint32_t oclVersion = MAX_OCLVERSION(deviceID);
     if (!processSourceAndOption(source, options, temp_header_path, clOpt,
                                 dumpLLVMFileName, dumpASMFileName, dumpSPIRBinaryName,
                                 optLevel, stringSize, err, errSize, oclVersion))
@@ -1147,11 +1152,10 @@ EXTEND_QUOTE:
 
     gbe_program p;
     acquireLLVMContextLock();
-    //FIXME: if use new allocated context to link two modules there would be context mismatch
-    //for some functions, so we use global context now, need switch to new context later.
+
     llvm::Module * out_module;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
-    llvm::LLVMContext* llvm_ctx = &GBEGetLLVMContext();
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
+    llvm::LLVMContext* llvm_ctx = new llvm::LLVMContext;
 #else
     llvm::LLVMContext* llvm_ctx = &llvm::getGlobalContext();
 #endif
@@ -1168,7 +1172,9 @@ EXTEND_QUOTE:
       p = gbe_program_new_gen_program(deviceID, out_module, NULL, NULL);
 
       if (OCL_OUTPUT_BUILD_LOG && options)
-        llvm::errs() << options;
+        llvm::errs() << "options:" << options << "\n";
+      if (OCL_OUTPUT_BUILD_LOG && err && *errSize)
+        llvm::errs() << err << "\n";
     } else
       p = NULL;
     releaseLLVMContextLock();
@@ -1512,6 +1518,7 @@ void releaseLLVMContextLock()
 }
 
 GBE_EXPORT_SYMBOL gbe_program_new_from_source_cb *gbe_program_new_from_source = NULL;
+GBE_EXPORT_SYMBOL gbe_program_new_from_llvm_file_cb *gbe_program_new_from_llvm_file = NULL;
 GBE_EXPORT_SYMBOL gbe_program_compile_from_source_cb *gbe_program_compile_from_source = NULL;
 GBE_EXPORT_SYMBOL gbe_program_link_program_cb *gbe_program_link_program = NULL;
 GBE_EXPORT_SYMBOL gbe_program_check_opt_cb *gbe_program_check_opt = NULL;
@@ -1574,6 +1581,7 @@ namespace gbe
   {
     CallBackInitializer(void) {
       gbe_program_new_from_source = gbe::programNewFromSource;
+      gbe_program_new_from_llvm_file = gbe::programNewFromLLVMFile;
       gbe_program_compile_from_source = gbe::programCompileFromSource;
       gbe_program_link_program = gbe::programLinkProgram;
       gbe_program_check_opt = gbe::programCheckOption;
@@ -1624,7 +1632,7 @@ namespace gbe
     }
 
     ~CallBackInitializer() {
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR > 3)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 34
       llvm::llvm_shutdown();
 #endif
     }

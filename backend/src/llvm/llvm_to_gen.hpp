@@ -23,7 +23,7 @@
  */
 #ifndef __GBE_IR_LLVM_TO_GEN_HPP__
 #define __GBE_IR_LLVM_TO_GEN_HPP__
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
 #include "llvm/IR/LLVMContext.h"
 #endif
 
@@ -35,12 +35,8 @@ namespace gbe {
 
   /*! Convert the LLVM IR code to a GEN IR code,
 		  optLevel 0 equal to clang -O1 and 1 equal to clang -O2*/
-  bool llvmToGen(ir::Unit &unit, const char *fileName, const void* module,
+  bool llvmToGen(ir::Unit &unit, const void* module,
                  int optLevel, bool strictMath, int profiling, std::string &errors);
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
-  extern llvm::LLVMContext& GBEGetLLVMContext();
-#endif
-
 } /* namespace gbe */
 
 #endif /* __GBE_IR_LLVM_TO_GEN_HPP__ */

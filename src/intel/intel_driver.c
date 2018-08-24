@@ -137,19 +137,28 @@ return 1;
 static int
 intel_driver_context_init(intel_driver_t *driver)
 {
-driver->ctx = drm_intel_gem_context_create(driver->bufmgr);
-if (!driver->ctx)
-  return 0;
-driver->null_bo = NULL;
+  driver->ctx = drm_intel_gem_context_create(driver->bufmgr);
+  if (!driver->ctx)
+    return 0;
+  driver->null_bo = NULL;
 #ifdef HAS_BO_SET_SOFTPIN
-drm_intel_bo *bo = dri_bo_alloc(driver->bufmgr, "null_bo", 64*1024, 4096);
-drm_intel_bo_set_softpin_offset(bo, 0);
-// don't reuse it, that would make two bo trying to bind to same address,
-// which is un-reasonable.
-drm_intel_bo_disable_reuse(bo);
-driver->null_bo = bo;
+  drm_intel_bo *bo = dri_bo_alloc(driver->bufmgr, "null_bo", 64*1024, 4096);
+  drm_intel_bo_set_softpin_offset(bo, 0);
+  // don't reuse it, that would make two bo trying to bind to same address,
+  // which is un-reasonable.
+  drm_intel_bo_disable_reuse(bo);
+
+  drm_intel_bo_map(bo, 1);
+  *(uint32_t *)bo->virtual = MI_BATCH_BUFFER_END;
+  drm_intel_bo_unmap(bo);
+
+  if (drm_intel_gem_bo_context_exec(bo, driver->ctx, 0, 0) == 0) {
+    driver->null_bo = bo;
+  } else {
+    drm_intel_bo_unreference(bo);
+  }
 #endif
-return 1;
+    return 1;
 }
 
 static void

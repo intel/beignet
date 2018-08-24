@@ -254,12 +254,36 @@ static struct _cl_device_id intel_kbl_gt4_device = {
 #include "cl_gen9_device.h"
 };
 
+static struct _cl_device_id intel_glk18eu_device = {
+  .max_compute_unit = 18,
+  .max_thread_per_unit = 6,
+  .sub_slice_count = 3,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+#include "cl_gen9_device.h"
+};
+
+static struct _cl_device_id intel_glk12eu_device = {
+  .max_compute_unit = 12,
+  .max_thread_per_unit = 6,
+  .sub_slice_count = 2,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+#include "cl_gen9_device.h"
+};
+
 LOCAL cl_device_id
-cl_get_gt_device(void)
+cl_get_gt_device(cl_device_type device_type)
 {
   cl_device_id ret = NULL;
   const int device_id = cl_driver_get_device_id();
   cl_device_id device = NULL;
+
+  //cl_get_gt_device only return GPU type device.
+  if (((CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_DEFAULT) & device_type) == 0)
+    return NULL;
 
 #define DECL_INFO_STRING(BREAK, STRUCT, FIELD, STRING) \
     STRUCT.FIELD = STRING; \
@@ -581,6 +605,10 @@ skl_gt2_break:
 
     case PCI_CHIP_SKYLAKE_ULT_GT3:
       DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake ULT GT3");
+    case PCI_CHIP_SKYLAKE_ULT_GT3E1:
+      DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake ULT GT3E");
+    case PCI_CHIP_SKYLAKE_ULT_GT3E2:
+      DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake ULT GT3E");
     case PCI_CHIP_SKYLAKE_HALO_GT3:
       DECL_INFO_STRING(skl_gt3_break, intel_skl_gt3_device, name, "Intel(R) HD Graphics Skylake Halo GT3");
     case PCI_CHIP_SKYLAKE_SRV_GT3:
@@ -733,6 +761,26 @@ kbl_gt4_break:
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
+    case PCI_CHIP_GLK_3x6:
+      DECL_INFO_STRING(glk18eu_break, intel_bxt18eu_device, name, "Intel(R) HD Graphics Geminilake(3x6)");
+glk18eu_break:
+      intel_glk18eu_device.device_id = device_id;
+      intel_glk18eu_device.platform = cl_get_platform_default();
+      ret = &intel_glk18eu_device;
+      cl_intel_platform_get_default_extension(ret);
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      break;
+
+    case PCI_CHIP_GLK_2x6:
+      DECL_INFO_STRING(glk12eu_break, intel_bxt12eu_device, name, "Intel(R) HD Graphics Geminilake(2x6)");
+glk12eu_break:
+      intel_glk12eu_device.device_id = device_id;
+      intel_glk12eu_device.platform = cl_get_platform_default();
+      ret = &intel_glk12eu_device;
+      cl_intel_platform_get_default_extension(ret);
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      break;
+
     case PCI_CHIP_SANDYBRIDGE_BRIDGE:
     case PCI_CHIP_SANDYBRIDGE_GT1:
     case PCI_CHIP_SANDYBRIDGE_GT2:
@@ -877,7 +925,7 @@ cl_get_device_ids(cl_platform_id    platform,
   cl_device_id device;
 
   /* Do we have a usable device? */
-  device = cl_get_gt_device();
+  device = cl_get_gt_device(device_type);
   if (device) {
     cl_self_test_res ret = cl_self_test(device, SELF_TEST_PASS);
     if (ret == SELF_TEST_ATOMIC_FAIL) {
@@ -938,7 +986,9 @@ LOCAL cl_bool is_gen_device(cl_device_id device) {
          device == &intel_kbl_gt15_device ||
          device == &intel_kbl_gt2_device ||
          device == &intel_kbl_gt3_device ||
-         device == &intel_kbl_gt4_device;
+         device == &intel_kbl_gt4_device ||
+         device == &intel_glk18eu_device ||
+         device == &intel_glk12eu_device;
 }
 
 LOCAL cl_int
@@ -1329,6 +1379,10 @@ cl_get_device_info(cl_device_id     device,
       src_ptr = device->driver_version;
       src_size = device->driver_version_sz;
       break;
+    case CL_DEVICE_SUB_GROUP_SIZES_INTEL:
+      src_ptr = device->sub_group_sizes;
+      src_size = device->sub_group_sizes_sz;
+      break;
 
     default:
       return CL_INVALID_VALUE;
@@ -1359,7 +1413,8 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
         || device == &intel_skl_gt3_device || device == &intel_skl_gt4_device
         || device == &intel_bxt18eu_device || device == &intel_bxt12eu_device || device == &intel_kbl_gt1_device
         || device == &intel_kbl_gt2_device || device == &intel_kbl_gt3_device
-        || device == &intel_kbl_gt4_device || device == &intel_kbl_gt15_device) {
+        || device == &intel_kbl_gt4_device || device == &intel_kbl_gt15_device
+        || device == &intel_glk18eu_device || device == &intel_glk12eu_device) {
     *ver = 9;
   } else
     return CL_INVALID_VALUE;
@@ -1471,6 +1526,7 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
     DECL_FIELD(COMPILE_WORK_GROUP_SIZE, kernel->compile_wg_sz)
     DECL_FIELD(PRIVATE_MEM_SIZE, kernel->stack_size)
     case CL_KERNEL_GLOBAL_WORK_SIZE:
+    {
       dimension = cl_check_builtin_kernel_dimension(kernel, device);
       if ( !dimension ) return CL_INVALID_VALUE;
       if (param_value_size_ret != NULL)
@@ -1488,6 +1544,18 @@ cl_get_kernel_workgroup_info(cl_kernel kernel,
         return CL_SUCCESS;
       }
       return CL_SUCCESS;
+    }
+    case CL_KERNEL_SPILL_MEM_SIZE_INTEL:
+    {
+      if (param_value && param_value_size < sizeof(cl_ulong))
+        return CL_INVALID_VALUE;
+      if (param_value_size_ret != NULL)
+        *param_value_size_ret = sizeof(cl_ulong);
+      if (param_value)
+        *(cl_ulong*)param_value = (cl_ulong)interp_kernel_get_scratch_size(kernel->opaque);
+      return CL_SUCCESS;
+    }
+
     default:
       return CL_INVALID_VALUE;
   };
@@ -1571,6 +1639,16 @@ cl_get_kernel_subgroup_info(cl_kernel kernel,
       }
       break;
     }
+    case CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL:
+    {
+      if (param_value && param_value_size < sizeof(size_t))
+        return CL_INVALID_VALUE;
+      if (param_value_size_ret != NULL)
+        *param_value_size_ret = sizeof(size_t);
+      if (param_value)
+        *(size_t*)param_value = interp_kernel_get_simd_width(kernel->opaque);
+      return CL_SUCCESS;
+    }
     default:
       return CL_INVALID_VALUE;
   };
@@ -1603,7 +1681,7 @@ cl_devices_list_check(cl_uint num_devices, const cl_device_id *devices)
     }
 
     // TODO: We now just support Gen Device.
-    if (devices[i] != cl_get_gt_device()) {
+    if (devices[i] != cl_get_gt_device(devices[i]->device_type)) {
       return CL_INVALID_DEVICE;
     }
   }

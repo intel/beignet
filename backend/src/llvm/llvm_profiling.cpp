@@ -26,29 +26,15 @@
 #include <stdlib.h>
 
 #include "llvm/Config/llvm-config.h"
-#if LLVM_VERSION_MINOR <= 2
-#include "llvm/Function.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/Instructions.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/Module.h"
-#else
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
-#endif  /* LLVM_VERSION_MINOR <= 2 */
 #include "llvm/Pass.h"
-#if LLVM_VERSION_MINOR <= 1
-#include "llvm/Support/IRBuilder.h"
-#elif LLVM_VERSION_MINOR == 2
-#include "llvm/IRBuilder.h"
-#else
 #include "llvm/IR/IRBuilder.h"
-#endif /* LLVM_VERSION_MINOR <= 1 */
 
-#if LLVM_VERSION_MINOR >= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/CFG.h"
 #else
@@ -97,7 +83,11 @@ namespace gbe
     {
     }
 
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    virtual StringRef getPassName() const
+#else
     virtual const char *getPassName() const
+#endif
     {
       return "Timestamp Parser";
     }
@@ -111,15 +101,9 @@ namespace gbe
     int pointNum = 0;
 
     switch (F.getCallingConv()) {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
-      case CallingConv::PTX_Device:
-        return false;
-      case CallingConv::PTX_Kernel:
-#else
       case CallingConv::C:
       case CallingConv::Fast:
       case CallingConv::SPIR_KERNEL:
-#endif
         break;
       default:
         GBE_ASSERTM(false, "Unsupported calling convention");
@@ -178,12 +162,19 @@ namespace gbe
       /* Add the timestamp store function call. */
       // __gen_ocl_store_timestamp(int nth, int type);
       Value *Args[2] = {ConstantInt::get(intTy, pointNum++), ConstantInt::get(intTy, profilingType)};
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
       builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
               "__gen_ocl_calc_timestamp", Type::getVoidTy(module->getContext()),
               IntegerType::getInt32Ty(module->getContext()),
-              IntegerType::getInt32Ty(module->getContext()),
-              NULL)),
+              IntegerType::getInt32Ty(module->getContext()))),
               ArrayRef<Value*>(Args));
+#else
+      builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
+              "__gen_ocl_calc_timestamp", Type::getVoidTy(module->getContext()),
+              IntegerType::getInt32Ty(module->getContext()),
+              IntegerType::getInt32Ty(module->getContext()), nullptr)),
+              ArrayRef<Value*>(Args));
+#endif
     }
     /* We insert one store_profiling at the end of the last block to hold the place. */
     llvm::Function::iterator BE = F.end();
@@ -193,12 +184,19 @@ namespace gbe
     builder->SetInsertPoint(&*retInst);
     Value *Args2[2] = {profilingBuf, ConstantInt::get(intTy, profilingType)};
 
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
     builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
             "__gen_ocl_store_profiling", Type::getVoidTy(module->getContext()),
             ptrTy,
-            IntegerType::getInt32Ty(module->getContext()),
-            NULL)),
+            IntegerType::getInt32Ty(module->getContext()))),
             ArrayRef<Value*>(Args2));
+#else
+    builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
+            "__gen_ocl_store_profiling", Type::getVoidTy(module->getContext()),
+            ptrTy,
+            IntegerType::getInt32Ty(module->getContext()), nullptr)),
+            ArrayRef<Value*>(Args2));
+#endif
 
     delete builder;
     return changed;

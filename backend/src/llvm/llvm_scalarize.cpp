@@ -96,7 +96,7 @@ namespace gbe {
 
     Scalarize() : FunctionPass(ID)
     {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
       initializeDominatorTreeWrapperPassPass(*PassRegistry::getPassRegistry());
 #else
       initializeDominatorTreePass(*PassRegistry::getPassRegistry());
@@ -873,15 +873,9 @@ namespace gbe {
   bool Scalarize::runOnFunction(Function& F)
   {
     switch (F.getCallingConv()) {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
-    case CallingConv::PTX_Device:
-      return false;
-    case CallingConv::PTX_Kernel:
-#else
     case CallingConv::C:
     case CallingConv::Fast:
     case CallingConv::SPIR_KERNEL:
-#endif
       break;
     default:
       GBE_ASSERTM(false, "Unsupported calling convention");

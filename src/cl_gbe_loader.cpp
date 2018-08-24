@@ -24,6 +24,7 @@
 
 //function pointer from libgbe.so
 gbe_program_new_from_source_cb *compiler_program_new_from_source = NULL;
+gbe_program_new_from_llvm_file_cb *compiler_program_new_from_llvm_file = NULL;
 gbe_program_compile_from_source_cb *compiler_program_compile_from_source = NULL;
 gbe_program_new_gen_program_cb *compiler_program_new_gen_program = NULL;
 gbe_program_link_program_cb *compiler_program_link_program = NULL;
@@ -296,6 +297,10 @@ struct GbeLoaderInitializer
     if (dlhCompiler != NULL) {
       compiler_program_new_from_source = *(gbe_program_new_from_source_cb **)dlsym(dlhCompiler, "gbe_program_new_from_source");
       if (compiler_program_new_from_source == NULL)
+        return;
+
+      compiler_program_new_from_llvm_file = *(gbe_program_new_from_llvm_file_cb **)dlsym(dlhCompiler, "gbe_program_new_from_llvm_file");
+      if (compiler_program_new_from_llvm_file == NULL)
         return;
 
       compiler_program_compile_from_source = *(gbe_program_compile_from_source_cb **)dlsym(dlhCompiler, "gbe_program_compile_from_source");

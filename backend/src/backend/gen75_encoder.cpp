@@ -53,8 +53,14 @@ namespace gbe
     gen7_insn->header.quarter_control = this->curr.quarterControl;
     gen7_insn->bits1.ia1.nib_ctrl = this->curr.nibControl;
     gen7_insn->header.mask_control = this->curr.noMask;
-    gen7_insn->bits2.ia1.flag_reg_nr = this->curr.flag;
-    gen7_insn->bits2.ia1.flag_sub_reg_nr = this->curr.subFlag;
+    if (insn->header.opcode == GEN_OPCODE_MAD || insn->header.opcode == GEN_OPCODE_LRP)
+    {
+      gen7_insn->bits1.da3src.flag_reg_nr = this->curr.flag;
+      gen7_insn->bits1.da3src.flag_sub_reg_nr = this->curr.subFlag;
+    } else {
+      gen7_insn->bits2.ia1.flag_reg_nr = this->curr.flag;
+      gen7_insn->bits2.ia1.flag_sub_reg_nr = this->curr.subFlag;
+    }
     if (this->curr.predicate != GEN_PREDICATE_NONE) {
       gen7_insn->header.predicate_control = this->curr.predicate;
       gen7_insn->header.predicate_inverse = this->curr.inversePredicate;

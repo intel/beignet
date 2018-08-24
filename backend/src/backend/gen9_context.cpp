@@ -236,4 +236,8 @@ namespace gbe
     this->sel = GBE_NEW(SelectionKbl, *this);
   }
 
+  void GlkContext::newSelection(void) {
+    this->sel = GBE_NEW(SelectionGlk, *this);
+  }
+
 }

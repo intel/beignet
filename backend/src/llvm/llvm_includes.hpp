@@ -24,6 +24,7 @@
 #ifndef __GBE_IR_LLVM_INCLUDES_HPP__
 #define __GBE_IR_LLVM_INCLUDES_HPP__
 
+#ifdef GBE_COMPILER_AVAILABLE
 #include "llvm/Config/llvm-config.h"
 
 #include "llvm/IR/BasicBlock.h"
@@ -75,7 +76,12 @@
 
 #include "llvm-c/Linker.h"
 #include "llvm/IRReader/IRReader.h"
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+#include <llvm/Bitcode/BitcodeWriter.h>
+//#include <llvm/Bitcode/BitcodeReader.h>
+#else
 #include "llvm/Bitcode/ReaderWriter.h"
+#endif
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
@@ -91,7 +97,7 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/CFG.h"
@@ -111,7 +117,7 @@
 #include "llvm/Target/Mangler.h"
 #endif
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/LegacyPassManager.h"
 #else
@@ -122,14 +128,20 @@
 
 #include <clang/CodeGen/CodeGenAction.h>
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
 #include "llvm/Analysis/BasicAliasAnalysis.h"
 #include "llvm/Analysis/TypeBasedAliasAnalysis.h"
 #endif
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
 #include "llvm/Transforms/IPO/FunctionAttrs.h"
 #include "llvm/Transforms/Scalar/GVN.h"
 #endif
+
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
+#include "llvm/Support/Error.h"
+#endif
+
+#endif /*GBE_COMPILER_AVAILABLE */
 
 #endif /* __GBE_IR_LLVM_INCLUDES_HPP__ */

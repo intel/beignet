@@ -305,8 +305,8 @@ namespace gbe {
     }
     /*! Build a program from a ir::Unit */
     bool buildFromUnit(const ir::Unit &unit, std::string &error);
-    /*! Buils a program from a LLVM source code */
-    bool buildFromLLVMFile(const char *fileName, const void* module, std::string &error, int optLevel);
+    /*! Buils a program from a LLVM Module */
+    bool buildFromLLVMModule(const void* module, std::string &error, int optLevel);
     /*! Buils a program from a OCL string */
     bool buildFromSource(const char *source, std::string &error);
     /*! Get size of the global constant arrays */
