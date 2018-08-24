@@ -358,31 +358,40 @@ cl_context_delete(cl_context ctx)
   if (UNLIKELY(ctx == NULL))
     return;
 
+  int internal_ctx_refs = 1;
+  // determine how many ctx refs are held by internal_prgs and built_in_prgs
+  for (i = CL_INTERNAL_KERNEL_MIN; i < CL_INTERNAL_KERNEL_MAX; i++) {
+    if (ctx->internal_kernels[i] && ctx->internal_prgs[i])
+      ++internal_ctx_refs;
+  }
+
   /* We are not done yet */
-  if (CL_OBJECT_DEC_REF(ctx) > 1)
+  if (CL_OBJECT_DEC_REF(ctx) > internal_ctx_refs)
     return;
+
+  // create a temporary extra ref here so cl_program_delete doesn't
+  // attempt a recursive full cl_context_delete when cleaning up
+  // our internal programs
+  CL_OBJECT_INC_REF(ctx);
 
   /* delete the internal programs. */
   for (i = CL_INTERNAL_KERNEL_MIN; i < CL_INTERNAL_KERNEL_MAX; i++) {
     if (ctx->internal_kernels[i]) {
-      cl_kernel_delete(ctx->internal_kernels[i]);
+      cl_kernel k = ctx->internal_kernels[i];
       ctx->internal_kernels[i] = NULL;
+      cl_kernel_delete(k);
 
       assert(ctx->internal_prgs[i]);
-      cl_program_delete(ctx->internal_prgs[i]);
+      cl_program p = ctx->internal_prgs[i];
       ctx->internal_prgs[i] = NULL;
-    }
-
-    if (ctx->internal_kernels[i]) {
-      cl_kernel_delete(ctx->built_in_kernels[i]);
-      ctx->built_in_kernels[i] = NULL;
+      cl_program_delete(p);
     }
   }
 
-  cl_program_delete(ctx->built_in_prgs);
-  ctx->built_in_prgs = NULL;
+  CL_OBJECT_DEC_REF(ctx);
 
   cl_free(ctx->prop_user);
+  cl_free(ctx->devices);
   cl_driver_delete(ctx->drv);
   CL_OBJECT_DESTROY_BASE(ctx);
   cl_free(ctx);
@@ -426,32 +435,18 @@ cl_context_get_static_kernel_from_bin(cl_context ctx, cl_int index,
 
     ctx->internal_prgs[index]->is_built = 1;
 
-    /* All CL_ENQUEUE_FILL_BUFFER_ALIGN16_xxx use the same program, different kernel. */
-    if (index >= CL_ENQUEUE_FILL_BUFFER_ALIGN8_8 && index <= CL_ENQUEUE_FILL_BUFFER_ALIGN8_64) {
-      int i = CL_ENQUEUE_FILL_BUFFER_ALIGN8_8;
-      for (; i <= CL_ENQUEUE_FILL_BUFFER_ALIGN8_64; i++) {
-        if (index != i) {
-          assert(ctx->internal_prgs[i] == NULL);
-          assert(ctx->internal_kernels[i] == NULL);
-          cl_program_add_ref(ctx->internal_prgs[index]);
-          ctx->internal_prgs[i] = ctx->internal_prgs[index];
-        }
-
-        if (i == CL_ENQUEUE_FILL_BUFFER_ALIGN8_8) {
-          ctx->internal_kernels[i] = cl_program_create_kernel(ctx->internal_prgs[index],
+    if (index == CL_ENQUEUE_FILL_BUFFER_ALIGN8_8) {
+      ctx->internal_kernels[index] = cl_program_create_kernel(ctx->internal_prgs[index],
                                                               "__cl_fill_region_align8_2", NULL);
-        } else if (i == CL_ENQUEUE_FILL_BUFFER_ALIGN8_16) {
-          ctx->internal_kernels[i] = cl_program_create_kernel(ctx->internal_prgs[index],
+    } else if (index == CL_ENQUEUE_FILL_BUFFER_ALIGN8_16) {
+      ctx->internal_kernels[index] = cl_program_create_kernel(ctx->internal_prgs[index],
                                                               "__cl_fill_region_align8_4", NULL);
-        } else if (i == CL_ENQUEUE_FILL_BUFFER_ALIGN8_32) {
-          ctx->internal_kernels[i] = cl_program_create_kernel(ctx->internal_prgs[index],
+    } else if (index == CL_ENQUEUE_FILL_BUFFER_ALIGN8_32) {
+      ctx->internal_kernels[index] = cl_program_create_kernel(ctx->internal_prgs[index],
                                                               "__cl_fill_region_align8_8", NULL);
-        } else if (i == CL_ENQUEUE_FILL_BUFFER_ALIGN8_64) {
-          ctx->internal_kernels[i] = cl_program_create_kernel(ctx->internal_prgs[index],
+    } else if (index == CL_ENQUEUE_FILL_BUFFER_ALIGN8_64) {
+      ctx->internal_kernels[index] = cl_program_create_kernel(ctx->internal_prgs[index],
                                                               "__cl_fill_region_align8_16", NULL);
-        } else
-          assert(0);
-      }
     } else {
       ctx->internal_kernels[index] = cl_kernel_dup(ctx->internal_prgs[index]->ker[0]);
     }

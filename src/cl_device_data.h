@@ -247,7 +247,9 @@
 /* SKL */
 #define PCI_CHIP_SKYLAKE_ULT_GT1	0x1906   /* Intel(R) Skylake ULT - GT1 */
 #define PCI_CHIP_SKYLAKE_ULT_GT2	0x1916   /* Intel(R) Skylake ULT - GT2 */
-#define PCI_CHIP_SKYLAKE_ULT_GT3	0x1926   /* Intel(R) Skylake ULT - GT3 */
+#define PCI_CHIP_SKYLAKE_ULT_GT3	0x1923   /* Intel(R) Skylake ULT - GT3 */
+#define PCI_CHIP_SKYLAKE_ULT_GT3E1	0x1926   /* Intel(R) Skylake ULT - GT3E */
+#define PCI_CHIP_SKYLAKE_ULT_GT3E2	0x1927   /* Intel(R) Skylake ULT - GT3E */
 #define PCI_CHIP_SKYLAKE_ULT_GT2F	0x1921   /* Intel(R) Skylake ULT - GT2F */
 #define PCI_CHIP_SKYLAKE_ULX_GT1	0x190E   /* Intel(R) Skylake ULX - GT1 */
 #define PCI_CHIP_SKYLAKE_ULX_GT2	0x191E   /* Intel(R) Skylake ULX - GT2 */
@@ -284,6 +286,8 @@
 
 #define IS_SKL_GT3(devid)               \
   (devid == PCI_CHIP_SKYLAKE_ULT_GT3 ||   \
+   devid == PCI_CHIP_SKYLAKE_ULT_GT3E1 ||   \
+   devid == PCI_CHIP_SKYLAKE_ULT_GT3E2 ||   \
    devid == PCI_CHIP_SKYLAKE_HALO_GT3 || \
    devid == PCI_CHIP_SKYLAKE_SRV_GT3 || \
    devid == PCI_CHIP_SKYLAKE_MEDIA_SRV_GT3)
@@ -361,7 +365,16 @@
 
 #define IS_KABYLAKE(devid) (IS_KBL_GT1(devid) || IS_KBL_GT15(devid) || IS_KBL_GT2(devid) || IS_KBL_GT3(devid) || IS_KBL_GT4(devid))
 
-#define IS_GEN9(devid)     (IS_SKYLAKE(devid) || IS_BROXTON(devid) || IS_KABYLAKE(devid))
+#define PCI_CHIP_GLK_3x6     0x3184
+#define PCI_CHIP_GLK_2x6     0x3185
+
+#define IS_GEMINILAKE(devid)      \
+  (devid == PCI_CHIP_GLK_3x6 ||   \
+   devid == PCI_CHIP_GLK_2x6)
+
+#define IS_GEN9(devid)     (IS_SKYLAKE(devid) || IS_BROXTON(devid) || IS_KABYLAKE(devid) || IS_GEMINILAKE(devid))
+
+#define MAX_OCLVERSION(devid) (IS_GEN9(devid) ? 200 : 120)
 
 #endif /* __CL_DEVICE_DATA_H__ */
 

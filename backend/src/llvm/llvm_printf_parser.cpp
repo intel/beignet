@@ -309,7 +309,11 @@ error:
     bool parseOnePrintfInstruction(CallInst * call);
     bool generateOneParameterInst(PrintfSlot& slot, Value* arg, Value*& new_arg);
 
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    virtual StringRef getPassName() const
+#else
     virtual const char *getPassName() const
+#endif
     {
       return "Printf Parser";
     }
@@ -381,7 +385,7 @@ error:
     }
 
     GBE_ASSERT(unit.printfs.find(call) == unit.printfs.end());
-    unit.printfs.insert(std::pair<llvm::CallInst*, PrintfSet::PrintfFmt*>(call, printf_fmt));
+    unit.printfs.insert(std::pair<void *, PrintfSet::PrintfFmt*>((void *)call, printf_fmt));
     return true;
   }
 
@@ -389,15 +393,9 @@ error:
   {
     bool hasPrintf = false;
     switch (F.getCallingConv()) {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
-      case CallingConv::PTX_Device:
-        return false;
-      case CallingConv::PTX_Kernel:
-#else
       case CallingConv::C:
       case CallingConv::Fast:
       case CallingConv::SPIR_KERNEL:
-#endif
         break;
       default:
         GBE_ASSERTM(false, "Unsupported calling convention");
@@ -521,7 +519,11 @@ error:
       case Type::FloatTyID: {
         /* llvm 3.6 will give a undef value for NAN. */
         if (dyn_cast<llvm::UndefValue>(arg)) {
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+          APFloat nan = APFloat::getNaN(APFloat::IEEEsingle(), false);
+#else
           APFloat nan = APFloat::getNaN(APFloat::IEEEsingle, false);
+#endif
           new_arg = ConstantFP::get(module->getContext(), nan);
         }
 

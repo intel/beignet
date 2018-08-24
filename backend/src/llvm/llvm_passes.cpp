@@ -42,7 +42,7 @@ namespace gbe
 {
   bool isKernelFunction(const llvm::Function &F) {
     bool bKernel = false;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
     bKernel = F.getMetadata("kernel_arg_name") != NULL;
 #else
     const Module *module = F.getParent();
@@ -53,7 +53,7 @@ namespace gbe
       uint32_t ops = md.getNumOperands();
       for(uint32_t x = 0; x < ops; x++) {
         MDNode* node = md.getOperand(x);
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
         Value * op = node->getOperand(0);
 #else
         Value * op = cast<ValueAsMetadata>(node->getOperand(0))->getValue();
@@ -74,7 +74,7 @@ namespace gbe
     if(ops > 0) {
       uint32_t major = 0, minor = 0;
       MDNode* node = version->getOperand(0);
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
       major = mdconst::extract<ConstantInt>(node->getOperand(0))->getZExtValue();
       minor = mdconst::extract<ConstantInt>(node->getOperand(1))->getZExtValue();
 #else
@@ -180,12 +180,23 @@ namespace gbe
     return size_bit/8;
   }
 
-  int32_t getGEPConstOffset(const ir::Unit &unit, CompositeType *CompTy, int32_t TypeIndex) {
+  Type* getEltType(Type* eltTy, uint32_t index) {
+    Type *elementType = NULL;
+    if (PointerType* ptrType = dyn_cast<PointerType>(eltTy))
+      elementType = ptrType->getElementType();
+    else if(SequentialType * seqType = dyn_cast<SequentialType>(eltTy))
+      elementType = seqType->getElementType();
+    else if(CompositeType * compTy= dyn_cast<CompositeType>(eltTy))
+      elementType = compTy->getTypeAtIndex(index);
+    GBE_ASSERT(elementType);
+    return elementType;
+  }
+
+  int32_t getGEPConstOffset(const ir::Unit &unit, Type *eltTy, int32_t TypeIndex) {
     int32_t offset = 0;
-    SequentialType * seqType = dyn_cast<SequentialType>(CompTy);
-    if (seqType != NULL) {
+    if (!eltTy->isStructTy()) {
       if (TypeIndex != 0) {
-        Type *elementType = seqType->getElementType();
+        Type *elementType = getEltType(eltTy);
         uint32_t elementSize = getTypeByteSize(unit, elementType);
         uint32_t align = getAlignmentByte(unit, elementType);
         elementSize += getPadding(elementSize, align);
@@ -193,17 +204,16 @@ namespace gbe
       }
     } else {
       int32_t step = TypeIndex > 0 ? 1 : -1;
-      GBE_ASSERT(CompTy->isStructTy());
       for(int32_t ty_i=0; ty_i != TypeIndex; ty_i += step)
       {
-        Type* elementType = CompTy->getTypeAtIndex(ty_i);
+        Type* elementType = getEltType(eltTy, ty_i);
         uint32_t align = getAlignmentByte(unit, elementType);
         offset += getPadding(offset, align * step);
         offset += getTypeByteSize(unit, elementType) * step;
       }
 
       //add getPaddingding for accessed type
-      const uint32_t align = getAlignmentByte(unit, CompTy->getTypeAtIndex(TypeIndex));
+      const uint32_t align = getAlignmentByte(unit, getEltType(eltTy ,TypeIndex));
       offset += getPadding(offset, align * step);
     }
     return offset;
@@ -222,7 +232,11 @@ namespace gbe
       AU.setPreservesCFG();
     }
 
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    virtual StringRef getPassName() const {
+#else
     virtual const char *getPassName() const {
+#endif
       return "SPIR backend: insert special spir instructions";
     }
 
@@ -247,8 +261,8 @@ namespace gbe
   {
     const uint32_t ptrSize = unit.getPointerSize();
     Value* parentPointer = GEPInst->getOperand(0);
-    CompositeType* CompTy = parentPointer ? cast<CompositeType>(parentPointer->getType()) : NULL;
-    if(!CompTy)
+    Type* eltTy = parentPointer ? parentPointer->getType() : NULL;
+    if(!eltTy)
       return false;
 
     Value* currentAddrInst = 
@@ -262,22 +276,21 @@ namespace gbe
       ConstantInt* ConstOP = dyn_cast<ConstantInt>(GEPInst->getOperand(op));
       if (ConstOP != NULL) {
         TypeIndex = ConstOP->getZExtValue();
-        constantOffset += getGEPConstOffset(unit, CompTy, TypeIndex);
+        constantOffset += getGEPConstOffset(unit, eltTy, TypeIndex);
       }
       else {
         // we only have array/vectors here, 
         // therefore all elements have the same size
         TypeIndex = 0;
 
-        Type* elementType = CompTy->getTypeAtIndex(TypeIndex);
+        Type* elementType = getEltType(eltTy);
+
         uint32_t size = getTypeByteSize(unit, elementType);
 
         //add padding
         uint32_t align = getAlignmentByte(unit, elementType);
         size += getPadding(size, align);
 
-        Constant* newConstSize = 
-          ConstantInt::get(IntegerType::get(GEPInst->getContext(), ptrSize), size);
 
         Value *operand = GEPInst->getOperand(op); 
 
@@ -308,18 +321,27 @@ namespace gbe
           }
         }
 #endif
-        Value* tmpMul = operand;
+        Value* tmpOffset = operand;
         if (size != 1) {
-          tmpMul = BinaryOperator::Create(Instruction::Mul, newConstSize, operand,
-                                         "", GEPInst);
+          if (isPowerOf<2>(size)) {
+            Constant* shiftAmnt =
+              ConstantInt::get(IntegerType::get(GEPInst->getContext(), ptrSize), logi2(size));
+            tmpOffset = BinaryOperator::Create(Instruction::Shl, operand, shiftAmnt,
+                                           "", GEPInst);
+          } else{
+            Constant* sizeConst =
+              ConstantInt::get(IntegerType::get(GEPInst->getContext(), ptrSize), size);
+            tmpOffset = BinaryOperator::Create(Instruction::Mul, sizeConst, operand,
+                                           "", GEPInst);
+          }
         }
         currentAddrInst = 
-          BinaryOperator::Create(Instruction::Add, currentAddrInst, tmpMul,
+          BinaryOperator::Create(Instruction::Add, currentAddrInst, tmpOffset,
               "", GEPInst);
       }
 
       //step down in type hirachy
-      CompTy = dyn_cast<CompositeType>(CompTy->getTypeAtIndex(TypeIndex));
+      eltTy = getEltType(eltTy, TypeIndex);
     }
 
     //insert addition of new offset before GEPInst when it is not zero

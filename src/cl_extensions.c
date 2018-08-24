@@ -42,7 +42,7 @@ void check_opt1_extension(cl_extensions_t *extensions)
   {
     if (id == EXT_ID(khr_icd))
       extensions->extensions[id].base.ext_enabled = 1;
-#if  LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
     if (id == EXT_ID(khr_spir))
       extensions->extensions[id].base.ext_enabled = 1;
 #endif
@@ -69,8 +69,16 @@ check_intel_extension(cl_extensions_t *extensions)
 {
   int id;
   for(id = INTEL_EXT_START_ID; id <= INTEL_EXT_END_ID; id++)
+  {
     if(id != EXT_ID(intel_motion_estimation))
       extensions->extensions[id].base.ext_enabled = 1;
+    if(id == EXT_ID(intel_required_subgroup_size))
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR > 40
+      extensions->extensions[id].base.ext_enabled = 1;
+#else
+      extensions->extensions[id].base.ext_enabled = 0;
+#endif
+  }
 }
 
 void

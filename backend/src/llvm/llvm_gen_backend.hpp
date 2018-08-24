@@ -46,7 +46,7 @@ namespace llvm {
   FunctionPass *createExpandConstantExprPass();
   FunctionPass *createExpandLargeIntegersPass();
   FunctionPass *createPromoteIntegersPass();
-  FunctionPass *createStripAttributesPass();
+  FunctionPass *createStripAttributesPass(bool lastTime);
   // Copy debug information from Original to New, and return New.
   template <typename T> T *CopyDebug(T *New, llvm::Instruction *Original) {
     New->setDebugLoc(Original->getDebugLoc());
@@ -82,9 +82,9 @@ namespace gbe
       auto it = map.find(symbol);
 
       if (it == map.end()) {
-        int status;
+        int status = 0; /* set for libcxxrt */
         char *realName = abi::__cxa_demangle(symbol.c_str(), NULL, NULL, &status);
-        if (status == 0) {
+        if (realName) {
           std::string realFnName(realName), stripName;
           stripName = realFnName.substr(0, realFnName.find("("));
           it = map.find(stripName);
@@ -118,7 +118,10 @@ namespace gbe
   uint32_t getTypeByteSize(const ir::Unit &unit, llvm::Type* Ty);
 
   /*! Get GEP constant offset for the specified operand.*/
-  int32_t getGEPConstOffset(const ir::Unit &unit, llvm::CompositeType *CompTy, int32_t TypeIndex);
+  int32_t getGEPConstOffset(const ir::Unit &unit, llvm::Type *eltTy, int32_t TypeIndex);
+
+  /*! Get element type for a type.*/
+  llvm::Type* getEltType(llvm::Type *eltTy, uint32_t index = 0);
 
   /*! whether this is a kernel function */
   bool isKernelFunction(const llvm::Function &f);
@@ -146,7 +149,7 @@ namespace gbe
   /*! Insert the time stamp for profiling. */
   llvm::FunctionPass* createProfilingInserterPass(int profilingType, ir::Unit &unit);
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
   /* customized loop unrolling pass. */
   llvm::LoopPass *createCustomLoopUnrollPass();
 #endif

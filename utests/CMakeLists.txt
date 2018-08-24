@@ -283,13 +283,24 @@ set (utests_sources
   compiler_sub_group_shuffle_down.cpp
   compiler_sub_group_shuffle_up.cpp
   compiler_sub_group_shuffle_xor.cpp
+  compiler_reqd_sub_group_size.cpp
   builtin_global_linear_id.cpp
   builtin_local_linear_id.cpp
   multi_queue_events.cpp
   compiler_mix.cpp
   compiler_math_3op.cpp
   compiler_bsort.cpp
-  builtin_kernel_block_motion_estimate_intel.cpp)
+  builtin_kernel_block_motion_estimate_intel.cpp
+  compiler_program_global.cpp
+  compiler_generic_atomic.cpp
+  compiler_atomic_functions_20.cpp
+  compiler_sampler.cpp
+  compiler_generic_pointer.cpp
+  runtime_pipe_query.cpp
+  compiler_pipe_builtin.cpp
+  compiler_device_enqueue.cpp
+  compiler_sqrt_div.cpp
+  compiler_remove_negative_add.cpp)
 
 if (LLVM_VERSION_NODOT VERSION_GREATER 34)
   SET(utests_sources
@@ -297,18 +308,6 @@ if (LLVM_VERSION_NODOT VERSION_GREATER 34)
       compiler_overflow.cpp)
 endif (LLVM_VERSION_NODOT VERSION_GREATER 34)
 
-if (ENABLE_OPENCL_20)
-  SET(utests_sources
-      ${utests_sources}
-      compiler_program_global.cpp
-      compiler_generic_atomic.cpp
-      compiler_atomic_functions_20.cpp
-      compiler_sampler.cpp
-      compiler_generic_pointer.cpp
-      runtime_pipe_query.cpp
-      compiler_pipe_builtin.cpp
-      compiler_device_enqueue.cpp)
-endif (ENABLE_OPENCL_20)
 
 if (NOT_BUILD_STAND_ALONE_UTEST)
   if (X11_FOUND)

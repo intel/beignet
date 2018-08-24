@@ -29,7 +29,8 @@ two more packages (the following package name is for Ubuntu):
 - ocl-icd-libopencl1
 
 If you don't want to enable ICD, or your system doesn't have ICD OpenCL support,
-you can still link to the beignet OpenCL library. You can find the beignet/libcl.so
+you must explicitly disable ICD support by running cmake with option `-DOCLICD_COMPAT=0`
+then you can still link to the beignet OpenCL library. You can find the beignet/libcl.so
 in your system's library installation directories.
 
 Note that the compiler depends on LLVM (Low-Level Virtual Machine project), and the
@@ -160,15 +161,13 @@ Supported Targets
 
 OpenCL 2.0
 ----------
-From release v1.3.0, beignet support OpenCL 2.0. By default, OpenCL 2.0 support is disabled, you can enable it when cmake with option
--DENABLE_OPENCL_20=1. Please remember that to enable OpenCL 2.0, there are some dependencies. First, OpenCL 2.0 only support the targets
-from Skylake, include Skylake, Kabylake and Apollolake. Then, clang supports all OpenCL 2.0 feature from 3.9. So to enable OpenCL 2.0,
-you must update LLVM/clang to 3.9 or later. And also requeires libdrm at least 2.4.66.
-After enable OpenCL 2.0, beignet complies with OpenCL 2.0 spec, but some OpenCL 2.0 features are simulated by software, there is no performance
-gain, such as pipe and device queues, especially device queues.
-If you build beignet with OpenCL 2.0 enabled and your kernel don't use the OpenCL 2.0 features, please pass a build option -cl-std=CL1.2 for
-performance, the OpenCL 2.0 uses more registers and has lots of int64 operations, which may hurt performance, and beignet will continue to improve
-OpenCL 2.0 performance.
+From release v1.3.0, beignet supports OpenCL 2.0 on Skylake and later hardware.
+This requires LLVM/Clang 3.9 or later, libdrm 2.4.66 or later and x86_64 linux.
+As required by the OpenCL specification, kernels are compiled as OpenCL C 1.2 by default; to use 2.0 they
+must explicitly request it with the -cl-std=CL2.0 build option.  As OpenCL 2.0 is likely to be slower than
+1.2, we recommend that this is used only where needed.  (This is because 2.0 uses more registers and has
+lots of int64 operations, and some of the 2.0 features (pipes and especially device queues) are implemented
+in software so do not provide any performance gain.)  Beignet will continue to improve OpenCL 2.0 performance.
 
 Known Issues
 ------------
@@ -222,10 +221,8 @@ Known Issues
   This loses some precision but gains performance.
 
 * cl\_khr\_gl\_sharing.
-  This extension highly depends on mesa support. It seems that mesa would not provide
-  such type of extensions, we may have to hack with mesa source code to support this
-  extension. This feature used to work with a previous mesa git version. But now, it's
-  simply broken.
+  This extension is partially implemented(the most commonly used part), and we will implement
+  other parts based on requirement.
 
 Project repository
 ------------------
@@ -283,9 +280,10 @@ Documents for OpenCL application developers
 - [[Kernel Optimization Guide|Beignet/optimization-guide]]
 - [[Libva Buffer Sharing|Beignet/howto/libva-buffer-sharing-howto]]
 - [[V4l2 Buffer Sharing|Beignet/howto/v4l2-buffer-sharing-howto]]
+- [[OpenGL Buffer Sharing|Beignet/howto/gl-buffer-sharing-howto]]
 - [[Video Motion Estimation|Beignet/howto/video-motion-estimation-howto]]
 - [[Stand Alone Unit Test|Beignet/howto/stand-alone-utest-howto]]
-- [[Android build|Beignet/android-build-howto]]
+- [[Android build|Beignet/howto/android-build-howto]]
 
 The wiki URL is as below:
 [http://www.freedesktop.org/wiki/Software/Beignet/](http://www.freedesktop.org/wiki/Software/Beignet/)

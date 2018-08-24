@@ -2,12 +2,14 @@
 
 void compiler_device_enqueue(void)
 {
+  if(!cl_check_ocl20(false))
+    return;
   const size_t n = 32;
   const uint32_t global_sz = 3;
   uint32_t result = 0;
 
   // Setup kernel and buffers
-  OCL_CREATE_KERNEL("compiler_device_enqueue");
+  OCL_CALL(cl_kernel_init, "compiler_device_enqueue.cl", "compiler_device_enqueue", SOURCE, "-cl-std=CL2.0");
   OCL_CREATE_BUFFER(buf[0], 0, n * sizeof(uint32_t), NULL);
   OCL_SET_ARG(0, sizeof(uint32_t), &global_sz);
   OCL_SET_ARG(1, sizeof(cl_mem), &buf[0]);

@@ -136,6 +136,8 @@ struct _cl_device_id {
   uint32_t atomic_test_result;
   cl_uint image_pitch_alignment;
   cl_uint image_base_address_alignment;
+  size_t sub_group_sizes[2];
+  size_t sub_group_sizes_sz;
 
   //inited as NULL, created only when cmrt kernel is used
   void* cmrt_device;  //realtype: CmDevice*
@@ -154,7 +156,7 @@ extern cl_int cl_get_device_ids(cl_platform_id    platform,
                                 cl_uint *         num_devices);
 
 /* Get the intel GPU device we currently have in this machine (if any) */
-extern cl_device_id cl_get_gt_device(void);
+extern cl_device_id cl_get_gt_device(cl_device_type device_type);
 
 /* Provide info about the device */
 extern cl_int cl_get_device_info(cl_device_id     device,

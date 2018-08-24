@@ -144,7 +144,9 @@ cl_image_get_intel_format(const cl_image_format *fmt)
     case CL_RG:
       switch (type) {
         case CL_UNORM_INT8:     return I965_SURFACEFORMAT_R8G8_UNORM;
+        case CL_UNORM_INT16:    return I965_SURFACEFORMAT_R16G16_UNORM;
         case CL_UNSIGNED_INT8:  return I965_SURFACEFORMAT_R8G8_UINT;
+        case CL_UNSIGNED_INT16: return I965_SURFACEFORMAT_R16G16_UINT;
         default: return INTEL_UNSUPPORTED_FORMAT;
       };
 #if 0

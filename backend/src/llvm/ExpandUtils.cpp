@@ -101,7 +101,11 @@ namespace llvm {
   Function *RecreateFunction(Function *Func, FunctionType *NewType) {
     Function *NewFunc = Function::Create(NewType, Func->getLinkage());
     NewFunc->copyAttributesFrom(Func);
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    Func->getParent()->getFunctionList().insert(Func->getIterator(), NewFunc);
+#else
     Func->getParent()->getFunctionList().insert(ilist_iterator<Function>(Func), NewFunc);
+#endif
     NewFunc->takeName(Func);
     NewFunc->getBasicBlockList().splice(NewFunc->begin(),
                                         Func->getBasicBlockList());

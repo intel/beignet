@@ -30,7 +30,7 @@ ndrange_t __gen_ocl_set_ndrange_info(__private struct ndrange_info_t *info);
 __private struct ndrange_info_t* __gen_ocl_get_ndrange_info(ndrange_t info);
 __global int* __gen_ocl_get_enqueue_info_addr(void);
 
-OVERLOADABLE int enqueue_kernel(queue_t q, int flag, ndrange_t ndrange, void (^block)(void))
+int __enqueue_kernel_basic(queue_t q, int flag, ndrange_t ndrange, BLOCK_TYPE block)
 {
   int i;
   __private struct Block_literal *literal = (__private struct Block_literal *)block;
@@ -40,8 +40,11 @@ OVERLOADABLE int enqueue_kernel(queue_t q, int flag, ndrange_t ndrange, void (^b
   __global int* start_addr = __gen_ocl_get_enqueue_info_addr();
   int offset = atomic_add(start_addr, size + sizeof(struct ndrange_info_t));
   __global uchar* addr = (__global uchar*)start_addr + offset + sizeof(int);
+#if __clang_major__*10 + __clang_minor__ >= 50
+  __private struct ndrange_info_t *info = to_private(&ndrange);
+#else
   __private struct ndrange_info_t *info = __gen_ocl_get_ndrange_info(ndrange);
-
+#endif
   *((__global struct ndrange_info_t *)addr) = *info;
   addr += sizeof(*info);
 
@@ -51,14 +54,14 @@ OVERLOADABLE int enqueue_kernel(queue_t q, int flag, ndrange_t ndrange, void (^b
   return 0;
 }
 
-OVERLOADABLE int enqueue_kernel(queue_t q, int flag, ndrange_t ndrange,
-                                uint num_events_in_wait_list, const clk_event_t *event_wait_list,
-                                clk_event_t *event_ret, void (^block)(void))
+int __enqueue_kernel_basic_events(queue_t q, int flag, ndrange_t ndrange,
+                                uint num_events_in_wait_list, const EVENT_TYPE event_wait_list,
+                                EVENT_TYPE event_ret, BLOCK_TYPE block)
 {
-  return enqueue_kernel(q, flag, ndrange, block);
+  return __enqueue_kernel_basic(q, flag, ndrange, block);
 }
 
-int __gen_enqueue_kernel_slm(queue_t q, int flag, ndrange_t ndrange, __private void * block, int count, __private int* slm_sizes)
+int __gen_enqueue_kernel_slm(queue_t q, int flag, ndrange_t ndrange, BLOCK_TYPE block, int count, __private int* slm_sizes)
 {
   int i;
   __private struct Block_literal* literal = (__private struct Block_literal *)block;
@@ -69,7 +72,11 @@ int __gen_enqueue_kernel_slm(queue_t q, int flag, ndrange_t ndrange, __private v
   __global int* start_addr = __gen_ocl_get_enqueue_info_addr();
   int offset = atomic_add(start_addr, size + sizeof(struct ndrange_info_t) + slm_size);
   __global uchar* addr = (__global uchar*)start_addr + offset + sizeof(int);
+#if __clang_major__*10 + __clang_minor__ >= 50
+  __private struct ndrange_info_t *info = to_private(&ndrange);
+#else
   __private struct ndrange_info_t *info = __gen_ocl_get_ndrange_info(ndrange);
+#endif
 
   *((__global struct ndrange_info_t *)addr) = *info;
   addr += sizeof(*info);
@@ -111,12 +118,12 @@ bool is_valid_event(clk_event_t event)
   return 1;
 }
 
-uint __get_kernel_work_group_size_impl(__private void *block)
+uint __get_kernel_work_group_size_impl(BLOCK_TYPE block)
 {
   return 256;
 }
 
-uint __get_kernel_preferred_work_group_multiple_impl(__private  void *block)
+uint __get_kernel_preferred_work_group_multiple_impl(BLOCK_TYPE block)
 {
   return 16;
 }
@@ -127,13 +134,19 @@ void capture_event_profiling_info(clk_event_t event, int name, global void *valu
   ((__global ulong *)value)[0] = 0x3000;
   ((__global ulong *)value)[1] = 0x6000;
 }
+
+#if __clang_major__*10 + __clang_minor__ >= 50
+#define RET_INFO  return info;
+#else
+#define RET_INFO  return __gen_ocl_set_ndrange_info(&info);
+#endif
+
 OVERLOADABLE ndrange_t ndrange_1D(size_t global_work_size)
 {
   struct ndrange_info_t info;
   info.type = 0x1;
   info.global_work_size[0] = global_work_size;
-  return __gen_ocl_set_ndrange_info(&info);
-  //return ndrange;
+  RET_INFO;
 }
 
 OVERLOADABLE ndrange_t ndrange_1D(size_t global_work_size, size_t local_work_size)
@@ -142,8 +155,7 @@ OVERLOADABLE ndrange_t ndrange_1D(size_t global_work_size, size_t local_work_siz
   info.type = 0x2;
   info.global_work_size[0] = global_work_size;
   info.local_work_size[0] = local_work_size;
-  return __gen_ocl_set_ndrange_info(&info);
- // return ndrange;
+  RET_INFO;
 }
 
 
@@ -154,8 +166,7 @@ OVERLOADABLE ndrange_t ndrange_1D(size_t global_work_offset, size_t global_work_
   info.global_work_size[0] = global_work_size;
   info.local_work_size[0] = local_work_size;
   info.global_work_offset[0] = global_work_offset;
-  return __gen_ocl_set_ndrange_info(&info);
-  //return ndrange;
+  RET_INFO;
 }
 
 OVERLOADABLE ndrange_t ndrange_2D(const size_t global_work_size[2])
@@ -164,8 +175,7 @@ OVERLOADABLE ndrange_t ndrange_2D(const size_t global_work_size[2])
   info.type = 0x11;
   info.global_work_size[0] = global_work_size[0];
   info.global_work_size[1] = global_work_size[1];
-  return __gen_ocl_set_ndrange_info(&info);
-  //return ndrange;
+  RET_INFO;
 }
 
 OVERLOADABLE ndrange_t ndrange_2D(const size_t global_work_size[2], const size_t local_work_size[2])
@@ -176,7 +186,7 @@ OVERLOADABLE ndrange_t ndrange_2D(const size_t global_work_size[2], const size_t
   info.global_work_size[1] = global_work_size[1];
   info.local_work_size[0] = local_work_size[0];
   info.local_work_size[1] = local_work_size[1];
-  return __gen_ocl_set_ndrange_info(&info);
+  RET_INFO;
 }
 
 
@@ -190,7 +200,7 @@ OVERLOADABLE ndrange_t ndrange_2D(const size_t global_work_offset[2], const size
   info.local_work_size[1] = local_work_size[1];
   info.global_work_offset[0] = global_work_offset[0];
   info.global_work_offset[1] = global_work_offset[1];
-  return __gen_ocl_set_ndrange_info(&info);
+  RET_INFO;
 }
 
 OVERLOADABLE ndrange_t ndrange_3D(const size_t global_work_size[3])
@@ -200,7 +210,7 @@ OVERLOADABLE ndrange_t ndrange_3D(const size_t global_work_size[3])
   info.global_work_size[0] = global_work_size[0];
   info.global_work_size[1] = global_work_size[1];
   info.global_work_size[2] = global_work_size[2];
-  return __gen_ocl_set_ndrange_info(&info);
+  RET_INFO;
 }
 
 OVERLOADABLE ndrange_t ndrange_3D(const size_t global_work_size[3], const size_t local_work_size[3])
@@ -213,7 +223,7 @@ OVERLOADABLE ndrange_t ndrange_3D(const size_t global_work_size[3], const size_t
   info.local_work_size[0] = local_work_size[0];
   info.local_work_size[1] = local_work_size[1];
   info.local_work_size[2] = local_work_size[2];
-  return __gen_ocl_set_ndrange_info(&info);
+  RET_INFO;
 }
 
 OVERLOADABLE ndrange_t ndrange_3D(const size_t global_work_offset[3], const size_t global_work_size[3], const size_t local_work_size[3])
@@ -229,7 +239,7 @@ OVERLOADABLE ndrange_t ndrange_3D(const size_t global_work_offset[3], const size
   info.global_work_offset[0] = global_work_offset[0];
   info.global_work_offset[1] = global_work_offset[1];
   info.global_work_offset[2] = global_work_offset[2];
-  return __gen_ocl_set_ndrange_info(&info);
+  RET_INFO;
 }
 
 int enqueue_marker (queue_t queue, uint num_events_in_wait_list, const clk_event_t *event_wait_list, clk_event_t *event_ret)

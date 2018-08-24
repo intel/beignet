@@ -181,7 +181,7 @@ endif(LLVM_VERSION_NODOT VERSION_EQUAL 34)
 
 link_directories (${LLVM_LIBRARY_DIR} ${DRM_LIBDIR})
 
-#do not build nor install if the standalone compiler is givenen
+#do not build nor install if the standalone compiler is given
 if (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
 if (BUILD_STANDALONE_GBE_COMPILER STREQUAL "true")
 macro(remove_cxx_flag flag)

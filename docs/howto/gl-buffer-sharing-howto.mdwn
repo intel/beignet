@@ -1,0 +1,82 @@
+GL Buffer Sharing HowTo
+=========================
+
+Beignet now supports cl_khr_gl_sharing partially (the most commonly used part), which is an official
+extension of Khronos OpenCL. With this extension, Beignet can create memory object from OpenGL/OpenGL
+ES buffer, texture or renderbuffer object with zero-copy. Currently, we just support creating memory
+object from GL buffer object or 2d texture (the most common target type). We will support creating
+from other GL target type if necessary.
+
+Prerequisite
+------------
+
+Mesa GL library and Mesa EGL library are required. Both version should be greater or equal than
+13.0.0.
+
+Steps
+-----
+
+A typical procedure of using cl_khr_gl_sharing is as below:
+
+- Basic egl routine (eglGetDisplay, eglInitialize, eglCreateContext...).
+
+- Create GL 2d texture in normal OpenGL way.
+
+- Check whether cl_khr_gl_sharing is supported by Beignet (Whether cl_khr_gl_sharing is present
+  in CL_DEVICE_EXTENSIONS string).
+
+- Create cl context with following cl_context_properties:
+    cl_context_properties *props=new cl_context_properties[7];
+    int i = 0;
+    props[i++] = CL_CONTEXT_PLATFORM;
+    props[i++] = (cl_context_properties)platform; //Valid OpenCL handle
+    props[i++] = CL_EGL_DISPLAY_KHR;  //We only support CL_EGL_DISPLAY_KHR now
+    props[i++] = (cl_context_properties)eglGetCurrentDisplay(); //EGLDisplay handle of the display
+    props[i++] = CL_GL_CONTEXT_KHR; //We only support CL_GL_CONTEXT_KHR now
+    props[i++] = (cl_context_properties)eglGetCurrentContext(); //EGLContext created by above EGLDisplay
+    props[i++] = 0;
+
+- Create cl image object from GL 2d texture by calling clCreateFromGLTexture.
+
+- Ensure any pending GL operations which access this GL 2d texture have completed by glFinish.
+
+- Acquire cl image object by calling clEnqueueAcquireGLObjects.
+
+- Access this cl image object as an usual cl image object.
+
+- Release cl image object by calling clEnqueueReleaseGLObjects.
+
+- Ensure any pending OpenCL operations which access this cl image object have completed by clFinish.
+
+- Do other operation on GL 2d texture.
+
+Sample code
+-----------
+
+We have developed an example showing how to utilize cl_khr_gl_sharing in examples/gl_buffer_sharing
+directory. A cl image object is created from a gl 2d texture and processed by OpenCL kernel, then
+is shown on screen.
+
+Steps to build and run this example:
+
+- Install mesa gl and egl library(version >= 13.0.0). X11 is also required.
+
+- Add option -DBUILD_EXAMPLES=ON to enable building examples when running cmake, such as:
+  `> mkdir build`
+  `> cd build`
+  `> cmake -DBUILD_EXAMPLES=ON ../`
+
+- Build source code:
+  `> make`
+
+- Export your X Display (if you login to your machine by ssh):
+  `> export DISPLAY=:0.0`
+
+- Run:
+  `> cd examples`
+  `> . ../utests/setenv.sh`
+  `> ./example-gl_buffer_sharing`
+
+More references
+---------------
+https://www.khronos.org/registry/OpenCL/specs/opencl-1.2-extensions.pdf

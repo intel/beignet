@@ -95,9 +95,9 @@
 #define LLVM_VERSION_MINOR 0
 #endif /* !defined(LLVM_VERSION_MINOR) */
 
-#if (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR < 3)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 33
 #error "Only LLVM 3.3 and newer are supported"
-#endif /* (LLVM_VERSION_MAJOR != 3) || (LLVM_VERSION_MINOR > 4) */
+#endif
 
 using namespace llvm;
 
@@ -308,7 +308,7 @@ namespace gbe
         if(StrTy)
           return getTypeByteSize(unit,StrTy);
       }
-      GBE_ASSERTM(false, "Unspported type name");
+      GBE_ASSERTM(false, "Unsupported type name");
       return 0;
   }
 #undef TYPESIZEVEC
@@ -357,6 +357,16 @@ namespace gbe
       GBE_ASSERT(! (isa<Constant>(value) && !isa<GlobalValue>(value)));
       Type *type = value->getType();
       auto typeID = type->getTypeID();
+      if (typeID == Type::PointerTyID)
+      {
+        Type *eltTy = dyn_cast<PointerType>(type)->getElementType();
+        if (eltTy->isStructTy()) {
+          StructType *strTy = dyn_cast<StructType>(eltTy);
+          if (!strTy->isLiteral() && strTy->getName().data() &&
+              strstr(strTy->getName().data(), "sampler"))
+            type = Type::getInt32Ty(value->getContext());
+        }
+      }
       switch (typeID) {
         case Type::IntegerTyID:
         case Type::FloatTyID:
@@ -565,7 +575,7 @@ namespace gbe
         has_errors(false),
         legacyMode(true)
     {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
       initializeLoopInfoWrapperPassPass(*PassRegistry::getPassRegistry());
 #else
       initializeLoopInfoPass(*PassRegistry::getPassRegistry());
@@ -573,10 +583,14 @@ namespace gbe
       pass = PASS_EMIT_REGISTERS;
     }
 
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    virtual llvm::StringRef getPassName() const { return "Gen Back-End"; }
+#else
     virtual const char *getPassName() const { return "Gen Back-End"; }
+#endif
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
       AU.addRequired<LoopInfoWrapperPass>();
 #else
       AU.addRequired<LoopInfo>();
@@ -611,7 +625,7 @@ namespace gbe
       if (legacyMode)
         analyzePointerOrigin(F);
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >=7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
       LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
 #else
       LI = &getAnalysis<LoopInfo>();
@@ -726,6 +740,8 @@ namespace gbe
     DECL_VISIT_FN(AtomicCmpXchgInst, AtomicCmpXchgInst);
 #undef DECL_VISIT_FN
 
+    // Emit rounding instructions from gen native function
+    void emitRoundingCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode);
     // Emit unary instructions from gen native function
     void emitUnaryCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode, ir::Type = ir::TYPE_FLOAT);
     // Emit unary instructions from gen native function
@@ -745,9 +761,6 @@ namespace gbe
     void visitVAArgInst(VAArgInst &I) {NOT_SUPPORTED;}
     void visitSwitchInst(SwitchInst &I) {NOT_SUPPORTED;}
     void visitInvokeInst(InvokeInst &I) {NOT_SUPPORTED;}
-#if LLVM_VERSION_MINOR == 0
-    void visitUnwindInst(UnwindInst &I) {NOT_SUPPORTED;}
-#endif /* __LLVM_30__ */
     void visitResumeInst(ResumeInst &I) {NOT_SUPPORTED;}
     void visitInlineAsm(CallInst &I) {NOT_SUPPORTED;}
     void visitIndirectBrInst(IndirectBrInst &I) {NOT_SUPPORTED;}
@@ -766,7 +779,7 @@ namespace gbe
     void emitUnalignedDQLoadStore(ir::Register ptr, Value *llvmValues, ir::AddressSpace addrSpace, ir::Register bti, bool isLoad, bool dwAligned, bool fixedBTI);
     void visitInstruction(Instruction &I) {NOT_SUPPORTED;}
     ir::PrintfSet::PrintfFmt* getPrintfInfo(CallInst* inst) {
-      if (unit.printfs.find(inst) == unit.printfs.end())
+      if (unit.printfs.find((void *)inst) == unit.printfs.end())
         return NULL;
       return unit.printfs[inst];
     }
@@ -837,7 +850,7 @@ namespace gbe
       for (Value::use_iterator iter = work->use_begin(); iter != work->use_end(); ++iter) {
       // After LLVM 3.5, use_iterator points to 'Use' instead of 'User',
       // which is more straightforward.
-  #if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 5)
+  #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 35
         User *theUser = *iter;
   #else
         User *theUser = iter->getUser();
@@ -961,7 +974,7 @@ namespace gbe
             CallInst *ci = dyn_cast<CallInst>(theUser);
             pointer = ci ? ci->getArgOperand(0) : NULL;
           } else {
-            theUser->dump();
+            //theUser->dump();
             GBE_ASSERT(0 && "Unknown instruction operating on pointers\n");
           }
 
@@ -1091,7 +1104,7 @@ namespace gbe
             if (predBB->getTerminator())
               Builder2.SetInsertPoint(predBB->getTerminator());
 
-#if (LLVM_VERSION_MAJOR== 3 && LLVM_VERSION_MINOR < 6)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 36
   // llvm 3.5 and older version don't have CreateBitOrPointerCast() define
             Type *srcTy = base->getType();
             Type *dstTy = ptr->getType();
@@ -1109,7 +1122,7 @@ namespace gbe
           pointerBaseMap.insert(std::make_pair(ptr, basePhi));
           return basePhi;
       } else {
-        ptr->dump();
+        //ptr->dump();
         GBE_ASSERT(0 && "Unhandled instruction in getPointerBase\n");
         return ptr;
       }
@@ -1190,7 +1203,7 @@ namespace gbe
           BtiValueMap.insert(std::make_pair(Val, btiPhi));
           return btiPhi;
         } else {
-          Val->dump();
+          //Val->dump();
           GBE_ASSERT(0 && "Unhandled instruction in getBtiRegister\n");
           return Val;
         }
@@ -1250,7 +1263,7 @@ namespace gbe
      uint32_t ops = clKernels->getNumOperands();
       for(uint32_t x = 0; x < ops; x++) {
         MDNode* node = clKernels->getOperand(x);
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
         Value * op = node->getOperand(0);
 #else
         auto *V = cast<ValueAsMetadata>(node->getOperand(0));
@@ -1274,7 +1287,7 @@ namespace gbe
     MDNode *typeNameNode = NULL;
     MDNode *typeBaseNameNode = NULL;
     MDNode *typeQualNode = NULL;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
     typeNameNode = F.getMetadata("kernel_arg_type");
     typeBaseNameNode = F.getMetadata("kernel_arg_base_type");
     typeQualNode = F.getMetadata("kernel_arg_type_qual");
@@ -1300,7 +1313,7 @@ namespace gbe
     ir::FunctionArgument::InfoFromLLVM llvmInfo;
     for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I, argID++) {
       unsigned opID = argID;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 39
       opID += 1;
 #endif
 
@@ -1342,7 +1355,7 @@ namespace gbe
       for (Value::use_iterator iter = work->use_begin(); iter != work->use_end(); ++iter) {
       // After LLVM 3.5, use_iterator points to 'Use' instead of 'User',
       // which is more straightforward.
-  #if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 5)
+  #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 35
         User *theUser = *iter;
   #else
         User *theUser = iter->getUser();
@@ -1505,15 +1518,15 @@ namespace gbe
       Value *pointer = expr->getOperand(0);
       if (expr->getOpcode() == Instruction::GetElementPtr) {
         uint32_t constantOffset = 0;
-        CompositeType* CompTy = cast<CompositeType>(pointer->getType());
+        Type* EltTy = pointer->getType();
         for(uint32_t op=1; op<expr->getNumOperands(); ++op) {
             int32_t TypeIndex;
             ConstantInt* ConstOP = dyn_cast<ConstantInt>(expr->getOperand(op));
             GBE_ASSERTM(ConstOP != NULL, "must be constant index");
             TypeIndex = ConstOP->getZExtValue();
             GBE_ASSERT(TypeIndex >= 0);
-            constantOffset += getGEPConstOffset(unit, CompTy, TypeIndex);
-            CompTy = dyn_cast<CompositeType>(CompTy->getTypeAtIndex(TypeIndex));
+            constantOffset += getGEPConstOffset(unit, pointer->getType(), TypeIndex);
+            EltTy = getEltType(EltTy, TypeIndex);
         }
 
         ir::Constant cc = unit.getConstantSet().getConstant(pointer->getName());
@@ -1644,7 +1657,7 @@ namespace gbe
         }
       default:
         {
-          c->dump();
+          //c->dump();
           NOT_IMPLEMENTED;
         }
     }
@@ -1749,7 +1762,6 @@ namespace gbe
   {
     GBE_ASSERT(dyn_cast<ConstantExpr>(CPV) == NULL);
 
-#if LLVM_VERSION_MINOR > 0
     ConstantDataSequential *seq = dyn_cast<ConstantDataSequential>(CPV);
 
     if (seq) {
@@ -1772,7 +1784,6 @@ namespace gbe
         GBE_ASSERTM(0, "Const data array never be half float\n");
       }
     } else
-#endif /* LLVM_VERSION_MINOR > 0 */
 
     if (dyn_cast<ConstantAggregateZero>(CPV)) {
       Type* Ty = CPV->getType();
@@ -1898,7 +1909,7 @@ namespace gbe
   ir::ImmediateIndex GenWriter::processConstantImmIndex(Constant *CPV, int32_t index) {
     if (dyn_cast<ConstantExpr>(CPV) == NULL)
       return processConstantImmIndexImpl(CPV, index);
-    CPV->dump();
+    //CPV->dump();
     GBE_ASSERT(0 && "unsupported constant.\n");
     return ctx.newImmediate((uint32_t)0);
   }
@@ -2114,6 +2125,7 @@ namespace gbe
     // Loop over the kernel metadatas to set the required work group size.
     size_t reqd_wg_sz[3] = {0, 0, 0};
     size_t hint_wg_sz[3] = {0, 0, 0};
+    size_t reqd_sg_sz = 0;
     ir::FunctionArgument::InfoFromLLVM llvmInfo;
     MDNode *addrSpaceNode = NULL;
     MDNode *typeNameNode = NULL;
@@ -2124,7 +2136,7 @@ namespace gbe
 
     std::string functionAttributes;
 
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
     /* LLVM 3.9 change kernel arg info as function metadata */
     addrSpaceNode = F.getMetadata("kernel_arg_addr_space");
     accessQualNode = F.getMetadata("kernel_arg_access_qual");
@@ -2209,6 +2221,27 @@ namespace gbe
       functionAttributes += buffer;
       functionAttributes += " ";
     }
+    if ((attrNode = F.getMetadata("intel_reqd_sub_group_size"))) {
+      GBE_ASSERT(attrNode->getNumOperands() == 1);
+      ConstantInt *sz = mdconst::extract<ConstantInt>(attrNode->getOperand(0));
+      GBE_ASSERT(sz);
+      reqd_sg_sz = sz->getZExtValue();
+      if(!(reqd_sg_sz == 8 || reqd_sg_sz == 16)){
+        F.getContext().emitError("Required sub group size is illegal!");
+        ctx.getUnit().setValid(false);
+        return;
+      }
+      functionAttributes += "intel_reqd_sub_group_size";
+      std::stringstream param;
+      char buffer[100] = {0};
+      param << "(";
+      param << reqd_sg_sz;
+      param << ")";
+      param >> buffer;
+      functionAttributes += buffer;
+      functionAttributes += " ";
+    }
+
 #else
     /* First find the meta data belong to this function. */
     MDNode *node = getKernelFunctionMetadata(&F);
@@ -2226,7 +2259,7 @@ namespace gbe
 
       if (attrName->getString() == "reqd_work_group_size") {
         GBE_ASSERT(attrNode->getNumOperands() == 4);
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
         ConstantInt *x = dyn_cast<ConstantInt>(attrNode->getOperand(1));
         ConstantInt *y = dyn_cast<ConstantInt>(attrNode->getOperand(2));
         ConstantInt *z = dyn_cast<ConstantInt>(attrNode->getOperand(3));
@@ -2268,13 +2301,13 @@ namespace gbe
       } else if (attrName->getString() == "vec_type_hint") {
         GBE_ASSERT(attrNode->getNumOperands() == 3);
         functionAttributes += attrName->getString();
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
         Value* V = attrNode->getOperand(1);
 #else
         auto *Op1 = cast<ValueAsMetadata>(attrNode->getOperand(1));
         Value *V = Op1 ? Op1->getValue() : NULL;
 #endif
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
         ConstantInt *sign = dyn_cast<ConstantInt>(attrNode->getOperand(2));
 #else
         ConstantInt *sign = mdconst::extract<ConstantInt>(attrNode->getOperand(2));
@@ -2303,7 +2336,7 @@ namespace gbe
         functionAttributes += " ";
       } else if (attrName->getString() == "work_group_size_hint") {
         GBE_ASSERT(attrNode->getNumOperands() == 4);
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
         ConstantInt *x = dyn_cast<ConstantInt>(attrNode->getOperand(1));
         ConstantInt *y = dyn_cast<ConstantInt>(attrNode->getOperand(2));
         ConstantInt *z = dyn_cast<ConstantInt>(attrNode->getOperand(3));
@@ -2334,6 +2367,8 @@ namespace gbe
 #endif /* LLVM 3.9 Function metadata */
 
     ctx.getFunction().setCompileWorkGroupSize(reqd_wg_sz[0], reqd_wg_sz[1], reqd_wg_sz[2]);
+    if (reqd_sg_sz)
+      ctx.setSimdWidth(reqd_sg_sz);
 
     ctx.getFunction().setFunctionAttributes(functionAttributes);
     // Loop over the arguments and output registers for them
@@ -2343,18 +2378,15 @@ namespace gbe
       Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
 
       // Insert a new register for each function argument
-#if LLVM_VERSION_MINOR <= 1
-      const AttrListPtr &PAL = F.getAttributes();
-#endif /* LLVM_VERSION_MINOR <= 1 */
       for (; I != E; ++I, ++argID) {
         uint32_t opID = argID;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR < 9
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 39
         opID += 1;
 #endif
         const std::string &argName = I->getName().str();
         Type *type = I->getType();
         if(addrSpaceNode) {
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 5
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR <= 35
           llvmInfo.addrSpace = (cast<ConstantInt>(addrSpaceNode->getOperand(opID)))->getZExtValue();
 #else
           llvmInfo.addrSpace = (mdconst::extract<ConstantInt>(addrSpaceNode->getOperand(opID)))->getZExtValue();
@@ -2417,10 +2449,11 @@ namespace gbe
         }
 
         if (llvmInfo.isSamplerType()) {
-          ctx.input(argName, ir::FunctionArgument::SAMPLER, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type), 0);
+          ctx.input(argName, ir::FunctionArgument::SAMPLER, reg, llvmInfo, 4, 4, 0);
           (void)ctx.getFunction().getSamplerSet()->append(reg, &ctx);
           continue;
         }
+
         if(llvmInfo.isPipeType()) {
           llvmInfo.typeSize = getTypeSize(F.getParent(),unit,llvmInfo.typeName);
           ctx.input(argName, ir::FunctionArgument::PIPE, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type), BtiMap.find(&*I)->second);
@@ -2435,11 +2468,7 @@ namespace gbe
             continue;
           Type *pointed = pointerType->getElementType();
           // By value structure
-#if LLVM_VERSION_MINOR <= 1
-          if (PAL.paramHasAttr(argID+1, Attribute::ByVal)) {
-#else
           if (I->hasByValAttr()) {
-#endif /* LLVM_VERSION_MINOR <= 1 */
             const size_t structSize = getTypeByteSize(unit, pointed);
             ctx.input(argName, ir::FunctionArgument::STRUCTURE, reg, llvmInfo, structSize, getAlignmentByte(unit, type), 0);
           }
@@ -2925,7 +2954,7 @@ namespace gbe
     const Instruction *insn = NULL;
     for(Value::const_use_iterator iter = v->use_begin(); iter != v->use_end(); ++iter) {
     // After LLVM 3.5, use_iterator points to 'Use' instead of 'User', which is more straightforward.
-#if (LLVM_VERSION_MAJOR == 3) && (LLVM_VERSION_MINOR < 5)
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR < 35
       const User *theUser = *iter;
 #else
       const User *theUser = iter->getUser();
@@ -2980,10 +3009,12 @@ namespace gbe
           this->newRegister(const_cast<GlobalVariable*>(&v));
           ir::Register reg = regTranslator.getScalar(const_cast<GlobalVariable*>(&v), 0);
           ir::Constant &con = unit.getConstantSet().getConstant(v.getName());
-          ctx.LOADI(getType(ctx, v.getType()), reg, ctx.newIntegerImmediate(con.getOffset(), getType(ctx, v.getType())));
           if (!legacyMode) {
-            ctx.ADD(getType(ctx, v.getType()), reg, ir::ocl::constant_addrspace, reg);
-          }
+            ir::Register regload = ctx.reg(getFamily(getType(ctx, v.getType())));
+            ctx.LOADI(getType(ctx, v.getType()), regload, ctx.newIntegerImmediate(con.getOffset(), getType(ctx, v.getType())));
+            ctx.ADD(getType(ctx, v.getType()), reg, ir::ocl::constant_addrspace, regload);
+          } else
+            ctx.LOADI(getType(ctx, v.getType()), reg, ctx.newIntegerImmediate(con.getOffset(), getType(ctx, v.getType())));
         }
       } else if(addrSpace == ir::MEM_PRIVATE) {
           this->newRegister(const_cast<GlobalVariable*>(&v));
@@ -3163,15 +3194,9 @@ namespace gbe
   void GenWriter::emitFunction(Function &F)
   {
     switch (F.getCallingConv()) {
-#if LLVM_VERSION_MINOR <= 2
-      case CallingConv::PTX_Device: // we do not emit device function
-        return;
-      case CallingConv::PTX_Kernel:
-#else
       case CallingConv::C:
       case CallingConv::Fast:
       case CallingConv::SPIR_KERNEL:
-#endif
         break;
       default:
         GBE_ASSERTM(false, "Unsupported calling convention");
@@ -3272,11 +3297,41 @@ namespace gbe
       case Instruction::Sub:
       case Instruction::FSub: ctx.SUB(type, dst, src0, src1); break;
       case Instruction::Mul:
+      {
+        //LLVM always put constant to src1, but also add the src0 constant check.
+        ConstantInt *c = dyn_cast<ConstantInt>(I.getOperand(0));
+        int index = 0;
+        if (c == NULL) {
+          c = dyn_cast<ConstantInt>(I.getOperand(0));
+          index = 1;
+        }
+        if (c != NULL && isPowerOf<2>(c->getSExtValue())) {
+          c = ConstantInt::get(c->getType(), logi2(c->getZExtValue()));
+          if(index == 0)
+            ctx.SHL(type, dst, src1, this->getRegister(c));
+          else
+            ctx.SHL(type, dst, src0, this->getRegister(c));
+        } else {
+          ctx.MUL(type, dst, src0, src1);
+        }
+        break;
+      }
       case Instruction::FMul: ctx.MUL(type, dst, src0, src1); break;
       case Instruction::URem: ctx.REM(getUnsignedType(ctx, I.getType()), dst, src0, src1); break;
       case Instruction::SRem:
       case Instruction::FRem: ctx.REM(type, dst, src0, src1); break;
-      case Instruction::UDiv: ctx.DIV(getUnsignedType(ctx, I.getType()), dst, src0, src1); break;
+      case Instruction::UDiv:
+      {
+        //Only check divisor for DIV
+        ConstantInt *c = dyn_cast<ConstantInt>(I.getOperand(1));
+        if (c != NULL && isPowerOf<2>(c->getZExtValue())) {
+          c = ConstantInt::get(c->getType(), logi2(c->getZExtValue()));
+          ctx.SHR(getUnsignedType(ctx, I.getType()), dst, src0, this->getRegister(c));
+        } else {
+          ctx.DIV(getUnsignedType(ctx, I.getType()), dst, src0, src1);
+        }
+        break;
+      }
       case Instruction::SDiv:
       case Instruction::FDiv: ctx.DIV(type, dst, src0, src1); break;
       case Instruction::And:  ctx.AND(type, dst, src0, src1); break;
@@ -3371,11 +3426,12 @@ namespace gbe
     const ir::Register src0 = this->getRegister(I.getOperand(0));
     const ir::Register src1 = this->getRegister(I.getOperand(1));
     const ir::Register tmp = ctx.reg(getFamily(ctx, I.getType()));
+    const ir::Register tmp1 = ctx.reg(getFamily(ctx, I.getType()));
     Value *cv = ConstantInt::get(I.getType(), 1);
 
     switch (I.getPredicate()) {
       case ICmpInst::FCMP_OEQ: ctx.EQ(type, dst, src0, src1); break;
-      case ICmpInst::FCMP_ONE: ctx.NE(type, dst, src0, src1); break;
+      case ICmpInst::FCMP_UNE: ctx.NE(type, dst, src0, src1); break;
       case ICmpInst::FCMP_OLE: ctx.LE(type, dst, src0, src1); break;
       case ICmpInst::FCMP_OGE: ctx.GE(type, dst, src0, src1); break;
       case ICmpInst::FCMP_OLT: ctx.LT(type, dst, src0, src1); break;
@@ -3421,9 +3477,10 @@ namespace gbe
         ctx.GT(type, tmp, src0, src1);
         ctx.XOR(insnType, dst, tmp, getRegister(cv));
         break;
-      case ICmpInst::FCMP_UNE:
-        ctx.EQ(type, tmp, src0, src1);
-        ctx.XOR(insnType, dst, tmp, getRegister(cv));
+      case ICmpInst::FCMP_ONE:
+        ctx.LT(type, tmp, src0, src1);
+        ctx.GT(type, tmp1, src0, src1);
+        ctx.OR(insnType, dst, tmp, tmp1);
         break;
       case ICmpInst::FCMP_TRUE:
         ctx.MOV(insnType, dst, getRegister(cv));
@@ -3758,14 +3815,12 @@ namespace gbe
           break;
           case Intrinsic::stackrestore:
           break;
-#if LLVM_VERSION_MINOR >= 2
           case Intrinsic::lifetime_start:
           case Intrinsic::lifetime_end:
           break;
           case Intrinsic::fmuladd:
             this->newRegister(&I);
           break;
-#endif /* LLVM_VERSION_MINOR >= 2 */
           case Intrinsic::debugtrap:
           case Intrinsic::trap:
           case Intrinsic::dbg_value:
@@ -4051,6 +4106,15 @@ namespace gbe
         regTranslator.newValueProxy(srcValue, dst);
         break;
       }
+      case GEN_OCL_INT_TO_SAMPLER:
+      case GEN_OCL_SAMPLER_TO_INT:
+      {
+        Value *srcValue = I.getOperand(0);
+        //srcValue->dump();
+        //dst->dump();
+        regTranslator.newValueProxy(srcValue, dst);
+        break;
+      }
       case GEN_OCL_ENQUEUE_GET_ENQUEUE_INFO_ADDR:
         regTranslator.newScalarProxy(ir::ocl::enqueuebufptr, dst);
         break;
@@ -4090,6 +4154,21 @@ namespace gbe
         has_errors = true;
         Func->getContext().emitError(&I,"function '" + fnName + "' not found or cannot be inlined");
     };
+  }
+
+  void GenWriter::emitRoundingCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode) {
+    if (I.getType()->isHalfTy()) {
+      const ir::Register src = this->getRegister(I.getOperand(0));
+      const ir::Register srcFloat = ctx.reg(ir::FAMILY_DWORD);
+      const ir::Register dstFloat = ctx.reg(ir::FAMILY_DWORD);
+      const ir::Register dst = this->getRegister(&I);
+      ctx.F16TO32(ir::TYPE_FLOAT, ir::TYPE_U16, srcFloat, src);
+      ctx.ALU1(opcode, ir::TYPE_FLOAT, dstFloat, srcFloat);
+      ctx.F32TO16(ir::TYPE_U16, ir::TYPE_FLOAT, dst, dstFloat);
+    } else {
+      GBE_ASSERT(I.getType()->isFloatTy());
+      this->emitUnaryCallInst(I,CS,opcode);
+    }
   }
 
   void GenWriter::emitUnaryCallInst(CallInst &I, CallSite &CS, ir::Opcode opcode, ir::Type type) {
@@ -4469,10 +4548,19 @@ namespace gbe
   /* append a new sampler. should be called before any reference to
    * a sampler_t value. */
   uint8_t GenWriter::appendSampler(CallSite::arg_iterator AI) {
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+    CallInst *TC = dyn_cast<CallInst>(*AI);
+    Constant *CPV = TC ? dyn_cast<Constant>(TC->getOperand(0)) : NULL;
+#else
     Constant *CPV = dyn_cast<Constant>(*AI);
+#endif
     uint8_t index;
     if (CPV != NULL)
     {
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+      // Check if the Callee is sampler convert function
+      GBE_ASSERT(TC->getCalledFunction()->getName().str() == "__gen_ocl_int_to_sampler");
+#endif
       // This is not a kernel argument sampler, we need to append it to sampler set,
       // and allocate a sampler slot for it.
       const ir::Immediate &x = processConstantImm(CPV);
@@ -4519,11 +4607,9 @@ namespace gbe
             ctx.MOV(ir::getType(family), dst, src);
           }
           break;
-#if LLVM_VERSION_MINOR >= 2
           case Intrinsic::lifetime_start:
           case Intrinsic::lifetime_end:
           break;
-#endif /* LLVM_VERSION_MINOR >= 2 */
           case Intrinsic::debugtrap:
           case Intrinsic::trap:
           case Intrinsic::dbg_value:
@@ -4669,10 +4755,10 @@ namespace gbe
           }
           break;
           case Intrinsic::sqrt: this->emitUnaryCallInst(I,CS,ir::OP_SQR); break;
-          case Intrinsic::ceil: this->emitUnaryCallInst(I,CS,ir::OP_RNDU); break;
-          case Intrinsic::trunc: this->emitUnaryCallInst(I,CS,ir::OP_RNDZ); break;
-          case Intrinsic::rint: this->emitUnaryCallInst(I,CS,ir::OP_RNDE); break;
-          case Intrinsic::floor: this->emitUnaryCallInst(I,CS,ir::OP_RNDD); break;
+          case Intrinsic::ceil: this->emitRoundingCallInst(I,CS,ir::OP_RNDU); break;
+          case Intrinsic::trunc: this->emitRoundingCallInst(I,CS,ir::OP_RNDZ); break;
+          case Intrinsic::rint: this->emitRoundingCallInst(I,CS,ir::OP_RNDE); break;
+          case Intrinsic::floor: this->emitRoundingCallInst(I,CS,ir::OP_RNDD); break;
           case Intrinsic::sin: this->emitUnaryCallInst(I,CS,ir::OP_SIN); break;
           case Intrinsic::cos: this->emitUnaryCallInst(I,CS,ir::OP_COS); break;
           case Intrinsic::log2: this->emitUnaryCallInst(I,CS,ir::OP_LOG); break;
@@ -5454,15 +5540,21 @@ namespace gbe
           case GEN_OCL_GET_PIPE:
           case GEN_OCL_MAKE_RID:
           case GEN_OCL_GET_RID:
+          case GEN_OCL_INT_TO_SAMPLER:
+          case GEN_OCL_SAMPLER_TO_INT:
           {
             break;
           }
           case GEN_OCL_ENQUEUE_SET_NDRANGE_INFO:
           {
             GBE_ASSERT(AI != AE);
+            Value *dstValue;
+            if(I.hasStructRetAttr())
+              dstValue = *AI++;
+            else
+              dstValue = &I;
             Value *srcValue = *AI;
             ++AI;
-            Value *dstValue = &I;
             regTranslator.newValueProxy(srcValue, dstValue);
             break;
           }

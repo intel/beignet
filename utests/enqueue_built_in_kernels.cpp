@@ -14,6 +14,7 @@ void enqueue_built_in_kernels(void)
   OCL_ASSERT(ret_sz == built_in_kernels_size);
   cl_program built_in_prog = clCreateProgramWithBuiltInKernels(ctx, 1, &device, built_in_kernel_names, &err);
   OCL_ASSERT(built_in_prog != NULL);
+  clReleaseProgram(built_in_prog);
 }
 
 MAKE_UTEST_FROM_FUNCTION(enqueue_built_in_kernels);

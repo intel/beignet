@@ -142,6 +142,48 @@ namespace gbe
       }
     }
 
+    if (insn.opcode == SEL_OP_MATH) {
+      switch (insn.extra.function) {
+        case GEN_MATH_FUNCTION_INV:
+          strcat(opname, ".inv");
+          break;
+        case GEN_MATH_FUNCTION_LOG:
+          strcat(opname, ".log");
+          break;
+        case GEN_MATH_FUNCTION_EXP:
+          strcat(opname, ".exp");
+          break;
+        case GEN_MATH_FUNCTION_SQRT:
+          strcat(opname, ".sqrt");
+          break;
+        case GEN_MATH_FUNCTION_RSQ:
+          strcat(opname, ".rsq");
+          break;
+        case GEN_MATH_FUNCTION_SIN:
+          strcat(opname, ".sin");
+          break;
+        case GEN_MATH_FUNCTION_COS:
+          strcat(opname, ".cos");
+          break;
+        case GEN_MATH_FUNCTION_FDIV:
+          strcat(opname, ".fdiv");
+          break;
+        case GEN_MATH_FUNCTION_POW:
+          strcat(opname, ".pow");
+          break;
+        case GEN_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER:
+          strcat(opname, ".intdivmod");
+          break;
+        case GEN_MATH_FUNCTION_INT_DIV_QUOTIENT:
+          strcat(opname, ".intdiv");
+          break;
+        case GEN_MATH_FUNCTION_INT_DIV_REMAINDER:
+          strcat(opname, ".intmod");
+          break;
+      }
+    }
+
+
     int n = strlen(opname);
     if(n >= OP_NAME_LENGTH - 20) {
       cout << "opname too long: " << opname << endl;

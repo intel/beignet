@@ -87,6 +87,7 @@ DEF(char)
 DEF(uchar)
 DEF(short)
 DEF(ushort)
+DEF(half)
 DEF(int)
 DEF(uint)
 DEF(float)
@@ -107,8 +108,8 @@ DEF(ulong)
 #define DEC2X(TYPE, MASKTYPE) \
   OVERLOADABLE TYPE##2 shuffle2(TYPE##16 x, TYPE##16 y, MASKTYPE##2 mask) { \
     TYPE##2 z; \
-    z.s0 = mask.s0 < 16 ? ((TYPE *)&x)[mask.s0] : ((TYPE *)&y)[mask.s0 & 15]; \
-    z.s1 = mask.s1 < 16 ? ((TYPE *)&x)[mask.s1] : ((TYPE *)&y)[mask.s1 & 15]; \
+    z.s0 = (mask.s0 & 31) < 16 ? ((TYPE *)&x)[mask.s0 & 31] : ((TYPE *)&y)[mask.s0 & 15]; \
+    z.s1 = (mask.s1 & 31) < 16 ? ((TYPE *)&x)[mask.s1 & 31] : ((TYPE *)&y)[mask.s1 & 15]; \
     return z; \
   }
 
@@ -120,10 +121,10 @@ DEF(ulong)
 #define DEC4X(TYPE, MASKTYPE) \
   OVERLOADABLE TYPE##4 shuffle2(TYPE##16 x, TYPE##16 y, MASKTYPE##4 mask) { \
     TYPE##4 z; \
-    z.s0 = mask.s0 < 16 ? ((TYPE *)&x)[mask.s0] : ((TYPE *)&y)[mask.s0 & 15]; \
-    z.s1 = mask.s1 < 16 ? ((TYPE *)&x)[mask.s1] : ((TYPE *)&y)[mask.s1 & 15]; \
-    z.s2 = mask.s2 < 16 ? ((TYPE *)&x)[mask.s2] : ((TYPE *)&y)[mask.s2 & 15]; \
-    z.s3 = mask.s3 < 16 ? ((TYPE *)&x)[mask.s3] : ((TYPE *)&y)[mask.s3 & 15]; \
+    z.s0 = (mask.s0 & 31) < 16 ? ((TYPE *)&x)[mask.s0 & 31] : ((TYPE *)&y)[mask.s0 & 15]; \
+    z.s1 = (mask.s1 & 31) < 16 ? ((TYPE *)&x)[mask.s1 & 31] : ((TYPE *)&y)[mask.s1 & 15]; \
+    z.s2 = (mask.s2 & 31) < 16 ? ((TYPE *)&x)[mask.s2 & 31] : ((TYPE *)&y)[mask.s2 & 15]; \
+    z.s3 = (mask.s3 & 31) < 16 ? ((TYPE *)&x)[mask.s3 & 31] : ((TYPE *)&y)[mask.s3 & 15]; \
     return z; \
   }
 
@@ -135,14 +136,14 @@ DEF(ulong)
 #define DEC8X(TYPE, MASKTYPE) \
   OVERLOADABLE TYPE##8 shuffle2(TYPE##16 x, TYPE##16 y, MASKTYPE##8 mask) { \
     TYPE##8 z; \
-    z.s0 = mask.s0 < 16 ? ((TYPE *)&x)[mask.s0] : ((TYPE *)&y)[mask.s0 & 15]; \
-    z.s1 = mask.s1 < 16 ? ((TYPE *)&x)[mask.s1] : ((TYPE *)&y)[mask.s1 & 15]; \
-    z.s2 = mask.s2 < 16 ? ((TYPE *)&x)[mask.s2] : ((TYPE *)&y)[mask.s2 & 15]; \
-    z.s3 = mask.s3 < 16 ? ((TYPE *)&x)[mask.s3] : ((TYPE *)&y)[mask.s3 & 15]; \
-    z.s4 = mask.s4 < 16 ? ((TYPE *)&x)[mask.s4] : ((TYPE *)&y)[mask.s4 & 15]; \
-    z.s5 = mask.s5 < 16 ? ((TYPE *)&x)[mask.s5] : ((TYPE *)&y)[mask.s5 & 15]; \
-    z.s6 = mask.s6 < 16 ? ((TYPE *)&x)[mask.s6] : ((TYPE *)&y)[mask.s6 & 15]; \
-    z.s7 = mask.s7 < 16 ? ((TYPE *)&x)[mask.s7] : ((TYPE *)&y)[mask.s7 & 15]; \
+    z.s0 = (mask.s0 & 31) < 16 ? ((TYPE *)&x)[mask.s0 & 31] : ((TYPE *)&y)[mask.s0 & 15]; \
+    z.s1 = (mask.s1 & 31) < 16 ? ((TYPE *)&x)[mask.s1 & 31] : ((TYPE *)&y)[mask.s1 & 15]; \
+    z.s2 = (mask.s2 & 31) < 16 ? ((TYPE *)&x)[mask.s2 & 31] : ((TYPE *)&y)[mask.s2 & 15]; \
+    z.s3 = (mask.s3 & 31) < 16 ? ((TYPE *)&x)[mask.s3 & 31] : ((TYPE *)&y)[mask.s3 & 15]; \
+    z.s4 = (mask.s4 & 31) < 16 ? ((TYPE *)&x)[mask.s4 & 31] : ((TYPE *)&y)[mask.s4 & 15]; \
+    z.s5 = (mask.s5 & 31) < 16 ? ((TYPE *)&x)[mask.s5 & 31] : ((TYPE *)&y)[mask.s5 & 15]; \
+    z.s6 = (mask.s6 & 31) < 16 ? ((TYPE *)&x)[mask.s6 & 31] : ((TYPE *)&y)[mask.s6 & 15]; \
+    z.s7 = (mask.s7 & 31) < 16 ? ((TYPE *)&x)[mask.s7 & 31] : ((TYPE *)&y)[mask.s7 & 15]; \
     return z; \
   }
 
@@ -154,22 +155,22 @@ DEF(ulong)
 #define DEC16X(TYPE, MASKTYPE) \
   OVERLOADABLE TYPE##16 shuffle2(TYPE##16 x, TYPE##16 y, MASKTYPE##16 mask) { \
     TYPE##16 z; \
-    z.s0 = mask.s0 < 16 ? ((TYPE *)&x)[mask.s0] : ((TYPE *)&y)[mask.s0 & 15]; \
-    z.s1 = mask.s1 < 16 ? ((TYPE *)&x)[mask.s1] : ((TYPE *)&y)[mask.s1 & 15]; \
-    z.s2 = mask.s2 < 16 ? ((TYPE *)&x)[mask.s2] : ((TYPE *)&y)[mask.s2 & 15]; \
-    z.s3 = mask.s3 < 16 ? ((TYPE *)&x)[mask.s3] : ((TYPE *)&y)[mask.s3 & 15]; \
-    z.s4 = mask.s4 < 16 ? ((TYPE *)&x)[mask.s4] : ((TYPE *)&y)[mask.s4 & 15]; \
-    z.s5 = mask.s5 < 16 ? ((TYPE *)&x)[mask.s5] : ((TYPE *)&y)[mask.s5 & 15]; \
-    z.s6 = mask.s6 < 16 ? ((TYPE *)&x)[mask.s6] : ((TYPE *)&y)[mask.s6 & 15]; \
-    z.s7 = mask.s7 < 16 ? ((TYPE *)&x)[mask.s7] : ((TYPE *)&y)[mask.s7 & 15]; \
-    z.s8 = mask.s8 < 16 ? ((TYPE *)&x)[mask.s8] : ((TYPE *)&y)[mask.s8 & 15]; \
-    z.s9 = mask.s9 < 16 ? ((TYPE *)&x)[mask.s9] : ((TYPE *)&y)[mask.s9 & 15]; \
-    z.sA = mask.sA < 16 ? ((TYPE *)&x)[mask.sA] : ((TYPE *)&y)[mask.sA & 15]; \
-    z.sB = mask.sB < 16 ? ((TYPE *)&x)[mask.sB] : ((TYPE *)&y)[mask.sB & 15]; \
-    z.sC = mask.sC < 16 ? ((TYPE *)&x)[mask.sC] : ((TYPE *)&y)[mask.sC & 15]; \
-    z.sD = mask.sD < 16 ? ((TYPE *)&x)[mask.sD] : ((TYPE *)&y)[mask.sD & 15]; \
-    z.sE = mask.sE < 16 ? ((TYPE *)&x)[mask.sE] : ((TYPE *)&y)[mask.sE & 15]; \
-    z.sF = mask.sF < 16 ? ((TYPE *)&x)[mask.sF] : ((TYPE *)&y)[mask.sF & 15]; \
+    z.s0 = (mask.s0 & 31) < 16 ? ((TYPE *)&x)[mask.s0 & 31] : ((TYPE *)&y)[mask.s0 & 15]; \
+    z.s1 = (mask.s1 & 31) < 16 ? ((TYPE *)&x)[mask.s1 & 31] : ((TYPE *)&y)[mask.s1 & 15]; \
+    z.s2 = (mask.s2 & 31) < 16 ? ((TYPE *)&x)[mask.s2 & 31] : ((TYPE *)&y)[mask.s2 & 15]; \
+    z.s3 = (mask.s3 & 31) < 16 ? ((TYPE *)&x)[mask.s3 & 31] : ((TYPE *)&y)[mask.s3 & 15]; \
+    z.s4 = (mask.s4 & 31) < 16 ? ((TYPE *)&x)[mask.s4 & 31] : ((TYPE *)&y)[mask.s4 & 15]; \
+    z.s5 = (mask.s5 & 31) < 16 ? ((TYPE *)&x)[mask.s5 & 31] : ((TYPE *)&y)[mask.s5 & 15]; \
+    z.s6 = (mask.s6 & 31) < 16 ? ((TYPE *)&x)[mask.s6 & 31] : ((TYPE *)&y)[mask.s6 & 15]; \
+    z.s7 = (mask.s7 & 31) < 16 ? ((TYPE *)&x)[mask.s7 & 31] : ((TYPE *)&y)[mask.s7 & 15]; \
+    z.s8 = (mask.s8 & 31) < 16 ? ((TYPE *)&x)[mask.s8 & 31] : ((TYPE *)&y)[mask.s8 & 15]; \
+    z.s9 = (mask.s9 & 31) < 16 ? ((TYPE *)&x)[mask.s9 & 31] : ((TYPE *)&y)[mask.s9 & 15]; \
+    z.sA = (mask.sA & 31) < 16 ? ((TYPE *)&x)[mask.sA & 31] : ((TYPE *)&y)[mask.sA & 15]; \
+    z.sB = (mask.sB & 31) < 16 ? ((TYPE *)&x)[mask.sB & 31] : ((TYPE *)&y)[mask.sB & 15]; \
+    z.sC = (mask.sC & 31) < 16 ? ((TYPE *)&x)[mask.sC & 31] : ((TYPE *)&y)[mask.sC & 15]; \
+    z.sD = (mask.sD & 31) < 16 ? ((TYPE *)&x)[mask.sD & 31] : ((TYPE *)&y)[mask.sD & 15]; \
+    z.sE = (mask.sE & 31) < 16 ? ((TYPE *)&x)[mask.sE & 31] : ((TYPE *)&y)[mask.sE & 15]; \
+    z.sF = (mask.sF & 31) < 16 ? ((TYPE *)&x)[mask.sF & 31] : ((TYPE *)&y)[mask.sF & 15]; \
     return z; \
   }
 
@@ -201,6 +202,7 @@ DEF(char)
 DEF(uchar)
 DEF(short)
 DEF(ushort)
+DEF(half)
 DEF(int)
 DEF(uint)
 DEF(float)

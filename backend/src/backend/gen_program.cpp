@@ -24,18 +24,18 @@
 
 #ifdef GBE_COMPILER_AVAILABLE
 #include "llvm/Config/llvm-config.h"
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR <= 2
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
-#include "llvm/DataLayout.h"
-#else
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/DataLayout.h"
-#endif  /* LLVM_VERSION_MINOR <= 2 */
 #include "llvm-c/Linker.h"
+#include "llvm-c/BitReader.h"
+#include "llvm-c/BitWriter.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+#include "llvm/Bitcode/BitcodeWriter.h"
+#else
 #include "llvm/Bitcode/ReaderWriter.h"
+#endif /* LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40 */
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -61,6 +61,7 @@
 #include <clang/CodeGen/CodeGenAction.h>
 #endif
 
+#include "sys/cvar.hpp"
 #include <cstring>
 #include <sstream>
 #include <memory>
@@ -127,30 +128,46 @@ namespace gbe {
 
   void GenProgram::CleanLlvmResource(void){
 #ifdef GBE_COMPILER_AVAILABLE
+    llvm::LLVMContext* ctx = NULL;
     if(module){
+      ctx = &((llvm::Module*)module)->getContext();
+      (void)ctx;
       delete (llvm::Module*)module;
       module = NULL;
     }
-
+//llvm's version < 3.9, ctx is global ctx, can't be deleted.
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
+    //each module's context is individual, just delete it, ignaor llvm_ctx.
+    if (ctx != NULL)
+      delete ctx;
+#else
     if(llvm_ctx){
       delete (llvm::LLVMContext*)llvm_ctx;
       llvm_ctx = NULL;
     }
 #endif
+#endif
   }
 
   /*! We must avoid spilling at all cost with Gen */
-  static const struct CodeGenStrategy {
+  struct CodeGenStrategy {
     uint32_t simdWidth;
     uint32_t reservedSpillRegs;
     bool limitRegisterPressure;
-  } codeGenStrategy[] = {
+  };
+  static const struct CodeGenStrategy codeGenStrategyDefault[] = {
     {16, 0, false},
     {8, 0, false},
     {8, 8, false},
     {8, 16, false},
   };
+  static const struct CodeGenStrategy codeGenStrategySimd16[] = {
+    {16, 0, false},
+    {16, 8, false},
+    {16, 16, false},
+  };
 
+  IVAR(OCL_SIMD_WIDTH, 8, 15, 16);
   Kernel *GenProgram::compileKernel(const ir::Unit &unit, const std::string &name,
                                     bool relaxMath, int profiling) {
 #ifdef GBE_COMPILER_AVAILABLE
@@ -158,19 +175,23 @@ namespace gbe {
     // when the function already provides the simd width we need to use (i.e.
     // non zero)
     const ir::Function *fn = unit.getFunction(name);
+    const struct CodeGenStrategy* codeGenStrategy = codeGenStrategyDefault;
     if(fn == NULL)
       GBE_ASSERT(0);
-    uint32_t codeGenNum = sizeof(codeGenStrategy) / sizeof(codeGenStrategy[0]);
+    uint32_t codeGenNum = sizeof(codeGenStrategyDefault) / sizeof(codeGenStrategyDefault[0]);
     uint32_t codeGen = 0;
     GenContext *ctx = NULL;
-    if (fn->getSimdWidth() == 8) {
+    if ( fn->getSimdWidth() != 0 && OCL_SIMD_WIDTH != 15) {
+      GBE_ASSERTM(0, "unsupported SIMD width!");
+    }else if (fn->getSimdWidth() == 8 || OCL_SIMD_WIDTH == 8) {
       codeGen = 1;
-    } else if (fn->getSimdWidth() == 16) {
-      codeGenNum = 1;
-    } else if (fn->getSimdWidth() == 0) {
+    } else if (fn->getSimdWidth() == 16 || OCL_SIMD_WIDTH == 16){
+      codeGenStrategy = codeGenStrategySimd16;
+      codeGenNum = sizeof(codeGenStrategySimd16) / sizeof(codeGenStrategySimd16[0]);
+    } else if (fn->getSimdWidth() == 0 && OCL_SIMD_WIDTH == 15) {
       codeGen = 0;
     } else
-      GBE_ASSERT(0);
+      GBE_ASSERTM(0, "unsupported SIMD width!");
     Kernel *kernel = NULL;
 
     // Stop when compilation is successful
@@ -188,6 +209,8 @@ namespace gbe {
       ctx = GBE_NEW(BxtContext, unit, name, deviceID, relaxMath);
     } else if (IS_KABYLAKE(deviceID)) {
       ctx = GBE_NEW(KblContext, unit, name, deviceID, relaxMath);
+    } else if (IS_GEMINILAKE(deviceID)) {
+      ctx = GBE_NEW(GlkContext, unit, name, deviceID, relaxMath);
     }
     GBE_ASSERTM(ctx != NULL, "Fail to create the gen context\n");
 
@@ -243,6 +266,7 @@ namespace gbe {
     GBHI_SKL = 5,
     GBHI_BXT = 6,
     GBHI_KBL = 7,
+    GBHI_GLK = 8,
     GBHI_MAX,
   };
 #define GEN_BINARY_VERSION  1
@@ -254,7 +278,8 @@ namespace gbe {
                                               {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'B', 'D', 'W'},
                                               {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'S', 'K', 'L'},
                                               {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'B', 'X', 'T'},
-                                              {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'K', 'B', 'T'}
+                                              {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'K', 'B', 'T'},
+                                              {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'G', 'L', 'K'}
                                               };
 
 #define FILL_GEN_HEADER(binary, index)  do {int i = 0; do {*(binary+i) = gen_binary_header[index][i]; i++; }while(i < GEN_BINARY_HEADER_LENGTH);}while(0)
@@ -266,6 +291,7 @@ namespace gbe {
 #define FILL_SKL_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_SKL)
 #define FILL_BXT_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_BXT)
 #define FILL_KBL_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_KBL)
+#define FILL_GLK_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_GLK)
 
   static bool genHeaderCompare(const unsigned char *BufPtr, GEN_BINARY_HEADER_INDEX index)
   {
@@ -291,6 +317,7 @@ namespace gbe {
 #define MATCH_SKL_HEADER(binary) genHeaderCompare(binary, GBHI_SKL)
 #define MATCH_BXT_HEADER(binary) genHeaderCompare(binary, GBHI_BXT)
 #define MATCH_KBL_HEADER(binary) genHeaderCompare(binary, GBHI_KBL)
+#define MATCH_GLK_HEADER(binary) genHeaderCompare(binary, GBHI_GLK)
 
 #define MATCH_DEVICE(deviceID, binary) ((IS_IVYBRIDGE(deviceID) && MATCH_IVB_HEADER(binary)) ||  \
                                       (IS_IVYBRIDGE(deviceID) && MATCH_IVB_HEADER(binary)) ||  \
@@ -300,7 +327,8 @@ namespace gbe {
                                       (IS_CHERRYVIEW(deviceID) && MATCH_CHV_HEADER(binary)) ||  \
                                       (IS_SKYLAKE(deviceID) && MATCH_SKL_HEADER(binary)) || \
                                       (IS_BROXTON(deviceID) && MATCH_BXT_HEADER(binary)) || \
-                                      (IS_KABYLAKE(deviceID) && MATCH_KBL_HEADER(binary)) \
+                                      (IS_KABYLAKE(deviceID) && MATCH_KBL_HEADER(binary)) || \
+                                      (IS_GEMINILAKE(deviceID) && MATCH_GLK_HEADER(binary)) \
                                       )
 
   static gbe_program genProgramNewFromBinary(uint32_t deviceID, const char *binary, size_t size) {
@@ -335,20 +363,20 @@ namespace gbe {
     //the first byte stands for binary_type.
     binary_content.assign(binary+1, size-1);
     llvm::StringRef llvm_bin_str(binary_content);
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
-    llvm::LLVMContext& c = GBEGetLLVMContext();
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
+    llvm::LLVMContext *c = new llvm::LLVMContext;
 #else
-    llvm::LLVMContext& c = llvm::getGlobalContext();
+    llvm::LLVMContext *c = &llvm::getGlobalContext();
 #endif
     llvm::SMDiagnostic Err;
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 6
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 36
     std::unique_ptr<llvm::MemoryBuffer> memory_buffer = llvm::MemoryBuffer::getMemBuffer(llvm_bin_str, "llvm_bin_str");
     acquireLLVMContextLock();
-    llvm::Module* module = llvm::parseIR(memory_buffer->getMemBufferRef(), Err, c).release();
+    llvm::Module* module = llvm::parseIR(memory_buffer->getMemBufferRef(), Err, *c).release();
 #else
     llvm::MemoryBuffer* memory_buffer = llvm::MemoryBuffer::getMemBuffer(llvm_bin_str, "llvm_bin_str");
     acquireLLVMContextLock();
-    llvm::Module* module = llvm::ParseIR(memory_buffer, Err, c);
+    llvm::Module* module = llvm::ParseIR(memory_buffer, Err, *c);
 #endif
     // if load 32 bit spir binary, the triple should be spir-unknown-unknown.
     llvm::Triple triple(module->getTargetTriple());
@@ -408,6 +436,8 @@ namespace gbe {
         FILL_BXT_HEADER(*binary);
       }else if(IS_KABYLAKE(prog->deviceID)){
         FILL_KBL_HEADER(*binary);
+      }else if(IS_GEMINILAKE(prog->deviceID)){
+        FILL_GLK_HEADER(*binary);
       }else {
         free(*binary);
         *binary = NULL;
@@ -436,7 +466,6 @@ namespace gbe {
   }
 
   static gbe_program genProgramNewFromLLVM(uint32_t deviceID,
-                                           const char *fileName,
                                            const void* module,
                                            const void* llvm_ctx,
                                            const char* asm_file_name,
@@ -456,7 +485,7 @@ namespace gbe {
 #ifdef GBE_COMPILER_AVAILABLE
     std::string error;
     // Try to compile the program
-    if (program->buildFromLLVMFile(fileName, module, error, optLevel) == false) {
+    if (program->buildFromLLVMModule(module, error, optLevel) == false) {
       if (err != NULL && errSize != NULL && stringSize > 0u) {
         const size_t msgSize = std::min(error.size(), stringSize-1u);
         std::memcpy(err, error.c_str(), msgSize);
@@ -486,31 +515,39 @@ namespace gbe {
   {
 #ifdef GBE_COMPILER_AVAILABLE
     using namespace gbe;
-    char* errMsg;
+    char* errMsg = NULL;
     if(((GenProgram*)dst_program)->module == NULL){
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 8
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
+      LLVMModuleRef modRef;
+      LLVMParseBitcodeInContext2(wrap(new llvm::LLVMContext()),
+                                 LLVMWriteBitcodeToMemoryBuffer(wrap((llvm::Module*)((GenProgram*)src_program)->module)),
+                                 &modRef);
+      ((GenProgram*)dst_program)->module = llvm::unwrap(modRef);
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
       ((GenProgram*)dst_program)->module = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module).release();
 #else
       ((GenProgram*)dst_program)->module = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module);
 #endif
       errSize = 0;
-    }else{
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
-      // Src now will be removed automatically. So clone it.
-      llvm::Module* src = llvm::CloneModule((llvm::Module*)((GenProgram*)src_program)->module).release();
-#else
+    } else {
       llvm::Module* src = (llvm::Module*)((GenProgram*)src_program)->module;
-#endif
       llvm::Module* dst = (llvm::Module*)((GenProgram*)dst_program)->module;
-
-#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 9
-      if (LLVMLinkModules2(wrap(dst), wrap(src))) {
-#elif LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 7
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
+      if (&src->getContext() != &dst->getContext()) {
+        LLVMModuleRef modRef;
+        LLVMParseBitcodeInContext2(wrap(&dst->getContext()),
+                                    LLVMWriteBitcodeToMemoryBuffer(wrap(src)),
+                                    &modRef);
+        src = llvm::unwrap(modRef);
+      }
+      llvm::Module* clone = llvm::CloneModule(src).release();
+      if (LLVMLinkModules2(wrap(dst), wrap(clone))) {
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
       if (LLVMLinkModules(wrap(dst), wrap(src), LLVMLinkerPreserveSource_Removed, &errMsg)) {
 #else
       if (LLVMLinkModules(wrap(dst), wrap(src), LLVMLinkerPreserveSource, &errMsg)) {
 #endif
-        if (err != NULL && errSize != NULL && stringSize > 0u) {
+        if (err != NULL && errSize != NULL && stringSize > 0u && errMsg) {
           strncpy(err, errMsg, stringSize-1);
           err[stringSize-1] = '\0';
           *errSize = strlen(err);
@@ -518,7 +555,6 @@ namespace gbe {
         return true;
       }
     }
-    // Everything run fine
 #endif
     return false;
   }
@@ -579,7 +615,7 @@ namespace gbe {
     acquireLLVMContextLock();
     llvm::Module* module = (llvm::Module*)p->module;
 
-    if (p->buildFromLLVMFile(NULL, module, error, optLevel) == false) {
+    if (p->buildFromLLVMModule(module, error, optLevel) == false) {
       if (err != NULL && errSize != NULL && stringSize > 0u) {
         const size_t msgSize = std::min(error.size(), stringSize-1u);
         std::memcpy(err, error.c_str(), msgSize);

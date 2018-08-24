@@ -48,7 +48,12 @@ namespace gbe {
 
       }
 
-      virtual const char *getPassName() const {
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
+      virtual StringRef getPassName() const
+#else
+      virtual const char *getPassName() const
+#endif
+      {
         return "SPIR backend: set barrier no duplicate attr";
       }
 
@@ -69,7 +74,11 @@ namespace gbe {
               if (F.hasFnAttribute(Attribute::NoDuplicate)) {
                 auto attrs = F.getAttributes();
                 F.setAttributes(attrs.removeAttribute(M.getContext(),
+#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
+                                AttributeList::FunctionIndex,
+#else
                                 AttributeSet::FunctionIndex,
+#endif
                                 Attribute::NoDuplicate));
                 changed = true;
               }

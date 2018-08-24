@@ -18,10 +18,14 @@
 
 #include "cl_platform_id.h"
 #include "CL/cl_intel.h" // for clGetKernelSubGroupInfoKHR
-/* The interop functions are not implemented in Beignet */
-#define CL_GL_INTEROP(x) NULL
-/* OpenCL 1.2 is not implemented in Beignet */
-#define CL_1_2_NOTYET(x) NULL
+/* The interop functions are only available if sharing is enabled */
+#ifdef HAS_GL_EGL
+#define CL_GL_INTEROP(x) x
+#else
+#define CL_GL_INTEROP(x) (void *) NULL
+#endif
+/* These are not yet implemented in Beignet */
+#define CL_NOTYET(x) (void *) NULL
 
 /** Return platform list through ICD interface
  * This code is used only if a client is linked directly against the library
@@ -114,13 +118,13 @@ struct _cl_icd_dispatch const cl_khr_icd_dispatch = {
   clGetExtensionFunctionAddress,
   CL_GL_INTEROP(clCreateFromGLBuffer),
   CL_GL_INTEROP(clCreateFromGLTexture2D),
-  CL_GL_INTEROP(clCreateFromGLTexture3D),
-  CL_GL_INTEROP(clCreateFromGLRenderbuffer),
-  CL_GL_INTEROP(clGetGLObjectInfo),
-  CL_GL_INTEROP(clGetGLTextureInfo),
+  CL_NOTYET(clCreateFromGLTexture3D),
+  CL_NOTYET(clCreateFromGLRenderbuffer),
+  CL_NOTYET(clGetGLObjectInfo),
+  CL_NOTYET(clGetGLTextureInfo),
   CL_GL_INTEROP(clEnqueueAcquireGLObjects),
   CL_GL_INTEROP(clEnqueueReleaseGLObjects),
-  CL_GL_INTEROP(clGetGLContextInfoKHR),
+  CL_NOTYET(clGetGLContextInfoKHR),
   (void *) NULL,
   (void *) NULL,
   (void *) NULL,
@@ -135,9 +139,9 @@ struct _cl_icd_dispatch const cl_khr_icd_dispatch = {
   clEnqueueReadBufferRect,
   clEnqueueWriteBufferRect,
   clEnqueueCopyBufferRect,
-  CL_1_2_NOTYET(clCreateSubDevicesEXT),
-  CL_1_2_NOTYET(clRetainDeviceEXT),
-  CL_1_2_NOTYET(clReleaseDeviceEXT),
+  CL_NOTYET(clCreateSubDevicesEXT),
+  CL_NOTYET(clRetainDeviceEXT),
+  CL_NOTYET(clReleaseDeviceEXT),
 #ifdef CL_VERSION_1_2
   (void *) NULL,
   clCreateSubDevices,
