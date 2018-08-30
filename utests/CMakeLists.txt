@@ -16,9 +16,9 @@ if (NOT NOT_BUILD_STAND_ALONE_UTEST)
   ENDIF(OPENCL_FOUND)
 
   # Force Release with debug info
-  if (NOT CMAKE_BUILD_TYPE)
-    set (CMAKE_BUILD_TYPE RelWithDebInfo)
-  endif (NOT CMAKE_BUILD_TYPE)
+  #if (NOT CMAKE_BUILD_TYPE)
+  #  set (CMAKE_BUILD_TYPE RelWithDebInfo)
+  #endif (NOT CMAKE_BUILD_TYPE)
   message(STATUS "Building mode: " ${CMAKE_BUILD_TYPE})
 
   set (CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "assure config" FORCE)
