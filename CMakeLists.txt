@@ -62,11 +62,11 @@ else (BEIGNET_INSTALL_DIR STREQUAL "${CMAKE_INSTALL_PREFIX}/lib/beignet/")
 endif (BEIGNET_INSTALL_DIR STREQUAL "${CMAKE_INSTALL_PREFIX}/lib/beignet/")
 
 # Force Release with debug info
-if (NOT CMAKE_BUILD_TYPE)
-  set (CMAKE_BUILD_TYPE RelWithDebInfo)
-endif (NOT CMAKE_BUILD_TYPE)
-set (CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "assure config" FORCE)
-message(STATUS "Building mode: " ${CMAKE_BUILD_TYPE})
+# if (NOT CMAKE_BUILD_TYPE)
+#  set (CMAKE_BUILD_TYPE RelWithDebInfo)
+# endif (NOT CMAKE_BUILD_TYPE)
+#set (CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "assure config" FORCE)
+#message(STATUS "Building mode: " ${CMAKE_BUILD_TYPE})
 
 # XXX now hard coded to enable the clamp to border workaround for IVB.
 ADD_DEFINITIONS(-DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND)
