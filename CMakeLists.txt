@@ -32,7 +32,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}
 INCLUDE (FindPkgConfig)
 
 SET(CMAKE_VERBOSE_MAKEFILE "false")
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMake/")
 INCLUDE (GNUInstallDirs OPTIONAL)
 # support old CMake without GNUInstallDirs
 if (NOT CMAKE_INSTALL_FULL_LIBDIR)
@@ -63,11 +63,11 @@ else (BEIGNET_INSTALL_DIR STREQUAL "${CMAKE_INSTALL_PREFIX}/lib/beignet/")
 endif (BEIGNET_INSTALL_DIR STREQUAL "${CMAKE_INSTALL_PREFIX}/lib/beignet/")
 
 # Force Release with debug info
-if (NOT CMAKE_BUILD_TYPE)
-  set (CMAKE_BUILD_TYPE RelWithDebInfo)
-endif (NOT CMAKE_BUILD_TYPE)
-set (CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "assure config" FORCE)
-message(STATUS "Building mode: " ${CMAKE_BUILD_TYPE})
+# if (NOT CMAKE_BUILD_TYPE)
+#  set (CMAKE_BUILD_TYPE RelWithDebInfo)
+# endif (NOT CMAKE_BUILD_TYPE)
+#set (CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "assure config" FORCE)
+#message(STATUS "Building mode: " ${CMAKE_BUILD_TYPE})
 
 # XXX now hard coded to enable the clamp to border workaround for IVB.
 ADD_DEFINITIONS(-DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND)
@@ -211,21 +211,18 @@ ENDIF(EGL_FOUND)
 
 OPTION(OCLICD_COMPAT "OCL ICD compatibility mode" ON)
 IF(OCLICD_COMPAT)
-  Find_Package(OCLIcd)
-  IF(OCLIcd_FOUND)
-    MESSAGE(STATUS "Looking for OCL ICD header file - found")
-    configure_file (
-      "intel-beignet.icd.in"
-      "${ICD_FILE_NAME}"
-      )
-    IF(NOT OCL_ICD_INSTALL_PREFIX)
-      set(OCL_ICD_INSTALL_PREFIX "/etc/OpenCL/vendors")
-    ENDIF(NOT OCL_ICD_INSTALL_PREFIX)
-    install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${ICD_FILE_NAME} DESTINATION ${OCL_ICD_INSTALL_PREFIX})
-  ELSE(OCLIcd_FOUND)
-    MESSAGE(STATUS "Looking for OCL ICD header file - not found")
-    MESSAGE(FATAL_ERROR "OCL ICD loader miss. If you really want to disable OCL ICD support, please run cmake with option -DOCLICD_COMPAT=0.")
-  ENDIF(OCLIcd_FOUND)
+Find_Package(OCLIcd)
+IF(OCLIcd_FOUND)
+  MESSAGE(STATUS "Looking for OCL ICD header file - found")
+  configure_file (
+    "intel-beignet.icd.in"
+    "${ICD_FILE_NAME}"
+  )
+  install (FILES ${CMAKE_CURRENT_BINARY_DIR}/${ICD_FILE_NAME} DESTINATION /etc/OpenCL/vendors COMPONENT beignet)
+ELSE(OCLIcd_FOUND)
+  MESSAGE(STATUS "Looking for OCL ICD header file - not found")
+  MESSAGE(FATAL_ERROR "OCL ICD loader miss. If you really want to disable OCL ICD support, please run cmake with option -DOCLICD_COMPAT=0.")
+ENDIF(OCLIcd_FOUND)
 ENDIF(OCLICD_COMPAT)
 
 Find_Package(PythonInterp)
@@ -279,7 +276,8 @@ ELSE (CAN_OPENCL_20)
 ENDIF(CAN_OPENCL_20)
 
 set (LIBCL_DRIVER_VERSION_MAJOR 1)
-set (LIBCL_DRIVER_VERSION_MINOR 4)
+set (LIBCL_DRIVER_VERSION_MINOR 3)
+set (LIBCL_DRIVER_VERSION_PATCH 2)
 if (ENABLE_OPENCL_20)
   set (LIBCL_C_VERSION_MAJOR 2)
   set (LIBCL_C_VERSION_MINOR 0)
@@ -292,42 +290,6 @@ configure_file (
   "src/OCLConfig.h"
 )
 
-
-OPTION(BUILD_EXAMPLES "Build examples" OFF)
-IF(BUILD_EXAMPLES)
-IF(NOT X11_FOUND)
-  MESSAGE(FATAL_ERROR "XLib is necessary for examples - not found")
-ENDIF(NOT X11_FOUND)
-
-# libva & libva-x11
-pkg_check_modules(LIBVA REQUIRED libva)
-pkg_check_modules(LIBVA-X11 REQUIRED libva-x11)
-set(LIBVA_BUF_SH_DEP false)
-set(V4L2_BUF_SH_DEP false)
-IF(LIBVA_FOUND AND LIBVA-X11_FOUND)
-  MESSAGE(STATUS "Looking for LIBVA - found at ${LIBVA_PREFIX} ${LIBVA_VERSION}")
-  MESSAGE(STATUS "Looking for LIBVA-X11 - found at ${LIBVA-X11_PREFIX} ${LIBVA-X11_VERSION}")
-  INCLUDE_DIRECTORIES(${LIBVA_INCLUDE_DIRS})
-  INCLUDE_DIRECTORIES(${LIBVA-X11_INCLUDE_DIRS})
-  set(V4L2_BUF_SH_DEP true)
-  IF(LIBVA_VERSION VERSION_LESS "0.36.0" OR LIBVA-X11_VERSION VERSION_LESS "0.36.0")
-    IF(LIBVA_VERSION VERSION_LESS "0.36.0")
-      MESSAGE(STATUS "Looking for LIBVA (>= 0.36.0) - not found")
-    ENDIF(LIBVA_VERSION VERSION_LESS "0.36.0")
-    IF(LIBVA-X11_VERSION VERSION_LESS "0.36.0")
-      MESSAGE(STATUS "Looking for LIBVA-X11 (>= 0.36.0) - not found")
-    ENDIF(LIBVA-X11_VERSION VERSION_LESS "0.36.0")
-    MESSAGE(STATUS "Example libva_buffer_sharing will not be built")
-  ELSE(LIBVA_VERSION VERSION_LESS "0.36.0" OR LIBVA-X11_VERSION VERSION_LESS "0.36.0")
-    set(LIBVA_BUF_SH_DEP true)
-  ENDIF(LIBVA_VERSION VERSION_LESS "0.36.0" OR LIBVA-X11_VERSION VERSION_LESS "0.36.0")
-ELSE(LIBVA_FOUND AND LIBVA-X11_FOUND)
-  MESSAGE(STATUS "Example libva_buffer_sharing and v4l2_buffer_sharing will not be built")
-ENDIF(LIBVA_FOUND AND LIBVA-X11_FOUND)
-IF(NOT (OPENGL_FOUND AND EGL_FOUND AND X11_FOUND))
-  MESSAGE(STATUS "Example gl_buffer_sharing will not be built")
-ENDIF(NOT (OPENGL_FOUND AND EGL_FOUND AND X11_FOUND))
-ENDIF(BUILD_EXAMPLES)
 
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(backend)

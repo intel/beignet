@@ -70,7 +70,7 @@ check_intel_extension(cl_extensions_t *extensions)
   int id;
   for(id = INTEL_EXT_START_ID; id <= INTEL_EXT_END_ID; id++)
   {
-    if(id != EXT_ID(intel_motion_estimation) && id != EXT_ID(intel_device_side_avc_motion_estimation))
+    if(id != EXT_ID(intel_motion_estimation))
       extensions->extensions[id].base.ext_enabled = 1;
     if(id == EXT_ID(intel_required_subgroup_size))
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR > 40

@@ -30,10 +30,7 @@
   DECL_EXT(intel_motion_estimation) \
   DECL_EXT(intel_subgroups) \
   DECL_EXT(intel_subgroups_short) \
-  DECL_EXT(intel_required_subgroup_size) \
-  DECL_EXT(intel_media_block_io) \
-  DECL_EXT(intel_planar_yuv) \
-  DECL_EXT(intel_device_side_avc_motion_estimation)
+  DECL_EXT(intel_required_subgroup_size)
 
 #define DECL_GL_EXTENSIONS \
   DECL_EXT(khr_gl_sharing)\

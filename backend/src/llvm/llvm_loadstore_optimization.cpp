@@ -64,21 +64,19 @@ namespace gbe {
     Type *getValueType(Value *insn);
     Value *getPointerOperand(Value *I);
     unsigned getAddressSpace(Value *I);
-    bool isSimpleLoadStore(Value *I);
-    bool optimizeLoadStore(BasicBlock &BB);
+    
+    bool     isSimpleLoadStore(Value *I);
+    bool     optimizeLoadStore(BasicBlock &BB);
 
-    bool isLoadStoreCompatible(Value *A, Value *B, int *dist, int *elementSize,
-                               int maxVecSize);
-    void mergeLoad(BasicBlock &BB, SmallVector<Instruction *, 16> &merged,
-                   Instruction *first, int offset);
-    void mergeStore(BasicBlock &BB, SmallVector<Instruction *, 16> &merged,
-                    Instruction *first, Instruction *last, int offset);
-    bool findConsecutiveAccess(BasicBlock &BB,
-                               SmallVector<Instruction *, 16> &merged,
-                               const BasicBlock::iterator &start,
-                               unsigned maxVecSize, bool isLoad,
-                               int *addrOffset, Instruction *&first,
-                               Instruction *&last);
+    bool     isLoadStoreCompatible(Value *A, Value *B);
+    void     mergeLoad(BasicBlock &BB, SmallVector<Instruction*, 16> &merged);
+    void     mergeStore(BasicBlock &BB, SmallVector<Instruction*, 16> &merged);
+    bool     findConsecutiveAccess(BasicBlock &BB,
+                                  SmallVector<Instruction*, 16> &merged,
+                                  const BasicBlock::iterator &start,
+                                  unsigned maxVecSize,
+                                  bool isLoad);
+
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
     virtual StringRef getPassName() const
 #else

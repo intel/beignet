@@ -16,9 +16,9 @@ if (NOT NOT_BUILD_STAND_ALONE_UTEST)
   ENDIF(OPENCL_FOUND)
 
   # Force Release with debug info
-  if (NOT CMAKE_BUILD_TYPE)
-    set (CMAKE_BUILD_TYPE RelWithDebInfo)
-  endif (NOT CMAKE_BUILD_TYPE)
+  #if (NOT CMAKE_BUILD_TYPE)
+  #  set (CMAKE_BUILD_TYPE RelWithDebInfo)
+  #endif (NOT CMAKE_BUILD_TYPE)
   message(STATUS "Building mode: " ${CMAKE_BUILD_TYPE})
 
   set (CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "assure config" FORCE)
@@ -306,11 +306,7 @@ set (utests_sources
   compiler_pipe_builtin.cpp
   compiler_device_enqueue.cpp
   compiler_sqrt_div.cpp
-  compiler_remove_negative_add.cpp
-  compiler_fdiv2rcp.cpp
-  compiler_block_motion_estimate_intel.cpp
-  compiler_skip_check.cpp
-  compiler_intra_prediction.cpp)
+  compiler_remove_negative_add.cpp)
 
 if (LLVM_VERSION_NODOT VERSION_GREATER 34)
   SET(utests_sources

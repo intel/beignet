@@ -366,9 +366,6 @@ cl_context_delete(cl_context ctx)
       ++internal_ctx_refs;
   }
 
-  if (ctx->image_queue)
-    ++internal_ctx_refs;
-
   /* We are not done yet */
   if (CL_OBJECT_DEC_REF(ctx) > internal_ctx_refs)
     return;
@@ -377,12 +374,6 @@ cl_context_delete(cl_context ctx)
   // attempt a recursive full cl_context_delete when cleaning up
   // our internal programs
   CL_OBJECT_INC_REF(ctx);
-
-  if (ctx->image_queue) {
-    cl_command_queue q = ctx->image_queue;
-    ctx->image_queue = NULL;
-    clReleaseCommandQueue(q);
-  }
 
   /* delete the internal programs. */
   for (i = CL_INTERNAL_KERNEL_MIN; i < CL_INTERNAL_KERNEL_MAX; i++) {

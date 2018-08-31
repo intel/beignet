@@ -274,6 +274,26 @@ static struct _cl_device_id intel_glk12eu_device = {
 #include "cl_gen9_device.h"
 };
 
+static struct _cl_device_id intel_glk18eu_device = {
+  .max_compute_unit = 18,
+  .max_thread_per_unit = 6,
+  .sub_slice_count = 3,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+#include "cl_gen9_device.h"
+};
+
+static struct _cl_device_id intel_glk12eu_device = {
+  .max_compute_unit = 12,
+  .max_thread_per_unit = 6,
+  .sub_slice_count = 2,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+#include "cl_gen9_device.h"
+};
+
 LOCAL cl_device_id
 cl_get_gt_device(cl_device_type device_type)
 {

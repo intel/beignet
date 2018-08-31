@@ -94,6 +94,23 @@ namespace gbe
 
   private:
     // local copy propagation
+    class ReplaceInfo
+    {
+    public:
+      ReplaceInfo(SelectionInstruction& insn,
+                  const GenRegister& intermedia,
+                  const GenRegister& replacement) :
+                  insn(insn), intermedia(intermedia), replacement(replacement)
+      {
+        assert(insn.opcode == SEL_OP_MOV || insn.opcode == SEL_OP_ADD);
+        assert(&(insn.dst(0)) == &intermedia);
+        this->elements = CalculateElements(intermedia, insn.state.execWidth);
+        replacementOverwritten = false;
+      }
+      ~ReplaceInfo()
+      {
+        this->toBeReplaceds.clear();
+      }
 
     typedef map<ir::Register, ReplaceInfo*> ReplaceInfoMap;
     ReplaceInfoMap replaceInfoMap;
@@ -104,7 +121,7 @@ namespace gbe
     void doReplacement(ReplaceInfo* info);
     bool CanBeReplaced(const ReplaceInfo* info, const SelectionInstruction& insn, const GenRegister& var);
     void cleanReplaceInfoMap();
-    void doZeroAddedOptimization(SelectionInstruction &insn);
+    void doNegAddOptimization(SelectionInstruction &insn);
 
     SelectionBlock &bb;
     const ir::Liveness::LiveOut& liveout;
@@ -292,7 +309,7 @@ namespace gbe
       if (insn.opcode == SEL_OP_MOV)
         addToReplaceInfoMap(insn);
 
-      doZeroAddedOptimization(insn);
+      doNegAddOptimization(insn);
     }
     cleanReplaceInfoMap();
   }
@@ -304,12 +321,12 @@ namespace gbe
      Also it can be used for the same like instruction sequence.
      Do it just like a:  mov b, -b, so it is a Mov operation like LocalCopyPropagation
   */
-  void SelBasicBlockOptimizer::doZeroAddedOptimization(SelectionInstruction &insn) {
+  void SelBasicBlockOptimizer::doNegAddOptimization(SelectionInstruction &insn) {
     if (insn.opcode == SEL_OP_ADD) {
       GenRegister src0 = insn.src(0);
       GenRegister src1 = insn.src(1);
-      if ((src1.file == GEN_IMMEDIATE_VALUE && src1.value.f == 0.0f) ||
-          (src0.file == GEN_IMMEDIATE_VALUE && src0.value.f == 0.0f))
+      if ((src0.negation && src1.file == GEN_IMMEDIATE_VALUE && src1.value.f == 0.0f) ||
+          (src1.negation && src0.file == GEN_IMMEDIATE_VALUE && src0.value.f == 0.0f))
         addToReplaceInfoMap(insn);
     }
   }
