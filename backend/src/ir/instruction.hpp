@@ -217,7 +217,8 @@ namespace ir {
       return T::isClassOf(*this);
     }
     /*! max_src used by vme for payload passing and setting */
-    static const uint32_t MAX_SRC_NUM = 40;
+    //static const uint32_t MAX_SRC_NUM = 48;
+    static const uint32_t MAX_SRC_NUM = 64;
     static const uint32_t MAX_DST_NUM = 32;
     DebugInfo DBGInfo;
   protected:
@@ -389,6 +390,7 @@ namespace ir {
   public:
     /*! Return the value stored in the instruction */
     Immediate getImmediate(void) const;
+    void setImmediateIndex(ImmediateIndex immIndex);
     /*! Return the type of the stored value */
     Type getType(void) const;
     /*! Return true if the given instruction is an instance of this class */
@@ -419,6 +421,16 @@ namespace ir {
 
   /*! Video motion estimation */
   class VmeInstruction : public Instruction {
+  public:
+    uint8_t getImageIndex() const;
+    uint8_t getMsgType() const;
+    Type getSrcType(void) const;
+    Type getDstType(void) const;
+    /*! Return true if the given instruction is an instance of this class */
+    static bool isClassOf(const Instruction &insn);
+  };
+
+  class ImeInstruction : public Instruction {
   public:
     uint8_t getImageIndex() const;
     uint8_t getMsgType() const;
@@ -646,6 +658,8 @@ namespace ir {
     uint8_t getImageIndex() const;
     uint8_t getVectorSize() const;
     Type getType(void) const;
+    uint8_t getWidth() const;
+    uint8_t getHeight() const;
   };
 
   /*! Media Block Write.  */
@@ -656,6 +670,8 @@ namespace ir {
     uint8_t getImageIndex() const;
     uint8_t getVectorSize() const;
     Type getType(void) const;
+    uint8_t getWidth() const;
+    uint8_t getHeight() const;
   };
 
   /*! Specialize the instruction. Also performs typechecking first based on the
@@ -875,6 +891,7 @@ namespace ir {
   Instruction SAMPLE(uint8_t imageIndex, Tuple dst, Tuple src, uint8_t srcNum, bool dstIsFloat, bool srcIsFloat, uint8_t sampler, uint8_t samplerOffset);
   /*! video motion estimation */
   Instruction VME(uint8_t imageIndex, Tuple dst, Tuple src, uint32_t dstNum, uint32_t srcNum, int msg_type, int vme_search_path_lut, int lut_sub);
+  Instruction IME(uint8_t imageIndex, Tuple dst, Tuple src, uint32_t dstNum, uint32_t srcNum, int msg_type);
   /*! get image information , such as width/height/depth/... */
   Instruction GET_IMAGE_INFO(int infoType, Register dst, uint8_t imageIndex, Register infoReg);
   /*! label labelIndex */
@@ -893,9 +910,9 @@ namespace ir {
   /*! printf */
   Instruction PRINTF(Register dst, Tuple srcTuple, Tuple typeTuple, uint8_t srcNum, uint8_t bti, uint16_t num);
   /*! media block read */
-  Instruction MBREAD(uint8_t imageIndex, Tuple dst, uint8_t vec_size, Tuple coord, uint8_t srcNum, Type type);
+  Instruction MBREAD(uint8_t imageIndex, Tuple dst, uint8_t vec_size, Tuple coord, uint8_t srcNum, Type type, uint8_t width, uint8_t height);
   /*! media block write */
-  Instruction MBWRITE(uint8_t imageIndex, Tuple srcTuple, uint8_t srcNum, uint8_t vec_size, Type type);
+  Instruction MBWRITE(uint8_t imageIndex, Tuple srcTuple, uint8_t srcNum, uint8_t vec_size, Type type, uint8_t width, uint8_t height);
 } /* namespace ir */
 } /* namespace gbe */
 

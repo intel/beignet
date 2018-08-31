@@ -370,6 +370,7 @@ static const char *target_function_gen75[16] = {
   [GEN_SFID_DATAPORT_DATA] = "data (0)",
   [GEN_SFID_PIXEL_INTERPOLATOR] = "pix_interpolator",
   [GEN_SFID_DATAPORT1_DATA] = "data (1)",
+  [GEN_SFID_CHECK_REFINE] = "check_and_refine",
 };
 
 static const char *gateway_sub_function[8] = {
@@ -527,6 +528,13 @@ static int gen_version;
     bits;                                                       \
   })
 
+#define GEN8_BITS_FIELD(inst, gen8) \
+  ({                                                            \
+    int bits;                                                   \
+      bits = ((const union Gen8NativeInstruction *)inst)->gen8; \
+    bits;                                                       \
+  })
+
 #define GEN_BITS_FIELD(inst, gen)                               \
   ({                                                            \
     int bits;                                                   \
@@ -583,6 +591,8 @@ static int gen_version;
 #define BRANCH_UIP(inst)           GEN_BITS_FIELD2(inst, bits3.gen7_branch.uip, bits2.gen8_branch.uip/8)
 #define VME_BTI(inst)              GEN7_BITS_FIELD(inst, bits3.vme_gen7.bti)
 #define VME_MSG_TYPE(inst)         GEN7_BITS_FIELD(inst, bits3.vme_gen7.msg_type)
+#define IME_BTI(inst)              GEN8_BITS_FIELD(inst, bits3.ime_gen8.bti)
+#define IME_MSG_TYPE(inst)         GEN8_BITS_FIELD(inst, bits3.ime_gen8.msg_type)
 #define SAMPLE_BTI(inst)           GEN_BITS_FIELD(inst, bits3.sampler_gen7.bti)
 #define SAMPLER(inst)              GEN_BITS_FIELD(inst, bits3.sampler_gen7.sampler)
 #define SAMPLER_MSG_TYPE(inst)     GEN_BITS_FIELD(inst, bits3.sampler_gen7.msg_type)
@@ -1510,9 +1520,19 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
     if (immbti) {
       switch (target) {
         case GEN_SFID_VIDEO_MOTION_EST:
+          if(gen_version == 7)
+            format(file, " (bti: %d, msg_type: %d)",
+                   VME_BTI(inst),
+                   VME_MSG_TYPE(inst));
+          else if(gen_version == 9)
+            format(file, " (bti: %d, msg_type: %d)",
+                   IME_BTI(inst),
+                   IME_MSG_TYPE(inst));
+          break;
+        case GEN_SFID_CHECK_REFINE:
           format(file, " (bti: %d, msg_type: %d)",
-                 VME_BTI(inst),
-                 VME_MSG_TYPE(inst));
+                 IME_BTI(inst),
+                 IME_MSG_TYPE(inst));
           break;
         case GEN_SFID_SAMPLER:
           format(file, " (%d, %d, %d, %d)",
@@ -1546,7 +1566,7 @@ int gen_disasm (FILE *file, const void *inst, uint32_t deviceID, uint32_t compac
                    data_port_data_cache_byte_scattered_simd_mode[BYTE_RW_SIMD_MODE(inst)],
                    data_port_data_cache_category[UNTYPED_RW_CATEGORY(inst)],
                    data_port_data_cache_msg_type[UNTYPED_RW_MSG_TYPE(inst)]);
-            else if(UNTYPED_RW_MSG_TYPE(inst) == 0 || UNTYPED_RW_MSG_TYPE(inst) == 8)
+            else if(UNTYPED_RW_MSG_TYPE(inst) == 0 || UNTYPED_RW_MSG_TYPE(inst) == 1 || UNTYPED_RW_MSG_TYPE(inst) == 8)
               format(file, " (bti: %d, data size: %s, %s, %s)",
                    UNTYPED_RW_BTI(inst),
                    data_port_data_cache_block_size[OWORD_RW_BLOCK_SIZE(inst)],

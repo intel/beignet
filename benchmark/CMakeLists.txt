@@ -13,6 +13,7 @@ set (benchmark_sources
   ../utests/vload_bench.cpp
   benchmark_copy_buf.cpp
   benchmark_use_host_ptr_buffer.cpp
+  benchmark_use_host_ptr_large_image.cpp
   benchmark_read_buffer.cpp
   benchmark_read_image.cpp
   benchmark_copy_buffer_to_image.cpp

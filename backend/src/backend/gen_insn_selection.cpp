@@ -193,6 +193,7 @@ namespace gbe
            this->opcode == SEL_OP_BYTE_GATHERA64  ||
            this->opcode == SEL_OP_SAMPLE ||
            this->opcode == SEL_OP_VME ||
+           this->opcode == SEL_OP_IME ||
            this->opcode == SEL_OP_DWORD_GATHER ||
            this->opcode == SEL_OP_OBREAD ||
            this->opcode == SEL_OP_MBREAD;
@@ -290,7 +291,7 @@ namespace gbe
   // SelectionBlock
   ///////////////////////////////////////////////////////////////////////////
 
-  SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) : bb(bb), endifLabel( (ir::LabelIndex) 0), removeSimpleIfEndif(false){}
+  SelectionBlock::SelectionBlock(const ir::BasicBlock *bb) : bb(bb), endifLabel( (ir::LabelIndex) 0){}
 
   void SelectionBlock::append(ir::Register reg) { tmp.push_back(reg); }
 
@@ -511,8 +512,6 @@ namespace gbe
     uint32_t buildBasicBlockDAG(const ir::BasicBlock &bb);
     /*! Perform the selection on the basic block */
     void matchBasicBlock(const ir::BasicBlock &bb, uint32_t insnNum);
-    /*! a simple block can use predication instead of if/endif*/
-    bool isSimpleBlock(const ir::BasicBlock &bb, uint32_t insnNum);
     /*! an instruction has a QWORD family src or dst operand. */
     bool hasQWord(const ir::Instruction &insn);
     /*! A root instruction needs to be generated */
@@ -742,6 +741,7 @@ namespace gbe
     void SAMPLE(GenRegister *dst, uint32_t dstNum, GenRegister *msgPayloads, uint32_t msgNum, uint32_t bti, uint32_t sampler, bool isLD, bool isUniform);
     /*! Encode vme instructions */
     void VME(uint32_t bti, GenRegister *dst, GenRegister *payloadVal, uint32_t dstNum, uint32_t srcNum, uint32_t msg_type, uint32_t vme_search_path_lut, uint32_t lut_sub);
+    void IME(uint32_t bti, GenRegister *dst, GenRegister *payloadVal, uint32_t dstNum, uint32_t srcNum, uint32_t msg_type);
     /*! Encode typed write instructions */
     void TYPED_WRITE(GenRegister *msgs, uint32_t msgNum, uint32_t bti, bool is3D);
     /*! Get image information */
@@ -997,6 +997,14 @@ namespace gbe
                                     uint32_t registerPool) {
     GBE_ASSERT(registerPool != 0);
 
+    struct SpillReg {
+      uint32_t type:4;       //!< Gen type
+      uint32_t vstride:4;    //!< Vertical stride
+      uint32_t width:3;        //!< Width
+      uint32_t hstride:2;      //!< Horizontal stride
+    };
+    map <uint32_t, struct SpillReg> SpillRegs;
+
     for (auto &block : blockList)
       for (auto &insn : block.insnList) {
         // spill / unspill insn should be skipped when do spilling
@@ -1061,10 +1069,22 @@ namespace gbe
                                             1 + (ctx.reservedSpillRegs * 8) / ctx.getSimdWidth(), 0);
             unspill->state = GenInstructionState(simdWidth);
             unspill->state.noMask = 1;
-            unspill->dst(0) = GenRegister(GEN_GENERAL_REGISTER_FILE,
-                                          registerPool + regSlot.poolOffset, 0,
-                                          selReg.type, selReg.vstride,
-                                          selReg.width, selReg.hstride);
+            auto it = SpillRegs.find(selReg.value.reg);
+            GenRegister dst0;
+            if( it != SpillRegs.end()) {
+              dst0 = GenRegister(GEN_GENERAL_REGISTER_FILE,
+                                 registerPool + regSlot.poolOffset, 0,
+                                 it->second.type, it->second.vstride,
+                                 it->second.width, it->second.hstride);
+            } else {
+              dst0 = GenRegister(GEN_GENERAL_REGISTER_FILE,
+                                 registerPool + regSlot.poolOffset, 0,
+                                 selReg.type, selReg.vstride,
+                                 selReg.width, selReg.hstride);
+            }
+
+            dst0.value.reg = selReg.value.reg;
+            unspill->dst(0) = dst0;
             for(uint32_t i = 1; i < 1 + (ctx.reservedSpillRegs * 8) / ctx.getSimdWidth(); i++)
               unspill->dst(i) = ctx.getSimdWidth() == 8 ?
                                 GenRegister::vec8(GEN_GENERAL_REGISTER_FILE, registerPool + (i - 1), 0 ) :
@@ -1076,7 +1096,7 @@ namespace gbe
 
           GenRegister src = insn.src(regSlot.srcID);
           // change nr/subnr, keep other register settings
-          src.nr = registerPool + regSlot.poolOffset; src.subnr = 0; src.physical = 1;
+          src.nr = registerPool + regSlot.poolOffset + src.nr; src.physical = 1;
           insn.src(regSlot.srcID) = src;
         };
 
@@ -1123,6 +1143,14 @@ namespace gbe
             spill->state  = insn.state;//GenInstructionState(simdWidth);
             spill->state.accWrEnable = 0;
             spill->state.saturate = 0;
+            // Store the spilled regiter type.
+            struct SpillReg tmp;
+            tmp.type = selReg.type;
+            tmp.vstride = selReg.vstride;
+            tmp.hstride = selReg.hstride;
+            tmp.width= selReg.width;
+            SpillRegs[selReg.value.reg] = tmp;
+
             if (insn.opcode == SEL_OP_SEL)
               spill->state.predicate = GEN_PREDICATE_NONE;
             spill->src(0) = GenRegister(GEN_GENERAL_REGISTER_FILE,
@@ -1162,11 +1190,6 @@ namespace gbe
       SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
       mov->src(0) = GenRegister::retype(insn->src(regID), gr.type);
       mov->state = GenInstructionState(simdWidth);
-      if(this->block->removeSimpleIfEndif){
-        mov->state.predicate = GEN_PREDICATE_NORMAL;
-        mov->state.flag = 0;
-        mov->state.subFlag = 1;
-      }
       if (this->isScalarReg(insn->src(regID).reg()))
         mov->state.noMask = 1;
       mov->dst(0) = gr;
@@ -1196,11 +1219,6 @@ namespace gbe
       SelectionInstruction *mov = this->create(SEL_OP_MOV, 1, 1);
       mov->dst(0) = GenRegister::retype(insn->dst(regID), gr.type);
       mov->state = GenInstructionState(simdWidth);
-      if(this->block->removeSimpleIfEndif){
-        mov->state.predicate = GEN_PREDICATE_NORMAL;
-        mov->state.flag = 0;
-        mov->state.subFlag = 1;
-      }
       if (simdWidth == 1) {
         mov->state.noMask = 1;
         mov->src(0) = GenRegister::retype(GenRegister::vec1(GEN_GENERAL_REGISTER_FILE, gr.reg()), gr.type);
@@ -2502,62 +2520,6 @@ namespace gbe
     return false;
   } 
 
-  bool Selection::Opaque::isSimpleBlock(const ir::BasicBlock &bb, uint32_t insnNum) {
-
-    // FIXME should include structured innermost if/else/endif
-    if(bb.belongToStructure)
-      return false;
-
-    // FIXME scalar reg should not be excluded and just need some special handling.
-    for (int32_t insnID = insnNum-1; insnID >= 0; --insnID) {
-      SelectionDAG &dag = *insnDAG[insnID];
-      const ir::Instruction& insn = dag.insn;
-      if ( (insn.getDstNum() && this->isScalarReg(insn.getDst(0)) == true) ||
-         insn.isMemberOf<ir::CompareInstruction>() ||
-         insn.isMemberOf<ir::SelectInstruction>() ||
-         insn.getOpcode() == ir::OP_SIMD_ANY ||
-         insn.getOpcode() == ir::OP_SIMD_ALL ||
-         insn.getOpcode() == ir::OP_ELSE)
-        return false;
-
-      // Most of the QWord(long) related instruction introduce some CMP or
-      // more than 10 actual instructions at latter stage.
-      if (hasQWord(insn))
-        return false;
-
-      // Unaligned load may introduce CMP instruction.
-      if ( insn.isMemberOf<ir::LoadInstruction>()) {
-        const ir::LoadInstruction &ld = ir::cast<ir::LoadInstruction>(insn);
-        if (!ld.isAligned())
-          return false;
-      }
-      //If dst is a bool reg, the insn may modify flag, can't use this flag
-      //as predication, so can't remove if/endif. For example ir:
-      //%or.cond1244 = or i1 %cmp.i338, %cmp2.i403
-      //%or.cond1245 = or i1 %or.cond1244, %cmp3.i405
-      //asm:
-      //(+f1.0) or.ne(16)       g20<1>:W        g9<8,8,1>:W     g1<8,8,1>:W
-      //(+f1.1) or.ne.f1.1(16)  g21<1>:W        g20<8,8,1>:W    g30<8,8,1>:W
-      //The second insn is error.
-      if(insn.getDstNum() && getRegisterFamily(insn.getDst(0)) == ir::FAMILY_BOOL)
-          return false;
-    }
-
-    // there would generate a extra CMP instruction for predicated BRA with extern flag,
-    // should retrun false to keep the if/endif.
-    if((insnDAG[insnNum-1]->insn.isMemberOf<ir::BranchInstruction>())){
-      if (insnDAG[insnNum-1]->insn.getOpcode() == ir::OP_BRA) {
-        const ir::BranchInstruction &insn = ir::cast<ir::BranchInstruction>(insnDAG[insnNum-1]->insn);
-        if(insn.isPredicated() && insnDAG[insnNum-1]->child[0] == NULL){
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
-
   uint32_t Selection::Opaque::buildBasicBlockDAG(const ir::BasicBlock &bb)
   {
     using namespace ir;
@@ -2644,14 +2606,12 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     // Bottom up code generation
     bool needEndif = this->block->hasBranch == false && !this->block->hasBarrier;
     needEndif = needEndif && bb.needEndif;
-    this->block->removeSimpleIfEndif = insnNum < 10 && isSimpleBlock(bb, insnNum);
-    if (needEndif && !this->block->removeSimpleIfEndif) {
+    if (needEndif) {
       if(!bb.needIf) // this basic block is the exit of a structure
         this->ENDIF(GenRegister::immd(0), bb.endifLabel, bb.endifLabel);
       else {
         const ir::BasicBlock *next = bb.getNextBlock();
         this->ENDIF(GenRegister::immd(0), next->getLabelIndex());
-        needEndif = false;
       }
     }
 
@@ -2668,12 +2628,6 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         // Start a new code fragment
         this->startBackwardGeneration();
 
-        if(this->block->removeSimpleIfEndif){
-          this->push();
-            this->curr.predicate = GEN_PREDICATE_NORMAL;
-            this->curr.flag = 0;
-            this->curr.subFlag = 1;
-        }
         // If there is no branch at the end of this block.
 
         // Try all the patterns from best to worst
@@ -2684,12 +2638,6 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         } while (it != end);
         GBE_ASSERT(it != end);
 
-        if(this->block->removeSimpleIfEndif){
-            this->curr.predicate = GEN_PREDICATE_NONE;
-            this->curr.flag = 0;
-            this->curr.subFlag = 1;
-          this->pop();
-        }
         // If we are in if/endif fix mode, and this block is
         // large enough, we need to insert endif/if pair to eliminate
         // the too long if/endif block.
@@ -2785,6 +2733,25 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     insn->extra.msg_type = msg_type;
     insn->extra.vme_search_path_lut = vme_search_path_lut;
     insn->extra.lut_sub = lut_sub;
+  }
+
+  void Selection::Opaque::IME(uint32_t bti, GenRegister *dst, GenRegister *payloadVal,
+                              uint32_t dstNum, uint32_t srcNum, uint32_t msg_type) {
+    SelectionInstruction *insn = this->appendInsn(SEL_OP_IME, dstNum, srcNum);
+    SelectionVector *dstVector = this->appendVector();
+
+    for (uint32_t elemID = 0; elemID < dstNum; ++elemID)
+      insn->dst(elemID) = dst[elemID];
+    for (uint32_t elemID = 0; elemID < srcNum; ++elemID)
+      insn->src(elemID) = payloadVal[elemID];
+
+    dstVector->regNum = dstNum;
+    dstVector->isSrc = 0;
+    dstVector->offsetID = 0;
+    dstVector->reg = &insn->dst(0);
+
+    insn->setbti(bti);
+    insn->extra.ime_msg_type = msg_type;
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -3333,6 +3300,34 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         sel.MATH(dst, function, src0, src1);
       } else if(type == TYPE_FLOAT) {
         GBE_ASSERT(op != OP_REM);
+        SelectionDAG *child0 = dag.child[0];
+        if (child0 && child0->insn.getOpcode() == OP_LOADI) {
+          const auto &loadimm = cast<LoadImmInstruction>(child0->insn);
+          const Immediate imm = loadimm.getImmediate();
+          float immVal = imm.getFloatValue();
+          int* dwPtr = (int*)&immVal;
+
+          //if immedia is a exactly pow of 2, it can be converted to RCP
+          if((*dwPtr & 0x7FFFFF) == 0) {
+            if(immVal == -1.0f)
+            {
+              GenRegister tmp = GenRegister::negate(src1);
+              sel.MATH(dst, GEN_MATH_FUNCTION_INV, tmp);
+            }
+            else {
+              sel.MATH(dst, GEN_MATH_FUNCTION_INV, src1);
+              if(immVal != 1.0f) {
+                GenRegister isrc = GenRegister::immf(immVal);
+                sel.MUL(dst, dst, isrc);
+              }
+            }
+
+            if(dag.child[1])
+              dag.child[1]->isRoot = 1;
+            return true;
+          }
+        }
+
         sel.MATH(dst, GEN_MATH_FUNCTION_FDIV, src0, src1);
       } else if (type == TYPE_S64 || type == TYPE_U64) {
         GenRegister tmp[15];
@@ -6935,19 +6930,17 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
             sel.JMPI(GenRegister::immd(0), jip, label);
           sel.pop();
         }
-        if(!sel.block->removeSimpleIfEndif){
-          sel.push();
-            sel.curr.flag = 0;
-            sel.curr.subFlag = 1;
-            sel.curr.predicate = GEN_PREDICATE_NORMAL;
-            if(!insn.getParent()->needEndif && insn.getParent()->needIf) {
-              ir::LabelIndex label = insn.getParent()->endifLabel;
-              sel.IF(GenRegister::immd(0), label, label);
-            }
-            else
-              sel.IF(GenRegister::immd(0), sel.block->endifLabel, sel.block->endifLabel);
-          sel.pop();
-        }
+        sel.push();
+          sel.curr.flag = 0;
+          sel.curr.subFlag = 1;
+          sel.curr.predicate = GEN_PREDICATE_NORMAL;
+          if(!insn.getParent()->needEndif && insn.getParent()->needIf) {
+            ir::LabelIndex label = insn.getParent()->endifLabel;
+            sel.IF(GenRegister::immd(0), label, label);
+          }
+          else
+            sel.IF(GenRegister::immd(0), sel.block->endifLabel, sel.block->endifLabel);
+        sel.pop();
       }
 
       return true;
@@ -7071,6 +7064,47 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       return true;
     }
     DECL_CTOR(VmeInstruction, 1, 1);
+  };
+
+  DECL_PATTERN(ImeInstruction)
+  {
+    INLINE bool emitOne(Selection::Opaque &sel, const ir::ImeInstruction &insn, bool &markChildren) const
+    {
+      using namespace ir;
+      uint32_t msg_type;
+      msg_type = insn.getMsgType();
+      GBE_ASSERT(msg_type == 1 || msg_type == 2 || msg_type == 3);
+      uint32_t payloadLen = 0;
+      if(msg_type == 2){
+        payloadLen = 6;
+      }
+      else if(msg_type == 1 || msg_type == 3){
+        payloadLen = 8;
+      }
+      uint32_t selDstNum = insn.getDstNum() + payloadLen;
+      uint32_t srcNum = insn.getSrcNum();
+      vector<GenRegister> dst(selDstNum);
+      vector<GenRegister> payloadVal(srcNum);
+      uint32_t valueID = 0;
+      for (valueID = 0; valueID < insn.getDstNum(); ++valueID)
+        dst[valueID] = sel.selReg(insn.getDst(valueID), insn.getDstType());
+      for (valueID = insn.getDstNum(); valueID < selDstNum; ++valueID)
+        dst[valueID] = sel.selReg(sel.reg(FAMILY_DWORD), TYPE_U32);
+
+      for (valueID = 0; valueID < srcNum; ++valueID)
+        payloadVal[valueID] = sel.selReg(insn.getSrc(valueID), insn.getSrcType());
+
+      uint32_t bti = insn.getImageIndex() + BTI_WORKAROUND_IMAGE_OFFSET;
+      if (bti > BTI_MAX_ID) {
+        std::cerr << "Too large bti " << bti;
+        return false;
+      }
+
+      sel.IME(bti, dst.data(), payloadVal.data(), selDstNum, srcNum, msg_type);
+
+      return true;
+    }
+    DECL_CTOR(ImeInstruction, 1, 1);
   };
 
   /*! Typed write instruction pattern. */
@@ -7507,7 +7541,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           sel.curr.predicate = GEN_PREDICATE_NORMAL;
           sel.setBlockIP(ip, dst.value());
           sel.curr.predicate = GEN_PREDICATE_NONE;
-          if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif)
+          if (!sel.block->hasBarrier)
             sel.ENDIF(GenRegister::immd(0), nextLabel);
           sel.block->endifOffset = -1;
         sel.pop();
@@ -7519,7 +7553,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         if(insn.getParent()->needEndif)
           sel.setBlockIP(ip, dst.value());
 
-        if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif) {
+        if (!sel.block->hasBarrier) {
           if(insn.getParent()->needEndif && !insn.getParent()->needIf)
             sel.ENDIF(GenRegister::immd(0), insn.getParent()->endifLabel, insn.getParent()->endifLabel);
           else if(insn.getParent()->needEndif)
@@ -7569,7 +7603,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           sel.setBlockIP(ip, dst.value());
           sel.block->endifOffset = -1;
           sel.curr.predicate = GEN_PREDICATE_NONE;
-          if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif)
+          if (!sel.block->hasBarrier)
             sel.ENDIF(GenRegister::immd(0), next);
           sel.curr.execWidth = 1;
           if (simdWidth == 16)
@@ -7587,7 +7621,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         if(insn.getParent()->needEndif)
         sel.setBlockIP(ip, dst.value());
         sel.block->endifOffset = -1;
-        if (!sel.block->hasBarrier && !sel.block->removeSimpleIfEndif) {
+        if (!sel.block->hasBarrier) {
           if(insn.getParent()->needEndif && !insn.getParent()->needIf)
             sel.ENDIF(GenRegister::immd(0), insn.getParent()->endifLabel, insn.getParent()->endifLabel);
           else if(insn.getParent()->needEndif)
@@ -7971,6 +8005,27 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     }
   };
 
+  static uint32_t fixBlockSize(uint8_t width, uint8_t height, uint32_t vec_size,
+                               uint32_t typeSize, uint32_t simdWidth,
+                               uint32_t &block_width) {
+    uint32_t blocksize = 0;
+    if (width && height) {
+      if (width * height * typeSize > vec_size * simdWidth * typeSize) {
+        if (width <= simdWidth * vec_size) {
+          height = vec_size * simdWidth / width;
+        } else {
+          height = 1;
+          width = vec_size * simdWidth / height;
+        }
+      }
+    } else {
+      width = simdWidth;
+      height = vec_size;
+    }
+    block_width = typeSize * (width < simdWidth ? width : simdWidth);
+    blocksize = (block_width - 1) % 32 | (height - 1) << 16;
+    return blocksize;
+  }
   /*! Media Block Read pattern */
   DECL_PATTERN(MediaBlockReadInstruction)
   {
@@ -7980,19 +8035,26 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       uint32_t vec_size = insn.getVectorSize();
       uint32_t simdWidth = sel.curr.execWidth;
       const Type type = insn.getType();
-      const uint32_t typeSize = type == TYPE_U32 ? 4 : 2;
+      uint32_t typeSize = 0;
+      if(type == TYPE_U32) {
+        typeSize = 4;
+      }else if(type == TYPE_U16) {
+        typeSize = 2;
+      }else if(type == TYPE_U8) {
+        typeSize = 1;
+      }else
+        NOT_IMPLEMENTED;
       uint32_t response_size = simdWidth * vec_size * typeSize / 32;
       // ushort in simd8 will have half reg thus 0.5 reg size, but response lenght is still 1
       response_size = response_size ? response_size : 1;
-      uint32_t block_width = typeSize * simdWidth;
-      uint32_t blocksize = (block_width - 1) % 32 | (vec_size - 1) << 16;
-
+      uint32_t block_width = 0;
+      uint32_t blocksize = fixBlockSize(insn.getWidth(), insn.getHeight(), vec_size, typeSize, simdWidth, block_width);
 
       vector<GenRegister> valuesVec;
       vector<GenRegister> tmpVec;
       for (uint32_t i = 0; i < vec_size; ++i) {
         valuesVec.push_back(sel.selReg(insn.getDst(i), type));
-        if(simdWidth == 16 && typeSize == 4)
+        if((simdWidth == 16 && typeSize == 4) || typeSize == 1)
           tmpVec.push_back(GenRegister::ud8grf(sel.reg(FAMILY_REG)));
       }
       const GenRegister coordx = GenRegister::toUniform(sel.selReg(insn.getSrc(0), TYPE_U32), GEN_TYPE_UD);
@@ -8018,15 +8080,23 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         sel.MOV(blocksizereg, GenRegister::immud(blocksize));
       sel.pop();
 
-      if (simdWidth * typeSize < 64) {
+      if (block_width < 64) {
         sel.push();
           sel.curr.execWidth = 8;
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.curr.noMask = 1;
           // Now read the data
-          sel.MBREAD(&valuesVec[0], vec_size, header, insn.getImageIndex(), response_size);
+          if(typeSize == 1) {
+            sel.MBREAD(&tmpVec[0], vec_size, header, insn.getImageIndex(), response_size);
+            for (uint32_t i = 0; i < vec_size; i++) {
+              sel.MOV(valuesVec[i], sel.getOffsetReg(GenRegister::retype(tmpVec[0], GEN_TYPE_UB), 0, i*simdWidth));
+              sel.MOV(sel.getOffsetReg(valuesVec[i], 0, 16), sel.getOffsetReg(GenRegister::retype(tmpVec[0], GEN_TYPE_UB), 0, i*simdWidth + 8));
+            }
+          }else
+            sel.MBREAD(&valuesVec[0], vec_size, header, insn.getImageIndex(), response_size);
+
         sel.pop();
-      } else if (simdWidth * typeSize == 64) {
+      } else if (block_width == 64) {
         sel.push();
           sel.curr.execWidth = 8;
           sel.curr.predicate = GEN_PREDICATE_NONE;
@@ -8067,12 +8137,20 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
       uint32_t simdWidth = sel.curr.execWidth;
       const uint32_t genType = type == TYPE_U32 ? GEN_TYPE_UD : GEN_TYPE_UW;
       const RegisterFamily family = getFamily(type);
-      const uint32_t typeSize = type == TYPE_U32 ? 4 : 2;
+      uint32_t typeSize = 0;
+      if(type == TYPE_U32) {
+        typeSize = 4;
+      }else if(type == TYPE_U16) {
+        typeSize = 2;
+      }else if(type == TYPE_U8) {
+        typeSize = 1;
+      }else
+        NOT_IMPLEMENTED;
       // ushort in simd8 will have half reg, but data lenght is still 1
       uint32_t data_size = simdWidth * vec_size * typeSize / 32;
       data_size = data_size? data_size : 1;
-      uint32_t block_width = typeSize * simdWidth;
-      uint32_t blocksize = (block_width - 1) % 32 | (vec_size - 1) << 16;
+      uint32_t block_width = 0;
+      uint32_t blocksize = fixBlockSize(insn.getWidth(), insn.getHeight(), vec_size, typeSize, simdWidth, block_width);
 
 
       vector<GenRegister> valuesVec;
@@ -8107,7 +8185,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
         sel.MOV(blocksizereg, GenRegister::immud(blocksize));
       sel.pop();
 
-      if (simdWidth * typeSize < 64) {
+      if (block_width < 64) {
         for (uint32_t i = 0; i < vec_size; ++i) {
             sel.MOV(tmpVec[i], valuesVec[i]);
         }
@@ -8116,9 +8194,16 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
           sel.curr.predicate = GEN_PREDICATE_NONE;
           sel.curr.noMask = 1;
           // Now write the data
-          sel.MBWRITE(header, &tmpVec[0], vec_size, insn.getImageIndex(), data_size);
+          if(typeSize == 1) {
+            for (uint32_t i = 0; i < vec_size; i++) {
+                sel.MOV(sel.getOffsetReg(GenRegister::retype(tmpVec[0], GEN_TYPE_UB), 0, i*simdWidth), valuesVec[i]);
+                sel.MOV(sel.getOffsetReg(GenRegister::retype(tmpVec[0], GEN_TYPE_UB), 0, i*simdWidth + 8), sel.getOffsetReg(valuesVec[i], 0, 16) );
+            }
+            sel.MBWRITE(header, &tmpVec[0], vec_size, insn.getImageIndex(), data_size);
+          } else
+            sel.MBWRITE(header, &tmpVec[0], vec_size, insn.getImageIndex(), data_size);
         sel.pop();
-      } else if (simdWidth * typeSize == 64) {
+      } else if (block_width == 64) {
         sel.push();
           sel.curr.execWidth = 8;
           sel.curr.predicate = GEN_PREDICATE_NONE;
@@ -8178,6 +8263,7 @@ extern bool OCL_DEBUGINFO; // first defined by calling BVAR in program.cpp
     this->insert<SelectModifierInstructionPattern>();
     this->insert<SampleInstructionPattern>();
     this->insert<VmeInstructionPattern>();
+    this->insert<ImeInstructionPattern>();
     this->insert<GetImageInfoInstructionPattern>();
     this->insert<ReadARFInstructionPattern>();
     this->insert<RegionInstructionPattern>();

@@ -61,6 +61,8 @@ typedef struct _cl_mapped_ptr {
   size_t size;
   size_t origin[3];  /* mapped origin */
   size_t region[3];  /* mapped region */
+  cl_mem tmp_ker_buf;       /* this object is tmp buffer for OCL kernel copying */
+  uint8_t ker_write_map;    /* this flag is used to indicate CL_MAP_WRITE for OCL kernel copying */
 }cl_mapped_ptr;
 
 typedef struct _cl_mem_dstr_cb {
@@ -143,6 +145,10 @@ struct _cl_mem_image {
   size_t offset;                  /* offset for dri_bo, used when it's reloc. */
   cl_mem buffer_1d;               /* if the image is created from buffer, it point to the buffer.*/
   uint8_t is_image_from_buffer;       /* IMAGE from Buffer*/
+  cl_mem nv12_image;               /* if the image is created from nv12 Image, it point to the image.*/
+  uint8_t is_image_from_nv12_image;       /* IMAGE from NV12 Image*/
+  cl_bool is_ker_copy;      /* this object is copied by OCL kernel */
+  cl_mem tmp_ker_buf;       /* this object is tmp buffer for OCL kernel copying */
 };
 
 struct _cl_mem_gl_image {
@@ -363,6 +369,9 @@ extern cl_mem cl_mem_new_image_from_fd(cl_context ctx,
 
 extern cl_int cl_mem_record_map_mem(cl_mem mem, void *ptr, void **mem_ptr, size_t offset,
                       size_t size, const size_t *origin, const size_t *region);
+
+extern cl_int cl_mem_record_map_mem_for_kernel(cl_mem mem, void *ptr, void **mem_ptr, size_t offset,
+                      size_t size, const size_t *origin, const size_t *region, cl_mem tmp_ker_buf, uint8_t write_map);
 
 extern cl_int cl_mem_set_destructor_callback(cl_mem memobj,
                       void(CL_CALLBACK *pfn_notify)(cl_mem, void *), void *user_data);

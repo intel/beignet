@@ -83,5 +83,6 @@ DEF(uint);
 DEF(long);
 DEF(ulong);
 DEF(float);
+DEF(double);
 #undef DEFN
 #undef DEF

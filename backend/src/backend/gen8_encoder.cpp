@@ -883,4 +883,9 @@ namespace gbe
                    msg_length,
                    response_length);
    }
+
+    /* for BDW and after, no need to split CMP when src is DW*/
+    bool Gen8Encoder::needToSplitCmpBySrcType(GenEncoder *p, GenRegister src0, GenRegister src1) {
+      return false;
+    }
 } /* End of the name space. */

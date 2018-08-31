@@ -56,6 +56,22 @@ OVERLOADABLE int isordered(half x, half y);
 OVERLOADABLE int isunordered(half x, half y);
 OVERLOADABLE int signbit(half x);
 
+OVERLOADABLE int isequal(double x, double y);
+OVERLOADABLE int isnotequal(double x, double y);
+OVERLOADABLE int isgreater(double x, double y);
+OVERLOADABLE int isgreaterequal(double x, double y);
+OVERLOADABLE int isless(double x, double y);
+OVERLOADABLE int islessequal(double x, double y);
+OVERLOADABLE int islessgreater(double x, double y);
+
+OVERLOADABLE int isfinite(double x);
+OVERLOADABLE int isinf(double x);
+OVERLOADABLE int isnan(double x);
+OVERLOADABLE int isnormal(double x);
+
+OVERLOADABLE int isordered(double x, double y);
+OVERLOADABLE int isunordered(double x, double y);
+OVERLOADABLE int signbit(double x);
 
 // any
 #define DEC1(type) OVERLOADABLE int any(type a);
@@ -113,6 +129,7 @@ DEF(long) DEF(ulong)
 #undef DEF
 OVERLOADABLE float bitselect(float a, float b, float c);
 OVERLOADABLE half bitselect(half a, half b, half c);
+OVERLOADABLE double bitselect(double a, double b, double c);
 
 
 #define DEF(TYPE1, TYPE2) \

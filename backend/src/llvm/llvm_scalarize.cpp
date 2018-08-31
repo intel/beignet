@@ -690,6 +690,12 @@ namespace gbe {
           case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE2:
           case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE4:
           case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE8:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_US_IMAGE16:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UC_IMAGE:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UC_IMAGE2:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UC_IMAGE4:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UC_IMAGE8:
+          case GEN_OCL_SUB_GROUP_BLOCK_WRITE_UC_IMAGE16:
           {
             ++CI;
             ++CI;
@@ -711,6 +717,7 @@ namespace gbe {
             break;
           }
           case GEN_OCL_VME:
+          case GEN_OCL_IME:
           case GEN_OCL_SUB_GROUP_BLOCK_READ_UI_MEM2:
           case GEN_OCL_SUB_GROUP_BLOCK_READ_UI_MEM4:
           case GEN_OCL_SUB_GROUP_BLOCK_READ_UI_MEM8:
@@ -723,6 +730,11 @@ namespace gbe {
           case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE2:
           case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE4:
           case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE8:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_US_IMAGE16:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE2:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE4:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE8:
+          case GEN_OCL_SUB_GROUP_BLOCK_READ_UC_IMAGE16:
             setAppendPoint(call);
             extractFromVector(call);
             break;

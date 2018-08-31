@@ -162,6 +162,7 @@ namespace gbe
     void BRD(GenRegister src);
     /*! Compare instructions */
     void CMP(uint32_t conditional, GenRegister src0, GenRegister src1, GenRegister dst = GenRegister::null());
+    virtual bool needToSplitCmpBySrcType(GenEncoder *p, GenRegister src0, GenRegister src1);
     /*! Select with embedded compare (like sel.le ...) */
     void SEL_CMP(uint32_t conditional, GenRegister dst, GenRegister src0, GenRegister src1);
     /*! EOT is used to finish GPGPU threads */
@@ -230,6 +231,10 @@ namespace gbe
                           uint32_t msg_type,
                           unsigned char vme_search_path_lut,
                           unsigned char lut_sub);
+    virtual void IME(unsigned char bti,
+                         GenRegister dest,
+                         GenRegister msg,
+                         uint32_t msg_type);
     virtual void FLUSH_SAMPLERCACHE(GenRegister dst);
 
     /*! TypedWrite instruction for texture */

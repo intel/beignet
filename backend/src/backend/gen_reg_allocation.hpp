@@ -40,6 +40,17 @@ namespace gbe
     int32_t addr;
   } SpillRegTag;
 
+  typedef struct HoleRegTag {
+    uint32_t startID;
+    uint32_t endID;
+    uint32_t regSize;
+    ir::Register reg;
+  }HoleRegTag;
+
+  typedef struct BlockRegInterval {
+    int32_t blockID, defID, useID;
+  }BlockRegInterval;
+
   typedef map<ir::Register, SpillRegTag> SpilledRegs;
 
   /*! Register allocate (i.e. virtual to physical register mapping) */

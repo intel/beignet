@@ -61,9 +61,10 @@ namespace gbe {
       #endif
       return optimizeLoadStore(BB);
     }
-    Type    *getValueType(Value *insn);
-    Value   *getPointerOperand(Value *I);
+    Type *getValueType(Value *insn);
+    Value *getPointerOperand(Value *I);
     unsigned getAddressSpace(Value *I);
+    
     bool     isSimpleLoadStore(Value *I);
     bool     optimizeLoadStore(BasicBlock &BB);
 
@@ -75,6 +76,7 @@ namespace gbe {
                                   const BasicBlock::iterator &start,
                                   unsigned maxVecSize,
                                   bool isLoad);
+
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
     virtual StringRef getPassName() const
 #else
@@ -109,7 +111,7 @@ namespace gbe {
     return NULL;
   }
 
-  bool GenLoadStoreOptimization::isLoadStoreCompatible(Value *A, Value *B) {
+  bool GenLoadStoreOptimization::isLoadStoreCompatible(Value *A, Value *B, int *dist, int* elementSize, int maxVecSize) {
     Value *ptrA = getPointerOperand(A);
     Value *ptrB = getPointerOperand(B);
     unsigned ASA = getAddressSpace(A);
@@ -136,10 +138,17 @@ namespace gbe {
     // The Instructions are connsecutive if the size of the first load/store is
     // the same as the offset.
     int64_t sz = TD->getTypeStoreSize(Ty);
-    return ((-offset) == sz);
+    *dist = -offset;
+    *elementSize = sz;
+
+    //a insn with small distance from the search load/store is a candidate one
+    return (abs(-offset) < sz*maxVecSize);
   }
 
-  void GenLoadStoreOptimization::mergeLoad(BasicBlock &BB, SmallVector<Instruction*, 16> &merged) {
+  void GenLoadStoreOptimization::mergeLoad(BasicBlock &BB,
+                                            SmallVector<Instruction*, 16> &merged,
+                                            Instruction *first,
+                                            int offset) {
     IRBuilder<> Builder(&BB);
 
     unsigned size = merged.size();
@@ -147,14 +156,27 @@ namespace gbe {
     for(unsigned i = 0; i < size; i++) {
       values.push_back(merged[i]);
     }
-    LoadInst *ld = cast<LoadInst>(merged[0]);
+    LoadInst *ld = cast<LoadInst>(first);
     unsigned align = ld->getAlignment();
     unsigned addrSpace = ld->getPointerAddressSpace();
     // insert before first load
     Builder.SetInsertPoint(ld);
+
+    //modify offset
+    Value *newPtr = ld->getPointerOperand();
+    if(offset != 0)
+    {
+      Type *ptype = ld->getPointerOperand()->getType();
+      unsigned typeSize = TD->getPointerTypeSize(ptype);
+      ptype = (typeSize == 4) ? Builder.getInt32Ty():Builder.getInt64Ty();
+      Value *StartAddr = Builder.CreatePtrToInt(ld->getPointerOperand(), ptype);
+      Value *offsetVal = ConstantInt::get(ptype, offset);
+      Value *newAddr = Builder.CreateAdd(StartAddr, offsetVal);
+      newPtr = Builder.CreateIntToPtr(newAddr, ld->getPointerOperand()->getType());
+    }
+
     VectorType *vecTy = VectorType::get(ld->getType(), size);
-    Value *vecPtr = Builder.CreateBitCast(ld->getPointerOperand(),
-                                        PointerType::get(vecTy, addrSpace));
+    Value *vecPtr = Builder.CreateBitCast(newPtr, PointerType::get(vecTy, addrSpace));
     LoadInst *vecValue = Builder.CreateLoad(vecPtr);
     vecValue->setAlignment(align);
 
@@ -163,6 +185,25 @@ namespace gbe {
       values[i]->replaceAllUsesWith(S);
     }
   }
+
+  class mergedInfo{
+    public:
+    Instruction* mInsn;
+    int mOffset;
+
+    void init(Instruction* insn, int offset)
+    {
+      mInsn = insn;
+      mOffset = offset;
+    }
+  };
+
+  struct offsetSorter {
+    bool operator()(mergedInfo* m0, mergedInfo* m1) const {
+    return m0->mOffset < m1->mOffset;
+    }
+  };
+
   // When searching for consecutive memory access, we do it in a small window,
   // if the window is too large, it would take up too much compiling time.
   // An Important rule we have followed is don't try to change load/store order.
@@ -173,11 +214,12 @@ namespace gbe {
                             SmallVector<Instruction*, 16> &merged,
                             const BasicBlock::iterator &start,
                             unsigned maxVecSize,
-                            bool isLoad) {
-
+                            bool isLoad,
+                            int *addrOffset,
+                            Instruction *&first,
+                            Instruction *&last) {
     if(!isSimpleLoadStore(&*start)) return false;
 
-    merged.push_back(&*start);
     unsigned targetAddrSpace = getAddressSpace(&*start);
 
     BasicBlock::iterator E = BB.end();
@@ -185,19 +227,41 @@ namespace gbe {
     ++J;
 
     unsigned maxLimit = maxVecSize * 8;
-    bool reordered = false;
+    bool crossAddressSpace = false;
+    // When we are merging loads and there are some other AddressSpace stores
+    // lies among them, we are saying that loadStoreReorder happens. The same
+    // for merging stores and there are some other AddressSpace load among them.
+    bool loadStoreReorder = false;
+    bool ready = false;
+    int elementSize;
 
-    for(unsigned ss = 0; J != E && ss <= maxLimit; ++ss, ++J) {
+    SmallVector<mergedInfo *, 32> searchInsnArray;
+    SmallVector<mergedInfo *, 32> orderedInstrs;
+    mergedInfo meInfoArray[32];
+    int indx = 0;
+    meInfoArray[indx++].init(&*start, 0);
+    searchInsnArray.push_back(&meInfoArray[0]);
+
+    for(unsigned ss = 0; J!= E && ss <= maxLimit; ++ss, ++J) {
       if((isLoad && isa<LoadInst>(*J)) || (!isLoad && isa<StoreInst>(*J))) {
-        if(isLoadStoreCompatible(merged[merged.size()-1], &*J)) {
-          merged.push_back(&*J);
-        }
+          int distance;
+          if(isLoadStoreCompatible(searchInsnArray[0]->mInsn, &*J, &distance, &elementSize, maxVecSize))
+          {
+            meInfoArray[indx].init(&*J, distance);
+            searchInsnArray.push_back(&meInfoArray[indx]);
+            indx++;
+            if (crossAddressSpace)
+              loadStoreReorder = true;
+
+            if(indx >= 32)
+              break;
+          }
       } else if((isLoad && isa<StoreInst>(*J))) {
         // simple stop to keep read/write order
         StoreInst *st = cast<StoreInst>(&*J);
         unsigned addrSpace = st->getPointerAddressSpace();
         if (addrSpace != targetAddrSpace) {
-          reordered = true;
+          crossAddressSpace = true;
         } else {
           break;
         }
@@ -205,19 +269,74 @@ namespace gbe {
         LoadInst *ld = cast<LoadInst>(&*J);
         unsigned addrSpace = ld->getPointerAddressSpace();
         if (addrSpace != targetAddrSpace) {
-          reordered = true;
+          crossAddressSpace = true;
         } else {
           break;
         }
       }
-
-      if(merged.size() >= maxVecSize) break;
     }
 
-    return reordered;
+
+    if(indx > 1)
+    {
+      first = (*searchInsnArray.begin())->mInsn;
+      //try to sort the load/store by the offset from the start
+      //the farthest is at the beginning. this is easy to find the
+      //continuous load/store
+      orderedInstrs = searchInsnArray;
+      std::sort(searchInsnArray.begin(), searchInsnArray.end(), offsetSorter());
+
+      // try to find continuous loadstore insn in the candidate array
+      for (unsigned i = 0; i < searchInsnArray.size(); i++)
+      {
+        unsigned j;
+        for(j = 0; j < maxVecSize-1 && (j+i+1) < searchInsnArray.size(); j++)
+        {
+          if(searchInsnArray[i+j+1]->mOffset - searchInsnArray[i+j]->mOffset != elementSize)
+            break;
+
+          //this means the search load/store which offset is 0, is in the sequence
+          if(searchInsnArray[i+j]->mOffset == 0 || searchInsnArray[i+j+1]->mOffset == 0)
+            ready = true;
+        }
+
+        if(j > 0 && ready)
+        {
+          unsigned endIndx = j + 1;
+          *addrOffset = searchInsnArray[i]->mOffset;
+          endIndx = (endIndx >= 16) ? 16 : (endIndx >= 8 ? 8 : (endIndx >= 4 ? 4 : endIndx));
+
+          for(unsigned k = 0; k < endIndx; k++)
+          {
+            merged.push_back(searchInsnArray[i+k]->mInsn);
+            if (k >= maxVecSize)
+              break;
+          }
+          // find the last instruction if we are trying to merge STOREs.
+          // we will later use it as the insertion point.
+          if (!isLoad)
+            for (auto insn = orderedInstrs.rbegin();
+                 insn != orderedInstrs.rend(); ++insn) {
+              if (std::find(merged.begin(), merged.end(), (*insn)->mInsn) !=
+                  merged.end()) {
+                last = (*insn)->mInsn;
+                break;
+              }
+            }
+
+          break;
+        }
+      }
+    }
+
+    return loadStoreReorder;
   }
 
-  void GenLoadStoreOptimization::mergeStore(BasicBlock &BB, SmallVector<Instruction*, 16> &merged) {
+  void GenLoadStoreOptimization::mergeStore(BasicBlock &BB,
+                                            SmallVector<Instruction*, 16> &merged,
+                                            Instruction *first,
+                                            Instruction *last,
+                                            int offset) {
     IRBuilder<> Builder(&BB);
 
     unsigned size = merged.size();
@@ -225,7 +344,7 @@ namespace gbe {
     for(unsigned i = 0; i < size; i++) {
       values.push_back(cast<StoreInst>(merged[i])->getValueOperand());
     }
-    StoreInst *st = cast<StoreInst>(merged[0]);
+    StoreInst *st = cast<StoreInst>(first);
     if(!st)
       return;
 
@@ -233,7 +352,7 @@ namespace gbe {
 
     unsigned align = st->getAlignment();
     // insert before the last store
-    Builder.SetInsertPoint(merged[size-1]);
+    Builder.SetInsertPoint(last);
 
     Type *dataTy = st->getValueOperand()->getType();
     VectorType *vecTy = VectorType::get(dataTy, size);
@@ -245,12 +364,26 @@ namespace gbe {
     Value * stPointer = st->getPointerOperand();
     if(!stPointer)
       return;
-    Value *newPtr = Builder.CreateBitCast(stPointer, PointerType::get(vecTy, addrSpace));
+
+    //modify offset
+    Value *newSPtr = stPointer;
+    if(offset != 0)
+    {
+      unsigned typeSize = TD->getPointerTypeSize(stPointer->getType());
+      Type *ptype = (typeSize == 4) ? Builder.getInt32Ty() : Builder.getInt64Ty();
+      Value *StartAddr = Builder.CreatePtrToInt(stPointer, ptype);
+      Value *offsetVal = ConstantInt::get(ptype, offset);
+      Value *newAddr = Builder.CreateAdd(StartAddr, offsetVal);
+      newSPtr = Builder.CreateIntToPtr(newAddr, stPointer->getType());
+    }
+
+    Value *newPtr = Builder.CreateBitCast(newSPtr, PointerType::get(vecTy, addrSpace));
     StoreInst *newST = Builder.CreateStore(parent, newPtr);
     newST->setAlignment(align);
   }
 
-  // Find the safe iterator we can point to. If reorder happens, we need to
+  // Find the safe iterator (will not be deleted after the merge) we can
+  // point to. If reorder happens, we need to
   // point to the instruction after the first of toBeDeleted. If no reorder,
   // we are safe to point to the instruction after the last of toBeDeleted
   static BasicBlock::iterator
@@ -260,12 +393,15 @@ namespace gbe {
     BasicBlock::iterator safe = current;
     unsigned size = toBeDeleted.size();
     if (reorder) {
-      unsigned i = 0;
-      while (i < size && toBeDeleted[i] == &*safe) {
-        ++i;
-        ++safe;
+      BasicBlock *BB = &*current->getParent();
+      for (; safe != BB->end(); ++safe) {
+        if (std::find(toBeDeleted.begin(), toBeDeleted.end(), &*safe) ==
+            toBeDeleted.end())
+          break;
       }
     } else {
+      // TODO we should use the furthest instruction, so that the outer loop
+      // ends quicker.
       safe = BasicBlock::iterator(toBeDeleted[size - 1]);
       ++safe;
     }
@@ -286,9 +422,12 @@ namespace gbe {
              ((ty->isIntegerTy(8) || ty->isIntegerTy(16)) && isLoad)))
           continue;
 
+        int addrOffset = 0;
+        Instruction *first = nullptr, *last = nullptr;
         unsigned maxVecSize = (ty->isFloatTy() || ty->isIntegerTy(32)) ? 4 :
                               (ty->isIntegerTy(16) ? 8 : 16);
-        bool reorder = findConsecutiveAccess(BB, merged, BBI, maxVecSize, isLoad);
+        bool reorder = findConsecutiveAccess(BB, merged, BBI, maxVecSize,
+                                             isLoad, &addrOffset, first, last);
         uint32_t size = merged.size();
         uint32_t pos = 0;
         bool doDeleting = size > 1;
@@ -303,9 +442,9 @@ namespace gbe {
                              (size >= 4 ? 4 : size));
           SmallVector<Instruction*, 16> mergedVec(merged.begin() + pos, merged.begin() + pos + vecSize);
           if(isLoad)
-            mergeLoad(BB, mergedVec);
+            mergeLoad(BB, mergedVec, first, addrOffset);
           else
-            mergeStore(BB, mergedVec);
+            mergeStore(BB, mergedVec, first, last, addrOffset);
           // remove merged insn
           for(uint32_t i = 0; i < mergedVec.size(); i++)
             mergedVec[i]->eraseFromParent();

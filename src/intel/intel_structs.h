@@ -310,29 +310,22 @@ typedef struct gen8_surface_state
   } ss5;
 
   struct {
-    union {
       union {
         struct {
           uint32_t aux_surface_mode:3;
           uint32_t aux_surface_pitch:9;
           uint32_t pad3:4;
+          uint32_t aux_sruface_qpitch:15;
+          uint32_t pad2:1;
         };
-        struct {
-          uint32_t uv_plane_y_offset:14;
-          uint32_t pad2:2;
-        };
-      };
 
       struct {
-        uint32_t uv_plane_x_offset:14;
-        uint32_t pad1:1;
-        uint32_t seperate_uv_plane_enable:1;
+        uint32_t uv_plane_y_offset : 14;
+        uint32_t pad1 : 2;
+        uint32_t uv_plane_x_offset : 14;
+        uint32_t pad0 : 2;
       };
-      struct {
-        uint32_t aux_sruface_qpitch:15;
-        uint32_t pad0:1;
       };
-    };
   } ss6;
 
   struct {
@@ -431,6 +424,69 @@ typedef struct gen7_media_surface_state
     uint32_t pad0;
   } ss7;
 } gen7_media_surface_state_t;
+
+typedef struct gen9_media_surface_state
+{
+  struct {
+    uint32_t pad3:12;
+    uint32_t pad2:4;
+    uint32_t pad1:11; //ExistsIf [Surface Format] is not one of Planar Formats
+    uint32_t rotation:2;
+  } ss0;
+
+  struct {
+    uint32_t uv_offset_v_direction:2;
+    uint32_t pic_struct:2;
+    uint32_t width:14;
+    uint32_t height:14;
+  } ss1;
+
+  struct {
+    uint32_t tile_mode:2;
+    uint32_t half_pitch_for_chroma:1;
+    uint32_t surface_pitch:18;
+    uint32_t address_control:1;
+    uint32_t mem_compress_enable:1;
+    uint32_t mem_compress_mode:1;
+    uint32_t uv_offset_v_direction_msb:1;
+    uint32_t uv_offset_u_direction:1;
+    uint32_t interleave_chroma:1;
+    uint32_t surface_format:5;
+  } ss2;
+
+  struct {
+    uint32_t y_offset_for_u:14;
+    uint32_t pad1:2;
+    uint32_t x_offset_for_u:14;
+    uint32_t pad0:2;
+  } ss3;
+
+  struct {
+    uint32_t y_offset_for_v:15;
+    uint32_t pad1:1;
+    uint32_t x_offset_for_v:14;
+    uint32_t pad0:2;
+  } ss4;
+
+  struct {
+    uint32_t surface_object_control_state:7;
+    uint32_t pad2:11;
+    uint32_t tiled_res_mode:2;
+    uint32_t pad1:4;
+    uint32_t pad0:6;
+    uint32_t vert_line_stride_offset:1;
+    uint32_t vert_line_stride:1;
+  } ss5;
+
+  struct {
+    uint32_t base_addr;
+  } ss6;
+
+  struct {
+    uint32_t base_addr_high:16;
+    uint32_t pad0:16;
+  } ss7;
+} gen9_media_surface_state_t;
 
 typedef union gen_surface_state
 {

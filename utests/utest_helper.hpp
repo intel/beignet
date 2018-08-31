@@ -303,6 +303,9 @@ extern int cl_check_beignet(void);
 /* Check is intel subgroups enabled. */
 extern int cl_check_subgroups(void);
 
+/* Check is intel_media_block_io enabled. */
+extern int cl_check_media_block_io(void);
+
 typedef cl_int(clGetKernelSubGroupInfoKHR_cb)(cl_kernel, cl_device_id,
                                               cl_kernel_sub_group_info, size_t,
                                               const void *, size_t, void *,

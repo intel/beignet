@@ -154,6 +154,14 @@ cl_command_queue_bind_image(cl_command_queue queue, cl_kernel k, cl_gpgpu gpgpu,
                           image->intel_fmt, image->image_type, image->bpp,
                           image->w, image->h, image->depth,
                           image->row_pitch, image->slice_pitch, (cl_gpgpu_tiling)image->tiling);
+    //We always setup media surface state, so this surface can be used for vme
+    else if ((image->fmt.image_channel_order == CL_R) && (image->fmt.image_channel_data_type == CL_UNORM_INT8) &&
+             cl_gpgpu_bind_image_for_vme)
+      cl_gpgpu_bind_image_for_vme(gpgpu, k->images[i].idx + BTI_WORKAROUND_IMAGE_OFFSET, image->base.bo,
+                          image->offset + k->args[id].mem->offset,
+                          image->intel_fmt, image->image_type, image->bpp,
+                          image->w, image->h, image->depth,
+                          image->row_pitch, image->slice_pitch, (cl_gpgpu_tiling)image->tiling);
   }
   return CL_SUCCESS;
 }

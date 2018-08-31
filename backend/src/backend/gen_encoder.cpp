@@ -192,6 +192,10 @@ namespace gbe
     if (isSrcDstDiffSpan(dst, src0) == true) return true;
     if (isSrcDstDiffSpan(dst, src1) == true) return true;
 
+    return p->needToSplitCmpBySrcType(p, src0, src1);
+  }
+
+  bool GenEncoder::needToSplitCmpBySrcType(GenEncoder *p, GenRegister src0, GenRegister src1) {
     if (src0.type == GEN_TYPE_D || src0.type == GEN_TYPE_UD || src0.type == GEN_TYPE_F)
       return true;
     if (src1.type == GEN_TYPE_D || src1.type == GEN_TYPE_UD || src1.type == GEN_TYPE_F)
@@ -1270,6 +1274,14 @@ namespace gbe
     this->setSrc1(insn, GenRegister::immud(0));
     setVmeMessage(insn, bti, response_length, msg_length,
                   msg_type, vme_search_path_lut, lut_sub);
+  }
+
+  void GenEncoder::IME(unsigned char bti,
+                       GenRegister dest,
+                       GenRegister msg,
+                       uint32_t msg_type)
+  {
+    GBE_ASSERT(0);
   }
 
   void GenEncoder::TYPED_WRITE(GenRegister msg, GenRegister data, bool header_present, unsigned char bti, bool useSends)

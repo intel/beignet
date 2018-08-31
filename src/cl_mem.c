@@ -152,6 +152,9 @@ cl_mem_allocate(enum cl_mem_type type,
   mem->cmrt_mem = NULL;
   if (mem->type == CL_MEM_IMAGE_TYPE) {
     cl_mem_image(mem)->is_image_from_buffer = 0;
+    cl_mem_image(mem)->is_image_from_nv12_image = 0;
+    cl_mem_image(mem)->is_ker_copy = 0;
+    cl_mem_image(mem)->tmp_ker_buf = NULL;
   }
 
   if (sz != 0) {
@@ -230,7 +233,11 @@ cl_mem_allocate(enum cl_mem_type type,
       }
       // if the image if created from buffer, should use the bo directly to share same bo.
       mem->bo = buffer->bo;
-      cl_mem_image(mem)->is_image_from_buffer = 1;
+      if (IS_IMAGE(buffer) && cl_mem_image(buffer)->fmt.image_channel_order == CL_NV12_INTEL) {
+        cl_mem_image(mem)->is_image_from_nv12_image = 1;
+      } else {
+        cl_mem_image(mem)->is_image_from_buffer = 1;
+      }
       bufCreated = 1;
     }
 
@@ -746,6 +753,87 @@ cl_image_tiling_t cl_get_default_tiling(cl_driver drv)
 }
 
 static cl_mem
+_cl_new_image_copy_from_host_ptr(cl_context ctx,
+                  cl_mem_flags flags,
+                  const cl_image_format *fmt,
+                  const cl_mem_object_type image_type,
+                  size_t w,
+                  size_t h,
+                  size_t depth,
+                  size_t pitch,
+                  size_t slice_pitch,
+                  size_t sz,
+                  size_t aligned_pitch,
+                  uint32_t intel_fmt,
+                  uint32_t bpp,
+                  cl_image_tiling_t tiling,
+                  void *data,           //pointer from application
+                  cl_int *errcode_ret)
+{
+  cl_int err = CL_SUCCESS;
+  cl_mem mem = NULL;
+  size_t origin[3] = {0, 0, 0};
+  size_t region[3] = {w, h, depth};
+  size_t aligned_slice_pitch = 0;
+
+  if (ctx->image_queue == NULL) {
+    ctx->image_queue = clCreateCommandQueueWithProperties(ctx, ctx->devices[0], 0, &err);
+    if (err != CL_SUCCESS || !ctx->image_queue) {
+      *errcode_ret = err;
+      ctx->image_queue = NULL;
+      return NULL;
+    }
+  }
+
+  // Map host ptr to OCL buffer
+  cl_mem buf = clCreateBuffer(ctx, CL_MEM_USE_HOST_PTR, sz, data, &err);
+  if (err != CL_SUCCESS) {
+    *errcode_ret = err;
+    return NULL;
+  }
+
+  mem = cl_mem_allocate(CL_MEM_IMAGE_TYPE, ctx, flags, sz, tiling != CL_NO_TILE, NULL, NULL, &err);
+  if (mem == NULL || err != CL_SUCCESS) {
+    clReleaseMemObject(buf);
+    return NULL;
+  }
+
+  cl_buffer_set_tiling(mem->bo, tiling, aligned_pitch);
+
+  if (image_type == CL_MEM_OBJECT_IMAGE2D)
+    aligned_slice_pitch = 0;
+  else
+    //SKL need use tiling's aligned_h to calc slice_pitch and IVB to BDW need CL_NO_TILE's aligned_h to calc.
+    aligned_slice_pitch = aligned_pitch * ALIGN(h, cl_buffer_get_tiling_align(ctx, tiling, 2));
+
+  cl_mem_image_init(cl_mem_image(mem), w, h, image_type, depth, *fmt,
+                    intel_fmt, bpp, aligned_pitch, aligned_slice_pitch, tiling,
+                    0, 0, 0);
+
+  err = clEnqueueCopyBufferToImage(ctx->image_queue, buf, mem, 0, origin, region, 0, NULL, NULL);
+  if(err != CL_SUCCESS) {
+    clReleaseMemObject(buf);
+    clReleaseMemObject(mem);
+    return NULL;
+  }
+
+  err = clFinish(ctx->image_queue);
+  if(err != CL_SUCCESS) {
+    clReleaseMemObject(buf);
+    clReleaseMemObject(mem);
+    return NULL;
+  }
+
+  clReleaseMemObject(buf);
+  if (flags & CL_MEM_USE_HOST_PTR && data) {
+    mem->host_ptr = data;
+    cl_mem_image(mem)->host_row_pitch = pitch;
+    cl_mem_image(mem)->host_slice_pitch = slice_pitch;
+  }
+  return mem;
+}
+
+static cl_mem
 _cl_mem_new_image(cl_context ctx,
                   cl_mem_flags flags,
                   const cl_image_format *fmt,
@@ -760,6 +848,7 @@ _cl_mem_new_image(cl_context ctx,
                   cl_int *errcode_ret)
 {
   cl_int err = CL_SUCCESS;
+  cl_bool is_ker_copy = 0;
   cl_mem mem = NULL;
   cl_mem_object_type image_type = orig_image_type;
   uint32_t bpp = 0, intel_fmt = INTEL_UNSUPPORTED_FORMAT;
@@ -827,7 +916,7 @@ _cl_mem_new_image(cl_context ctx,
       h = (w + ctx->devices[0]->image2d_max_width - 1) / ctx->devices[0]->image2d_max_width;
       w = w > ctx->devices[0]->image2d_max_width ? ctx->devices[0]->image2d_max_width : w;
       tiling = CL_NO_TILE;
-    } else if(image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL) {
+    } else if(image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL && !IS_IMAGE(buffer)) {
       tiling = CL_NO_TILE;
     } else if (cl_driver_get_ver(ctx->drv) != 6) {
       /* Pick up tiling mode (we do only linear on SNB) */
@@ -873,6 +962,9 @@ _cl_mem_new_image(cl_context ctx,
     assert(0);
 
 #undef DO_IMAGE_ERROR
+  if (fmt->image_channel_order == CL_NV12_INTEL) {
+    h += h/2;
+  }
 
   uint8_t enableUserptr = 0;
   if (enable_true_hostptr && ctx->devices[0]->host_unified_memory && data != NULL && (flags & CL_MEM_USE_HOST_PTR)) {
@@ -894,7 +986,7 @@ _cl_mem_new_image(cl_context ctx,
       aligned_pitch = pitch;
     //no need align the height if 2d image from buffer.
     //the pitch should be same with buffer's pitch as they share same bo.
-    if (image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL) {
+    if (image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL && !IS_IMAGE(buffer)) {
       if(aligned_pitch < pitch) {
         aligned_pitch = pitch;
       }
@@ -911,7 +1003,7 @@ _cl_mem_new_image(cl_context ctx,
   }
 
   sz = aligned_pitch * aligned_h * depth;
-  if (image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL)  {
+  if (image_type == CL_MEM_OBJECT_IMAGE2D && buffer != NULL && !IS_IMAGE(buffer))  {
     //image 2d created from buffer: per spec, the buffer sz maybe larger than the image 2d.
     if (buffer->size >= sz)
       sz = buffer->size;
@@ -923,11 +1015,25 @@ _cl_mem_new_image(cl_context ctx,
 
   /* If sz is large than 128MB, map gtt may fail in some system.
      Because there is no obviours performance drop, disable tiling. */
-  if(tiling != CL_NO_TILE && sz > MAX_TILING_SIZE) {
-    tiling = CL_NO_TILE;
-    aligned_pitch = w * bpp;
-    aligned_h     = ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_NO_TILE, 1));
-    sz = aligned_pitch * aligned_h * depth;
+  if (tiling != CL_NO_TILE && sz > MAX_TILING_SIZE) {
+    if ((image_type == CL_MEM_OBJECT_IMAGE2D || image_type == CL_MEM_OBJECT_IMAGE3D) &&
+      buffer == NULL) {
+      if (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR)) {
+        mem = _cl_new_image_copy_from_host_ptr(ctx, flags, fmt, image_type, w, h, depth, pitch,
+          slice_pitch, sz, aligned_pitch, intel_fmt, bpp, tiling, data, &err);
+        if (mem != NULL) {
+          cl_mem_image(mem)->is_ker_copy = 1;
+          goto exit;
+        } else
+          goto error;
+      } else
+        is_ker_copy = 1;
+    } else {
+      tiling = CL_NO_TILE;
+      aligned_pitch = w * bpp;
+      aligned_h     = ALIGN(h, cl_buffer_get_tiling_align(ctx, CL_NO_TILE, 1));
+      sz = aligned_pitch * aligned_h * depth;
+    }
   }
 
   if (image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
@@ -979,6 +1085,13 @@ _cl_mem_new_image(cl_context ctx,
       cl_mem_copy_image(cl_mem_image(mem), pitch, slice_pitch, data);
   }
 
+  /* copy yuv data if required */
+  if(fmt->image_channel_order == CL_NV12_INTEL && data) {
+      cl_mem_copy_image(cl_mem_image(mem), pitch, slice_pitch, data);
+  }
+
+  cl_mem_image(mem)->is_ker_copy = is_ker_copy;
+
 exit:
   if (errcode_ret)
     *errcode_ret = err;
@@ -987,6 +1100,121 @@ error:
   cl_mem_delete(mem);
   mem = NULL;
   goto exit;
+}
+
+static cl_mem
+_cl_mem_new_image_from_nv12_image(cl_context ctx,
+                              cl_mem_flags flags,
+                              const cl_image_format* image_format,
+                              const cl_image_desc *image_desc,
+                              cl_int *errcode_ret)
+{
+  cl_mem image = NULL;
+  cl_mem imageIn = image_desc->mem_object;
+  cl_int err = CL_SUCCESS;
+  *errcode_ret = err;
+  uint32_t bpp;
+  uint32_t intel_fmt = INTEL_UNSUPPORTED_FORMAT;
+  size_t width = 0;
+  size_t height = 0;
+  size_t depth = 0;
+
+  /* Get the size of each pixel */
+  if (UNLIKELY((err = cl_image_byte_per_pixel(image_format, &bpp)) != CL_SUCCESS))
+    goto error;
+
+  /* Only a sub-set of the formats are supported */
+  intel_fmt = cl_image_get_intel_format(image_format);
+  if (UNLIKELY(intel_fmt == INTEL_UNSUPPORTED_FORMAT)) {
+    err = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+    goto error;
+  }
+
+  if(imageIn == NULL) {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
+
+  if (cl_mem_image(imageIn)->fmt.image_channel_order != CL_NV12_INTEL ||
+      (image_format->image_channel_order != CL_R &&
+       image_format->image_channel_order != CL_RG) ||
+      image_format->image_channel_data_type != CL_UNORM_INT8) {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
+
+  width = cl_mem_image(imageIn)->w;
+  if (image_desc->image_depth == 0) {
+    height = cl_mem_image(imageIn)->h * 2 / 3;
+  } else if (image_desc->image_depth == 1) {
+    width = cl_mem_image(imageIn)->w / 2;
+    height = cl_mem_image(imageIn)->h / 3;
+  } else {
+    err = CL_INVALID_IMAGE_DESCRIPTOR;
+    goto error;
+  }
+
+  //flags check here.
+  if ((flags & CL_MEM_USE_HOST_PTR) || (flags & CL_MEM_ALLOC_HOST_PTR) ||
+      (flags & CL_MEM_COPY_HOST_PTR)) {
+    err = CL_INVALID_VALUE;
+    goto error;
+  }
+
+  if (!(imageIn->flags & CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL)) {
+    if (((flags & CL_MEM_READ_WRITE) || (flags & CL_MEM_READ_ONLY)) &&
+        (imageIn->flags & CL_MEM_WRITE_ONLY)) {
+      err = CL_INVALID_VALUE;
+      goto error;
+    }
+    if (((flags & CL_MEM_READ_WRITE) || (flags & CL_MEM_WRITE_ONLY)) &&
+        (imageIn->flags | CL_MEM_READ_ONLY)) {
+      err = CL_INVALID_VALUE;
+      goto error;
+    }
+    if (((flags & CL_MEM_READ_WRITE) || (flags & CL_MEM_WRITE_ONLY) ||(flags & CL_MEM_READ_ONLY)) &&
+        (imageIn->flags & CL_MEM_NO_ACCESS_INTEL)) {
+      err = CL_INVALID_VALUE;
+      goto error;
+    }
+    if ((flags & CL_MEM_HOST_READ_ONLY) &&
+        (imageIn->flags & CL_MEM_HOST_WRITE_ONLY)) {
+      err = CL_INVALID_VALUE;
+      goto error;
+    }
+    if ((flags & CL_MEM_HOST_WRITE_ONLY) &&
+        (imageIn->flags & CL_MEM_HOST_READ_ONLY)) {
+      err = CL_INVALID_VALUE;
+      goto error;
+    }
+    if (((flags & CL_MEM_HOST_READ_ONLY) || (flags & CL_MEM_HOST_WRITE_ONLY)) &&
+        (imageIn->flags & CL_MEM_HOST_NO_ACCESS)) {
+      err = CL_INVALID_VALUE;
+      goto error;
+    }
+  }
+
+  image = _cl_mem_new_image(ctx, flags, image_format, image_desc->image_type,
+                            width, height, depth, cl_mem_image(imageIn)->row_pitch,
+                            0, NULL,
+                            imageIn, errcode_ret);
+  if (image == NULL)
+    return NULL;
+
+
+  if (image_desc->image_depth == 1) {
+    cl_mem_image(image)->offset = cl_mem_image(imageIn)->row_pitch * height * 2;
+  }
+  cl_mem_image(image)->nv12_image = imageIn;
+  cl_mem_add_ref(imageIn);
+  return image;
+
+error:
+  if (image)
+    cl_mem_delete(image);
+  image = NULL;
+  *errcode_ret = err;
+  return image;
 }
 
 static cl_mem
@@ -1034,7 +1262,7 @@ _cl_mem_new_image_from_buffer(cl_context ctx,
     goto error;
   }
   if ((buffer->flags & CL_MEM_READ_ONLY) &&
-      (flags & (CL_MEM_READ_WRITE|CL_MEM_WRITE_ONLY))) {
+      (flags & (CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY))) {
     err = CL_INVALID_VALUE;
     goto error;
   }
@@ -1169,9 +1397,14 @@ cl_mem_new_image(cl_context context,
                              image_desc->image_row_pitch, image_desc->image_slice_pitch,
                              host_ptr, NULL, errcode_ret);
   case CL_MEM_OBJECT_IMAGE2D:
-    if(image_desc->buffer)
-      return _cl_mem_new_image_from_buffer(context, flags, image_format,
-                             image_desc, errcode_ret);
+    if (image_desc->buffer) {
+      if (IS_IMAGE(image_desc->buffer)) {
+        return _cl_mem_new_image_from_nv12_image(context, flags, image_format,
+                                             image_desc, errcode_ret);
+      } else
+        return _cl_mem_new_image_from_buffer(context, flags, image_format,
+                                             image_desc, errcode_ret);
+    }
     else
       return _cl_mem_new_image(context, flags, image_format, image_desc->image_type,
                              image_desc->image_width, image_desc->image_height, image_desc->image_depth,
@@ -1246,6 +1479,19 @@ cl_mem_delete(cl_mem mem)
           cl_mem_image(mem)->buffer_1d = NULL;
           mem->bo = NULL;
         }
+    }
+    if (cl_mem_image(mem)->nv12_image) {
+        assert(cl_mem_image(mem)->image_type == CL_MEM_OBJECT_IMAGE2D);
+        cl_mem_delete(cl_mem_image(mem)->nv12_image);
+        if(cl_mem_image(mem)->image_type == CL_MEM_OBJECT_IMAGE2D && cl_mem_image(mem)->is_image_from_nv12_image == 1)
+        {
+          cl_mem_image(mem)->nv12_image = NULL;
+          mem->bo = NULL;
+        }
+    }
+    if (cl_mem_image(mem)->tmp_ker_buf) {
+      cl_mem_delete(cl_mem_image(mem)->tmp_ker_buf);
+      cl_mem_image(mem)->tmp_ker_buf = NULL;
     }
   }
 
@@ -1907,6 +2153,35 @@ fail:
   return ret;
 }
 
+#define ALIGN16 16
+#define ALIGN4 4
+#define ALIGN1 1
+
+static size_t
+get_align_size_for_copy_kernel(struct _cl_mem_image* image, const size_t origin0, const size_t region0,
+                            const size_t offset, cl_image_format *fmt) {
+  size_t align_size = 0;
+
+  if (((image->w * image->bpp) % ALIGN16 == 0) && ((origin0 * image->bpp) % ALIGN16 == 0) && (region0 % ALIGN16 == 0) &&
+      (offset % ALIGN16 == 0)) {
+    fmt->image_channel_order = CL_RGBA;
+    fmt->image_channel_data_type = CL_UNSIGNED_INT32;
+    align_size = ALIGN16;
+  } else if (((image->w * image->bpp) % ALIGN4 == 0) && ((origin0 * image->bpp) % ALIGN4 == 0) &&
+             (region0 % ALIGN4 == 0) && (offset % ALIGN4 == 0)) {
+    fmt->image_channel_order = CL_R;
+    fmt->image_channel_data_type = CL_UNSIGNED_INT32;
+    align_size = ALIGN4;
+  }
+  else{
+    fmt->image_channel_order = CL_R;
+    fmt->image_channel_data_type = CL_UNSIGNED_INT8;
+    align_size = ALIGN1;
+  }
+
+  return align_size;
+}
+
 LOCAL cl_int
 cl_mem_copy_image_to_buffer(cl_command_queue queue, cl_event event, struct _cl_mem_image* image, cl_mem buffer,
                          const size_t *src_origin, const size_t dst_offset, const size_t *region) {
@@ -1919,7 +2194,6 @@ cl_mem_copy_image_to_buffer(cl_command_queue queue, cl_event event, struct _cl_m
   cl_image_format fmt;
   size_t origin0, region0;
   size_t kn_dst_offset;
-  int align16 = 0;
   size_t align_size = 1;
   size_t w_saved;
 
@@ -1937,18 +2211,7 @@ cl_mem_copy_image_to_buffer(cl_command_queue queue, cl_event event, struct _cl_m
   w_saved = image->w;
   region0 = region[0] * bpp;
   kn_dst_offset = dst_offset;
-  if((image->image_type == CL_MEM_OBJECT_IMAGE2D) && ((image->w * image->bpp) % 16 == 0) &&
-      ((src_origin[0] * bpp) % 16 == 0) && (region0 % 16 == 0) && (dst_offset % 16 == 0)){
-    fmt.image_channel_order = CL_RGBA;
-    fmt.image_channel_data_type = CL_UNSIGNED_INT32;
-    align16 = 1;
-    align_size = 16;
-  }
-  else{
-    fmt.image_channel_order = CL_R;
-    fmt.image_channel_data_type = CL_UNSIGNED_INT8;
-    align_size = 1;
-  }
+  align_size = get_align_size_for_copy_kernel(image, src_origin[0], region0, dst_offset, &fmt);
   image->intel_fmt = cl_image_get_intel_format(&fmt);
   image->w = (image->w * image->bpp) / align_size;
   image->bpp = align_size;
@@ -1959,13 +2222,21 @@ cl_mem_copy_image_to_buffer(cl_command_queue queue, cl_event event, struct _cl_m
 
   /* setup the kernel and run. */
   if(image->image_type == CL_MEM_OBJECT_IMAGE2D) {
-    if(align16){
+    if(align_size == ALIGN16){
       extern char cl_internal_copy_image_2d_to_buffer_align16_str[];
       extern size_t cl_internal_copy_image_2d_to_buffer_align16_str_size;
 
       ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_BUFFER_ALIGN16,
                 cl_internal_copy_image_2d_to_buffer_align16_str,
                 (size_t)cl_internal_copy_image_2d_to_buffer_align16_str_size, NULL);
+    }
+    else if(align_size == ALIGN4){
+      extern char cl_internal_copy_image_2d_to_buffer_align4_str[];
+      extern size_t cl_internal_copy_image_2d_to_buffer_align4_str_size;
+
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_2D_TO_BUFFER_ALIGN4,
+                cl_internal_copy_image_2d_to_buffer_align4_str,
+                (size_t)cl_internal_copy_image_2d_to_buffer_align4_str_size, NULL);
     }
     else{
       extern char cl_internal_copy_image_2d_to_buffer_str[];
@@ -1975,11 +2246,28 @@ cl_mem_copy_image_to_buffer(cl_command_queue queue, cl_event event, struct _cl_m
           cl_internal_copy_image_2d_to_buffer_str, (size_t)cl_internal_copy_image_2d_to_buffer_str_size, NULL);
     }
   }else if(image->image_type == CL_MEM_OBJECT_IMAGE3D) {
-    extern char cl_internal_copy_image_3d_to_buffer_str[];
-    extern size_t cl_internal_copy_image_3d_to_buffer_str_size;
+    if (align_size == ALIGN16) {
+      extern char cl_internal_copy_image_3d_to_buffer_align16_str[];
+      extern size_t cl_internal_copy_image_3d_to_buffer_align16_str_size;
 
-    ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER,
-          cl_internal_copy_image_3d_to_buffer_str, (size_t)cl_internal_copy_image_3d_to_buffer_str_size, NULL);
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER_ALIGN16,
+                                                  cl_internal_copy_image_3d_to_buffer_align16_str,
+                                                  (size_t)cl_internal_copy_image_3d_to_buffer_align16_str_size, NULL);
+    } else if (align_size == ALIGN4) {
+      extern char cl_internal_copy_image_3d_to_buffer_align4_str[];
+      extern size_t cl_internal_copy_image_3d_to_buffer_align4_str_size;
+
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER_ALIGN4,
+                                                  cl_internal_copy_image_3d_to_buffer_align4_str,
+                                                  (size_t)cl_internal_copy_image_3d_to_buffer_align4_str_size, NULL);
+    } else {
+      extern char cl_internal_copy_image_3d_to_buffer_str[];
+      extern size_t cl_internal_copy_image_3d_to_buffer_str_size;
+
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER,
+                                                  cl_internal_copy_image_3d_to_buffer_str,
+                                                  (size_t)cl_internal_copy_image_3d_to_buffer_str_size, NULL);
+    }
   }
 
   if (!ker) {
@@ -2023,7 +2311,6 @@ cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_event event, cl_mem buffe
   cl_image_format fmt;
   size_t origin0, region0;
   size_t kn_src_offset;
-  int align16 = 0;
   size_t align_size = 1;
   size_t w_saved = 0;
 
@@ -2041,18 +2328,7 @@ cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_event event, cl_mem buffe
   w_saved = image->w;
   region0 = region[0] * bpp;
   kn_src_offset = src_offset;
-  if((image->image_type == CL_MEM_OBJECT_IMAGE2D) && ((image->w * image->bpp) % 16 == 0) &&
-      ((dst_origin[0] * bpp) % 16 == 0) && (region0 % 16 == 0) && (src_offset % 16 == 0)){
-    fmt.image_channel_order = CL_RGBA;
-    fmt.image_channel_data_type = CL_UNSIGNED_INT32;
-    align16 = 1;
-    align_size = 16;
-  }
-  else{
-    fmt.image_channel_order = CL_R;
-    fmt.image_channel_data_type = CL_UNSIGNED_INT8;
-    align_size = 1;
-  }
+  align_size = get_align_size_for_copy_kernel(image, dst_origin[0], region0, src_offset, &fmt);
   image->intel_fmt = cl_image_get_intel_format(&fmt);
   image->w = (image->w * image->bpp) / align_size;
   image->bpp = align_size;
@@ -2063,13 +2339,21 @@ cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_event event, cl_mem buffe
 
   /* setup the kernel and run. */
   if(image->image_type == CL_MEM_OBJECT_IMAGE2D) {
-    if(align16){
+    if(align_size == ALIGN16){
       extern char cl_internal_copy_buffer_to_image_2d_align16_str[];
       extern size_t cl_internal_copy_buffer_to_image_2d_align16_str_size;
 
       ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_2D_ALIGN16,
                 cl_internal_copy_buffer_to_image_2d_align16_str,
                 (size_t)cl_internal_copy_buffer_to_image_2d_align16_str_size, NULL);
+    }
+    else if(align_size == ALIGN4){
+      extern char cl_internal_copy_buffer_to_image_2d_align4_str[];
+      extern size_t cl_internal_copy_buffer_to_image_2d_align4_str_size;
+
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_2D_ALIGN4,
+                cl_internal_copy_buffer_to_image_2d_align4_str,
+                (size_t)cl_internal_copy_buffer_to_image_2d_align4_str_size, NULL);
     }
     else{
       extern char cl_internal_copy_buffer_to_image_2d_str[];
@@ -2079,11 +2363,27 @@ cl_mem_copy_buffer_to_image(cl_command_queue queue, cl_event event, cl_mem buffe
           cl_internal_copy_buffer_to_image_2d_str, (size_t)cl_internal_copy_buffer_to_image_2d_str_size, NULL);
     }
   }else if(image->image_type == CL_MEM_OBJECT_IMAGE3D) {
+    if (align_size == ALIGN16) {
+      extern char cl_internal_copy_buffer_to_image_3d_align16_str[];
+      extern size_t cl_internal_copy_buffer_to_image_3d_align16_str_size;
+
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_3D_ALIGN16,
+                                                  cl_internal_copy_buffer_to_image_3d_align16_str,
+                                                  (size_t)cl_internal_copy_buffer_to_image_3d_align16_str_size, NULL);
+    } else if (align_size == ALIGN4) {
+      extern char cl_internal_copy_buffer_to_image_3d_align4_str[];
+      extern size_t cl_internal_copy_buffer_to_image_3d_align4_str_size;
+
+      ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_3D_ALIGN4,
+                                                  cl_internal_copy_buffer_to_image_3d_align4_str,
+                                                  (size_t)cl_internal_copy_buffer_to_image_3d_align4_str_size, NULL);
+    } else {
       extern char cl_internal_copy_buffer_to_image_3d_str[];
       extern size_t cl_internal_copy_buffer_to_image_3d_str_size;
 
       ker = cl_context_get_static_kernel_from_bin(queue->ctx, CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_3D,
           cl_internal_copy_buffer_to_image_3d_str, (size_t)cl_internal_copy_buffer_to_image_3d_str_size, NULL);
+    }
   }
   if (!ker)
     return CL_OUT_OF_RESOURCES;
@@ -2389,6 +2689,95 @@ error:
   goto exit;
 }
 
+static cl_int
+get_mapped_address(cl_mem mem)
+{
+  cl_int slot = -1;
+  if (!mem->mapped_ptr_sz) {
+    mem->mapped_ptr_sz = 16;
+    mem->mapped_ptr = (cl_mapped_ptr *)malloc(
+        sizeof(cl_mapped_ptr) * mem->mapped_ptr_sz);
+    if (!mem->mapped_ptr) {
+      cl_mem_unmap_auto(mem);
+      return slot;
+    }
+    memset(mem->mapped_ptr, 0, mem->mapped_ptr_sz * sizeof(cl_mapped_ptr));
+    slot = 0;
+  } else {
+    int i = 0;
+    for (; i < mem->mapped_ptr_sz; i++) {
+      if (mem->mapped_ptr[i].ptr == NULL) {
+        slot = i;
+        break;
+      }
+    }
+    if (i == mem->mapped_ptr_sz) {
+      cl_mapped_ptr *new_ptr = (cl_mapped_ptr *)malloc(
+          sizeof(cl_mapped_ptr) * mem->mapped_ptr_sz * 2);
+      if (!new_ptr) {
+        cl_mem_unmap_auto(mem);
+        return slot;
+      }
+      memset(new_ptr, 0, 2 * mem->mapped_ptr_sz * sizeof(cl_mapped_ptr));
+      memcpy(new_ptr, mem->mapped_ptr,
+          mem->mapped_ptr_sz * sizeof(cl_mapped_ptr));
+      slot = mem->mapped_ptr_sz;
+      mem->mapped_ptr_sz *= 2;
+      free(mem->mapped_ptr);
+      mem->mapped_ptr = new_ptr;
+    }
+  }
+
+  assert(slot != -1);
+  return slot;
+}
+
+LOCAL cl_int
+cl_mem_record_map_mem_for_kernel(cl_mem mem, void *ptr, void **mem_ptr, size_t offset,
+                      size_t size, const size_t *origin, const size_t *region,
+                      cl_mem tmp_ker_buf, uint8_t write_map)
+{
+  // TODO: Need to add MT safe logic.
+
+  cl_int slot = -1;
+  int err = CL_SUCCESS;
+  size_t sub_offset = 0;
+
+  //ptr = (char*)ptr + offset + sub_offset;
+  if(mem->flags & CL_MEM_USE_HOST_PTR) {
+    assert(mem->host_ptr);
+    //only calc ptr here, will do memcpy in enqueue
+    *mem_ptr = (char*)ptr + offset + sub_offset;
+  } else {
+    *mem_ptr = ptr;
+  }
+  /* Record the mapped address. */
+  slot = get_mapped_address(mem);
+  if (slot == -1) {
+    err = CL_OUT_OF_HOST_MEMORY;
+    goto error;
+  }
+  mem->mapped_ptr[slot].ptr = *mem_ptr;
+  mem->mapped_ptr[slot].v_ptr = ptr;
+  mem->mapped_ptr[slot].size = size;
+  mem->mapped_ptr[slot].ker_write_map = write_map;
+  mem->mapped_ptr[slot].tmp_ker_buf = tmp_ker_buf;
+  if(origin) {
+    assert(region);
+    mem->mapped_ptr[slot].origin[0] = origin[0];
+    mem->mapped_ptr[slot].origin[1] = origin[1];
+    mem->mapped_ptr[slot].origin[2] = origin[2];
+    mem->mapped_ptr[slot].region[0] = region[0];
+    mem->mapped_ptr[slot].region[1] = region[1];
+    mem->mapped_ptr[slot].region[2] = region[2];
+  }
+  mem->map_ref++;
+error:
+  if (err != CL_SUCCESS)
+    *mem_ptr = NULL;
+  return err;
+}
+
 LOCAL cl_int
 cl_mem_record_map_mem(cl_mem mem, void *ptr, void **mem_ptr, size_t offset,
                       size_t size, const size_t *origin, const size_t *region)
@@ -2413,43 +2802,11 @@ cl_mem_record_map_mem(cl_mem mem, void *ptr, void **mem_ptr, size_t offset,
     *mem_ptr = ptr;
   }
   /* Record the mapped address. */
-  if (!mem->mapped_ptr_sz) {
-    mem->mapped_ptr_sz = 16;
-    mem->mapped_ptr = (cl_mapped_ptr *)malloc(
-        sizeof(cl_mapped_ptr) * mem->mapped_ptr_sz);
-    if (!mem->mapped_ptr) {
-      cl_mem_unmap_auto(mem);
-      err = CL_OUT_OF_HOST_MEMORY;
-      goto error;
-    }
-    memset(mem->mapped_ptr, 0, mem->mapped_ptr_sz * sizeof(cl_mapped_ptr));
-    slot = 0;
-  } else {
-    int i = 0;
-    for (; i < mem->mapped_ptr_sz; i++) {
-      if (mem->mapped_ptr[i].ptr == NULL) {
-        slot = i;
-        break;
-      }
-    }
-    if (i == mem->mapped_ptr_sz) {
-      cl_mapped_ptr *new_ptr = (cl_mapped_ptr *)malloc(
-          sizeof(cl_mapped_ptr) * mem->mapped_ptr_sz * 2);
-      if (!new_ptr) {
-        cl_mem_unmap_auto(mem);
-        err = CL_OUT_OF_HOST_MEMORY;
-        goto error;
-      }
-      memset(new_ptr, 0, 2 * mem->mapped_ptr_sz * sizeof(cl_mapped_ptr));
-      memcpy(new_ptr, mem->mapped_ptr,
-          mem->mapped_ptr_sz * sizeof(cl_mapped_ptr));
-      slot = mem->mapped_ptr_sz;
-      mem->mapped_ptr_sz *= 2;
-      free(mem->mapped_ptr);
-      mem->mapped_ptr = new_ptr;
-    }
+  slot = get_mapped_address(mem);
+  if (slot == -1) {
+    err = CL_OUT_OF_HOST_MEMORY;
+    goto error;
   }
-  assert(slot != -1);
   mem->mapped_ptr[slot].ptr = *mem_ptr;
   mem->mapped_ptr[slot].v_ptr = ptr;
   mem->mapped_ptr[slot].size = size;

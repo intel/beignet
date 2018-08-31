@@ -73,6 +73,8 @@ set (GBE_SRC
     ir/value.hpp
     ir/lowering.cpp
     ir/lowering.hpp
+    ir/constopt.cpp
+    ir/constopt.hpp
     ir/profiling.cpp
     ir/profiling.hpp
     ir/printf.cpp
@@ -113,6 +115,7 @@ set (GBE_SRC
     backend/gen_insn_selection.cpp
     backend/gen_insn_selection.hpp
     backend/gen_insn_selection_optimize.cpp
+    backend/gen_insn_selection_if_opt.cpp
     backend/gen_insn_scheduling.cpp
     backend/gen_insn_scheduling.hpp
     backend/gen_insn_selection_output.cpp

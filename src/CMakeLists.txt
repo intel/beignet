@@ -7,10 +7,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${OPENGL_INCLUDE_DIRS}
                     ${EGL_INCLUDE_DIRS})
 
-macro (MakeKernelBinStr KERNEL_PATH KERNEL_FILES)
+macro (MakeKernelBinStr KERNEL_DIST KERNEL_SOURCE KERNEL_FILES)
 foreach (KF ${KERNEL_FILES})
-  set (input_file ${KERNEL_PATH}/${KF}.cl)
-  set (output_file ${KERNEL_PATH}/${KF}_str.c)
+  set (input_file ${KERNEL_SOURCE}/${KF}.cl)
+  set (output_file ${KERNEL_DIST}/${KF}_str.c)
   list (APPEND KERNEL_STR_FILES ${output_file})
   list (GET GBE_BIN_GENERATER -1 GBE_BIN_FILE)
   if(GEN_PCI_ID)
@@ -34,7 +34,7 @@ macro (MakeBuiltInKernelStr KERNEL_PATH KERNEL_FILES)
   set (file_content)
   file (REMOVE ${output_file})
   foreach (KF ${KERNEL_NAMES})
-    set (input_file ${KERNEL_PATH}/${KF}.cl)
+    set (input_file ${CMAKE_CURRENT_SOURCE_DIR}/kernels/${KF}.cl)
     file(READ ${input_file} file_content )
     STRING(REGEX REPLACE ";" "\\\\;" file_content "${file_content}")
     file(APPEND ${output_file} ${file_content})
@@ -53,6 +53,9 @@ cl_internal_copy_image_2d_array_to_2d_array cl_internal_copy_image_2d_array_to_2
 cl_internal_copy_image_2d_array_to_3d cl_internal_copy_image_3d_to_2d_array
 cl_internal_copy_image_2d_to_buffer cl_internal_copy_image_2d_to_buffer_align16 cl_internal_copy_image_3d_to_buffer
 cl_internal_copy_buffer_to_image_2d cl_internal_copy_buffer_to_image_2d_align16 cl_internal_copy_buffer_to_image_3d
+cl_internal_copy_buffer_to_image_2d_align4 cl_internal_copy_image_2d_to_buffer_align4
+cl_internal_copy_buffer_to_image_3d_align4 cl_internal_copy_image_3d_to_buffer_align4
+cl_internal_copy_buffer_to_image_3d_align16 cl_internal_copy_image_3d_to_buffer_align16
 cl_internal_fill_buf_align8 cl_internal_fill_buf_align4
 cl_internal_fill_buf_align2 cl_internal_fill_buf_unalign
 cl_internal_fill_buf_align128 cl_internal_fill_image_1d
@@ -60,9 +63,9 @@ cl_internal_fill_image_1d_array cl_internal_fill_image_2d
 cl_internal_fill_image_2d_array cl_internal_fill_image_3d
 cl_internal_block_motion_estimate_intel)
 set (BUILT_IN_NAME  cl_internal_built_in_kernel)
-MakeBuiltInKernelStr ("${CMAKE_CURRENT_SOURCE_DIR}/kernels/" "${KERNEL_NAMES}")
-MakeKernelBinStr ("${CMAKE_CURRENT_SOURCE_DIR}/kernels/" "${KERNEL_NAMES}")
-MakeKernelBinStr ("${CMAKE_CURRENT_SOURCE_DIR}/kernels/" "${BUILT_IN_NAME}")
+MakeBuiltInKernelStr ("${CMAKE_CURRENT_BINARY_DIR}/kernels/" "${KERNEL_NAMES}")
+MakeKernelBinStr ("${CMAKE_CURRENT_BINARY_DIR}/kernels/" "${CMAKE_CURRENT_SOURCE_DIR}/kernels/" "${KERNEL_NAMES}")
+MakeKernelBinStr ("${CMAKE_CURRENT_BINARY_DIR}/kernels/" "${CMAKE_CURRENT_BINARY_DIR}/kernels/" "${BUILT_IN_NAME}")
 
 set(OPENCL_SRC
     ${KERNEL_STR_FILES}

@@ -57,4 +57,24 @@ OVERLOADABLE float4 fast_normalize(float4 x);
 OVERLOADABLE float3 cross(float3 v0, float3 v1);
 OVERLOADABLE float4 cross(float4 v0, float4 v1);
 
+OVERLOADABLE double dot(double p0, double p1);
+OVERLOADABLE double dot(double2 p0, double2 p1);
+OVERLOADABLE double dot(double3 p0, double3 p1);
+OVERLOADABLE double dot(double4 p0, double4 p1);
+OVERLOADABLE double length(double x);
+OVERLOADABLE double length(double2 x);
+OVERLOADABLE double length(double3 x);
+OVERLOADABLE double length(double4 x);
+OVERLOADABLE double distance(double x, double y);
+OVERLOADABLE double distance(double2 x, double2 y);
+OVERLOADABLE double distance(double3 x, double3 y);
+OVERLOADABLE double distance(double4 x, double4 y);
+OVERLOADABLE double normalize(double x);
+OVERLOADABLE double2 normalize(double2 x);
+OVERLOADABLE double3 normalize(double3 x);
+OVERLOADABLE double4 normalize(double4 x);
+OVERLOADABLE double3 cross(double3 v0, double3 v1);
+OVERLOADABLE double4 cross(double4 v0, double4 v1);
+
+
 #endif

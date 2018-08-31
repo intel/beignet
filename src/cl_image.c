@@ -17,6 +17,7 @@
  * Author: Benjamin Segovia <benjamin.segovia@intel.com>
  */
 
+#include "CL/cl_ext.h"
 #include "cl_image.h"
 #include "cl_utils.h"
 #include "intel/intel_defines.h"
@@ -97,6 +98,7 @@ cl_image_byte_per_pixel(const cl_image_format *fmt, uint32_t *bpp)
         return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
       *bpp *= 4;
     break;
+    case CL_NV12_INTEL: break;
 
     default: return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
   };
@@ -206,6 +208,11 @@ cl_image_get_intel_format(const cl_image_format *fmt)
     case CL_sBGRA:
       switch (type) {
         case CL_UNORM_INT8:     return I965_SURFACEFORMAT_B8G8R8A8_UNORM_SRGB;
+        default: return INTEL_UNSUPPORTED_FORMAT;
+      };
+    case CL_NV12_INTEL:
+      switch (type) {
+        case CL_UNORM_INT8:     return I965_SURFACEFORMAT_PLANAR_420_8;
         default: return INTEL_UNSUPPORTED_FORMAT;
       };
     default: return INTEL_UNSUPPORTED_FORMAT;

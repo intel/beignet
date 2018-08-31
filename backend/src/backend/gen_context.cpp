@@ -2349,10 +2349,20 @@ namespace gbe
     const unsigned int msg_type = insn.extra.msg_type;
 
     GBE_ASSERT(msg_type == 1);
-    int rsp_len;
-    if(msg_type == 1)
-      rsp_len = 6;
     uint32_t execWidth_org = p->curr.execWidth;
+    int virt_pld_len;
+    int virt_rsp_len;
+
+#define PHI_VME_PAYLOAD_LEN 5
+#define PHI_VME_WRITEBACK_LEN 6
+
+    if(msg_type == 1){
+      virt_rsp_len = PHI_VME_WRITEBACK_LEN;
+      if(execWidth_org == 8)
+        virt_pld_len = PHI_VME_PAYLOAD_LEN;
+      else if(execWidth_org == 16)
+        virt_pld_len = (PHI_VME_PAYLOAD_LEN + 1) / 2;
+    }
     p->push();
     p->curr.predicate = GEN_PREDICATE_NONE;
     p->curr.noMask = 1;
@@ -2364,8 +2374,8 @@ namespace gbe
      * So we should treat them differently.
      * */
     if(execWidth_org == 8){
-      for(int i=0; i < 5; i++){
-        GenRegister payload_grf = ra->genReg(insn.dst(rsp_len+i));
+      for(int i=0; i < virt_pld_len; i++){
+        GenRegister payload_grf = ra->genReg(insn.dst(virt_rsp_len+i));
         payload_grf.vstride = GEN_VERTICAL_STRIDE_0;
         payload_grf.width = GEN_WIDTH_1;
         payload_grf.hstride = GEN_HORIZONTAL_STRIDE_0;
@@ -2382,9 +2392,12 @@ namespace gbe
       }
     }
     else if(execWidth_org == 16){
-      for(int i=0; i < 2; i++){
-        for(int k = 0; k < 2; k++){
-          GenRegister payload_grf = ra->genReg(insn.dst(rsp_len+i));
+      for(int i=0; i < virt_pld_len; i++){
+        int nr_num = 2;
+        if( (i == virt_pld_len-1) && (PHI_VME_PAYLOAD_LEN%2 == 1) )
+          nr_num = 1;
+        for(int k = 0; k < nr_num; k++){
+          GenRegister payload_grf = ra->genReg(insn.dst(virt_rsp_len+i));
           payload_grf.nr += k;
           payload_grf.vstride = GEN_VERTICAL_STRIDE_0;
           payload_grf.width = GEN_WIDTH_1;
@@ -2401,31 +2414,16 @@ namespace gbe
           }
         }
       }
-      {
-        int i = 2;
-        GenRegister payload_grf = ra->genReg(insn.dst(rsp_len+i));
-        payload_grf.vstride = GEN_VERTICAL_STRIDE_0;
-        payload_grf.width = GEN_WIDTH_1;
-        payload_grf.hstride = GEN_HORIZONTAL_STRIDE_0;
-        payload_grf.subphysical = 1;
-        for(int j=0; j < 8; j++){
-          payload_grf.subnr = (7 - j) * typeSize(GEN_TYPE_UD);
-          GenRegister payload_val = ra->genReg(insn.src(i*16+j));
-          payload_val.vstride = GEN_VERTICAL_STRIDE_0;
-          payload_val.width = GEN_WIDTH_1;
-          payload_val.hstride = GEN_HORIZONTAL_STRIDE_0;
-
-          p->MOV(payload_grf, payload_val);
-        }
-      }
     }
     p->pop();
+#undef PHI_VME_PAYLOAD_LEN
+#undef PHI_VME_WRITEBACK_LEN
 
     p->push();
     p->curr.predicate = GEN_PREDICATE_NONE;
     p->curr.noMask = 1;
     p->curr.execWidth = 1;
-    GenRegister payload_did = GenRegister::retype(ra->genReg(insn.dst(rsp_len)), GEN_TYPE_UB);
+    GenRegister payload_did = GenRegister::retype(ra->genReg(insn.dst(virt_rsp_len)), GEN_TYPE_UB);
     payload_did.vstride = GEN_VERTICAL_STRIDE_0;
     payload_did.width = GEN_WIDTH_1;
     payload_did.hstride = GEN_HORIZONTAL_STRIDE_0;
@@ -2435,11 +2433,15 @@ namespace gbe
     p->MOV(payload_did, grf0);
     p->pop();
 
-    const GenRegister msgPayload = ra->genReg(insn.dst(rsp_len));
+    const GenRegister msgPayload = ra->genReg(insn.dst(virt_rsp_len));
     const unsigned char bti = insn.getbti();
     const unsigned int vme_search_path_lut = insn.extra.vme_search_path_lut;
     const unsigned int lut_sub = insn.extra.lut_sub;
     p->VME(bti, dst, msgPayload, msg_type, vme_search_path_lut, lut_sub);
+  }
+
+  void GenContext::emitImeInstruction(const SelectionInstruction &insn) {
+    GBE_ASSERT(0);
   }
 
   void GenContext::scratchWrite(const GenRegister header, uint32_t offset, uint32_t reg_num, uint32_t reg_type, uint32_t channel_mode) {
@@ -3642,16 +3644,25 @@ namespace gbe
     kernel->curbeSize = ALIGN(kernel->curbeSize, GEN_REG_SIZE);
   }
 
+  BVAR(OCL_OUTPUT_SEL_IR_AFTER_SELECT, false);
   BVAR(OCL_OUTPUT_SEL_IR, false);
   BVAR(OCL_OPTIMIZE_SEL_IR, true);
+  BVAR(OCL_OPTIMIZE_IF_BLOCK, true);
   bool GenContext::emitCode(void) {
     GenKernel *genKernel = static_cast<GenKernel*>(this->kernel);
     sel->select();
+    if (OCL_OUTPUT_SEL_IR_AFTER_SELECT) {
+      sel->addID();
+      outputSelectionIR(*this, this->sel, genKernel->getName());
+    }
     if (OCL_OPTIMIZE_SEL_IR)
       sel->optimize();
-    sel->addID();
-    if (OCL_OUTPUT_SEL_IR)
+    if (OCL_OPTIMIZE_IF_BLOCK)
+      sel->if_opt();
+    if (OCL_OUTPUT_SEL_IR) {
+      sel->addID();
       outputSelectionIR(*this, this->sel, genKernel->getName());
+    }
     schedulePreRegAllocation(*this, *this->sel);
     sel->addID();
     if (UNLIKELY(ra->allocate(*this->sel) == false))

@@ -65,7 +65,7 @@ cl_khr_extension_id_max
 #define OPT1_EXT_START_ID EXT_ID(khr_int64_base_atomics)
 #define OPT1_EXT_END_ID EXT_ID(khr_icd)
 #define INTEL_EXT_START_ID EXT_ID(intel_accelerator)
-#define INTEL_EXT_END_ID EXT_ID(intel_subgroups_short)
+#define INTEL_EXT_END_ID EXT_ID(intel_device_side_avc_motion_estimation)
 #define GL_EXT_START_ID EXT_ID(khr_gl_sharing)
 #define GL_EXT_END_ID EXT_ID(khr_gl_msaa_sharing)
 

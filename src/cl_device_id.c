@@ -149,7 +149,7 @@ static struct _cl_device_id intel_skl_gt1_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 2,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
@@ -159,7 +159,7 @@ static struct _cl_device_id intel_skl_gt2_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 3,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
@@ -169,7 +169,7 @@ static struct _cl_device_id intel_skl_gt3_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 6,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
@@ -179,7 +179,7 @@ static struct _cl_device_id intel_skl_gt4_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 9,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
@@ -209,7 +209,7 @@ static struct _cl_device_id intel_kbl_gt1_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 2,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
@@ -219,7 +219,7 @@ static struct _cl_device_id intel_kbl_gt15_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 3,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
@@ -229,7 +229,7 @@ static struct _cl_device_id intel_kbl_gt2_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 3,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
@@ -239,7 +239,7 @@ static struct _cl_device_id intel_kbl_gt3_device = {
   .max_thread_per_unit = 7,
   .sub_slice_count = 6,
   .max_work_item_sizes = {512, 512, 512},
-  .max_work_group_size = 512,
+  .max_work_group_size = 256,
   .max_clock_frequency = 1000,
 #include "cl_gen9_device.h"
 };
@@ -248,6 +248,26 @@ static struct _cl_device_id intel_kbl_gt4_device = {
   .max_compute_unit = 72,
   .max_thread_per_unit = 7,
   .sub_slice_count = 9,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 256,
+  .max_clock_frequency = 1000,
+#include "cl_gen9_device.h"
+};
+
+static struct _cl_device_id intel_glk18eu_device = {
+  .max_compute_unit = 18,
+  .max_thread_per_unit = 6,
+  .sub_slice_count = 3,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,
+  .max_clock_frequency = 1000,
+#include "cl_gen9_device.h"
+};
+
+static struct _cl_device_id intel_glk12eu_device = {
+  .max_compute_unit = 12,
+  .max_thread_per_unit = 6,
+  .sub_slice_count = 2,
   .max_work_item_sizes = {512, 512, 512},
   .max_work_group_size = 512,
   .max_clock_frequency = 1000,
@@ -576,6 +596,7 @@ skl_gt1_break:
 #endif
       cl_intel_platform_get_default_extension(ret);
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      cl_intel_platform_enable_extension(ret, cl_intel_device_side_avc_motion_estimation_ext_id);
       break;
 
     case PCI_CHIP_SKYLAKE_ULT_GT2:
@@ -601,6 +622,7 @@ skl_gt2_break:
 #endif
       cl_intel_platform_get_default_extension(ret);
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      cl_intel_platform_enable_extension(ret, cl_intel_device_side_avc_motion_estimation_ext_id);
       break;
 
     case PCI_CHIP_SKYLAKE_ULT_GT3:
@@ -624,6 +646,7 @@ skl_gt3_break:
       cl_intel_platform_enable_extension(ret, cl_khr_fp64_ext_id);
 #endif
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      cl_intel_platform_enable_extension(ret, cl_intel_device_side_avc_motion_estimation_ext_id);
       break;
 
     case PCI_CHIP_SKYLAKE_DT_GT4:
@@ -643,6 +666,7 @@ skl_gt4_break:
 #endif
       cl_intel_platform_get_default_extension(ret);
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      cl_intel_platform_enable_extension(ret, cl_intel_device_side_avc_motion_estimation_ext_id);
       break;
 
     case PCI_CHIP_BROXTON_0:
@@ -1121,10 +1145,12 @@ cl_get_device_info(cl_device_id     device,
       src_size = sizeof(device->image_max_array_size);
       break;
     case CL_DEVICE_IMAGE2D_MAX_WIDTH:
+    case CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL:
       src_ptr = &device->image2d_max_width;
       src_size = sizeof(device->image2d_max_width);
       break;
     case CL_DEVICE_IMAGE2D_MAX_HEIGHT:
+    case CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL:
       src_ptr = &device->image2d_max_height;
       src_size = sizeof(device->image2d_max_height);
       break;

@@ -342,6 +342,7 @@ cl_context_new(struct _cl_context_prop *props, cl_uint dev_num, cl_device_id* al
   TRY_ALLOC_NO_ERR (ctx->drv, cl_driver_new(props));
   ctx->props = *props;
   ctx->ver = cl_driver_get_ver(ctx->drv);
+  ctx->image_queue = NULL;
 
 exit:
   return ctx;

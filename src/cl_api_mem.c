@@ -21,6 +21,7 @@
 #include "cl_command_queue.h"
 #include "cl_event.h"
 #include "CL/cl.h"
+#include <string.h>
 
 cl_int
 clSetMemObjectDestructorCallback(cl_mem memobj,
@@ -341,6 +342,76 @@ clEnqueueMapBuffer(cl_command_queue command_queue,
   return mem_ptr;
 }
 
+static cl_int
+clEnqueueUnmapMemObjectForKernel(cl_command_queue command_queue,
+                        cl_mem memobj,
+                        void *mapped_ptr,
+                        cl_uint num_events_in_wait_list,
+                        const cl_event *event_wait_list,
+                        cl_event *event)
+{
+  cl_int err = CL_SUCCESS;
+  int i, j;
+  uint8_t write_map = 0;
+  cl_mem tmp_ker_buf = NULL;
+  size_t origin[3], region[3];
+  void *v_ptr = NULL;
+
+  assert(memobj->mapped_ptr_sz >= memobj->map_ref);
+  for (i = 0; i < memobj->mapped_ptr_sz; i++) {
+    if (memobj->mapped_ptr[i].ptr == mapped_ptr) {
+      memobj->mapped_ptr[i].ptr = NULL;
+      v_ptr = memobj->mapped_ptr[i].v_ptr;
+      write_map = memobj->mapped_ptr[i].ker_write_map;
+      tmp_ker_buf = memobj->mapped_ptr[i].tmp_ker_buf;
+      for (j = 0; j < 3; j++) {
+        region[j] = memobj->mapped_ptr[i].region[j];
+        origin[j] = memobj->mapped_ptr[i].origin[j];
+        memobj->mapped_ptr[i].region[j] = 0;
+        memobj->mapped_ptr[i].origin[j] = 0;
+      }
+      memobj->mapped_ptr[i].size = 0;
+      memobj->mapped_ptr[i].ker_write_map = 0;
+      memobj->mapped_ptr[i].tmp_ker_buf = 0;
+      memobj->mapped_ptr[i].v_ptr = NULL;
+      memobj->map_ref--;
+      break;
+    }
+  }
+
+  if (!tmp_ker_buf)
+    return CL_INVALID_MEM_OBJECT;
+
+  cl_event e;
+  err = clEnqueueUnmapMemObject(command_queue, tmp_ker_buf, v_ptr,
+    num_events_in_wait_list, event_wait_list, &e);
+  if (err != CL_SUCCESS) {
+    clReleaseEvent(e);
+    return err;
+  }
+
+  if (write_map) {
+    err = clEnqueueCopyBufferToImage(command_queue, tmp_ker_buf, memobj, 0, origin, region,
+        1, &e, event);
+    if (err != CL_SUCCESS) {
+      clReleaseEvent(e);
+      return err;
+    }
+
+    if (event == NULL) {
+      err = clFinish(command_queue);
+      if (err != CL_SUCCESS) {
+        clReleaseEvent(e);
+        return err;
+      }
+    }
+  }
+
+  clReleaseEvent(e);
+  clReleaseMemObject(tmp_ker_buf);
+  return err;
+}
+
 cl_int
 clEnqueueUnmapMemObject(cl_command_queue command_queue,
                         cl_mem memobj,
@@ -368,6 +439,11 @@ clEnqueueUnmapMemObject(cl_command_queue command_queue,
     if (command_queue->ctx != memobj->ctx) {
       err = CL_INVALID_CONTEXT;
       break;
+    }
+
+    if (CL_OBJECT_IS_IMAGE(memobj) && cl_mem_image(memobj)->is_ker_copy) {
+      return clEnqueueUnmapMemObjectForKernel(command_queue, memobj, mapped_ptr,
+        num_events_in_wait_list, event_wait_list, event);
     }
 
     err = cl_event_check_waitlist(num_events_in_wait_list, event_wait_list,
@@ -1457,6 +1533,114 @@ check_image_origin(struct _cl_mem_image *image, const size_t *porigin, size_t *o
   return CL_SUCCESS;
 }
 
+static void *
+clEnqueueMapImageByKernel(cl_command_queue command_queue,
+                  cl_mem mem,
+                  cl_bool blocking_map,
+                  cl_map_flags map_flags,
+                  const size_t *porigin,
+                  const size_t *pregion,
+                  size_t *image_row_pitch,
+                  size_t *image_slice_pitch,
+                  cl_uint num_events_in_wait_list,
+                  const cl_event *event_wait_list,
+                  cl_event *event,
+                  cl_int *errcode_ret)
+{
+  cl_int err = CL_SUCCESS;
+  void *ptr = NULL;
+  void *mem_ptr = NULL;
+  struct _cl_mem_image *image = NULL;
+  size_t region[3], copy_origin[3];
+  size_t origin[3], copy_region[3];
+  size_t offset = 0;
+  size_t buf_size = 0;
+
+  image = cl_mem_image(mem);
+
+  err = check_image_region(image, pregion, region);
+  if (err != CL_SUCCESS && errcode_ret) {
+    *errcode_ret = err;
+    return NULL;
+  }
+
+  err = check_image_origin(image, porigin, origin);
+  if (err != CL_SUCCESS && errcode_ret) {
+    *errcode_ret = err;
+    return NULL;
+  }
+
+  if (image->tmp_ker_buf)
+    clReleaseMemObject(image->tmp_ker_buf);
+
+  if (mem->flags & CL_MEM_USE_HOST_PTR) {
+    buf_size = image->w * image->h * image->depth * image->bpp;
+    memset(copy_origin, 0, sizeof(size_t) * 3);
+    copy_region[0] = image->w;
+    copy_region[1] = image->h;
+    copy_region[2] = image->depth;
+    image->tmp_ker_buf =
+      clCreateBuffer(command_queue->ctx, CL_MEM_USE_HOST_PTR, mem->size, mem->host_ptr, &err);
+  } else {
+    buf_size = region[0] * region[1] * region[2] * image->bpp;
+    memcpy(copy_origin, origin, sizeof(size_t) * 3);
+    memcpy(copy_region, region, sizeof(size_t) * 3);
+    image->tmp_ker_buf =
+      clCreateBuffer(command_queue->ctx, CL_MEM_ALLOC_HOST_PTR, buf_size, NULL, &err);
+  }
+  if ((image->tmp_ker_buf == NULL || err != CL_SUCCESS) && errcode_ret) {
+    image->tmp_ker_buf = NULL;
+    *errcode_ret = err;
+    return NULL;
+  }
+
+  cl_event e;
+  err = clEnqueueCopyImageToBuffer(command_queue, mem, image->tmp_ker_buf, copy_origin,
+    copy_region, 0, num_events_in_wait_list, event_wait_list, &e);
+  if (err != CL_SUCCESS && errcode_ret) {
+    clReleaseMemObject(image->tmp_ker_buf);
+    clReleaseEvent(e);
+    image->tmp_ker_buf = NULL;
+    *errcode_ret = err;
+    return NULL;
+  }
+
+  if (mem->flags & CL_MEM_USE_HOST_PTR) {
+      if (image_slice_pitch)
+        *image_slice_pitch = image->host_slice_pitch;
+      if (image_row_pitch)
+        *image_row_pitch = image->host_row_pitch;
+
+      offset = image->bpp * origin[0] + image->host_row_pitch * origin[1] +
+               image->host_slice_pitch * origin[2];
+  } else {
+    if (image_slice_pitch)
+      *image_slice_pitch = (image->image_type == CL_MEM_OBJECT_IMAGE2D) ?
+        image->slice_pitch : region[0] * region[1] * image->bpp;
+    if (image_row_pitch)
+      *image_row_pitch = region[0] * image->bpp;
+  }
+
+  ptr = clEnqueueMapBuffer(command_queue, image->tmp_ker_buf, blocking_map, map_flags, 0,
+      buf_size, 1, &e, event, &err);
+  if (err != CL_SUCCESS && errcode_ret) {
+    clReleaseMemObject(image->tmp_ker_buf);
+    clReleaseEvent(e);
+    image->tmp_ker_buf = NULL;
+    *errcode_ret = err;
+    return NULL;
+  }
+
+  err = cl_mem_record_map_mem_for_kernel(mem, ptr, &mem_ptr, offset, 0, origin, region,
+    image->tmp_ker_buf, (map_flags & (CL_MAP_WRITE | CL_MAP_WRITE_INVALIDATE_REGION)) ? 1 : 0);
+  image->tmp_ker_buf = NULL;
+  assert(err == CL_SUCCESS); // Easy way, do not use unmap to handle error.
+  if (errcode_ret)
+    *errcode_ret = err;
+  clReleaseEvent(e);
+  return mem_ptr;
+}
+
 void *
 clEnqueueMapImage(cl_command_queue command_queue,
                   cl_mem mem,
@@ -1528,6 +1712,12 @@ clEnqueueMapImage(cl_command_queue command_queue,
          mem->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS))) {
       err = CL_INVALID_OPERATION;
       break;
+    }
+
+    if (CL_OBJECT_IS_IMAGE(mem) && cl_mem_image(mem)->is_ker_copy) {
+      return clEnqueueMapImageByKernel(command_queue, mem, blocking_map, map_flags, origin, region,
+        image_row_pitch, image_slice_pitch, num_events_in_wait_list, event_wait_list,
+        event, errcode_ret);
     }
 
     err = cl_event_check_waitlist(num_events_in_wait_list, event_wait_list,
@@ -1636,6 +1826,61 @@ clEnqueueMapImage(cl_command_queue command_queue,
   return mem_ptr;
 }
 
+static cl_int
+clEnqueueReadImageByKernel(cl_command_queue command_queue,
+                   cl_mem mem,
+                   cl_bool blocking_read,
+                   const size_t *porigin,
+                   const size_t *pregion,
+                   size_t row_pitch,
+                   size_t slice_pitch,
+                   void *ptr,
+                   cl_uint num_events_in_wait_list,
+                   const cl_event *event_wait_list,
+                   cl_event *event)
+{
+  cl_int err = CL_SUCCESS;
+  struct _cl_mem_image *image = NULL;
+  size_t region[3];
+  size_t origin[3];
+
+  image = cl_mem_image(mem);
+
+  err = check_image_region(image, pregion, region);
+  if (err != CL_SUCCESS)
+    return err;
+
+  err = check_image_origin(image, porigin, origin);
+  if (err != CL_SUCCESS)
+    return err;
+
+  if (image->tmp_ker_buf)
+    clReleaseMemObject(image->tmp_ker_buf);
+
+  size_t buf_size = region[0] * region[1] * region[2] * image->bpp;
+  image->tmp_ker_buf = clCreateBuffer(command_queue->ctx, CL_MEM_USE_HOST_PTR,
+    buf_size, ptr, &err);
+  if (image->tmp_ker_buf == NULL || err != CL_SUCCESS) {
+    image->tmp_ker_buf = NULL;
+    return err;
+  }
+
+  cl_event e;
+  err = clEnqueueCopyImageToBuffer(command_queue, mem, image->tmp_ker_buf, origin,
+    region, 0, num_events_in_wait_list, event_wait_list, &e);
+  if (err != CL_SUCCESS) {
+    clReleaseMemObject(image->tmp_ker_buf);
+    clReleaseEvent(e);
+    image->tmp_ker_buf = NULL;
+    return err;
+  }
+
+  err = clEnqueueReadBuffer(command_queue, image->tmp_ker_buf, blocking_read, 0,
+    buf_size, ptr, 1, &e, event);
+  clReleaseEvent(e);
+  return err;
+}
+
 cl_int
 clEnqueueReadImage(cl_command_queue command_queue,
                    cl_mem mem,
@@ -1721,6 +1966,11 @@ clEnqueueReadImage(cl_command_queue command_queue,
       break;
     }
 
+    if (image->is_ker_copy) {
+      return clEnqueueReadImageByKernel(command_queue, mem, blocking_read, origin,
+        region, row_pitch, slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event);
+    }
+
     err = cl_event_check_waitlist(num_events_in_wait_list, event_wait_list,
                                   event, command_queue->ctx);
     if (err != CL_SUCCESS) {
@@ -1784,6 +2034,53 @@ clEnqueueReadImage(cl_command_queue command_queue,
   } else {
     cl_event_delete(e);
   }
+
+  return err;
+}
+
+static cl_int
+clEnqueueWriteImageByKernel(cl_command_queue command_queue,
+                    cl_mem mem,
+                    cl_bool blocking_write,
+                    const size_t *porigin,
+                    const size_t *pregion,
+                    size_t row_pitch,
+                    size_t slice_pitch,
+                    const void *ptr,
+                    cl_uint num_events_in_wait_list,
+                    const cl_event *event_wait_list,
+                    cl_event *event)
+{
+  cl_int err = CL_SUCCESS;
+  struct _cl_mem_image *image = NULL;
+  size_t region[3];
+  size_t origin[3];
+
+  image = cl_mem_image(mem);
+
+  err = check_image_region(image, pregion, region);
+  if (err != CL_SUCCESS)
+    return err;
+
+  err = check_image_origin(image, porigin, origin);
+  if (err != CL_SUCCESS)
+    return err;
+
+  if (image->tmp_ker_buf)
+    clReleaseMemObject(image->tmp_ker_buf);
+
+  size_t buf_size = region[0] * region[1] * region[2] * image->bpp;
+  image->tmp_ker_buf = clCreateBuffer(command_queue->ctx, CL_MEM_USE_HOST_PTR, buf_size, (void*)ptr, &err);
+  if (image->tmp_ker_buf == NULL || err != CL_SUCCESS) {
+    image->tmp_ker_buf = NULL;
+    return err;
+  }
+
+  err = clEnqueueCopyBufferToImage(command_queue, image->tmp_ker_buf, mem, 0, origin, region,
+    num_events_in_wait_list, event_wait_list, event);
+
+  if (blocking_write)
+    err = clFinish(command_queue);
 
   return err;
 }
@@ -1871,6 +2168,11 @@ clEnqueueWriteImage(cl_command_queue command_queue,
     if (mem->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)) {
       err = CL_INVALID_OPERATION;
       break;
+    }
+
+    if (image->is_ker_copy) {
+      return clEnqueueWriteImageByKernel(command_queue, mem, blocking_write, origin,
+        region, row_pitch, slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event);
     }
 
     err = cl_event_check_waitlist(num_events_in_wait_list, event_wait_list,

@@ -49,36 +49,42 @@ enum _cl_internal_ker_type {
   CL_ENQUEUE_COPY_BUFFER_UNALIGN_SRC_OFFSET,
   CL_ENQUEUE_COPY_BUFFER_RECT,
   CL_ENQUEUE_COPY_BUFFER_RECT_ALIGN4,
-  CL_ENQUEUE_COPY_IMAGE_1D_TO_1D,             //copy image 1d to image 1d
-  CL_ENQUEUE_COPY_IMAGE_2D_TO_2D,             //copy image 2d to image 2d
-  CL_ENQUEUE_COPY_IMAGE_3D_TO_2D,             //copy image 3d to image 2d
-  CL_ENQUEUE_COPY_IMAGE_2D_TO_3D,             //copy image 2d to image 3d
-  CL_ENQUEUE_COPY_IMAGE_3D_TO_3D,             //copy image 3d to image 3d
-  CL_ENQUEUE_COPY_IMAGE_2D_TO_2D_ARRAY,       //copy image 2d to image 2d array
-  CL_ENQUEUE_COPY_IMAGE_1D_ARRAY_TO_1D_ARRAY, //copy image 1d array to image 1d array
-  CL_ENQUEUE_COPY_IMAGE_2D_ARRAY_TO_2D_ARRAY, //copy image 2d array to image 2d array
-  CL_ENQUEUE_COPY_IMAGE_2D_ARRAY_TO_2D,       //copy image 2d array to image 2d
-  CL_ENQUEUE_COPY_IMAGE_2D_ARRAY_TO_3D,       //copy image 2d array to image 3d
-  CL_ENQUEUE_COPY_IMAGE_3D_TO_2D_ARRAY,       //copy image 3d to image 2d array
-  CL_ENQUEUE_COPY_IMAGE_2D_TO_BUFFER,   //copy image 2d to buffer
+  CL_ENQUEUE_COPY_IMAGE_1D_TO_1D,             // copy image 1d to image 1d
+  CL_ENQUEUE_COPY_IMAGE_2D_TO_2D,             // copy image 2d to image 2d
+  CL_ENQUEUE_COPY_IMAGE_3D_TO_2D,             // copy image 3d to image 2d
+  CL_ENQUEUE_COPY_IMAGE_2D_TO_3D,             // copy image 2d to image 3d
+  CL_ENQUEUE_COPY_IMAGE_3D_TO_3D,             // copy image 3d to image 3d
+  CL_ENQUEUE_COPY_IMAGE_2D_TO_2D_ARRAY,       // copy image 2d to image 2d array
+  CL_ENQUEUE_COPY_IMAGE_1D_ARRAY_TO_1D_ARRAY, // copy image 1d array to image 1d array
+  CL_ENQUEUE_COPY_IMAGE_2D_ARRAY_TO_2D_ARRAY, // copy image 2d array to image 2d array
+  CL_ENQUEUE_COPY_IMAGE_2D_ARRAY_TO_2D,       // copy image 2d array to image 2d
+  CL_ENQUEUE_COPY_IMAGE_2D_ARRAY_TO_3D,       // copy image 2d array to image 3d
+  CL_ENQUEUE_COPY_IMAGE_3D_TO_2D_ARRAY,       // copy image 3d to image 2d array
+  CL_ENQUEUE_COPY_IMAGE_2D_TO_BUFFER,         // copy image 2d to buffer
   CL_ENQUEUE_COPY_IMAGE_2D_TO_BUFFER_ALIGN16,
-  CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER,   //copy image 3d tobuffer
-  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_2D,   //copy buffer to image 2d
+  CL_ENQUEUE_COPY_IMAGE_2D_TO_BUFFER_ALIGN4,
+  CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER, // copy image 3d tobuffer
+  CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER_ALIGN16,
+  CL_ENQUEUE_COPY_IMAGE_3D_TO_BUFFER_ALIGN4,
+  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_2D, // copy buffer to image 2d
   CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_2D_ALIGN16,
-  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_3D,   //copy buffer to image 3d
-  CL_ENQUEUE_FILL_BUFFER_UNALIGN,      //fill buffer with 1 aligne pattern, pattern size=1
-  CL_ENQUEUE_FILL_BUFFER_ALIGN2,       //fill buffer with 2 aligne pattern, pattern size=2
-  CL_ENQUEUE_FILL_BUFFER_ALIGN4,       //fill buffer with 4 aligne pattern, pattern size=4
-  CL_ENQUEUE_FILL_BUFFER_ALIGN8_8,     //fill buffer with 8 aligne pattern, pattern size=8
-  CL_ENQUEUE_FILL_BUFFER_ALIGN8_16,    //fill buffer with 16 aligne pattern, pattern size=16
-  CL_ENQUEUE_FILL_BUFFER_ALIGN8_32,    //fill buffer with 16 aligne pattern, pattern size=32
-  CL_ENQUEUE_FILL_BUFFER_ALIGN8_64,    //fill buffer with 16 aligne pattern, pattern size=64
-  CL_ENQUEUE_FILL_BUFFER_ALIGN128,     //fill buffer with 128 aligne pattern, pattern size=128
-  CL_ENQUEUE_FILL_IMAGE_1D,             //fill image 1d
-  CL_ENQUEUE_FILL_IMAGE_1D_ARRAY,       //fill image 1d array
-  CL_ENQUEUE_FILL_IMAGE_2D,             //fill image 2d
-  CL_ENQUEUE_FILL_IMAGE_2D_ARRAY,       //fill image 2d array
-  CL_ENQUEUE_FILL_IMAGE_3D,             //fill image 3d
+  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_2D_ALIGN4,
+  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_3D, // copy buffer to image 3d
+  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_3D_ALIGN16,
+  CL_ENQUEUE_COPY_BUFFER_TO_IMAGE_3D_ALIGN4,
+  CL_ENQUEUE_FILL_BUFFER_UNALIGN,   // fill buffer with 1 aligne pattern, pattern size=1
+  CL_ENQUEUE_FILL_BUFFER_ALIGN2,    // fill buffer with 2 aligne pattern, pattern size=2
+  CL_ENQUEUE_FILL_BUFFER_ALIGN4,    // fill buffer with 4 aligne pattern, pattern size=4
+  CL_ENQUEUE_FILL_BUFFER_ALIGN8_8,  // fill buffer with 8 aligne pattern, pattern size=8
+  CL_ENQUEUE_FILL_BUFFER_ALIGN8_16, // fill buffer with 16 aligne pattern, pattern size=16
+  CL_ENQUEUE_FILL_BUFFER_ALIGN8_32, // fill buffer with 16 aligne pattern, pattern size=32
+  CL_ENQUEUE_FILL_BUFFER_ALIGN8_64, // fill buffer with 16 aligne pattern, pattern size=64
+  CL_ENQUEUE_FILL_BUFFER_ALIGN128,  // fill buffer with 128 aligne pattern, pattern size=128
+  CL_ENQUEUE_FILL_IMAGE_1D,         // fill image 1d
+  CL_ENQUEUE_FILL_IMAGE_1D_ARRAY,   // fill image 1d array
+  CL_ENQUEUE_FILL_IMAGE_2D,         // fill image 2d
+  CL_ENQUEUE_FILL_IMAGE_2D_ARRAY,   // fill image 2d array
+  CL_ENQUEUE_FILL_IMAGE_3D,         // fill image 3d
   CL_INTERNAL_KERNEL_MAX
 };
 
@@ -127,7 +133,7 @@ struct _cl_context {
   void (CL_CALLBACK *pfn_notify)(const char *, const void *, size_t, void *);
                                      /* User's callback when error occur in context */
   void *user_data;                   /* A pointer to user supplied data */
-
+  cl_command_queue image_queue;      /* A internal command queue for image data copying */
 };
 
 #define CL_OBJECT_CONTEXT_MAGIC 0x20BBCADE993134AALL

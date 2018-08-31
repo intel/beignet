@@ -96,8 +96,8 @@ namespace gbe
     const GenRegister &src(uint32_t srcID) const { return regs[dstNum+srcID]; }
     /*! Set debug infomation to selection */
     void setDBGInfo(DebugInfo in) { DBGInfo = in; }
-    /*! No more than 40 sources (40 sources are used by vme for payload passing and setting) */
-    enum { MAX_SRC_NUM = 40 };
+    /*! No more than 64 sources (48 sources are used by vme for payload passing and setting) */
+    enum { MAX_SRC_NUM = 64 };
     /*! No more than 17 destinations (17 used by image block read8) */
     enum { MAX_DST_NUM = 17 };
     /*! State of the instruction (extra fields neeed for the encoding) */
@@ -143,6 +143,10 @@ namespace gbe
         uint16_t vme_search_path_lut:3;
         uint16_t lut_sub:2;
       };
+      struct {
+        uint16_t ime_bti:8;
+        uint16_t ime_msg_type:2;
+      };
       uint32_t barrierType;
       uint32_t waitType;
       bool longjmp;
@@ -172,7 +176,7 @@ namespace gbe
     /*! Number of destinations */
     uint8_t dstNum:5;
     /*! Number of sources */
-    uint8_t srcNum:6;
+    uint8_t srcNum:7;
     /*! To store various indices */
     uint32_t index;
     /*! For BRC/IF to store the UIP */
@@ -192,6 +196,7 @@ namespace gbe
         case SEL_OP_DWORD_GATHER: return extra.function;
         case SEL_OP_SAMPLE: return extra.rdbti;
         case SEL_OP_VME: return extra.vme_bti;
+        case SEL_OP_IME: return extra.ime_bti;
         case SEL_OP_TYPED_WRITE: return extra.bti;
         default:
           GBE_ASSERT(0);
@@ -209,6 +214,7 @@ namespace gbe
         case SEL_OP_DWORD_GATHER: extra.function = bti; return;
         case SEL_OP_SAMPLE: extra.rdbti = bti; return;
         case SEL_OP_VME: extra.vme_bti = bti; return;
+        case SEL_OP_IME: extra.ime_bti = bti; return;
         case SEL_OP_TYPED_WRITE: extra.bti = bti; return;
         default:
           GBE_ASSERT(0);
@@ -268,7 +274,6 @@ namespace gbe
     int endifOffset;
     bool hasBarrier;
     bool hasBranch;
-    bool removeSimpleIfEndif;
   };
 
   enum SEL_IR_OPT_FEATURE {
@@ -323,6 +328,8 @@ namespace gbe
     /* optimize at selection IR level */
     void optimize(void);
     uint32_t opt_features;
+
+    void if_opt(void);
 
     /* Add insn ID for sel IR */
     void addID(void);

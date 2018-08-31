@@ -101,6 +101,7 @@ set (utests_sources
   compiler_convert_uchar_sat.cpp
   compiler_copy_buffer.cpp
   compiler_copy_image.cpp
+  compiler_copy_large_image.cpp
   compiler_copy_image_1d.cpp
   compiler_copy_image_3d.cpp
   compiler_copy_buffer_row.cpp
@@ -110,6 +111,7 @@ set (utests_sources
   compiler_abs.cpp
   compiler_abs_diff.cpp
   compiler_fill_image.cpp
+  compiler_fill_large_image.cpp
   compiler_fill_image0.cpp
   compiler_fill_image_1d.cpp
   compiler_fill_image_3d.cpp
@@ -178,6 +180,8 @@ set (utests_sources
   compiler_subgroup_buffer_block_write.cpp
   compiler_subgroup_image_block_read.cpp
   compiler_subgroup_image_block_write.cpp
+  compiler_subgroup_media_block_read.cpp
+  compiler_subgroup_media_block_write.cpp
   compiler_async_stride_copy.cpp
   compiler_insn_selection_min.cpp
   compiler_insn_selection_max.cpp
@@ -268,6 +272,7 @@ set (utests_sources
   builtin_kernel_max_global_size.cpp
   image_1D_buffer.cpp
   image_from_buffer.cpp
+  image_planar_yuv.cpp
   compare_image_2d_and_1d_array.cpp
   compiler_fill_image_1d_array.cpp
   compiler_fill_image_2d_array.cpp
@@ -277,6 +282,7 @@ set (utests_sources
   runtime_use_host_ptr_buffer.cpp
   runtime_alloc_host_ptr_buffer.cpp
   runtime_use_host_ptr_image.cpp
+  runtime_use_host_ptr_large_image.cpp
   compiler_get_max_sub_group_size.cpp
   compiler_get_sub_group_local_id.cpp
   compiler_sub_group_shuffle.cpp

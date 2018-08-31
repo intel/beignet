@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="driver">
+<id>com.intel.beignet</id>
+<name>Beignet</name>
+<summary>OpenCL (GPU compute) driver for Intel GPUs</summary>
+<description>This allows using Intel integrated GPUs for general computation, speeding up some applications.</description>
+<provides>
+@modalias_list@
+</provides>
+<metadata_license>MIT</metadata_license>
+<project_license>LGPL-2.1+</project_license>
+<url type="homepage">https://www.freedesktop.org/wiki/Software/Beignet/</url>
+<url type="bugtracker">https://bugs.freedesktop.org/buglist.cgi?product=Beignet&amp;component=Beignet&amp;resolution=---</url>
+<developer_name>Intel</developer_name>
+<releases>
+<release version="@version@"></release>
+</releases>
+</component>

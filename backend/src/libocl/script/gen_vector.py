@@ -269,9 +269,8 @@ class builtinProto():
             vtype = fixup_type(vtypeSeq, ptypeSeqs[n], i);
             # XXX FIXME now skip all double vector, as we don't
             # defined those scalar version's prototype.
-            if ptype[0].find('double') != -1 or \
-               vtype[0].find('double') != -1:
-                return
+            if ptype[0].find('double') != -1 and self.functionName.find('native') != -1 :
+              return;
 
             if (n == 0):
                 formatStr = 'OVERLOADABLE {0}{1} {2} ('.format(vtype[0], vtype[1], self.functionName)

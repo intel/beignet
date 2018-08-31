@@ -75,6 +75,52 @@ namespace gbe
                        simd_mode, return_format);
   }
 
+  void Gen9Encoder::setImeMessage(GenNativeInstruction *insn,
+                                unsigned char bti,
+                                uint32_t response_length,
+                                uint32_t msg_length,
+                                uint32_t msg_type)
+  {
+
+     GenMessageTarget sfid = GEN_SFID_NULL;
+     if(msg_type == 1 || msg_type == 3)
+       // 0Dh Check and Refinement Engine SFID_CRE    SKL+ (SIC and FBR blong to SFID_CRE on SKL+)
+       sfid = GEN_SFID_CHECK_REFINE;
+     else if(msg_type == 2)
+       sfid = GEN_SFID_VIDEO_MOTION_EST;
+     setMessageDescriptor(insn, sfid, msg_length, response_length, true);
+     Gen8NativeInstruction *gen8_insn = &insn->gen8_insn;
+     gen8_insn->bits3.ime_gen8.bti = bti;
+     gen8_insn->bits3.ime_gen8.msg_type = msg_type;
+     gen8_insn->bits3.ime_gen8.stream_out_enable = 0;
+     gen8_insn->bits3.ime_gen8.stream_in_enable = 0;
+     gen8_insn->bits3.ime_gen8.stream_out_enable2 = 0;
+
+  }
+
+  void Gen9Encoder::IME(unsigned char bti,
+                       GenRegister dest,
+                       GenRegister msg,
+                       uint32_t msg_type)
+  {
+    GBE_ASSERT(msg_type == 1 || msg_type == 2 || msg_type == 3);
+    uint32_t msg_length, response_length;
+    if(msg_type == 1 || msg_type == 3){
+      msg_length = 8;
+      response_length = 7;
+    }
+    if(msg_type == 2){
+      msg_length = 6;
+      response_length = 7;
+    }
+    GenNativeInstruction *insn = this->next(GEN_OPCODE_SEND);
+    this->setHeader(insn);
+    this->setDst(insn, dest);
+    this->setSrc0(insn, msg);
+    this->setSrc1(insn, GenRegister::immud(0));
+    setImeMessage(insn, bti, response_length, msg_length, msg_type);
+  }
+
   void Gen9Encoder::setSendsOperands(Gen9NativeInstruction *gen9_insn, GenRegister dst, GenRegister src0, GenRegister src1)
   {
     assert(dst.subnr == 0 && src0.subnr == 0 && src1.subnr == 0);
