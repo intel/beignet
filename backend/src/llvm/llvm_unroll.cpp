@@ -206,6 +206,7 @@ namespace gbe {
             //Don't change the unrollID if doesn't force unroll.
             //setUnrollID(parentL, false);
 #if LLVM_VERSION_MAJOR >= 6
+            LPM.markLoopAsDeleted(*parentL);
             loopInfo.erase(parentL);
 #elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
             loopInfo.markAsRemoved(parentL);
