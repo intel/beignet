@@ -292,7 +292,7 @@ namespace gbe
       if (insn.opcode == SEL_OP_MOV)
         addToReplaceInfoMap(insn);
 
-      doZeroAddedOptimization(insn);
+      //doZeroAddedOptimization(insn);
     }
     cleanReplaceInfoMap();
   }
