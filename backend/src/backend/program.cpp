@@ -985,6 +985,12 @@ EXTEND_QUOTE:
           continue; // Don't push this str back; ignore it.
         }
 
+        if(str == "-g") {
+            // The OpenCL 2.0 standard requires accepting -g,
+            // but does not require that it actually does anything
+            continue;
+        }
+
         clOpt.push_back(str);
       }
       free(c_str);
