@@ -243,7 +243,12 @@ namespace gbe
     }
 
     /*! Return the IR virtual register */
-    INLINE ir::Register reg(void) const { return ir::Register(value.reg); }
+    INLINE ir::Register reg(void) const {
+      if (this->physical)
+        return ir::Register();
+      else
+        return ir::Register(value.reg);
+    }
 
     /*! For immediates or virtual register */
     union {
