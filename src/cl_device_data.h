@@ -424,7 +424,54 @@
 
 #define IS_COFFEELAKE(devid) (IS_CFL_GT1(devid) || IS_CFL_GT2(devid) || IS_CFL_GT3(devid))
 
-#define IS_GEN9(devid)     (IS_SKYLAKE(devid) || IS_BROXTON(devid) || IS_KABYLAKE(devid) || IS_GEMINILAKE(devid) || IS_COFFEELAKE(devid))
+#define PCI_CHIP_COMETLAKE_S_GT1_1   0x9BA5
+#define PCI_CHIP_COMETLAKE_S_GT1_2   0x9BA8
+
+#define PCI_CHIP_COMETLAKE_H_GT1_1   0x9BA4
+#define PCI_CHIP_COMETLAKE_H_GT1_2   0x9BA2
+
+#define PCI_CHIP_COMETLAKE_U_GT1_1   0x9B21
+#define PCI_CHIP_COMETLAKE_U_GT1_2   0x9BAA
+#define PCI_CHIP_COMETLAKE_U_GT1_3   0x9BAC
+
+#define PCI_CHIP_COMETLAKE_S_GT2_1   0x9BC5
+#define PCI_CHIP_COMETLAKE_S_GT2_2   0x9BC8
+
+#define PCI_CHIP_COMETLAKE_H_GT2_1   0x9BC4
+#define PCI_CHIP_COMETLAKE_H_GT2_2   0x9BC2
+
+#define PCI_CHIP_COMETLAKE_W_GT2_1   0x9BC6
+#define PCI_CHIP_COMETLAKE_W_GT2_2   0x9BE6
+#define PCI_CHIP_COMETLAKE_W_GT2_3   0x9BF6
+
+#define PCI_CHIP_COMETLAKE_U_GT2_1   0x9B41
+#define PCI_CHIP_COMETLAKE_U_GT2_2   0x9BCA
+#define PCI_CHIP_COMETLAKE_U_GT2_3   0x9BCC
+
+#define IS_CML_GT1(devid) \
+    (devid == PCI_CHIP_COMETLAKE_S_GT1_1   || \
+     devid == PCI_CHIP_COMETLAKE_S_GT1_2   || \
+     devid == PCI_CHIP_COMETLAKE_H_GT1_1   || \
+     devid == PCI_CHIP_COMETLAKE_H_GT1_2   || \
+     devid == PCI_CHIP_COMETLAKE_U_GT1_1   || \
+     devid == PCI_CHIP_COMETLAKE_U_GT1_2   || \
+     devid == PCI_CHIP_COMETLAKE_U_GT1_3)
+
+#define IS_CML_GT2(devid) \
+    (devid == PCI_CHIP_COMETLAKE_S_GT2_1   || \
+     devid == PCI_CHIP_COMETLAKE_S_GT2_2   || \
+     devid == PCI_CHIP_COMETLAKE_H_GT2_1   || \
+     devid == PCI_CHIP_COMETLAKE_H_GT2_2   || \
+     devid == PCI_CHIP_COMETLAKE_W_GT2_1   || \
+     devid == PCI_CHIP_COMETLAKE_W_GT2_2   || \
+     devid == PCI_CHIP_COMETLAKE_W_GT2_3   || \
+     devid == PCI_CHIP_COMETLAKE_U_GT2_1   || \
+     devid == PCI_CHIP_COMETLAKE_U_GT2_2   || \
+     devid == PCI_CHIP_COMETLAKE_U_GT2_3)
+
+#define IS_COMETLAKE(devid) (IS_CML_GT1(devid) || IS_CML_GT2(devid))
+
+#define IS_GEN9(devid)     (IS_SKYLAKE(devid) || IS_BROXTON(devid) || IS_KABYLAKE(devid) || IS_GEMINILAKE(devid) || IS_COFFEELAKE(devid) || IS_COMETLAKE(devid))
 
 #define MAX_OCLVERSION(devid) (IS_GEN9(devid) ? 200 : 120)
 
