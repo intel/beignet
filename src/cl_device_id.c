@@ -324,6 +324,16 @@ static struct _cl_device_id intel_cml_gt2_device = {
 #include "cl_gen9_device.h"
 };
 
+static struct _cl_device_id intel_aml_gt2_device = {
+  .max_compute_unit = 24,
+  .max_thread_per_unit = 7,
+  .sub_slice_count = 3,
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 256,
+  .max_clock_frequency = 1000,
+#include "cl_gen9_device.h"
+};
+
 LOCAL cl_device_id
 cl_get_gt_device(cl_device_type device_type)
 {
@@ -939,6 +949,21 @@ cml_gt2_break:
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
+    case PCI_CHIP_AMBERLAKE_Y_GT2_1:
+    case PCI_CHIP_AMBERLAKE_Y_GT2_2:
+    case PCI_CHIP_AMBERLAKE_Y_GT2_3:
+      DECL_INFO_STRING(aml_gt2_break, intel_aml_gt2_device, name, "Intel(R) UHD Graphics Amber Lake ULX GT2");
+aml_gt2_break:
+      intel_aml_gt2_device.device_id = device_id;
+      intel_aml_gt2_device.platform = cl_get_platform_default();
+      ret = &intel_aml_gt2_device;
+      cl_intel_platform_get_default_extension(ret);
+#ifdef ENABLE_FP64
+      cl_intel_platform_enable_extension(ret, cl_khr_fp64_ext_id);
+#endif
+      cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
+      break;
+
     case PCI_CHIP_SANDYBRIDGE_BRIDGE:
     case PCI_CHIP_SANDYBRIDGE_GT1:
     case PCI_CHIP_SANDYBRIDGE_GT2:
@@ -1151,7 +1176,8 @@ LOCAL cl_bool is_gen_device(cl_device_id device) {
          device == &intel_cfl_gt2_device ||
          device == &intel_cfl_gt3_device ||
          device == &intel_cml_gt1_device ||
-         device == &intel_cml_gt2_device;
+         device == &intel_cml_gt2_device ||
+         device == &intel_aml_gt2_device;
 }
 
 LOCAL cl_int
@@ -1582,7 +1608,7 @@ cl_device_get_version(cl_device_id device, cl_int *ver)
         || device == &intel_glk18eu_device || device == &intel_glk12eu_device
         || device == &intel_cfl_gt1_device || device == &intel_cfl_gt1_device
         || device == &intel_cfl_gt3_device || device == &intel_cml_gt1_device
-        || device == &intel_cml_gt2_device) {
+        || device == &intel_cml_gt2_device || device == &intel_aml_gt2_device) {
     *ver = 9;
   } else
     return CL_INVALID_VALUE;

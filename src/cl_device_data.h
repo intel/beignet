@@ -471,7 +471,18 @@
 
 #define IS_COMETLAKE(devid) (IS_CML_GT1(devid) || IS_CML_GT2(devid))
 
-#define IS_GEN9(devid)     (IS_SKYLAKE(devid) || IS_BROXTON(devid) || IS_KABYLAKE(devid) || IS_GEMINILAKE(devid) || IS_COFFEELAKE(devid) || IS_COMETLAKE(devid))
+#define PCI_CHIP_AMBERLAKE_Y_GT2_1   0x591C
+#define PCI_CHIP_AMBERLAKE_Y_GT2_2   0x87C0
+#define PCI_CHIP_AMBERLAKE_Y_GT2_3   0x87CA
+
+#define IS_AML_GT2(devid) \
+    (devid == PCI_CHIP_AMBERLAKE_Y_GT2_1   || \
+     devid == PCI_CHIP_AMBERLAKE_Y_GT2_2   || \
+     devid == PCI_CHIP_AMBERLAKE_Y_GT2_3)
+
+#define IS_AMBERLAKE(devid) (IS_AML_GT2(devid))
+
+#define IS_GEN9(devid)     (IS_SKYLAKE(devid) || IS_BROXTON(devid) || IS_KABYLAKE(devid) || IS_GEMINILAKE(devid) || IS_COFFEELAKE(devid) || IS_COMETLAKE(devid) || IS_AMBERLAKE(devid))
 
 #define MAX_OCLVERSION(devid) (IS_GEN9(devid) ? 200 : 120)
 
