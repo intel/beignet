@@ -849,6 +849,8 @@ glk12eu_break:
     case PCI_CHIP_COFFEELAKE_S_GT1_2:
     case PCI_CHIP_COFFEELAKE_S_GT1_3:
       DECL_INFO_STRING(cfl_gt1_break, intel_cfl_gt1_device, name, "Intel(R) UHD Graphics Coffee Lake Desktop GT1");
+    case PCI_CHIP_COFFEELAKE_H_GT1_1:
+      DECL_INFO_STRING(cfl_gt1_break, intel_cfl_gt1_device, name, "Intel(R) UHD Graphics Coffee Lake Halo GT1");
     case PCI_CHIP_COFFEELAKE_U_GT1_1:
     case PCI_CHIP_COFFEELAKE_U_GT1_2:
       DECL_INFO_STRING(cfl_gt1_break, intel_cfl_gt1_device, name, "Intel(R) UHD Graphics Coffee Lake Mobile GT1");
@@ -867,6 +869,7 @@ cfl_gt1_break:
     case PCI_CHIP_COFFEELAKE_S_GT2_2:
     case PCI_CHIP_COFFEELAKE_S_GT2_3:
     case PCI_CHIP_COFFEELAKE_S_GT2_4:
+    case PCI_CHIP_COFFEELAKE_S_GT2_5:
       DECL_INFO_STRING(cfl_gt2_break, intel_cfl_gt2_device, name, "Intel(R) UHD Graphics Coffee Lake Desktop GT2");
     case PCI_CHIP_COFFEELAKE_H_GT2_1:
     case PCI_CHIP_COFFEELAKE_H_GT2_2:
