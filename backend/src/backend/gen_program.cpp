@@ -211,6 +211,10 @@ namespace gbe {
       ctx = GBE_NEW(KblContext, unit, name, deviceID, relaxMath);
     } else if (IS_COFFEELAKE(deviceID)) {
       ctx = GBE_NEW(KblContext, unit, name, deviceID, relaxMath);
+    } else if (IS_COMETLAKE(deviceID)) {
+      ctx = GBE_NEW(KblContext, unit, name, deviceID, relaxMath);
+    } else if (IS_AMBERLAKE(deviceID)) {
+      ctx = GBE_NEW(KblContext, unit, name, deviceID, relaxMath);
     } else if (IS_GEMINILAKE(deviceID)) {
       ctx = GBE_NEW(GlkContext, unit, name, deviceID, relaxMath);
     }
@@ -331,6 +335,8 @@ namespace gbe {
                                       (IS_BROXTON(deviceID) && MATCH_BXT_HEADER(binary)) || \
                                       (IS_KABYLAKE(deviceID) && MATCH_KBL_HEADER(binary)) || \
                                       (IS_COFFEELAKE(deviceID) && MATCH_KBL_HEADER(binary)) || \
+                                      (IS_COMETLAKE(deviceID) && MATCH_KBL_HEADER(binary)) || \
+                                      (IS_AMBERLAKE(deviceID) && MATCH_KBL_HEADER(binary)) || \
                                       (IS_GEMINILAKE(deviceID) && MATCH_GLK_HEADER(binary)) \
                                       )
 
@@ -440,6 +446,10 @@ namespace gbe {
       }else if(IS_KABYLAKE(prog->deviceID)){
         FILL_KBL_HEADER(*binary);
       }else if(IS_COFFEELAKE(prog->deviceID)){
+        FILL_KBL_HEADER(*binary);
+      }else if(IS_COMETLAKE(prog->deviceID)){
+        FILL_KBL_HEADER(*binary);
+      }else if(IS_AMBERLAKE(prog->deviceID)){
         FILL_KBL_HEADER(*binary);
       }else if(IS_GEMINILAKE(prog->deviceID)){
         FILL_GLK_HEADER(*binary);
